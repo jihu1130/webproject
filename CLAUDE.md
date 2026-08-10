@@ -242,24 +242,6 @@ com.webschool.webschool
 │   │                                        사용자) 공개 프로필. SecurityConfig에서 permitAll(GET).
 │   │                                        닉네임 + 작성 게시글 목록만 보여주는 최소 정보 화면(학교/
 │   │                                        학년/반 없음 - 사용자에게 직접 확인한 설계 결정)
-│   ├── service.UserService                : 회원가입, 프로필 수정, 아이디 중복체크, deleteAccount()
-│   │                                        (본인 확인 비밀번호 재입력 → 소프트 삭제, 2026-08-05(3차) 추가).
-│   │                                        **2026-08-10(2차) 변경**: deleteAccount()가 이제
-│   │                                        ROLE_SUPER_ADMIN 자진 탈퇴만 막는다("마지막 관리자 보호"
-│   │                                        가드는 총관리자가 항상 별도로 있어서 더 이상 불필요 - 6번
-│   │                                        항목 버그#9 참고)
-│   ├── service.AdminUserService           : 총관리자 전용 계정 관리 — 기존 UserService는 건드리지
-│   │                                        않고 완전히 분리(AdminPostService와 동일 패턴). 본인
-│   │                                        계정은 권한 변경/삭제 못 하게 방어 로직 있음
-│   │                                        (2026-08-05(3차) 추가). **2026-08-10(2차) 추가**:
-│   │                                        updatePermissions()(부관리자 권한 토글), deactivateUser()/
-│   │                                        activateUser()(계정 비활성화), getUserProfile()(프로필
-│   │                                        조회 - 게시글/댓글 수 + 최근 게시글), getAllAdmins()
-│   ├── service.UserProfileService         : (2026-08-10(5차) 신규) 커뮤니티 공개 프로필 조회 전용 -
-│   │                                        UserService(자기 자신 관리)/AdminUserService(총관리자
-│   │                                        전용)와 책임이 달라 분리. getProfile()이 ANONYMOUS 카테고리
-│   │                                        글을 결과에서 제외(본인 프로필이어도 익명 글은 안 보여줌 -
-│   │                                        익명성 보장이 핵심 설계 결정), 탈퇴 계정은 조회 자체를 막음
 │   ├── service.CustomUserDetailsService   : UserDetails.disabled(user.isDeleted() ||
 │   │                                        !user.isActive())로 탈퇴/비활성화 계정 로그인 차단
 │   │                                        (2026-08-05(3차) 추가, active 조건은 2026-08-10(2차) 추가)
