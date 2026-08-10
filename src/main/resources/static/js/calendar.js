@@ -1,41 +1,26 @@
 document.addEventListener('DOMContentLoaded', function () {
-    var calendarEl = document.getElementById('calendar');
+    var calGridMain = document.getElementById('calGridMain');
+    var calGridBody = document.getElementById('calGridBody');
+    var dayDetailPanel = document.getElementById('dayDetailPanel');
+
+    var today = new Date();
+    var currentYear = today.getFullYear();
+    var currentMonth = today.getMonth() + 1; // 1~12
 
     var selectedSchool = null; // { schoolName, schoolCode, officeCode, schoolKind }
-    var selectedDateStr = null; // 방금 클릭한(선택된) 날짜 ('YYYY-MM-DD')
-    var currentCommentDate = null; // 현재 모달에 열려있는 날짜 ('YYYYMMDD', 댓글 API용)
+    var selectedDateStr = formatLocalDate(today); // 방금 클릭한(선택된) 날짜 ('YYYY-MM-DD') - 아직 아무 날짜도
+    // 클릭하지 않았다면 오늘이 기본 선택 상태 (그리드 강조 표시용, 패널은 클릭 전엔 열리지 않음)
+    var currentCommentDate = null; // 현재 패널에 열려있는 날짜 ('YYYYMMDD', 댓글 API용)
     var currentCommentGrade = null; // 댓글이 공유되는 학년
     var currentCommentClassNm = null; // 댓글이 공유되는 반
 
-    // 1. FullCalendar 달력 초기화
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'ko',
-        headerToolbar: {
-            left: '',
-            center: 'title',
-            right: ''
-        },
-        dateClick: function (info) {
-            selectedDateStr = info.dateStr;
-            applySelectedDayStyle();
-            var selectedDate = info.dateStr.replace(/-/g, '');
-            fetchCalendarDetails(selectedDate, info.dateStr);
-        },
-        datesSet: function () {
-            syncQuicknav();
-            applySelectedDayStyle();
-        }
-    });
-
-    calendar.render();
-
-    // 아직 아무 날짜도 클릭하지 않았다면 오늘이 기본 선택 상태
-    selectedDateStr = formatLocalDate(new Date());
-    applySelectedDayStyle();
+    var DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
 
     var gradeSelect = document.getElementById('gradeSelect');
     var classSelect = document.getElementById('classSelect');
+
+    // 1. 캘린더 그리드 초기화
+    renderGrid();
 
     gradeSelect.addEventListener('change', function () {
         updateTitle();
@@ -48,21 +33,185 @@ document.addEventListener('DOMContentLoaded', function () {
     initQuicknav();
     updateTitle();
 
-    // 방금 클릭한 날짜(없으면 오늘)에 선택 표시를 적용
-    function applySelectedDayStyle() {
-        var prevSelected = calendarEl.querySelectorAll('.fc-day-selected');
-        prevSelected.forEach(function (el) { el.classList.remove('fc-day-selected'); });
+    document.getElementById('dayDetailClose').addEventListener('click', closePanel);
 
-        if (!selectedDateStr) return;
-        var cell = calendarEl.querySelector('.fc-daygrid-day[data-date="' + selectedDateStr + '"]');
-        if (cell) cell.classList.add('fc-day-selected');
-    }
+    // ── 달력 그리드 ─────────────────────────────────────────────
 
     function formatLocalDate(date) {
         var y = date.getFullYear();
         var m = String(date.getMonth() + 1).padStart(2, '0');
         var d = String(date.getDate()).padStart(2, '0');
         return y + '-' + m + '-' + d;
+    }
+
+    // 해당 연/월의 42칸(6주) 그리드용 날짜 배열 생성 - 앞뒤 달 날짜로 빈 칸을 채운다
+    function buildCalendarDays(year, month) {
+        var todayStr = formatLocalDate(new Date());
+        var firstDay = new Date(year, month - 1, 1);
+        var startDow = firstDay.getDay();
+        var daysInMonth = new Date(year, month, 0).getDate();
+        var prevMonthDays = new Date(year, month - 1, 0).getDate();
+        var days = [];
+
+        for (var i = startDow - 1; i >= 0; i--) {
+            var d = prevMonthDays - i;
+            var pm = month === 1 ? 12 : month - 1;
+            var py = month === 1 ? year - 1 : year;
+            var date = py + '-' + String(pm).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            days.push({ date: date, day: d, isCurrentMonth: false, isToday: date === todayStr, dow: days.length % 7 });
+        }
+
+        for (var day = 1; day <= daysInMonth; day++) {
+            var date2 = year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+            days.push({ date: date2, day: day, isCurrentMonth: true, isToday: date2 === todayStr, dow: days.length % 7 });
+        }
+
+        var remaining = 42 - days.length;
+        for (var d2 = 1; d2 <= remaining; d2++) {
+            var nm = month === 12 ? 1 : month + 1;
+            var ny = month === 12 ? year + 1 : year;
+            var date3 = ny + '-' + String(nm).padStart(2, '0') + '-' + String(d2).padStart(2, '0');
+            days.push({ date: date3, day: d2, isCurrentMonth: false, isToday: date3 === todayStr, dow: days.length % 7 });
+        }
+
+        return days;
+    }
+
+    function renderGrid() {
+        var days = buildCalendarDays(currentYear, currentMonth);
+        calGridBody.innerHTML = '';
+
+        days.forEach(function (day) {
+            var cell = document.createElement('div');
+            var classes = ['cal-day'];
+            if (day.isToday) classes.push('cal-day-today');
+            if (day.date === selectedDateStr) classes.push('cal-day-selected');
+            cell.className = classes.join(' ');
+            cell.dataset.date = day.date;
+
+            var num = document.createElement('span');
+            var numClasses = ['cal-day-num'];
+            if (!day.isCurrentMonth) {
+                numClasses.push('cal-day-num-muted');
+            } else if (day.dow === 0) {
+                numClasses.push('cal-day-num-sun');
+            } else if (day.dow === 6) {
+                numClasses.push('cal-day-num-sat');
+            }
+            num.className = numClasses.join(' ');
+            num.textContent = day.day;
+
+            cell.appendChild(num);
+            cell.addEventListener('click', function () { handleDayClick(day.date); });
+            calGridBody.appendChild(cell);
+        });
+    }
+
+    function handleDayClick(dateStr) {
+        selectedDateStr = dateStr;
+        renderGrid();
+        openPanel();
+        var formattedDate = dateStr.replace(/-/g, '');
+        fetchCalendarDetails(formattedDate, dateStr);
+    }
+
+    function openPanel() {
+        dayDetailPanel.style.display = 'flex';
+        calGridMain.classList.add('cal-grid-main--split');
+    }
+
+    function closePanel() {
+        dayDetailPanel.style.display = 'none';
+        calGridMain.classList.remove('cal-grid-main--split');
+        selectedDateStr = null;
+        renderGrid();
+    }
+
+    // ── 월 빠른 이동 컨트롤 (연/월 드롭다운 + 연/월 단위 이동 버튼) ─────
+
+    function initQuicknav() {
+        var yearSelect = document.getElementById('quickYearSelect');
+        var monthSelect = document.getElementById('quickMonthSelect');
+
+        var baseYear = new Date().getFullYear();
+        for (var y = baseYear - 5; y <= baseYear + 5; y++) {
+            var yOpt = document.createElement('option');
+            yOpt.value = y;
+            yOpt.textContent = y + '년';
+            yearSelect.appendChild(yOpt);
+        }
+
+        for (var m = 1; m <= 12; m++) {
+            var mOpt = document.createElement('option');
+            mOpt.value = m;
+            mOpt.textContent = m + '월';
+            monthSelect.appendChild(mOpt);
+        }
+
+        function jumpToSelected() {
+            currentYear = parseInt(yearSelect.value, 10);
+            currentMonth = parseInt(monthSelect.value, 10);
+            renderGrid();
+        }
+
+        yearSelect.addEventListener('change', jumpToSelected);
+        monthSelect.addEventListener('change', jumpToSelected);
+
+        document.getElementById('quickPrevYear').addEventListener('click', function () {
+            currentYear -= 1;
+            renderGrid();
+            syncQuicknav();
+        });
+        document.getElementById('quickNextYear').addEventListener('click', function () {
+            currentYear += 1;
+            renderGrid();
+            syncQuicknav();
+        });
+        document.getElementById('quickPrevMonth').addEventListener('click', function () {
+            if (currentMonth === 1) { currentMonth = 12; currentYear -= 1; } else { currentMonth -= 1; }
+            renderGrid();
+            syncQuicknav();
+        });
+        document.getElementById('quickNextMonth').addEventListener('click', function () {
+            if (currentMonth === 12) { currentMonth = 1; currentYear += 1; } else { currentMonth += 1; }
+            renderGrid();
+            syncQuicknav();
+        });
+        document.getElementById('quickTodayBtn').addEventListener('click', function () {
+            var now = new Date();
+            currentYear = now.getFullYear();
+            currentMonth = now.getMonth() + 1;
+            selectedDateStr = formatLocalDate(now);
+            renderGrid();
+            syncQuicknav();
+        });
+
+        syncQuicknav();
+    }
+
+    // 현재 표시 중인 연/월과 드롭다운 값을 맞춘다
+    function syncQuicknav() {
+        var yearSelect = document.getElementById('quickYearSelect');
+        var monthSelect = document.getElementById('quickMonthSelect');
+        if (!yearSelect || !monthSelect) return;
+
+        if (!yearSelect.querySelector('option[value="' + currentYear + '"]')) {
+            var yOpt = document.createElement('option');
+            yOpt.value = currentYear;
+            yOpt.textContent = currentYear + '년';
+            yearSelect.appendChild(yOpt);
+        }
+
+        yearSelect.value = currentYear;
+        monthSelect.value = currentMonth;
+    }
+
+    // 타이틀 문구 변경 (아이콘은 건드리지 않고 텍스트만 갱신 -> 아이콘이 바뀌어 보이는 현상 방지)
+    function updateTitle() {
+        var grade = document.getElementById('gradeSelect').value;
+        var classNm = document.getElementById('classSelect').value;
+        var schoolPrefix = selectedSchool ? selectedSchool.schoolName + ' ' : '';
+        document.getElementById('calendarTitleText').textContent = `${schoolPrefix}${grade}학년 ${classNm}반 시간표 캘린더`;
     }
 
     // 학교가 선택되어 있으면 실제 반 목록으로 갱신 (선택된 값은 최대한 유지)
@@ -98,85 +247,6 @@ document.addEventListener('DOMContentLoaded', function () {
             gradeSelect.value = mySchool.grade;
         }
         refreshClassOptions(mySchool.classNum);
-    }
-
-    // 4. 월 빠른 이동 컨트롤 (연/월 드롭다운 + 연/월 단위 이동 버튼)
-    function initQuicknav() {
-        var yearSelect = document.getElementById('quickYearSelect');
-        var monthSelect = document.getElementById('quickMonthSelect');
-
-        var baseYear = new Date().getFullYear();
-        for (var y = baseYear - 5; y <= baseYear + 5; y++) {
-            var yOpt = document.createElement('option');
-            yOpt.value = y;
-            yOpt.textContent = y + '년';
-            yearSelect.appendChild(yOpt);
-        }
-
-        for (var m = 1; m <= 12; m++) {
-            var mOpt = document.createElement('option');
-            mOpt.value = m;
-            mOpt.textContent = m + '월';
-            monthSelect.appendChild(mOpt);
-        }
-
-        function jumpToSelected() {
-            var year = parseInt(yearSelect.value, 10);
-            var month = parseInt(monthSelect.value, 10);
-            calendar.gotoDate(new Date(year, month - 1, 1));
-        }
-
-        yearSelect.addEventListener('change', jumpToSelected);
-        monthSelect.addEventListener('change', jumpToSelected);
-
-        document.getElementById('quickPrevYear').addEventListener('click', function () {
-            calendar.incrementDate({ years: -1 });
-        });
-        document.getElementById('quickNextYear').addEventListener('click', function () {
-            calendar.incrementDate({ years: 1 });
-        });
-        document.getElementById('quickPrevMonth').addEventListener('click', function () {
-            calendar.incrementDate({ months: -1 });
-        });
-        document.getElementById('quickNextMonth').addEventListener('click', function () {
-            calendar.incrementDate({ months: 1 });
-        });
-        document.getElementById('quickTodayBtn').addEventListener('click', function () {
-            calendar.today();
-            selectedDateStr = formatLocalDate(new Date());
-            applySelectedDayStyle();
-        });
-
-        syncQuicknav();
-    }
-
-    // FullCalendar가 표시 중인 연/월과 드롭다운 값을 맞춘다
-    function syncQuicknav() {
-        var yearSelect = document.getElementById('quickYearSelect');
-        var monthSelect = document.getElementById('quickMonthSelect');
-        if (!yearSelect || !monthSelect) return;
-
-        var current = calendar.getDate();
-        var year = current.getFullYear();
-        var month = current.getMonth() + 1;
-
-        if (!yearSelect.querySelector('option[value="' + year + '"]')) {
-            var yOpt = document.createElement('option');
-            yOpt.value = year;
-            yOpt.textContent = year + '년';
-            yearSelect.appendChild(yOpt);
-        }
-
-        yearSelect.value = year;
-        monthSelect.value = month;
-    }
-
-    // 타이틀 문구 변경 (아이콘은 건드리지 않고 텍스트만 갱신 -> 아이콘이 바뀌어 보이는 현상 방지)
-    function updateTitle() {
-        var grade = document.getElementById('gradeSelect').value;
-        var classNm = document.getElementById('classSelect').value;
-        var schoolPrefix = selectedSchool ? selectedSchool.schoolName + ' ' : '';
-        document.getElementById('calendarTitleText').textContent = `${schoolPrefix}${grade}학년 ${classNm}반 시간표 캘린더`;
     }
 
     // 2. 학교 검색 (공용 위젯 사용)
@@ -440,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     });
 
-    // 3. 백엔드 REST API 호출 및 모달 바인딩 함수
+    // 3. 백엔드 REST API 호출 및 상세 패널 바인딩 함수
     function fetchCalendarDetails(formattedDate, displayDate) {
         var grade = document.getElementById('gradeSelect').value;
         var classNm = document.getElementById('classSelect').value;
@@ -449,6 +519,20 @@ document.addEventListener('DOMContentLoaded', function () {
         currentCommentGrade = grade;
         currentCommentClassNm = classNm;
         document.getElementById('commentInput').value = '';
+
+        var dateParts = displayDate.split('-');
+        var dateObj = new Date(displayDate + 'T12:00:00');
+        var dow = dateObj.getDay();
+        var shortDate = `${parseInt(dateParts[1], 10)}월 ${parseInt(dateParts[2], 10)}일 (${DOW_KO[dow]})`;
+
+        var dateEl = document.getElementById('dayDetailDate');
+        dateEl.textContent = shortDate;
+        dateEl.className = 'day-detail-date' + (dow === 0 ? ' day-detail-date-sun' : dow === 6 ? ' day-detail-date-sat' : '');
+        document.getElementById('dayDetailClass').textContent = `${grade}학년 ${classNm}반`;
+
+        document.getElementById('mealContent').textContent = '급식 정보를 불러오는 중...';
+        document.getElementById('timetableList').innerHTML = '';
+        document.getElementById('eventBadge').style.display = 'none';
 
         var params = new URLSearchParams({ date: formattedDate, grade: grade, classNm: classNm });
         if (selectedSchool) {
@@ -466,14 +550,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                var dateParts = displayDate.split('-');
-                var shortDate = `${parseInt(dateParts[1], 10)}월 ${parseInt(dateParts[2], 10)}일`;
-                document.getElementById('modalTitle').innerText = `${shortDate} (${grade}-${classNm})`;
-
                 var eventBadge = document.getElementById('eventBadge');
                 if (data.eventName) {
-                    eventBadge.innerText = `🔔 학사일정: ${data.eventName}`;
-                    eventBadge.style.display = 'block';
+                    eventBadge.innerHTML = `<i class="fa-solid fa-bell"></i> 학사일정: ${escapeHtml(data.eventName)}`;
+                    eventBadge.style.display = 'flex';
                 } else {
                     eventBadge.style.display = 'none';
                 }
@@ -500,7 +580,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     specialSection.innerHTML = `
                         <div class="special-day-card">
                             <div class="special-icon">🏫</div>
-                            <h3>${specialTitle}</h3>
+                            <h3>${escapeHtml(specialTitle)}</h3>
                             <p>오늘은 정규 수업 및 급식이 진행되지 않는 날입니다.</p>
                         </div>
                     `;
@@ -517,23 +597,24 @@ document.addEventListener('DOMContentLoaded', function () {
                         mealContent.innerText = "등록된 급식 정보가 없습니다.";
                     }
 
-                    var tbody = document.getElementById('timetableBody');
-                    tbody.innerHTML = '';
+                    var timetableList = document.getElementById('timetableList');
+                    timetableList.innerHTML = '';
 
                     if (!data.timetable || data.timetable.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="2">등록된 시간표가 없습니다.</td></tr>';
+                        timetableList.innerHTML = '<div class="timetable-empty">등록된 시간표가 없습니다.</div>';
                     } else {
                         data.timetable.forEach(item => {
-                            var row = `<tr>
-                                <td>${item.perio}</td>
-                                <td>${item.subject}</td>
-                            </tr>`;
-                            tbody.innerHTML += row;
+                            var row = document.createElement('div');
+                            row.className = 'timetable-row';
+                            row.innerHTML = `
+                                <span class="timetable-perio">${escapeHtml(String(item.perio).replace('교시', ''))}</span>
+                                <span class="timetable-subject">${escapeHtml(item.subject)}</span>
+                            `;
+                            timetableList.appendChild(row);
                         });
                     }
                 }
 
-                document.getElementById('timetableModal').style.display = 'flex';
                 loadComments();
             })
             .catch(error => {
@@ -542,8 +623,3 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 });
-
-// 모달 닫기 함수
-function closeModal() {
-    document.getElementById('timetableModal').style.display = 'none';
-}
