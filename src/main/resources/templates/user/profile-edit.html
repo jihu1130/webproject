@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 프로필 설정 - WebSchool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+</head>
+<body class="auth-body">
+
+<div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+
+<div class="auth-shell">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h3 class="auth-title">내 프로필 설정</h3>
+            <p class="auth-subtitle">다른 사람이 보는 내 프로필(<span th:text="'/users/' + ${loginUser?.id}"></span>)에 표시될 소개글이에요</p>
+
+            <div th:if="${errorMessage}" class="auth-alert auth-alert-danger" th:text="${errorMessage}"></div>
+
+            <form th:action="@{/mypage/profile}" method="post">
+                <div class="auth-field">
+                    <label>소개글</label>
+                    <textarea name="bio" maxlength="150" rows="3" placeholder="짧은 한 줄 소개를 남겨보세요 (선택)" th:text="${bio}"></textarea>
+                </div>
+                <button type="submit" class="btn btn-brand auth-submit">저장하기</button>
+            </form>
+
+            <div class="auth-footer"><a href="/mypage">마이페이지로 돌아가기</a></div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

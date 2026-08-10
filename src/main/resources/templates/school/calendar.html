@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>웹스쿨 - 학사 & 시간표 캘린더</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/school-search.css}">
+    <link rel="stylesheet" th:href="@{/css/calendar.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('calendar')}"></div>
+
+<div class="calendar-page">
+    <div class="calendar-container">
+        <div class="page-heading">
+            <h1 id="calendarTitle">
+                <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                <span id="calendarTitleText">1학년 1반 시간표 캘린더</span>
+            </h1>
+            <p class="page-sub">학교를 검색하고 날짜를 클릭하면 그날의 시간표 · 급식 · 학사일정을 확인할 수 있어요.</p>
+        </div>
+
+        <div class="search-bar">
+            <div class="search-item search-item-wide school-search" id="schoolSearchWrap">
+                <label for="schoolSearchInput"><i class="fa-solid fa-magnifying-glass"></i> 학교명</label>
+                <div class="school-search-box">
+                    <input type="text" id="schoolSearchInput" placeholder="본인의 학교를 선택해보세요" autocomplete="off">
+                    <ul id="schoolSearchResults" class="school-search-results"></ul>
+                </div>
+            </div>
+
+            <div class="search-item">
+                <label for="gradeSelect"><i class="fa-solid fa-layer-group"></i> 학년</label>
+                <select id="gradeSelect">
+                    <option value="1" selected>1학년</option>
+                    <option value="2">2학년</option>
+                    <option value="3">3학년</option>
+                </select>
+            </div>
+
+            <div class="search-item">
+                <label for="classSelect"><i class="fa-solid fa-users"></i> 반</label>
+                <select id="classSelect">
+                    <option value="1" selected>1반</option>
+                    <option value="2">2반</option>
+                    <option value="3">3반</option>
+                    <option value="4">4반</option>
+                    <option value="5">5반</option>
+                    <option value="6">6반</option>
+                    <option value="7">7반</option>
+                    <option value="8">8반</option>
+                    <option value="9">9반</option>
+                    <option value="10">10반</option>
+                    <option value="11">11반</option>
+                    <option value="12">12반</option>
+                    <option value="13">13반</option>
+                    <option value="14">14반</option>
+                    <option value="15">15반</option>
+                    <option value="16">16반</option>
+                    <option value="17">17반</option>
+                    <option value="18">18반</option>
+                    <option value="19">19반</option>
+                    <option value="20">20반</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="calendar-quicknav">
+            <button type="button" id="quickPrevYear" class="quicknav-btn" aria-label="이전 해">
+                <i class="fa-solid fa-angles-left"></i>
+            </button>
+            <button type="button" id="quickPrevMonth" class="quicknav-btn" aria-label="이전 달">
+                <i class="fa-solid fa-angle-left"></i>
+            </button>
+
+            <div class="quicknav-select-group">
+                <select id="quickYearSelect" aria-label="연도 선택"></select>
+                <select id="quickMonthSelect" aria-label="월 선택"></select>
+            </div>
+
+            <button type="button" id="quickNextMonth" class="quicknav-btn" aria-label="다음 달">
+                <i class="fa-solid fa-angle-right"></i>
+            </button>
+            <button type="button" id="quickNextYear" class="quicknav-btn" aria-label="다음 해">
+                <i class="fa-solid fa-angles-right"></i>
+            </button>
+
+            <button type="button" id="quickTodayBtn" class="quicknav-today-btn">
+                <i class="fa-regular fa-calendar"></i> 오늘
+            </button>
+        </div>
+
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<div id="timetableModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="modalTitle">일정 상세 정보</h3>
+
+        <div id="eventBadge" class="event-badge" style="display: none;"></div>
+
+        <div id="specialContentSection" style="display: none;"></div>
+
+        <div id="normalContentSection">
+            <div class="modal-section">
+                <h4><i class="fa-solid fa-utensils"></i> 오늘의 급식</h4>
+                <div id="mealContent" class="meal-box">급식 정보를 불러오는 중...</div>
+            </div>
+
+            <div class="modal-section">
+                <h4><i class="fa-solid fa-book-open"></i> 시간표 정보</h4>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>교시</th>
+                        <th>과목</th>
+                    </tr>
+                    </thead>
+                    <tbody id="timetableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-section">
+            <h4><i class="fa-solid fa-comments"></i> 오늘의 한마디</h4>
+            <div id="commentList" class="comment-list"></div>
+            <form id="commentForm" class="comment-form">
+                <input type="text" id="commentInput" maxlength="300" placeholder="이 날에 대한 의견을 남겨보세요" required>
+                <button type="submit">등록</button>
+            </form>
+        </div>
+
+        <button class="close-btn" onclick="closeModal()">닫기</button>
+    </div>
+</div>
+
+<script th:if="${loginUser != null}" th:inline="javascript">
+    /*<![CDATA[*/
+    window.__USER_SCHOOL__ = {
+        schoolName: /*[[${loginUser.schoolName}]]*/ '',
+        schoolCode: /*[[${loginUser.schoolCode}]]*/ '',
+        atptCode: /*[[${loginUser.atptCode}]]*/ '',
+        schoolKind: /*[[${loginUser.schoolKind}]]*/ '',
+        grade: /*[[${loginUser.grade}]]*/ '',
+        classNum: /*[[${loginUser.classNum}]]*/ ''
+    };
+    /*]]>*/
+</script>
+<script th:src="@{/js/timeago.js}"></script>
+<script th:src="@{/js/school-search.js}"></script>
+<script th:src="@{/js/class-select.js}"></script>
+<script th:src="@{/js/grade-select.js}"></script>
+<script th:src="@{/js/calendar.js}"></script>
+</body>
+</html>

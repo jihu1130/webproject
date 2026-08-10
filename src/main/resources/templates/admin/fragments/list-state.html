@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 관리자 목록 화면의 행별 액션 폼(블라인드/삭제/복구/문제없음 처리 등)에 공통으로 끼워 넣는
+     hidden input 묶음. 액션 처리 후 컨트롤러가 이 값들을 그대로 읽어 원래 보던 검색어/필터/
+     페이지로 되돌아가는 리다이렉트를 만든다(PageUtils.buildListRedirect 참고) - 없으면 액션
+     하나 누를 때마다 목록이 검색 전 상태(1페이지)로 리셋된다. status/type 중 안 쓰는 화면은
+     해당 파라미터에 null을 넘기면 된다(빈 값은 자동으로 생략됨). -->
+<th:block th:fragment="hidden(status, keyword, page, size)">
+    <input type="hidden" name="status" th:if="${status != null}" th:value="${status}">
+    <input type="hidden" name="keyword" th:value="${keyword}">
+    <input type="hidden" name="page" th:value="${page}">
+    <input type="hidden" name="size" th:value="${size}">
+</th:block>
+
+<th:block th:fragment="hiddenWithType(type, keyword, page, size)">
+    <input type="hidden" name="type" th:if="${type != null}" th:value="${type}">
+    <input type="hidden" name="keyword" th:value="${keyword}">
+    <input type="hidden" name="page" th:value="${page}">
+    <input type="hidden" name="size" th:value="${size}">
+</th:block>
+
+</body>
+</html>

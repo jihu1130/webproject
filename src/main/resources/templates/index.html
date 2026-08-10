@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>웹스쿨 (WebSchool) - 우리학교 스마트 대시보드</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/index.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('home')}"></div>
+
+<!-- ══════════ 히어로 ══════════ -->
+<header class="hero">
+    <div class="hero-blob hero-blob-1"></div>
+    <div class="hero-blob hero-blob-2"></div>
+    <div class="hero-blob hero-blob-3"></div>
+    <div class="hero-grid-lines"></div>
+
+    <div class="hero-inner">
+        <div class="hero-copy">
+            <span class="hero-eyebrow hero-pop" style="--pop-delay:0ms">
+                <i class="fa-solid fa-bolt"></i> NEIS Open API 실시간 연동
+            </span>
+            <h1 class="hero-title hero-pop" style="--pop-delay:80ms">
+                우리 학교 생활의 전부,<br>
+                <span class="text-gradient">웹스쿨</span> 하나로 끝내요
+            </h1>
+            <p class="hero-sub hero-pop" style="--pop-delay:160ms">
+                시간표 · 급식 · 학사일정을 한곳에서 확인하고,<br class="hero-sub-break">
+                같은 학교 친구들과 자유롭게 소통해보세요.
+            </p>
+
+            <div class="hero-cta-group hero-pop" style="--pop-delay:240ms">
+                <a href="/school/calendar" class="hero-cta-primary">
+                    캘린더 보러가기 <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <a href="#features" class="hero-cta-secondary">
+                    <i class="fa-solid fa-play"></i> 기능 둘러보기
+                </a>
+            </div>
+
+            <div class="hero-badges hero-pop" style="--pop-delay:320ms">
+                <span><i class="fa-solid fa-circle-check"></i> 무료로 이용</span>
+                <span><i class="fa-solid fa-circle-check"></i> 학교/학년/반별 맞춤</span>
+                <span><i class="fa-solid fa-circle-check"></i> 실시간 데이터</span>
+            </div>
+        </div>
+
+        <div class="hero-visual hero-pop" style="--pop-delay:200ms">
+            <div class="hero-mockup" id="heroMockup">
+                <div class="hero-mockup-glare"></div>
+                <div class="hero-mockup-header">
+                    <span></span><span></span><span></span>
+                    <span class="hero-mockup-title">이번 주 시간표</span>
+                </div>
+                <div class="hero-mockup-body">
+                    <div class="hero-mockup-row">
+                        <span class="hero-mockup-chip hero-mockup-chip-brand">월</span>
+                        <span class="hero-mockup-bar" style="width: 82%"></span>
+                    </div>
+                    <div class="hero-mockup-row">
+                        <span class="hero-mockup-chip">화</span>
+                        <span class="hero-mockup-bar" style="width: 64%"></span>
+                    </div>
+                    <div class="hero-mockup-row">
+                        <span class="hero-mockup-chip">수</span>
+                        <span class="hero-mockup-bar" style="width: 90%"></span>
+                    </div>
+                    <div class="hero-mockup-row">
+                        <span class="hero-mockup-chip">목</span>
+                        <span class="hero-mockup-bar" style="width: 48%"></span>
+                    </div>
+                    <div class="hero-mockup-row">
+                        <span class="hero-mockup-chip">금</span>
+                        <span class="hero-mockup-bar" style="width: 72%"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-chip hero-chip-1"><i class="fa-solid fa-utensils"></i> 오늘 급식: 잡곡밥 · 미역국</div>
+            <div class="hero-chip hero-chip-2"><i class="fa-solid fa-comment-dots"></i> 오늘의 한마디 3개</div>
+        </div>
+    </div>
+
+    <a href="#features" class="hero-scroll-cue" aria-label="아래로 스크롤">
+        <span></span>
+    </a>
+</header>
+
+<!-- ══════════ 마퀴 ══════════ -->
+<div class="marquee-band">
+    <div class="marquee-track">
+        <span class="marquee-item"><i class="fa-solid fa-clock"></i> 학급별 시간표</span>
+        <span class="marquee-item"><i class="fa-solid fa-utensils"></i> 오늘의 급식</span>
+        <span class="marquee-item"><i class="fa-solid fa-calendar-days"></i> 학사일정</span>
+        <span class="marquee-item"><i class="fa-solid fa-comment-dots"></i> 오늘의 한마디</span>
+        <span class="marquee-item"><i class="fa-solid fa-fire"></i> 커뮤니티</span>
+        <span class="marquee-item"><i class="fa-solid fa-id-card"></i> 마이페이지</span>
+        <!-- 무한 스크롤처럼 보이도록 동일 목록을 한 번 더 복제 -->
+        <span class="marquee-item" aria-hidden="true"><i class="fa-solid fa-clock"></i> 학급별 시간표</span>
+        <span class="marquee-item" aria-hidden="true"><i class="fa-solid fa-utensils"></i> 오늘의 급식</span>
+        <span class="marquee-item" aria-hidden="true"><i class="fa-solid fa-calendar-days"></i> 학사일정</span>
+        <span class="marquee-item" aria-hidden="true"><i class="fa-solid fa-comment-dots"></i> 오늘의 한마디</span>
+        <span class="marquee-item" aria-hidden="true"><i class="fa-solid fa-fire"></i> 커뮤니티</span>
+        <span class="marquee-item" aria-hidden="true"><i class="fa-solid fa-id-card"></i> 마이페이지</span>
+    </div>
+</div>
+
+<!-- ══════════ 벤토 기능 그리드 ══════════ -->
+<section id="features" class="bento-section">
+    <div class="section-intro reveal-on-scroll">
+        <span class="section-kicker">FEATURES</span>
+        <h2 class="section-title">한눈에 보는 웹스쿨</h2>
+        <p class="section-sub">이미 만나볼 수 있는 기능부터, 다음 순서로 준비 중인 기능까지</p>
+    </div>
+
+    <div class="bento-grid">
+        <a href="/school/calendar" class="bento-card bento-card-lg bento-tilt reveal-on-scroll">
+            <div class="bento-card-glow"></div>
+            <div class="bento-icon"><i class="fa-solid fa-calendar-days"></i></div>
+            <h3>시간표 · 학사일정</h3>
+            <p>학년 · 반별로 매일 달라지는 시간표와 학사일정을 NEIS 데이터로 바로 확인하세요.</p>
+            <span class="bento-link">캘린더 열기 <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <a href="/school/calendar" class="bento-card bento-tilt reveal-on-scroll" style="--reveal-delay:1">
+            <div class="bento-card-glow"></div>
+            <div class="bento-icon bento-icon-sky"><i class="fa-solid fa-utensils"></i></div>
+            <h3>오늘의 급식</h3>
+            <p>매일 바뀌는 급식 메뉴를 한 번에</p>
+            <span class="bento-link">확인하기 <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <a href="/school/calendar" class="bento-card bento-tilt reveal-on-scroll" style="--reveal-delay:2">
+            <div class="bento-card-glow"></div>
+            <div class="bento-icon bento-icon-sky"><i class="fa-solid fa-comment-dots"></i></div>
+            <h3>오늘의 한마디</h3>
+            <p>날짜별로 같은 반 친구들과 짧은 이야기 나누기</p>
+            <span class="bento-link">참여하기 <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <a href="/posts" class="bento-card bento-tilt reveal-on-scroll" style="--reveal-delay:3">
+            <div class="bento-card-glow"></div>
+            <div class="bento-icon"><i class="fa-solid fa-fire"></i></div>
+            <h3>커뮤니티</h3>
+            <p>자유 · 익명 · 질의응답 게시판에서 학교 이야기를 나눠보세요.</p>
+            <span class="bento-link">게시판 보기 <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <a href="/mypage" class="bento-card bento-tilt reveal-on-scroll" style="--reveal-delay:4">
+            <div class="bento-card-glow"></div>
+            <div class="bento-icon"><i class="fa-solid fa-id-card"></i></div>
+            <h3>마이페이지</h3>
+            <p>내 학교 · 학년 · 반과 프로필을 관리하세요.</p>
+            <span class="bento-link">내 정보 보기 <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <div class="bento-card bento-card-soon reveal-on-scroll" style="--reveal-delay:5">
+            <div class="bento-icon bento-icon-soon"><i class="fa-solid fa-ranking-star"></i></div>
+            <h3>랭킹 / 티어</h3>
+            <p>활동 포인트를 쌓아 등급을 올리는 시스템을 준비하고 있어요.</p>
+            <span class="bento-badge-soon">준비중</span>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ 시작 방법 (3단계) ══════════ -->
+<section class="steps-section">
+    <div class="section-intro reveal-on-scroll">
+        <span class="section-kicker">HOW IT WORKS</span>
+        <h2 class="section-title">시작은 3단계면 충분해요</h2>
+        <p class="section-sub">가입 한 번이면, 그 다음부턴 로그인만 하면 됩니다</p>
+    </div>
+
+    <div class="steps-track">
+        <div class="steps-line"></div>
+
+        <div class="step-card reveal-on-scroll">
+            <div class="step-number">1</div>
+            <div class="step-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <h4>우리 학교 검색</h4>
+            <p>주소로 동명 학교까지 정확하게 구분해서 찾아요.</p>
+        </div>
+
+        <div class="step-card reveal-on-scroll" style="--reveal-delay:1">
+            <div class="step-number">2</div>
+            <div class="step-icon"><i class="fa-solid fa-user-plus"></i></div>
+            <h4>회원가입 · 학년/반 설정</h4>
+            <p>학교와 학년 · 반을 등록하면 자동으로 맞춰져요.</p>
+        </div>
+
+        <div class="step-card reveal-on-scroll" style="--reveal-delay:2">
+            <div class="step-number">3</div>
+            <div class="step-icon"><i class="fa-solid fa-calendar-check"></i></div>
+            <h4>캘린더 · 커뮤니티 이용</h4>
+            <p>시간표 확인부터 친구들과의 소통까지 바로 시작하세요.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ CTA 밴드 ══════════ -->
+<section class="cta-band reveal-on-scroll">
+    <div class="cta-blob"></div>
+    <div class="cta-inner">
+        <h2 th:if="${loginUser == null}">지금 바로 웹스쿨을 시작해보세요</h2>
+        <h2 th:if="${loginUser != null}" th:text="${loginUser.nickname + '님, 오늘도 좋은 하루 보내세요'}">환영합니다</h2>
+        <p th:if="${loginUser == null}">가입은 1분이면 충분해요. 우리 학교 친구들이 기다리고 있어요.</p>
+        <p th:if="${loginUser != null}">오늘 시간표와 학사일정을 확인하고, 커뮤니티에서 이야기를 나눠보세요.</p>
+
+        <div class="cta-buttons">
+            <a th:if="${loginUser == null}" href="/register" class="cta-btn-primary">
+                <i class="fa-solid fa-user-plus"></i> 회원가입하기
+            </a>
+            <a th:if="${loginUser == null}" href="/login" class="cta-btn-secondary">로그인</a>
+
+            <a th:if="${loginUser != null}" href="/school/calendar" class="cta-btn-primary">
+                <i class="fa-solid fa-calendar-days"></i> 캘린더로 이동
+            </a>
+            <a th:if="${loginUser != null}" href="/posts" class="cta-btn-secondary">커뮤니티 가기</a>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ 푸터 ══════════ -->
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <span class="footer-logo"><i class="fa-solid fa-graduation-cap"></i> WebSchool</span>
+            <p>학교 일정을 확인하고 같은 학교 학생들끼리 소통하는 공간</p>
+        </div>
+
+        <div class="footer-links">
+            <a href="/school/calendar">캘린더</a>
+            <a href="/posts">커뮤니티</a>
+            <a href="/mypage">마이페이지</a>
+            <a href="/register">회원가입</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <small>&copy; 2026 WebSchool. All rights reserved. Powered by NEIS Open API.</small>
+    </div>
+</footer>
+
+<button type="button" id="backToTop" class="back-to-top" aria-label="맨 위로">
+    <i class="fa-solid fa-arrow-up"></i>
+</button>
+
+<script th:src="@{/js/scroll-reveal.js}"></script>
+<script th:src="@{/js/index.js}"></script>
+</body>
+</html>
