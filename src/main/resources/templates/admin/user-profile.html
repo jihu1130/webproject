@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${profile.nickname + ' 프로필 - 관리자 - WebSchool'}">계정 프로필 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container admin-container-narrow">
+        <a href="/admin/users" class="post-list-back"><i class="fa-solid fa-arrow-left"></i> 계정 관리로</a>
+
+        <div class="admin-detail-card">
+            <span class="admin-status-badge admin-status-blind" th:if="${profile.deleted}" th:text="'탈퇴함(' + ${profile.deletedAt} + ')'">탈퇴함</span>
+            <span class="admin-status-badge admin-status-pending" th:if="${!profile.deleted and !profile.active}">비활성화됨</span>
+            <span class="admin-status-badge admin-status-cleared" th:if="${!profile.deleted and profile.active}">활동중</span>
+            <span class="admin-status-badge admin-status-cleared" th:if="${profile.role == 'ROLE_SUPER_ADMIN'}">총관리자</span>
+            <span class="admin-status-badge admin-status-pending" th:if="${profile.role == 'ROLE_ADMIN'}">부관리자</span>
+
+            <h1 class="post-detail-title" th:text="${profile.nickname}">닉네임</h1>
+            <p class="page-sub" style="margin: 0 0 12px;" th:text="'아이디: ' + ${profile.username}">아이디</p>
+
+            <dl class="admin-profile-grid">
+                <div class="admin-profile-field">
+                    <dt>관심 학교</dt>
+                    <dd th:text="${profile.schoolName != null ? profile.schoolName : '-'}">-</dd>
+                </div>
+                <div class="admin-profile-field">
+                    <dt>학교 종류</dt>
+                    <dd th:text="${profile.schoolKind != null ? profile.schoolKind : '-'}">-</dd>
+                </div>
+                <div class="admin-profile-field">
+                    <dt>학년 / 반</dt>
+                    <dd th:text="(${profile.grade != null ? profile.grade : '-'}) + '학년 ' + (${profile.classNum != null ? profile.classNum : '-'}) + '반'">-</dd>
+                </div>
+                <div class="admin-profile-field" th:if="${profile.role != 'ROLE_USER'}">
+                    <dt>관리자 권한</dt>
+                    <dd th:if="${profile.role == 'ROLE_SUPER_ADMIN'}">모든 권한</dd>
+                    <dd th:if="${profile.role == 'ROLE_ADMIN'}">
+                        <span th:text="${profile.canManageReports} ? '신고관리 O' : '신고관리 X'">-</span> ·
+                        <span th:text="${profile.canManagePosts} ? '게시글관리 O' : '게시글관리 X'">-</span> ·
+                        <span th:text="${profile.canManageScheduleComments} ? '한마디관리 O' : '한마디관리 X'">-</span>
+                    </dd>
+                </div>
+            </dl>
+
+            <div class="admin-profile-stats">
+                <div class="admin-profile-stat">
+                    <strong th:text="${profile.postCount}">0</strong>
+                    <span>작성 게시글</span>
+                </div>
+                <div class="admin-profile-stat">
+                    <strong th:text="${profile.commentCount}">0</strong>
+                    <span>작성 댓글</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-report-section">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-file-lines"></i> 최근 작성 게시글</h3>
+
+            <div th:if="${#lists.isEmpty(profile.recentPosts)}" class="post-comment-empty">작성한 게시글이 없어요.</div>
+
+            <div class="admin-report-list" th:unless="${#lists.isEmpty(profile.recentPosts)}">
+                <a class="admin-report-item admin-table-title" style="display: block;" th:each="post : ${profile.recentPosts}"
+                   th:href="@{'/admin/posts/' + ${post.id}}">
+                    <div class="admin-report-item-header">
+                        <span class="post-category-badge" th:text="${post.categoryLabel}">카테고리</span>
+                        <span class="post-comment-time" th:text="${post.createdAt}">날짜</span>
+                    </div>
+                    <div th:text="${post.title}">제목</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

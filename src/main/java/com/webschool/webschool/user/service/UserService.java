@@ -139,10 +139,12 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        // 마지막 남은 관리자가 마이페이지에서 스스로 탈퇴해버리면 시스템에 관리자가 한 명도 안 남는다 - 방지
-        if (user.getRole() == User.Role.ROLE_ADMIN
-                && userRepository.countByRoleAndDeletedFalse(User.Role.ROLE_ADMIN) <= 1) {
-            throw new IllegalArgumentException("마지막 남은 관리자 계정은 탈퇴할 수 없습니다. 다른 계정을 먼저 관리자로 지정해주세요.");
+        // 총관리자(admin, ROLE_SUPER_ADMIN)는 앱 안에서 다시 만들어낼 방법이 없는 유일한 계정이라
+        // 마이페이지 자진 탈퇴 자체를 막는다. 부관리자(ROLE_ADMIN)는 총관리자가 항상 별도로 남아있으므로
+        // "마지막 관리자 보호" 가드가 더 이상 필요 없다(예전엔 ROLE_ADMIN이 유일한 관리자 역할이라
+        // 마지막 한 명이 탈퇴하면 관리자가 전멸했지만, 지금은 총관리자가 그 역할과 무관하게 항상 있다).
+        if (user.isSuperAdmin()) {
+            throw new IllegalArgumentException("총관리자 계정은 탈퇴할 수 없습니다.");
         }
 
         // 작성한 게시글/댓글은 그대로 남기고(작성자 FK 유지), 계정만 로그인 불가 상태로 전환한다.

@@ -106,6 +106,10 @@
 | 신고 "문제없음" 관리자 판결 | ✅ 완료 (2026-08-05(3차) 추가 — 10번 항목 참고. `Post`/`PostComment.reportCleared`. 관리자가 "문제없음 처리"하면 그 게시물/댓글이 수정되기 전까지 재신고해도 카운트가 안 오르고 "이미 검토되어 문제없다고 판정된...입니다" 안내만 나감. 게시물/댓글 수정 시 또는 관리자가 다시 블라인드 처리하면 자동으로 리셋됨) |
 | 금지어 필터 | ✅ 완료 (`BannedWordFilter`, 게시글 제목/내용 + 댓글 내용에 적용. 목록은 예시 수준이라 운영 전 확장 필요) |
 | 관리자(Admin) 페이지 | ✅ 완료 (2026-08-05 추가 — 9번 항목 참고. `/admin/posts`, ROLE_ADMIN만 접근 가능. 신고 누적/블라인드 게시물 목록, 신고자·사유 상세, 수동 블라인드 On/Off. **2026-08-05(2차) 추가**: "삭제됨" 탭에서 소프트 삭제된 게시물(및 삭제된 댓글 포함 전체 댓글) 조회 + 복구, 게시물 상세에 첨부 이미지 갤러리도 표시. **2026-08-05(3차) 추가**: "전체 게시글" 탭(신고 여부 무관 전체 조회), 신고 "문제없음" 처리 버튼(게시물/댓글 각각), `/admin/users` 전체 계정 관리(권한 승격/해제, 탈퇴 처리/복구) 페이지, `/posts/{id}`↔`/admin/posts/{id}` 상호 이동 링크) |
+| 관리자 권한 체계(총관리자/부관리자) | ✅ 완료 (2026-08-10(2차) 추가 — 8번 항목 "2026-08-10(2차) 라운드" 참고. `User.Role`에 `ROLE_SUPER_ADMIN` 추가 — username="admin" 계정 전용, DB에서 직접 승격시킴. 그 외 관리자는 전부 `ROLE_ADMIN`(부관리자)이고 서로의 권한을 승격/해제할 수 없음(계정 관리 자체가 총관리자 전용). 총관리자가 부관리자별로 신고/게시글/한마디 관리 권한 3개를 개별로 켜고 끌 수 있는 전용 대시보드(`/admin/users/admins`) 추가. `AdminAccessInterceptor`가 `/admin/**` 하위 경로별로 실제 접근을 강제) |
+| 관리자 페이지 기본 진입점 | ✅ 완료 (2026-08-10(2차) 추가. "/admin"으로 들어가면 계정이 접근 가능한 첫 메뉴로 자동 이동 — 총관리자/신고 권한 보유자는 신고 관리부터, 그 외엔 게시글 관리 → 한마디 관리 순으로 폴백. 권한이 하나도 없으면 안내 화면(`/admin/access-denied`)) |
+| 계정 비활성화(정지) | ✅ 완료 (2026-08-10(2차) 추가. `User.active` — 탈퇴(`deleted`)와 별개로 총관리자가 계정과 작성 글은 그대로 둔 채 로그인만 즉시 차단/해제할 수 있는 가벼운 조치. 계정 관리 페이지에서 활성화/비활성화 버튼으로 토글) |
+| 계정 프로필 확인(관리자용) | ✅ 완료 (2026-08-10(2차) 추가. 계정 관리에서 닉네임 클릭 → 학교/학년/반/권한, 작성 게시글·댓글 수, 최근 게시글 5개를 보여주는 상세 화면) |
 | 게시글/댓글 소프트 딜리트 | ✅ 완료 (2026-08-05(2차) 추가 — 10번 항목 참고. `Post`/`PostComment`에 `deleted`/`deletedAt` 추가, 하드 삭제로 인한 FK 500 에러 근본 해결, 관리자 강제 삭제도 소프트로 통일 + 복구 기능) |
 | 커뮤니티 게시글 조회수 어뷰징 방지 | ✅ 완료 (HttpSession 기반, 같은 세션에서 같은 글 재조회 시 미증가) |
 | 포인트/티어 시스템 | ❌ 미구현 (User 엔티티에 point/tier 컬럼 자체가 없음) |
@@ -121,13 +125,34 @@ TTL/방학 D-Day. 어느 걸 먼저 할지 사용자에게 먼저 확인할 것.
 - Java 21 / Spring Boot 4.1.0 (data-jpa, security, thymeleaf, webmvc)
 - Hibernate 7.4.1 + MySQL 8 (`jdbc:mysql://localhost:3306/webschool`,
   계정 root/1234 — `application.yml`에 평문, 사용자가 그대로 두기로 결정함)
-- **관리자(ROLE_ADMIN) 테스트 계정**: `username=admin / password=admin`
-  (id=1). 회원가입 화면에서는 role을 선택할 방법이 없고
+- **총관리자(ROLE_SUPER_ADMIN) 테스트 계정**: `username=admin / password=admin`
+  (id=1). **2026-08-10(2차) 변경**: `User.Role`에 `ROLE_SUPER_ADMIN`이
+  추가되면서 이 계정이 `ROLE_ADMIN`에서 `ROLE_SUPER_ADMIN`으로 승격됐다
+  (SQL: `UPDATE users SET role='ROLE_SUPER_ADMIN' WHERE username='admin';`,
+  또는 아래 `SuperAdminSeeder.java`로도 동일하게 처리 가능). 앱 안에는
+  총관리자를 새로 만들거나 바꿀 방법이 전혀 없으므로(다른 계정을 총관리자로
+  만드는 UI/API 자체가 없음) `admin`이 유일한 총관리자로 고정돼 있다. 그
+  외의 관리자는 `/admin/users`(계정 관리, 총관리자 전용)에서 승격시킨
+  `ROLE_ADMIN`(부관리자) — 회원가입 화면에서는 role을 선택할 방법이 없고
   `UserService.register()`가 항상 `ROLE_USER`로 고정하기 때문에, 관리자
-  계정이 더 필요하면 지금은 DB에서 직접 role 컬럼을 바꾸는 것 외에 방법이
-  없다(SQL: `UPDATE users SET role='ROLE_ADMIN' WHERE username='...';`).
-  이 계정 정보도 DB 비밀번호와 마찬가지로 개발용 평문이니 배포 전에는
-  반드시 바꿀 것.
+  승격은 DB 직접 수정 또는 총관리자 계정으로 로그인 후 계정 관리 화면을
+  이용하는 것 둘 중 하나뿐이다. 이 계정 정보도 DB 비밀번호와 마찬가지로
+  개발용 평문이니 배포 전에는 반드시 바꿀 것.
+  **`src/test/java/com/webschool/webschool/SuperAdminSeeder.java`
+  (2026-08-10(3차) 추가)**: username="admin" 계정을 `ROLE_SUPER_ADMIN`으로
+  승격시키는 전용 시더(`TestDataSeeder.java`와 같은 폴더, 별도 파일 — 계정
+  생성이 아니라 기존 admin 계정의 역할만 바꾸는 책임이라 분리함). "admin"
+  계정이 없으면 회원가입부터 하라는 안내와 함께 `IllegalStateException`을
+  던지고, 이미 총관리자면 아무 것도 안 하므로(멱등) 여러 번 실행해도
+  안전하다. `UserRepository`를 직접 써서 `AdminUserService.setRole()`의
+  본인/총관리자 대상 방어 로직을 우회한다 — 그 방어 로직은 "런타임에
+  관리자 화면에서 다른 계정을 조작할 때"를 위한 것이지 "부트스트랩으로
+  admin 계정 자체를 총관리자로 만드는" 이 시더의 목적과는 다르기 때문.
+  실행: `./gradlew test --tests "com.webschool.webschool.SuperAdminSeeder"`.
+  **검증(2026-08-10(3차))**: `admin`을 SQL로 일부러 `ROLE_ADMIN`으로
+  강등시켜본 뒤 이 시더를 실행해 다시 `ROLE_SUPER_ADMIN`으로 정상 승격되는
+  것을 DB로 확인했고, 이미 총관리자인 상태에서 재실행해도 에러 없이
+  그대로 유지되는 것도 확인했다.
   **일반 사용자 테스트 계정(2026-08-10 추가)**: `user1`~`user5`(아이디=
   비밀번호, 예: `user1/user1`), ROLE_USER. `src/test/java/com/webschool/
   webschool/TestDataSeeder.java`를 실행하면 자동 생성되고, 자유/익명/
@@ -169,30 +194,66 @@ TTL/방학 D-Day. 어느 걸 먼저 할지 사용자에게 먼저 확인할 것.
 com.webschool.webschool
 ├── WebschoolApplication.java
 ├── main.controller.HomeController        : "/" -> index.html
+├── main.controller.AdminHomeController   : "/admin" 진입점 - 계정 권한에 따라 접근 가능한 첫 메뉴로
+│                                            자동 리다이렉트(총관리자/신고권한 보유자는 /admin/reports,
+│                                            그 외엔 /admin/posts → /admin/schedule-comments 순서로 폴백,
+│                                            아무 권한도 없으면 /admin/access-denied). "/admin/access-denied"
+│                                            (권한 없음 안내 화면)도 여기서 처리 (2026-08-10(2차) 추가)
 ├── global
-│   ├── config.SecurityConfig             : /admin/**는 hasRole("ADMIN"), /uploads/**는 permitAll
-│   ├── config.WebConfig                  : /uploads/** -> app.upload.dir 정적 리소스 매핑 (2026-08-05 추가)
-│   └── advice.GlobalModelAdvice          : 모든 화면에 loginUser 자동 주입
+│   ├── config.SecurityConfig             : /admin/**는 hasAnyRole("ADMIN","SUPER_ADMIN")까지 통과,
+│   │                                        /uploads/**는 permitAll. accessDeniedHandler가 /admin/**
+│   │                                        접근 거부 시 whitelabel 403 대신 /admin/access-denied로
+│   │                                        리다이렉트 (2026-08-10(2차) 변경)
+│   ├── config.WebConfig                  : /uploads/** -> app.upload.dir 정적 리소스 매핑 (2026-08-05 추가).
+│   │                                        AdminAccessInterceptor를 "/admin/**"에 등록 (2026-08-10(2차) 추가)
+│   ├── security.AdminAccessInterceptor   : "/admin/**" 안에서 부관리자별 세부 권한(신고/게시글/한마디
+│   │                                        관리)을 검사하는 HandlerInterceptor. ROLE_SUPER_ADMIN은
+│   │                                        무조건 통과, "/admin/users/**"는 총관리자 전용, 나머지는
+│   │                                        User의 canManageReports/Posts/ScheduleComments 플래그로
+│   │                                        판단. 권한 없으면 AccessDeniedException → SecurityConfig의
+│   │                                        accessDeniedHandler가 처리 (2026-08-10(2차) 추가)
+│   └── advice.GlobalModelAdvice          : 모든 화면에 loginUser 자동 주입 (User 엔티티 전체 - 템플릿에서
+│                                            loginUser.role/canManageReports 등 권한 플래그 바로 사용 가능)
 ├── user
 │   ├── controller.AuthController         : 로그인/회원가입/마이페이지/중복확인/계정삭제
 │   │                                        (POST /mypage/delete, 2026-08-05(3차) 추가)
-│   ├── controller.AdminUserController    : /admin/users (ROLE_ADMIN 전용) — 전체 계정 목록/권한
-│   │                                        승격·해제/탈퇴 처리/복구 (2026-08-05(3차) 추가)
+│   ├── controller.AdminUserController    : /admin/users (총관리자 ROLE_SUPER_ADMIN 전용,
+│   │                                        AdminAccessInterceptor가 강제) — 전체 계정 목록/권한
+│   │                                        승격·해제/탈퇴 처리/복구 (2026-08-05(3차) 추가).
+│   │                                        **2026-08-10(2차) 추가**: GET /admin/users/admins(부관리자
+│   │                                        권한 토글 대시보드), GET /admin/users/{id}/profile(프로필),
+│   │                                        POST .../permissions·deactivate·activate
 │   ├── service.UserService                : 회원가입, 프로필 수정, 아이디 중복체크, deleteAccount()
-│   │                                        (본인 확인 비밀번호 재입력 → 소프트 삭제, 2026-08-05(3차) 추가)
-│   ├── service.AdminUserService           : 관리자 전용 계정 관리 — 기존 UserService는 건드리지
+│   │                                        (본인 확인 비밀번호 재입력 → 소프트 삭제, 2026-08-05(3차) 추가).
+│   │                                        **2026-08-10(2차) 변경**: deleteAccount()가 이제
+│   │                                        ROLE_SUPER_ADMIN 자진 탈퇴만 막는다("마지막 관리자 보호"
+│   │                                        가드는 총관리자가 항상 별도로 있어서 더 이상 불필요 - 6번
+│   │                                        항목 버그#9 참고)
+│   ├── service.AdminUserService           : 총관리자 전용 계정 관리 — 기존 UserService는 건드리지
 │   │                                        않고 완전히 분리(AdminPostService와 동일 패턴). 본인
 │   │                                        계정은 권한 변경/삭제 못 하게 방어 로직 있음
-│   │                                        (2026-08-05(3차) 추가)
-│   ├── service.CustomUserDetailsService   : UserDetails.disabled(user.isDeleted())로 탈퇴 계정
-│   │                                        로그인 차단(2026-08-05(3차) 추가)
+│   │                                        (2026-08-05(3차) 추가). **2026-08-10(2차) 추가**:
+│   │                                        updatePermissions()(부관리자 권한 토글), deactivateUser()/
+│   │                                        activateUser()(계정 비활성화), getUserProfile()(프로필
+│   │                                        조회 - 게시글/댓글 수 + 최근 게시글), getAllAdmins()
+│   ├── service.CustomUserDetailsService   : UserDetails.disabled(user.isDeleted() ||
+│   │                                        !user.isActive())로 탈퇴/비활성화 계정 로그인 차단
+│   │                                        (2026-08-05(3차) 추가, active 조건은 2026-08-10(2차) 추가)
 │   ├── entity.User                        : username/password/nickname/
 │   │                                        schoolName/schoolCode/atptCode/
 │   │                                        schoolKind/grade/classNum/role/
-│   │                                        **deleted/deletedAt(2026-08-05(3차) 추가, 소프트 딜리트)**
+│   │                                        deleted/deletedAt(2026-08-05(3차) 추가, 소프트 딜리트)/
+│   │                                        **active(2026-08-10(2차) 추가, 총관리자의 계정 비활성화용 -
+│   │                                        deleted와 별개), canManageReports/canManagePosts/
+│   │                                        canManageScheduleComments(2026-08-10(2차) 추가, 부관리자별
+│   │                                        권한 플래그), isSuperAdmin()/isAdmin() 헬퍼**
 │   │                                        (point/tier 컬럼 아직 없음)
 │   ├── dto.RegisterDto / MyPageUpdateDto
-│   ├── dto.AdminUserSummaryDto            : 관리자 계정 목록 조회 전용 DTO (2026-08-05(3차) 추가)
+│   ├── dto.AdminUserSummaryDto            : 관리자 계정 목록 조회 전용 DTO (2026-08-05(3차) 추가).
+│   │                                        **2026-08-10(2차)**: active/canManageReports/canManagePosts/
+│   │                                        canManageScheduleComments 필드 추가
+│   ├── dto.AdminUserProfileDto / AdminUserProfilePostDto : 계정 프로필 화면 전용 DTO(학교 정보,
+│   │                                        권한, 작성 글/댓글 수, 최근 게시글 5개) (2026-08-10(2차) 추가)
 │   └── repository.UserRepository          : findAllByOrderByIdAsc() 추가(관리자 목록용, 2026-08-05(3차))
 ├── school
 │   ├── controller.SchoolController        : 캘린더 페이지 + 시간표/급식/학교검색/
@@ -324,8 +385,11 @@ com.webschool.webschool
 
 resources/templates
 ├── fragments/navbar.html                  : 공용 네비바 (th:fragment="navbar(active)"),
-│                                             "커뮤니티" 메뉴(/posts) + ROLE_ADMIN에게만 보이는
-│                                             "관리자" 메뉴(/admin/posts, sec:authorize="hasRole('ADMIN')")
+│                                             "커뮤니티" 메뉴(/posts) + 관리자(부관리자 포함)에게만
+│                                             보이는 "관리자" 메뉴(→ /admin, sec:authorize=
+│                                             "hasAnyRole('ADMIN','SUPER_ADMIN')") — 링크 대상이
+│                                             /admin/posts에서 /admin으로 바뀜(2026-08-10(2차) 변경,
+│                                             AdminHomeController가 권한별 첫 메뉴로 리다이렉트)
 ├── index.html                             : 홈 (히어로+bento 캐러셀+기능허브 그리드)
 ├── school/calendar.html                   : 캘린더(로그인 전용)
 ├── post/list.html                         : 카테고리 탭 필터 + 목록(블라인드 글은 서버에서 이미 제외됨)
@@ -351,11 +415,29 @@ resources/templates
 │                                             댓글/복구는 2026-08-05(2차)). **2026-08-05(3차) 추가**: "문제없음
 │                                             처리" 버튼(게시물 전체 + 댓글별 아이콘 버튼), "문제없음" 배지,
 │                                             하단에 "게시글 페이지에서 보기"(→ /posts/{id}, 삭제된 글이면 숨김)
-├── admin/user-list.html                   : 관리자 전체 계정 목록 — 상태(활동중/탈퇴함)/아이디/닉네임/
-│                                             학교/권한 배지 + 관리자 승격·권한해제/탈퇴 처리·복구 버튼.
-│                                             로그인한 관리자 본인 행은 "(본인 계정)"만 표시하고 액션
-│                                             버튼은 숨김(서버 단에서도 자기 자신 변경은 막혀 있음)
-│                                             (2026-08-05(3차) 추가)
+├── admin/user-list.html                   : 총관리자 전용(AdminAccessInterceptor가 강제) 전체 계정
+│                                             목록 — 상태(활동중/비활성화됨/탈퇴함)/아이디/닉네임(→
+│                                             프로필 링크)/학교/권한 배지(총관리자·부관리자·학생) +
+│                                             승격·권한해제/비활성화·활성화/탈퇴 처리·복구 버튼.
+│                                             로그인한 총관리자 본인 행은 "(총관리자)"만 표시하고
+│                                             액션 버튼은 항상 숨김(서버 단에서도 총관리자 대상 변경은
+│                                             막혀 있음) (2026-08-05(3차) 추가, 프로필 링크·비활성화·
+│                                             3단계 역할 배지는 2026-08-10(2차) 추가). 상단에
+│                                             "관리자 권한 관리로 →" 링크로 admin-permissions.html
+│                                             이동
+├── admin/admin-permissions.html           : "1개의 관리자 대시보드 페이지" - 총관리자가 부관리자별로
+│                                             신고/게시글/한마디 관리 권한 3개를 체크박스로 켜고 끄는
+│                                             화면(변경 시 onchange="this.submit()"으로 즉시 저장,
+│                                             별도 저장 버튼 없음). 총관리자 행은 "모든 권한 보유
+│                                             (변경 불가)"로 읽기 전용 표시. 계정 관리(/admin/users)와
+│                                             똑같이 총관리자 전용 (2026-08-10(2차) 추가)
+├── admin/user-profile.html                : "상대방의 프로필을 확인하는 기능" - 총관리자가 계정
+│                                             관리에서 닉네임을 클릭하면 여는 상세 화면. 학교/학년/반,
+│                                             권한, 작성 게시글·댓글 수, 최근 작성 게시글 5개(관리자
+│                                             게시글 상세로 링크)를 보여준다 (2026-08-10(2차) 추가)
+├── admin/access-denied.html               : 부관리자가 권한 없는 관리자 메뉴에 접근했을 때 뜨는
+│                                             안내 화면(SecurityConfig의 accessDeniedHandler가
+│                                             /admin/** 요청 거부 시 여기로 리다이렉트) (2026-08-10(2차) 추가)
 ├── admin/schedule-comment-list.html       : 관리자 "한마디 관리" — post-list.html/user-list.html을
 │                                             섞은 구조(전체/삭제됨 상태 탭 + 검색 + 행별 인라인 액션
 │                                             버튼: 문제없음 처리/블라인드 토글/삭제/복구). 한마디는
@@ -393,7 +475,11 @@ resources/static/css
                         (댓글별 문제없음 처리 아이콘 버튼). **2026-08-05(4차)**: 새 CSS 클래스 추가 없이
                         `admin/schedule-comment-list.html`이 기존 `.admin-user-actions`/`.admin-table`/
                         `.admin-status-badge`/`.admin-comment-content-cell`를 그대로 재사용함 — 한마디
-                        관리 화면 전용 스타일이 필요하면 여기부터 확인할 것
+                        관리 화면 전용 스타일이 필요하면 여기부터 확인할 것. **2026-08-10(2차) 추가**:
+                        `.admin-permission-list`/`.admin-permission-row`/`.admin-permission-toggle`
+                        (관리자 권한 관리 페이지의 부관리자별 권한 체크박스 행), `.admin-profile-grid`/
+                        `.admin-profile-field`/`.admin-profile-stats`/`.admin-profile-stat`(계정
+                        프로필 페이지의 정보 그리드·통계 카드)
 
 resources/static/js
 ├── school-search.js  : 학교검색 드롭다운 공용 위젯 (initSchoolSearchWidget)
@@ -691,9 +777,63 @@ resources/static/js
    삭제된 컬럼 잔존 등)가 있을 수 있으니, 회원가입/게시글 작성 등 INSERT
    경로에서 원인을 알 수 없는 `DataIntegrityViolationException`이 나면
    엔티티 코드가 아니라 실제 DB `DESCRIBE 테이블명;` 결과부터 확인할 것.**
-
-
-## 7. 실행/운영 메모
+9. **(2026-08-10(2차) 발견/수정) `ddl-auto: update`가 `users.role` enum에
+   새 값(`ROLE_SUPER_ADMIN`) 추가를 감지하지 못한 사례** — `User.Role`에
+   `ROLE_SUPER_ADMIN`을 추가하고 컨텍스트를 재기동해봤더니, `active`/
+   `can_manage_reports`/`can_manage_posts`/`can_manage_schedule_comments`
+   컬럼(새로 추가한 boolean 필드들)은 정상적으로 자동 생성됐는데 `role`
+   컬럼의 MySQL enum 정의(`enum('ROLE_ADMIN','ROLE_USER')`)는 그대로였다.
+   **이전에(2026-08-04 커뮤니티 리뉴얼 때) `Post.Category`에 값을 추가했을
+   땐 Hibernate가 `alter table posts modify column category enum(...)`를
+   자동으로 실행해줬던 것과 대조적** — 같은 `@Enumerated(EnumType.STRING)`
+   패턴인데 왜 이번엔 감지를 못 했는지 원인은 조사하지 않았다(재현성이
+   낮아 보임 - 앞으로 enum 값을 추가하는 다른 필드에서도 이 문제가 있는지
+   매번 실제로 `DESCRIBE`로 확인해볼 것, 자동으로 될 거라고 가정하지 말 것).
+   `ALTER TABLE users MODIFY COLUMN role ENUM('ROLE_USER','ROLE_ADMIN',
+   'ROLE_SUPER_ADMIN');`로 직접 고치고, 총관리자 승격 UPDATE문도 같이
+   실행해서 해결했다.
+10. **(2026-08-10(2차) 발견/수정) "마지막 남은 관리자는 강등/탈퇴 불가"
+    가드가 총관리자 개념 도입 후 오히려 버그가 된 사례** — `AdminUserService.
+    setRole()`/`deleteUser()`와 `UserService.deleteAccount()`에 있던
+    `countByRoleAndDeletedFalse(ROLE_ADMIN) <= 1`이면 막는 로직은, `ROLE_ADMIN`이
+    유일한 관리자 역할이던 시절엔 맞는 방어 로직이었지만 `ROLE_SUPER_ADMIN`을
+    추가한 뒤에는 **유일하게 남은 부관리자를 총관리자가 권한 해제하려 해도
+    "마지막 남은 부관리자 계정의 권한은 해제할 수 없습니다"라며 조용히
+    막아버리는 버그**가 됐다(총관리자가 항상 별도로 존재하므로 이 가드는
+    이제 항상 거짓이어야 하는데, 코드를 고치지 않고 냅뒀다가 실제로 curl로
+    데모 시나리오를 재현하다가 발견함 — 부관리자 1명을 승격→권한 부여까지
+    했다가 다시 권한 해제를 시도했더니 응답은 302(정상)인데 DB에는 반영이
+    안 되고 있었다). 세 곳 모두 이 가드를 완전히 제거했다(그 대신
+    `deleteAccount()`에는 총관리자 본인의 자진 탈퇴를 막는 새 가드를
+    추가함 — 총관리자는 앱 안에서 다시 만들 방법이 없는 유일한 계정이라
+    이쪽은 진짜로 막아야 함). **교훈: 권한 체계에 새로운 "항상 존재하는
+    상위 역할"을 추가할 때는, 기존에 "이 역할이 마지막 하나 남았을 때"를
+    가정하고 짜여진 방어 로직이 전부 그 가정 위에 있었다는 걸 의심하고
+    하나하나 다시 검토할 것 — 컴파일 에러 없이 조용히 잘못 동작하는
+    타입의 버그라 테스트 없이는 알아채기 어렵다.**
+11. **(2026-08-10(3차) 발견/수정) `admin/fragments/nav.html`의 관리자 4단계
+    탭이 총관리자를 포함해 아무에게도 안 보이던 버그** — 사용자가 "admin으로
+    로그인해도 관리자 대시보드 페이지에 원래 있던 1~4번 탭이 하나도 안
+    보인다"고 스크린샷으로 제보해서 발견함. 원인은 `loginUser.role ==
+    'ROLE_SUPER_ADMIN'`처럼 **`loginUser`(DTO가 아니라 실제 `User` 엔티티)의
+    `role` 필드(=`User.Role` enum)를 문자열 리터럴과 직접 `==` 비교**한
+    부분 — 이게 항상 false로 평가돼서 4개 `th:if` 전부 실패했다. 다른
+    관리자 화면(`admin/user-list.html`, `admin/admin-permissions.html`,
+    `admin/user-profile.html`)이 문제없이 동작했던 이유는 거기서 비교하는
+    `user.role`/`admin.role`/`profile.role`이 전부 `AdminUserSummaryDto`/
+    `AdminUserProfileDto`의 `String` 필드(서비스 단에서 `user.getRole().name()`으로
+    미리 변환해둠)라서 String==String 비교였기 때문 — `post.category ==
+    'ANONYMOUS'`(`PostDetailDto.category`도 마찬가지로 이미 `.name()`된
+    `String` 필드) 패턴을 보고 "엔티티 enum을 문자열과 직접 비교해도 되는
+    패턴이 이미 검증돼 있다"고 잘못 일반화한 게 원인이었다. `loginUser.role`처럼
+    **DTO를 거치지 않고 엔티티를 그대로 템플릿에서 쓸 때는 반드시
+    `loginUser.role.name() == '...'`처럼 `.name()`을 명시적으로 붙여야
+    한다**(엔티티 그대로 쓰는 `loginUser`는 `GlobalModelAdvice`가 모든
+    화면에 주입하므로 다른 템플릿에서도 같은 실수를 반복하지 않도록 주의할
+    것 — `user/mypage.html`은 원래부터 `.name()`을 붙이고 있어서 안전했다).
+    같은 김에 `user/mypage.html`의 역할 배지도 "관리자/학생" 2단계뿐이라
+    총관리자가 "학생"으로 잘못 표시되고 있던 걸 발견해서 "총관리자/부관리자/
+    학생" 3단계로 함께 고쳤다.
 
 - `./gradlew bootRun` (기본 포트 8888, `application.yml`의 `server.port`).
 - MySQL은 로컬에 이미 떠 있고 정상 연결됨 확인됨(`webschool` 스키마,
@@ -1217,3 +1357,133 @@ user5계정까지 만들게 해주고 게시물도 카테고리마다 3개씩 �
   콘솔 코드페이지 문제일 뿐 — JDBC URL에 `characterEncoding=UTF-8`이
   이미 있어 실제 저장된 데이터 자체는 정상이라고 판단함, 3번 항목의
   MySQL 연결 설정 참고).
+
+### 2026-08-10(2차) 라운드 — 관리자 권한 체계(총관리자/부관리자) + 계정 비활성화 + 프로필 확인 (✅ 완료)
+
+사용자 요청 원문 요약: "관리자 페이지에 들어가면 [신고 관리 탭이 기본으로
+뜨는 화면]처럼 실행되게 해줘. admin 빼고 다른 관리자는 전부 부관리자로
+만들어서 서로의 관리자 권한을 추가/제거 못 하게 하고, 총관리자가 부관리자
+계정별로 신고관리/게시글관리/한마디관리 3개 권한만 켜고 끌 수 있게 해줘
+(계정 관리는 여기 포함 안 됨) — 이를 위한 별도 관리자 대시보드 페이지 하나를
+추천함. 계정 비활성화 기능도 추가하고, 상대방(다른 계정)의 프로필을 확인하는
+기능도 추가해줘." 스크린샷으로 첨부된 화면은 "1.신고관리 2.게시글관리
+3.한마디관리 4.계정관리" 대분류 탭 + "게시물/댓글/오늘의 한마디" 하위 탭이
+있는 기존 `/admin/reports` 화면이었다.
+
+**설계 결정 (진행 전 스스로 정리한 판단, 애매한 지점마다 기존 코드/문서
+컨벤션을 근거로 삼음)**:
+- "admin 빼고 부관리자"를 username 하드코딩이 아니라 **새 역할
+  `User.Role.ROLE_SUPER_ADMIN`**으로 모델링했다 — 하드코딩보다 확장성 있고,
+  `Post.Category`/`ScheduleComment` 등 기존 코드가 전부 enum 기반 상태
+  모델을 쓰는 것과 일관됨. 앱 안에는 총관리자를 새로 만들거나 바꾸는 UI/API를
+  전혀 만들지 않았다(의도적 — "admin 하나로 고정"이라는 요청 그대로).
+- "1개의 관리자 대시보드 페이지" 추천을 **기존 "계정 관리"(`/admin/users`,
+  전체 유저 목록) 페이지에 권한 토글을 끼워넣는 대신, 별도의 새 페이지**
+  (`/admin/users/admins`, "관리자 권한 관리")로 만들었다 — 계정 관리는
+  학생 포함 전체 계정이 몇십~몇백 명일 수 있어 그 안에 권한 토글까지 넣으면
+  화면이 복잡해지고, "그를 위한" 이라는 표현이 권한 토글 전용 목적의 페이지를
+  가리킨다고 판단함. 관리자 계정만 추려서 보여주고(총관리자 행은 읽기 전용
+  "모든 권한 보유"), 부관리자 행마다 체크박스 3개가 `onchange="this.submit()"`
+  로 즉시 저장된다.
+- **HTML `<table>` 안에 행 전체를 감싸는 `<form>`을 넣지 않았다** — `<tr>`는
+  `<td>`/`<th>`만 자식으로 허용하는 HTML 콘텐츠 모델이라 `<form>`이 `<tr>`를
+  감싸면 브라우저가 파싱 단계에서 위치를 옮겨버릴 위험이 있다(foster
+  parenting). 그래서 "관리자 권한 관리" 페이지는 `<table>` 대신 `<div>` 기반
+  행 레이아웃(`.admin-permission-row`)으로 만들어 이 문제 자체를 피했다 —
+  앞으로 "테이블 한 행 전체를 하나의 폼으로 묶고 싶다"는 요구가 다시 생기면
+  테이블 대신 div 레이아웃을 쓰거나, `<form id="...">`를 테이블 밖에 두고
+  각 입력에 `form="..."` 속성으로 연결하는 방식을 검토할 것.
+- **권한 검사를 2단으로 나눴다**: (1) `SecurityConfig`의
+  `hasAnyRole("ADMIN","SUPER_ADMIN")` — "관리자이긴 한지"의 굵은 체
+  (2) 신규 `AdminAccessInterceptor`(`global.security` 패키지, `HandlerInterceptor`) —
+  `/admin/reports`·`/admin/posts`·`/admin/schedule-comments`·`/admin/users`
+  경로별로 부관리자가 실제로 그 메뉴에 대한 권한(`canManageReports` 등)이
+  있는지 세밀하게 체크. 기존 4개 관리자 컨트롤러(AdminReportController/
+  AdminPostController/AdminScheduleCommentController/AdminUserController)의
+  메서드 시그니처를 하나도 안 건드리고 권한 체계를 끼워넣을 수 있어서
+  이 방식을 택함(컨트롤러마다 `Authentication` 파라미터를 추가하고 매
+  메서드 시작에 체크 코드를 반복하는 대안보다 훨씬 적은 변경으로 끝남).
+  권한 없이 접근하면 `AccessDeniedException`을 던지고, `SecurityConfig`에
+  새로 추가한 `accessDeniedHandler`가 `/admin/**` 요청이면
+  `/admin/access-denied`(새 안내 페이지)로, 그 외엔 `/`로 리다이렉트한다.
+- **"계정 비활성화"를 기존 "탈퇴 처리"(`User.deleted`)와 별개의 새 필드
+  `User.active`로 만들었다** — 탈퇴는 본인/관리자가 계정을 사실상
+  정리하는 것(닉네임이 어디서나 "탈퇴한 사용자"로 치환됨)이고, 비활성화는
+  총관리자가 계정과 작성 글은 그대로 둔 채 로그인만 즉시 막았다가 다시
+  풀 수 있는 훨씬 가벼운 정지 조치라서 의미가 다르다고 판단했다(둘 다
+  로그인 차단 효과는 있어 `CustomUserDetailsService`에서
+  `disabled(user.isDeleted() || !user.isActive())`로 OR 결합). "이미
+  있는 탈퇴 기능과 뭐가 다르냐"는 질문이 나올 수 있는 지점이니, 다음에
+  이 기능을 만질 때는 이 구분을 참고할 것.
+- **"상대방의 프로필을 확인하는 기능"은 계정 관리(총관리자) 맥락으로
+  한정했다** — 게시글/댓글 상세 화면에서 작성자 닉네임을 클릭해 프로필을
+  보는 것까지는 만들지 않았다(요청 문장이 "총관리자가 ~계정별로"라는
+  문단 안에 함께 있어서 계정 관리 기능의 연장으로 해석함). 필요하면
+  다음 후보로 남겨둘 것.
+
+**구현 상세**:
+- `User` 엔티티: `Role.ROLE_SUPER_ADMIN` 추가, `active`(기본 true)/
+  `canManageReports`/`canManagePosts`/`canManageScheduleComments`(전부
+  기본 false) 컬럼 추가, `isSuperAdmin()`/`isAdmin()` 헬퍼 메서드.
+- `AdminAccessInterceptor`(신규) + `WebConfig`에 `/admin/**` 경로로 등록.
+- `SecurityConfig`: `hasRole("ADMIN")` → `hasAnyRole("ADMIN","SUPER_ADMIN")`,
+  `accessDeniedHandler` 추가.
+- `AdminHomeController`(신규, `main.controller` 패키지): `/admin` 진입점
+  (권한별 첫 메뉴로 리다이렉트) + `/admin/access-denied`.
+- `AdminUserService`/`AdminUserController`: `getAllAdmins()`(관리자만 필터),
+  `updatePermissions()`, `deactivateUser()`/`activateUser()`,
+  `getUserProfile()`(게시글/댓글 수 + 최근 게시글 5개 — `PostRepository`/
+  `PostCommentRepository`에 `countByAuthor_IdAndDeletedFalse()` 등 신규
+  쿼리 메서드 추가) 추가. `setRole()`은 총관리자 대상 변경을 막고, 부관리자→
+  학생 강등 시 권한 플래그 3개를 자동으로 꺼서(예전 권한이 남아있다가
+  나중에 재승격됐을 때 아무 확인 없이 부활하지 않도록) 정리.
+- 신규 템플릿: `admin/admin-permissions.html`(권한 토글 대시보드),
+  `admin/user-profile.html`(프로필), `admin/access-denied.html`(안내).
+- `admin/user-list.html`: 프로필 링크, 비활성화/활성화 버튼, 총관리자·
+  부관리자·학생 3단계 역할 배지, "관리자 권한 관리로 →" 링크 추가.
+- `fragments/navbar.html`(관리자 링크 → `/admin`, 역할 체크 갱신) /
+  `admin/fragments/nav.html`(부관리자는 권한 있는 탭만 노출, 계정 관리
+  탭은 총관리자 전용) 갱신.
+- `admin.css`: `.admin-permission-*`(권한 토글 행), `.admin-profile-*`
+  (프로필 페이지 정보 그리드/통계 카드) 클래스 추가.
+
+**진행 중 발견한 버그 2건(6번 항목 버그#9/#10에 상세 기록, 둘 다 이번
+라운드 안에서 직접 수정)**:
+1. `ddl-auto: update`가 이번엔 `users.role` enum에 `ROLE_SUPER_ADMIN`
+   추가를 자동으로 반영하지 못해서 mysql로 직접 `ALTER TABLE ... MODIFY
+   COLUMN role ENUM(...)`를 실행해야 했다.
+2. `AdminUserService`의 "마지막 남은 관리자는 강등/탈퇴 불가" 가드가
+   `ROLE_SUPER_ADMIN` 도입 이후엔 항상 거짓이어야 하는데 그대로 남아있어서,
+   총관리자가 유일한 부관리자의 권한을 해제하려 해도 조용히 막히는 버그가
+   됐다 — curl로 승격→권한부여→권한해제 시나리오를 재현하다가 발견,
+   `AdminUserService.setRole()`/`deleteUser()`와
+   `UserService.deleteAccount()` 세 곳 모두에서 이 가드를 제거했다(대신
+   `deleteAccount()`엔 총관리자 본인 자진 탈퇴를 막는 새 가드 추가).
+
+**검증**: `./gradlew compileJava`로 컴파일 확인 후, 실행 중인 devtools
+프로세스에 `compileJava`+`processResources`로 반영. curl로 쿠키를 유지하며
+전체 시나리오를 순서대로 실제 확인함 — admin 로그인 → `/admin` 접속 시
+`/admin/reports`로 자동 이동 → `user2`를 부관리자로 승격(권한 전부 꺼진
+상태로 시작하는지 DB로 확인) → 그 상태로 `user2` 로그인 시 `/admin`이
+`/admin/access-denied`로 감을 확인 → `admin`이 `canManagePosts=true`만
+부여 → `user2`로 재로그인 시 `/admin`은 `/admin/posts`로만 이동하고
+`/admin/reports`·`/admin/users`·다른 계정 승격 시도는 전부
+`/admin/access-denied`로 막히는지 확인 → 프로필 페이지(`/admin/users/
+{id}/profile`)와 관리자 권한 대시보드(`/admin/users/admins`) 응답 확인 →
+`user3` 비활성화 후 로그인 실패(`/login?error=true`) → 재활성화 후 로그인
+성공 → 부관리자 권한 해제(demote) 시도 → 첫 시도에서 버그#10을 발견하고
+수정한 뒤 재확인해서 정상 동작 확인. Claude_Browser로도 admin 계정으로
+로그인해 "관리자 권한 관리" 페이지에서 실제로 체크박스를 클릭해 즉시
+저장되는지(DB 값 변화로 확인), "계정 관리" 목록과 프로필 페이지가
+의도대로 렌더링되는지, `user2`로 로그인했을 때 관리자 하위 탭이 보유
+권한만큼만(이 경우 "1. 신고 관리" 하나만) 보이는지까지 눈으로 확인했다.
+테스트에 썼던 `user2`는 다시 `ROLE_USER`로 되돌려 TestDataSeeder가
+만든 원래 상태로 정리해뒀다.
+
+**다음에 이어서 할 때 참고할 것**: 게시글/댓글 상세 화면에서 작성자
+프로필로 바로 이동하는 링크는 아직 없다(위 설계 결정 참고, 필요하면
+`/admin/users/{id}/profile`을 그대로 재사용하면 됨 — 이미 어떤 대상이든
+동작하는 범용 조회 라우트라 새로 만들 것 없음). 관리자 권한 관리
+페이지에 검색/페이지네이션은 없다(관리자 수가 적을 걸 가정 — 8번 항목
+"관리자 목록 전체가 페이지네이션 없음" 항목과 같은 맥락, 관리자 수가
+늘어나면 같이 고려할 것).

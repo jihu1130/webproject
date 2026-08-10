@@ -17,4 +17,7 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
     @Query("SELECT c FROM PostComment c WHERE c.deleted = false AND (c.blind = true OR c.reportCount > 0) "
             + "ORDER BY c.blind DESC, c.reportCount DESC, c.createdAt DESC")
     List<PostComment> findReportedOrBlindComments();
+
+    // 관리자용: 계정 프로필 화면 - 작성 댓글 수
+    long countByAuthor_IdAndDeletedFalse(Long authorId);
 }

@@ -33,4 +33,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 관리자용: 삭제되지 않은 전체 글 목록(신고 여부 무관) - "전체 게시글" 탭
     List<Post> findAllByDeletedFalseOrderByCreatedAtDesc();
+
+    // 관리자용: 계정 프로필 화면 - 작성 글 수 / 최근 작성 글 미리보기
+    long countByAuthor_IdAndDeletedFalse(Long authorId);
+
+    List<Post> findTop5ByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(Long authorId);
 }

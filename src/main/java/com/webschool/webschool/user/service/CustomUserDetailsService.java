@@ -24,7 +24,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .username(user.getUsername())
                 .password(user.getPassword())
                 .roles(user.getRole().name().replace("ROLE_", ""))
-                .disabled(user.isDeleted()) // 탈퇴(소프트 삭제)한 계정은 로그인 차단
+                .disabled(user.isDeleted() || !user.isActive()) // 탈퇴했거나 관리자가 비활성화한 계정은 로그인 차단
                 .build();
     }
 }

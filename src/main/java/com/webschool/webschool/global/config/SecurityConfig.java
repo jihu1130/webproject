@@ -30,8 +30,10 @@ public class SecurityConfig {
                         .requestMatchers("/posts/**").authenticated()
                         // 캘린더(학사/급식 조회)는 로그인한 사용자만 이용 가능
                         .requestMatchers("/school/**").authenticated()
-                        // 관리자 전용 화면은 ROLE_ADMIN만 접근 가능
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // 관리자 전용 화면은 ROLE_ADMIN(부관리자)/ROLE_SUPER_ADMIN(총관리자) 둘 다 접근 가능.
+                        // 그 안에서 구체적으로 어떤 메뉴(신고/게시글/한마디/계정 관리)까지 볼 수 있는지는
+                        // AdminAccessInterceptor가 계정별 권한 플래그로 한 번 더 세밀하게 가른다.
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(login -> login
@@ -45,6 +47,13 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        // 부관리자가 권한 없는 관리자 메뉴에 접근하면 whitelabel 403 대신 안내 화면으로 보낸다
+                        .accessDeniedHandler((request, response, ex) -> {
+                            String target = request.getRequestURI().startsWith("/admin/") ? "/admin/access-denied" : "/";
+                            response.sendRedirect(target);
+                        })
                 );
 
         return http.build();

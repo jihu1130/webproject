@@ -10,7 +10,7 @@
             <a href="/" class="site-nav-link" th:classappend="${active == 'home'} ? ' active' : ''">홈</a>
             <a href="/school/calendar" class="site-nav-link" title="학사 & 급식 캘린더" th:classappend="${active == 'calendar'} ? ' active' : ''">캘린더</a>
             <a href="/posts" class="site-nav-link" th:classappend="${active == 'community'} ? ' active' : ''">커뮤니티</a>
-            <a href="/admin/posts" class="site-nav-link" sec:authorize="hasRole('ADMIN')"
+            <a href="/admin" class="site-nav-link" sec:authorize="hasAnyRole('ADMIN', 'SUPER_ADMIN')"
                th:classappend="${active == 'admin'} ? ' active' : ''">관리자</a>
         </div>
 

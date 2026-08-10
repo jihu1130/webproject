@@ -24,7 +24,14 @@
             <p class="mypage-username">@<span th:text="${loginUser != null ? loginUser.username : ''}"></span></p>
 
             <span class="mypage-role-badge"
-                  th:text="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'} ? '관리자' : '학생'">학생</span>
+                  th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+                  th:text="'총관리자'">총관리자</span>
+            <span class="mypage-role-badge"
+                  th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'}"
+                  th:text="'부관리자'">부관리자</span>
+            <span class="mypage-role-badge"
+                  th:if="${loginUser == null or loginUser.role == null or loginUser.role.name() == 'ROLE_USER'}"
+                  th:text="'학생'">학생</span>
 
             <div class="mypage-info-list">
                 <div class="mypage-info-row">

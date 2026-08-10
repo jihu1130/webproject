@@ -19,12 +19,14 @@
     <div class="admin-container">
         <div class="page-heading admin-page-heading">
             <h1><i class="fa-solid fa-shield-halved"></i> 관리자 대시보드</h1>
-            <p class="page-sub">전체 계정을 관리해요 - 권한 변경, 탈퇴 처리/복구</p>
+            <p class="page-sub">전체 계정을 관리해요 - 권한 변경, 비활성화/탈퇴 처리, 프로필 확인</p>
         </div>
 
         <div th:replace="~{admin/fragments/nav :: tabs('users')}"></div>
 
-        <form th:action="@{/admin/users}" method="get" class="admin-search-form">
+        <a href="/admin/users/admins" class="post-list-back"><i class="fa-solid fa-user-shield"></i> 관리자 권한 관리로 →</a>
+
+        <form th:action="@{/admin/users}" method="get" class="admin-search-form" style="margin-top: 12px;">
             <input type="text" name="keyword" placeholder="아이디/닉네임 검색" th:value="${keyword}">
             <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
         </form>
@@ -46,25 +48,39 @@
                     <td>
                         <span class="admin-status-badge admin-status-blind" th:if="${user.deleted}"
                               th:text="'탈퇴함(' + ${user.deletedAt} + ')'">탈퇴함</span>
-                        <span class="admin-status-badge admin-status-cleared" th:unless="${user.deleted}">활동중</span>
+                        <span class="admin-status-badge admin-status-pending" th:if="${!user.deleted and !user.active}">비활성화됨</span>
+                        <span class="admin-status-badge admin-status-cleared" th:if="${!user.deleted and user.active}">활동중</span>
                     </td>
                     <td th:text="${user.username}">아이디</td>
-                    <td th:text="${user.nickname}">닉네임</td>
+                    <td>
+                        <a th:href="@{'/admin/users/' + ${user.id} + '/profile'}" class="admin-table-title" th:text="${user.nickname}">닉네임</a>
+                    </td>
                     <td th:text="${user.schoolName != null ? user.schoolName : '-'}">학교</td>
                     <td>
-                        <span class="admin-status-badge" th:classappend="${user.role == 'ROLE_ADMIN'} ? ' admin-status-cleared' : ''"
-                              th:text="${user.role == 'ROLE_ADMIN'} ? '관리자' : '학생'">권한</span>
+                        <span class="admin-status-badge admin-status-cleared" th:if="${user.role == 'ROLE_SUPER_ADMIN'}">총관리자</span>
+                        <span class="admin-status-badge admin-status-pending" th:if="${user.role == 'ROLE_ADMIN'}">부관리자</span>
+                        <span class="admin-status-badge" th:if="${user.role == 'ROLE_USER'}">학생</span>
                     </td>
                     <td>
-                        <span th:if="${loginUser != null and loginUser.username == user.username}" class="admin-user-self-label">(본인 계정)</span>
-                        <div class="admin-user-actions" th:if="${loginUser == null or loginUser.username != user.username}">
+                        <span th:if="${user.role == 'ROLE_SUPER_ADMIN'}" class="admin-user-self-label">(총관리자)</span>
+                        <span th:if="${user.role != 'ROLE_SUPER_ADMIN' and loginUser != null and loginUser.username == user.username}" class="admin-user-self-label">(본인 계정)</span>
+                        <div class="admin-user-actions"
+                             th:if="${user.role != 'ROLE_SUPER_ADMIN' and (loginUser == null or loginUser.username != user.username)}">
                             <form th:if="${!user.deleted and user.role == 'ROLE_USER'}" th:action="@{'/admin/users/' + ${user.id} + '/promote'}" method="post"
-                                  onsubmit="return confirm('이 계정을 관리자로 승격할까요?');">
+                                  onsubmit="return confirm('이 계정을 부관리자로 승격할까요? 승격 직후에는 아무 권한도 없으니 \'관리자 권한 관리\'에서 권한을 켜주세요.');">
                                 <button type="submit" class="btn btn-outline-brand">관리자로 승격</button>
                             </form>
                             <form th:if="${!user.deleted and user.role == 'ROLE_ADMIN'}" th:action="@{'/admin/users/' + ${user.id} + '/demote'}" method="post"
                                   onsubmit="return confirm('이 계정의 관리자 권한을 해제할까요?');">
                                 <button type="submit" class="btn btn-outline-brand">권한 해제</button>
+                            </form>
+                            <form th:if="${!user.deleted and user.active}" th:action="@{'/admin/users/' + ${user.id} + '/deactivate'}" method="post"
+                                  onsubmit="return confirm('이 계정을 비활성화할까요? 계정과 작성 글은 그대로 남고 로그인만 즉시 차단됩니다.');">
+                                <button type="submit" class="btn btn-outline-brand">비활성화</button>
+                            </form>
+                            <form th:if="${!user.deleted and !user.active}" th:action="@{'/admin/users/' + ${user.id} + '/activate'}" method="post"
+                                  onsubmit="return confirm('이 계정을 다시 활성화할까요? 즉시 로그인할 수 있게 됩니다.');">
+                                <button type="submit" class="btn btn-outline-brand">활성화</button>
                             </form>
                             <form th:unless="${user.deleted}" th:action="@{'/admin/users/' + ${user.id} + '/delete'}" method="post"
                                   onsubmit="return confirm('이 계정을 탈퇴 처리할까요? 로그인이 즉시 차단됩니다.');">
