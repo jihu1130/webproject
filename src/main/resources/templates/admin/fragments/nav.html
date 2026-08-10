@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 관리자 4단계 대분류 탭: 1)신고 관리 2)게시글 관리 3)한마디 관리 4)계정 관리 (이 순서 고정) -->
+<nav th:fragment="tabs(active)" class="post-category-tabs">
+    <a href="/admin/reports" class="post-category-tab" th:classappend="${active == 'reports'} ? ' active' : ''">1. 신고 관리</a>
+    <a href="/admin/posts" class="post-category-tab" th:classappend="${active == 'posts'} ? ' active' : ''">2. 게시글 관리</a>
+    <a href="/admin/schedule-comments" class="post-category-tab" th:classappend="${active == 'schedule-comments'} ? ' active' : ''">3. 한마디 관리</a>
+    <a href="/admin/users" class="post-category-tab" th:classappend="${active == 'users'} ? ' active' : ''">4. 계정 관리</a>
+</nav>
+
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${post.title + ' - WebSchool'}">게시물 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('community')}"></div>
+
+<div class="post-page" id="postDetailPage" th:data-post-id="${post.uuid}" th:data-post-category="${post.category}">
+    <div class="post-container post-container-narrow">
+
+        <div class="post-blind-banner" th:if="${post.blind}">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            신고 누적(<span th:text="${post.reportCount}">3</span>회)으로 블라인드 처리된 게시물입니다.
+            작성자 본인과 관리자에게만 보여요.
+        </div>
+
+        <div class="post-detail-card">
+            <span class="post-category-badge" th:classappend="'post-category-badge-' + ${post.category}" th:text="${post.categoryLabel}">자유</span>
+            <h1 class="post-detail-title" th:text="${post.title}">제목</h1>
+
+            <div class="post-detail-meta">
+                <span><i class="fa-solid fa-user"></i> <span th:text="${post.nickname}">작성자</span></span>
+                <span><i class="fa-solid fa-clock"></i> <span id="postCreatedAt" th:text="${post.createdAt}">날짜</span></span>
+                <span th:if="${post.edited}" class="post-edited-badge">수정됨</span>
+                <span class="post-detail-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>
+            </div>
+
+            <div class="post-detail-content" th:text="${post.content}">내용</div>
+
+            <div class="post-image-gallery" th:if="${!images.empty}">
+                <a class="post-image-gallery-item" th:each="image : ${images}" th:href="${image.url}" target="_blank">
+                    <img th:src="${image.url}" th:alt="${image.originalFilename}">
+                </a>
+            </div>
+
+            <div class="post-detail-actions">
+                <div class="post-detail-actions-owner" th:if="${post.mine}">
+                    <a th:href="@{'/posts/' + ${post.uuid} + '/edit'}" class="btn btn-outline-brand">
+                        <i class="fa-solid fa-pen"></i> 수정
+                    </a>
+                    <form th:action="@{'/posts/' + ${post.uuid} + '/delete'}" method="post"
+                          onsubmit="return confirm('정말 삭제하시겠어요?');" class="post-delete-form">
+                        <button type="submit" class="post-delete-btn"><i class="fa-solid fa-trash"></i> 삭제</button>
+                    </form>
+                </div>
+                <button type="button" id="reportBtn" class="post-report-btn"
+                        th:unless="${post.mine}" sec:authorize="isAuthenticated()">
+                    <i class="fa-solid fa-flag"></i> 신고
+                </button>
+            </div>
+
+            <div class="post-detail-footer-links">
+                <a href="/posts" class="post-list-back"><i class="fa-solid fa-arrow-left"></i> 목록으로</a>
+                <a th:href="@{'/admin/posts/' + ${post.id}}" class="post-list-back" sec:authorize="hasRole('ADMIN')">
+                    <i class="fa-solid fa-shield-halved"></i> 관리자 페이지에서 보기
+                </a>
+            </div>
+        </div>
+
+        <div class="post-comment-section">
+            <h3 class="post-comment-heading">
+                <i class="fa-solid fa-comments" th:unless="${post.category == 'ANONYMOUS'}"></i>
+                <i class="fa-solid fa-reply" th:if="${post.category == 'ANONYMOUS'}"></i>
+                <span th:text="${post.category == 'ANONYMOUS'} ? '답변' : '댓글'">댓글</span>
+            </h3>
+
+            <div id="postCommentList" class="post-comment-list">
+                <div class="post-comment-empty">불러오는 중...</div>
+            </div>
+
+            <form id="postCommentForm" class="post-comment-form" sec:authorize="isAuthenticated()">
+                <input type="text" id="postCommentInput" maxlength="500"
+                       th:placeholder="${post.category == 'ANONYMOUS'} ? '답변을 남겨보세요' : '댓글을 남겨보세요'" required>
+                <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+            <p class="post-comment-login-notice" sec:authorize="!isAuthenticated()">
+                <span th:text="${post.category == 'ANONYMOUS'} ? '답변' : '댓글'">댓글</span>을 작성하려면 <a href="/login">로그인</a>이 필요해요.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/timeago.js}"></script>
+<script th:src="@{/js/post-detail.js}"></script>
+</body>
+</html>

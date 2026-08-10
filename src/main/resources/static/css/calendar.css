@@ -1,0 +1,622 @@
+* { box-sizing: border-box; }
+
+/* 페이지 레이아웃 */
+.calendar-page {
+    padding: 18px 16px 24px;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(14, 165, 233, 0.10) 0%, transparent 40%),
+        radial-gradient(circle at 90% 10%, rgba(79, 70, 229, 0.10) 0%, transparent 40%);
+}
+
+.calendar-container {
+    max-width: 960px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 18px;
+    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
+    border: 1px solid #f0f1fa;
+    position: relative;
+    overflow: hidden;
+}
+
+.calendar-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: var(--brand-gradient);
+}
+
+.page-heading {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.page-heading h1 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin-bottom: 2px;
+}
+
+.page-heading h1 i {
+    color: var(--brand-1);
+    margin-right: 6px;
+}
+
+.page-sub {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin: 0;
+}
+
+/* 월 빠른 이동 컨트롤 (컴팩트) */
+.calendar-quicknav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--brand-gradient-soft);
+    border: 1px solid #e6e8fb;
+    border-radius: 11px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.quicknav-btn {
+    width: 27px;
+    height: 27px;
+    border-radius: 8px;
+    border: 1.5px solid #dcdfef;
+    background: white;
+    color: var(--brand-1-dark);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.quicknav-btn:hover {
+    background: rgba(79, 70, 229, 0.08);
+    border-color: var(--brand-1);
+}
+
+.quicknav-btn:active { transform: translateY(1px); }
+
+.quicknav-select-group {
+    display: flex;
+    gap: 5px;
+    margin: 0 3px;
+}
+
+.quicknav-select-group select {
+    padding: 5px 7px;
+    border-radius: 8px;
+    border: 1.5px solid #dcdfef;
+    background: white;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 12.5px;
+    color: var(--ink);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.quicknav-select-group select:focus,
+.quicknav-select-group select:hover {
+    border-color: var(--brand-1);
+}
+
+.quicknav-today-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 12px;
+    height: 27px;
+    border-radius: 8px;
+    border: none;
+    background: var(--brand-gradient);
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 4px;
+    transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.quicknav-today-btn:hover { filter: brightness(1.06); }
+.quicknav-today-btn:active { transform: translateY(1px); }
+
+@media (max-width: 640px) {
+    .calendar-quicknav { gap: 5px; padding: 6px 8px; }
+    .quicknav-select-group select { padding: 5px 5px; font-size: 12px; }
+    .quicknav-today-btn { margin-left: 0; flex: 1 1 100%; justify-content: center; order: 10; }
+}
+
+/* 검색바 */
+.search-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--brand-gradient-soft);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+    justify-content: center;
+    border: 1px solid #e6e8fb;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-item-wide { flex: 1 1 260px; }
+
+.search-item label {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--brand-1-dark);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.search-item input, .search-item select {
+    padding: 7px 10px;
+    border: 1.5px solid #dcdfef;
+    border-radius: 8px;
+    font-size: 13.5px;
+    outline: none;
+    font-family: inherit;
+    background: white;
+    transition: border-color 0.15s ease;
+    flex: 1;
+    width: 100%;
+}
+
+.search-item input:focus, .search-item select:focus {
+    border-color: var(--brand-1);
+}
+
+/* FullCalendar 커스텀 */
+#calendar {
+    --fc-border-color: #edeef7;
+    --fc-button-bg-color: var(--brand-1);
+    --fc-button-border-color: var(--brand-1);
+    --fc-button-hover-bg-color: var(--brand-1-dark);
+    --fc-button-hover-border-color: var(--brand-1-dark);
+    --fc-button-active-bg-color: var(--brand-1-dark);
+    --fc-today-bg-color: rgba(14, 165, 233, 0.10);
+}
+
+.fc .fc-toolbar-title {
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+}
+
+.fc .fc-button {
+    text-transform: none;
+    font-weight: 600;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+    border-color: #eef0fa;
+}
+
+.fc .fc-scrollgrid {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.fc .fc-col-header {
+    background: #f8f9fd;
+}
+
+/* 날짜 배지: 평소/오늘/선택 모두 같은 알약 모양을 공유하고 배경색만 달라진다 */
+.fc .fc-daygrid-day-number {
+    font-weight: 600;
+    color: var(--ink);
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 0.12s ease;
+}
+
+.fc .fc-col-header-cell-cushion {
+    font-weight: 700;
+    color: var(--muted);
+    padding: 10px 4px;
+}
+
+.fc-day-sun a, .fc-day-sun .fc-col-header-cell-cushion, .fc-day-sun .fc-daygrid-day-number {
+    color: #e53935 !important;
+}
+.fc-day-sat a, .fc-day-sat .fc-col-header-cell-cushion, .fc-day-sat .fc-daygrid-day-number {
+    color: #1e88e5 !important;
+}
+
+.fc-daygrid-day:hover .fc-daygrid-day-number {
+    background-color: rgba(79, 70, 229, 0.08);
+}
+
+/* 강조 표시(오늘/선택) 등장 애니메이션: 살짝 튀어오르듯 커지며 자리잡음 */
+@keyframes day-highlight-pop {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    60% { transform: scale(1.12); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* 선택된 날짜는 브랜드 링이 바깥으로 한 번 번지는 효과를 더해 더 또렷하게 인지되도록 함 */
+@keyframes day-selected-ring-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.45); }
+    100% { box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); }
+}
+
+/* 오늘 날짜: 선택되지 않은 상태에서는 연한 노란색으로 표시 */
+.fc .fc-day-today .fc-daygrid-day-number {
+    background: rgba(250, 204, 21, 0.4);
+    color: var(--ink) !important;
+    font-weight: 800;
+    animation: day-highlight-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 방금 클릭한(선택된) 날짜: 브랜드 그라데이션 강조 */
+.fc .fc-day-selected .fc-daygrid-day-number {
+    background: var(--brand-gradient);
+    color: white !important;
+    font-weight: 800;
+    position: relative;
+    animation: day-highlight-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+               day-selected-ring-pulse 0.6s ease-out;
+}
+
+/* 오늘 = 선택된 날짜인 경우: 노란 배경(오늘 표시)은 유지하고, 파란 링으로 선택 표시를 추가 */
+.fc .fc-day-today.fc-day-selected .fc-daygrid-day-number {
+    background: rgba(250, 204, 21, 0.4);
+    color: var(--ink) !important;
+    font-weight: 800;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.55);
+    animation: day-highlight-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+               day-selected-ring-pulse 0.6s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fc .fc-day-today .fc-daygrid-day-number,
+    .fc .fc-day-selected .fc-daygrid-day-number,
+    .fc .fc-day-today.fc-day-selected .fc-daygrid-day-number {
+        animation: none;
+    }
+}
+
+.fc-daygrid-day {
+    transition: background-color 0.12s ease;
+}
+
+.fc-daygrid-day:hover {
+    background-color: #f8f8ff;
+    cursor: pointer;
+}
+
+/* 팝업 모달 */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(20, 18, 45, 0.55);
+    backdrop-filter: blur(2px);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 16px;
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    padding: 28px 26px 24px;
+    border-radius: 18px;
+    width: 360px;
+    max-width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 25px 60px rgba(20, 18, 45, 0.35);
+    animation: modal-pop 0.18s ease;
+}
+
+@keyframes modal-pop {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#modalTitle {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 14px;
+}
+
+.modal-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13.5px;
+}
+
+.modal-content th, .modal-content td {
+    border: 1px solid #edeef7;
+    padding: 8px;
+}
+
+.modal-content th {
+    background-color: #f6f7fd;
+    color: var(--brand-1-dark);
+    font-weight: 700;
+}
+
+.close-btn {
+    margin-top: 20px;
+    padding: 10px 18px;
+    background: var(--brand-gradient);
+    color: white;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    width: 100%;
+}
+
+.close-btn:hover { filter: brightness(1.06); }
+
+/* 모달 내부 섹션 */
+.modal-section {
+    margin-top: 16px;
+    text-align: left;
+}
+
+.modal-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.modal-section h4 i { color: var(--brand-1); }
+
+/* 학사일정 배너 */
+.event-badge {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.16), rgba(79, 70, 229, 0.08));
+    color: var(--brand-1-dark);
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    font-size: 13.5px;
+    text-align: left;
+}
+
+/* 급식 박스 */
+.meal-box {
+    background-color: #f8f9fc;
+    border: 1px solid #edeef7;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #495057;
+    white-space: pre-line;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.special-day-card {
+    background: var(--brand-gradient-tint-2);
+    border-radius: 14px;
+    padding: 32px 20px;
+    text-align: center;
+    margin: 4px 0 12px;
+}
+
+.special-day-card .special-icon {
+    font-size: 42px;
+    margin-bottom: 10px;
+}
+
+.special-day-card h3 {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--brand-1-dark);
+    margin-bottom: 8px;
+}
+
+.special-day-card p {
+    font-size: 13.5px;
+    color: #4b5065;
+    margin: 0;
+}
+
+/* 날짜별 한마디 댓글 */
+.comment-list {
+    max-height: 160px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.comment-empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12.5px;
+    padding: 14px 0;
+}
+
+.comment-item {
+    background: #f8f9fc;
+    border: 1px solid #edeef7;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.comment-item-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.comment-nickname {
+    font-weight: 700;
+    font-size: 12.5px;
+    color: var(--brand-1-dark);
+}
+
+.comment-time {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 6px;
+}
+
+.comment-time-value { border-bottom: 1px dotted transparent; }
+.comment-time-value:hover { border-bottom-color: var(--muted); }
+
+.comment-edited {
+    font-style: normal;
+}
+
+.comment-edit-btn,
+.comment-delete-btn,
+.comment-report-btn {
+    margin-left: 4px;
+    background: none;
+    border: none;
+    border-radius: 999px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 3px 6px;
+    line-height: 1;
+    transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.comment-edit-btn,
+.comment-report-btn { margin-left: auto; }
+.comment-edit-btn:hover { color: var(--brand-1); background: rgba(79, 70, 229, 0.08); transform: translateY(-1px); }
+.comment-delete-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
+.comment-report-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
+.comment-report-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.comment-blind-badge {
+    background: #fee2e2;
+    color: #b91c1c;
+    font-weight: 700;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 4px;
+}
+
+.comment-item-blind .comment-content { color: var(--muted); font-style: italic; }
+
+.comment-content {
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.comment-edit-form {
+    display: flex;
+    gap: 5px;
+}
+
+.comment-edit-input {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 8px;
+    border: 1.5px solid var(--brand-1);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+}
+
+.comment-edit-form button {
+    flex-shrink: 0;
+    border: none;
+    border-radius: 6px;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.comment-edit-form button[type="submit"] {
+    background: var(--brand-gradient);
+    color: white;
+}
+.comment-edit-form .comment-edit-cancel {
+    background: #f1f2f6;
+    color: var(--muted);
+}
+
+.comment-form {
+    display: flex;
+    gap: 6px;
+}
+
+.comment-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1.5px solid #dcdfef;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+.comment-form input:focus { border-color: var(--brand-1); }
+
+.comment-form button {
+    padding: 0 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--brand-gradient);
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.comment-form button:hover { filter: brightness(1.06); }
+
+@media (max-width: 640px) {
+    .calendar-container { padding: 20px; border-radius: 16px; }
+    .search-bar { flex-direction: column; align-items: stretch; }
+    .search-item { flex-direction: column; align-items: stretch; }
+    .search-item label { margin-bottom: 2px; }
+}

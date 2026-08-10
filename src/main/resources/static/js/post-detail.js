@@ -1,0 +1,220 @@
+// 게시물 상세 페이지: 댓글 CRUD(AJAX) + 신고 버튼
+document.addEventListener('DOMContentLoaded', function () {
+    var page = document.getElementById('postDetailPage');
+    if (!page) return;
+
+    var postId = page.getAttribute('data-post-id');
+    var isLoggedIn = !!document.getElementById('postCommentForm');
+    var isAnonymousPost = page.getAttribute('data-post-category') === 'ANONYMOUS';
+    var LABEL = isAnonymousPost ? '답변' : '댓글';
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str == null ? '' : str;
+        return div.innerHTML;
+    }
+
+    WebSchoolTimeago.apply(document.getElementById('postCreatedAt'));
+
+    // ---- 댓글 ----
+    function loadComments() {
+        var list = document.getElementById('postCommentList');
+        list.innerHTML = '<div class="post-comment-empty">불러오는 중...</div>';
+
+        fetch('/posts/' + postId + '/comments')
+            .then(function (res) { return res.json(); })
+            .then(renderComments)
+            .catch(function () {
+                list.innerHTML = '<div class="post-comment-empty">' + LABEL + '을 불러오지 못했습니다.</div>';
+            });
+    }
+
+    function renderComments(comments) {
+        var list = document.getElementById('postCommentList');
+
+        if (!comments || comments.length === 0) {
+            list.innerHTML = '<div class="post-comment-empty">아직 ' + LABEL + '이 없어요. 첫 ' + LABEL + '을 남겨보세요!</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        comments.forEach(function (c) {
+            var item = document.createElement('div');
+            item.className = 'post-comment-item' + (c.blind ? ' post-comment-item-blind' : '');
+
+            var editedBadge = c.edited ? ' <span class="post-comment-edited">(수정됨)</span>' : '';
+            var blindBadge = c.blind ? ' <span class="post-comment-blind-badge">블라인드</span>' : '';
+            var actionsHtml = c.mine
+                ? '<button type="button" class="post-comment-edit-btn" title="수정"><i class="fa-solid fa-pen"></i></button>' +
+                  '<button type="button" class="post-comment-delete-btn" title="삭제"><i class="fa-solid fa-xmark"></i></button>'
+                : (isLoggedIn ? '<button type="button" class="post-comment-report-btn" title="신고"><i class="fa-solid fa-flag"></i></button>' : '');
+
+            item.innerHTML =
+                '<div class="post-comment-item-header">' +
+                    '<span class="post-comment-nickname">' + escapeHtml(c.nickname) + '</span>' +
+                    '<span class="post-comment-time"><span class="post-comment-time-value">' + escapeHtml(c.createdAt) + '</span>' + editedBadge + blindBadge + '</span>' +
+                    actionsHtml +
+                '</div>' +
+                '<div class="post-comment-content">' + escapeHtml(c.content) + '</div>';
+
+            WebSchoolTimeago.apply(item.querySelector('.post-comment-time-value'));
+
+            var editBtn = item.querySelector('.post-comment-edit-btn');
+            if (editBtn) {
+                editBtn.addEventListener('click', function () { startEditComment(item, c); });
+            }
+
+            var delBtn = item.querySelector('.post-comment-delete-btn');
+            if (delBtn) {
+                delBtn.addEventListener('click', function () { deleteComment(c.id); });
+            }
+
+            var reportBtn = item.querySelector('.post-comment-report-btn');
+            if (reportBtn) {
+                reportBtn.addEventListener('click', function () { reportComment(c.id, reportBtn); });
+            }
+
+            list.appendChild(item);
+        });
+    }
+
+    function startEditComment(item, c) {
+        var contentEl = item.querySelector('.post-comment-content');
+        contentEl.innerHTML =
+            '<form class="post-comment-edit-form">' +
+                '<input type="text" class="post-comment-edit-input" maxlength="500" value="' + escapeHtml(c.content) + '">' +
+                '<button type="submit">저장</button>' +
+                '<button type="button" class="post-comment-edit-cancel">취소</button>' +
+            '</form>';
+
+        var input = contentEl.querySelector('.post-comment-edit-input');
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+
+        contentEl.querySelector('.post-comment-edit-cancel').addEventListener('click', function () {
+            loadComments();
+        });
+
+        contentEl.querySelector('.post-comment-edit-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var newContent = input.value.trim();
+            if (!newContent) return;
+
+            fetch('/posts/' + postId + '/comments/' + c.id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'content=' + encodeURIComponent(newContent)
+            })
+                .then(function (res) {
+                    if (!res.ok) return res.json().then(function (body) { throw new Error(body.error || '수정 실패'); });
+                    loadComments();
+                })
+                .catch(function (err) {
+                    alert(err.message || (LABEL + ' 수정에 실패했습니다.'));
+                });
+        });
+    }
+
+    function deleteComment(id) {
+        if (!confirm(LABEL + '을 삭제할까요?')) return;
+
+        fetch('/posts/' + postId + '/comments/' + id, { method: 'DELETE' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('삭제 실패');
+                loadComments();
+            })
+            .catch(function () {
+                alert(LABEL + ' 삭제에 실패했습니다.');
+            });
+    }
+
+    function reportComment(id, btn) {
+        if (!confirm('이 ' + LABEL + '을 신고하시겠어요?')) return;
+        var reason = prompt('신고 사유를 입력해주세요 (선택 사항입니다. 비워두고 확인해도 신고가 접수됩니다).', '') || '';
+
+        fetch('/posts/' + postId + '/comments/' + id + '/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'reason=' + encodeURIComponent(reason)
+        })
+            .then(function (res) {
+                return res.json().then(function (body) {
+                    if (!res.ok) throw new Error(body.error || '신고 처리에 실패했습니다.');
+                    return body;
+                });
+            })
+            .then(function (body) {
+                alert(body.blind ? ('신고가 접수되었습니다. 신고 누적으로 ' + LABEL + '이 블라인드 처리되었습니다.') : '신고가 접수되었습니다.');
+                loadComments();
+            })
+            .catch(function (err) {
+                alert(err.message || '신고 처리에 실패했습니다.');
+                if (btn) {
+                    btn.disabled = true;
+                }
+            });
+    }
+
+    var commentForm = document.getElementById('postCommentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var input = document.getElementById('postCommentInput');
+            var content = input.value.trim();
+            if (!content) return;
+
+            fetch('/posts/' + postId + '/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'content=' + encodeURIComponent(content)
+            })
+                .then(function (res) {
+                    if (!res.ok) return res.json().then(function (body) { throw new Error(body.error || '등록 실패'); });
+                    return res.json();
+                })
+                .then(function () {
+                    input.value = '';
+                    loadComments();
+                })
+                .catch(function (err) {
+                    alert(err.message || (LABEL + ' 등록에 실패했습니다.'));
+                });
+        });
+    }
+
+    loadComments();
+
+    // ---- 신고 ----
+    var reportBtn = document.getElementById('reportBtn');
+    if (reportBtn) {
+        reportBtn.addEventListener('click', function () {
+            if (!confirm('이 게시물을 신고하시겠어요?')) return;
+            var reason = prompt('신고 사유를 입력해주세요 (선택 사항입니다. 비워두고 확인해도 신고가 접수됩니다).', '') || '';
+
+            fetch('/posts/' + postId + '/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'reason=' + encodeURIComponent(reason)
+            })
+                .then(function (res) {
+                    return res.json().then(function (body) {
+                        if (!res.ok) throw new Error(body.error || '신고 처리에 실패했습니다.');
+                        return body;
+                    });
+                })
+                .then(function (body) {
+                    if (body.blind) {
+                        alert('신고가 접수되었습니다. 신고 누적으로 게시물이 블라인드 처리되었습니다.');
+                        location.href = '/posts';
+                        return;
+                    }
+                    alert('신고가 접수되었습니다.');
+                    reportBtn.disabled = true;
+                    reportBtn.innerHTML = '<i class="fa-solid fa-flag"></i> 신고 완료';
+                })
+                .catch(function (err) {
+                    alert(err.message || '신고 처리에 실패했습니다.');
+                });
+        });
+    }
+});

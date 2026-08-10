@@ -1,0 +1,153 @@
+package com.webschool.webschool.user.service;
+
+import com.webschool.webschool.user.dto.MyPageUpdateDto;
+import com.webschool.webschool.user.dto.RegisterDto;
+import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.regex.Pattern;
+
+@Service
+@RequiredArgsConstructor
+public class UserService {
+
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9]+$");
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public boolean isUsernameAvailable(String username) {
+        return !userRepository.existsByUsername(username);
+    }
+
+    public User getByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+    }
+
+    @Transactional
+    public void register(RegisterDto dto) {
+        if (dto.getUsername() == null || !USERNAME_PATTERN.matcher(dto.getUsername()).matches()) {
+            throw new IllegalArgumentException("아이디는 영문과 숫자만 사용할 수 있습니다.");
+        }
+
+        if (dto.getPassword() == null || !dto.getPassword().equals(dto.getConfirmPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        if (userRepository.existsByUsername(dto.getUsername())) {
+            throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
+        }
+
+        if (dto.getSchoolName() == null || dto.getSchoolName().isBlank()
+                || dto.getSchoolCode() == null || dto.getSchoolCode().isBlank()) {
+            throw new IllegalArgumentException("목록에서 학교를 검색하여 선택해주세요.");
+        }
+
+        if (dto.getGrade() == null || dto.getGrade().isBlank()
+                || dto.getClassNum() == null || dto.getClassNum().isBlank()) {
+            throw new IllegalArgumentException("학년과 반을 선택해주세요.");
+        }
+
+        String nickname = dto.getNickname();
+        if (nickname == null || nickname.isBlank()) {
+            nickname = dto.getUsername();
+        }
+
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setPassword(passwordEncoder.encode(dto.getPassword())); // BCrypt 암호화
+        user.setNickname(nickname);
+        user.setSchoolName(dto.getSchoolName());
+        user.setSchoolCode(dto.getSchoolCode());
+        user.setAtptCode(dto.getAtptCode());
+        user.setSchoolKind(dto.getSchoolKind());
+        user.setGrade(dto.getGrade());
+        user.setClassNum(dto.getClassNum());
+        user.setRole(User.Role.ROLE_USER);
+
+        userRepository.save(user);
+    }
+
+    /**
+     * 마이페이지 정보 수정. 아이디가 변경되면 true를 반환 (세션 재로그인 필요).
+     */
+    @Transactional
+    public boolean updateProfile(String currentUsername, MyPageUpdateDto dto) {
+        User user = getByUsername(currentUsername);
+
+        if (dto.getCurrentPassword() == null || dto.getCurrentPassword().isBlank()
+                || !passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        if (dto.getSchoolName() == null || dto.getSchoolName().isBlank()
+                || dto.getSchoolCode() == null || dto.getSchoolCode().isBlank()) {
+            throw new IllegalArgumentException("목록에서 학교를 검색하여 선택해주세요.");
+        }
+
+        if (dto.getGrade() == null || dto.getGrade().isBlank()
+                || dto.getClassNum() == null || dto.getClassNum().isBlank()) {
+            throw new IllegalArgumentException("학년과 반을 선택해주세요.");
+        }
+
+        boolean usernameChanged = false;
+        String newUsername = dto.getUsername() == null ? "" : dto.getUsername().trim();
+
+        if (!newUsername.isBlank() && !newUsername.equals(user.getUsername())) {
+            if (!USERNAME_PATTERN.matcher(newUsername).matches()) {
+                throw new IllegalArgumentException("아이디는 영문과 숫자만 사용할 수 있습니다.");
+            }
+            if (userRepository.existsByUsername(newUsername)) {
+                throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
+            }
+            user.setUsername(newUsername);
+            usernameChanged = true;
+        }
+
+        if (dto.getNewPassword() != null && !dto.getNewPassword().isBlank()) {
+            if (!dto.getNewPassword().equals(dto.getConfirmNewPassword())) {
+                throw new IllegalArgumentException("새 비밀번호가 일치하지 않습니다.");
+            }
+            user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        }
+
+        String nickname = dto.getNickname();
+        user.setNickname((nickname == null || nickname.isBlank()) ? user.getUsername() : nickname.trim());
+
+        user.setSchoolName(dto.getSchoolName());
+        user.setSchoolCode(dto.getSchoolCode());
+        user.setAtptCode(dto.getAtptCode());
+        user.setSchoolKind(dto.getSchoolKind());
+        user.setGrade(dto.getGrade());
+        user.setClassNum(dto.getClassNum());
+
+        return usernameChanged;
+    }
+
+    // 계정 탈퇴(소프트 딜리트) - 본인 확인을 위해 현재 비밀번호를 재입력받는다
+    @Transactional
+    public void deleteAccount(String username, String password) {
+        User user = getByUsername(username);
+
+        if (password == null || password.isBlank() || !passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // 마지막 남은 관리자가 마이페이지에서 스스로 탈퇴해버리면 시스템에 관리자가 한 명도 안 남는다 - 방지
+        if (user.getRole() == User.Role.ROLE_ADMIN
+                && userRepository.countByRoleAndDeletedFalse(User.Role.ROLE_ADMIN) <= 1) {
+            throw new IllegalArgumentException("마지막 남은 관리자 계정은 탈퇴할 수 없습니다. 다른 계정을 먼저 관리자로 지정해주세요.");
+        }
+
+        // 작성한 게시글/댓글은 그대로 남기고(작성자 FK 유지), 계정만 로그인 불가 상태로 전환한다.
+        // 화면에는 실제 닉네임 대신 "탈퇴한 사용자"로 표시된다(PostService.displayNickname() 등 참고).
+        user.setDeleted(true);
+        user.setDeletedAt(LocalDateTime.now());
+    }
+}

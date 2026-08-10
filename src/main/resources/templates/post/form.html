@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${mode == 'edit'} ? '게시물 수정 - WebSchool' : '게시물 작성 - WebSchool'">게시물 작성 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('community')}"></div>
+
+<div class="post-page">
+    <div class="post-container post-container-narrow">
+        <div class="post-form-card">
+            <h2 th:text="${mode == 'edit'} ? '게시물 수정' : '게시물 작성'">게시물 작성</h2>
+
+            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+
+            <form th:action="${mode == 'edit'} ? @{'/posts/' + ${postUuid} + '/edit'} : @{/posts}"
+                  th:object="${postForm}" method="post" enctype="multipart/form-data">
+                <div class="post-field">
+                    <label>카테고리</label>
+                    <div class="post-category-radio-group" id="postCategoryRadioGroup">
+                        <label class="post-category-radio">
+                            <input type="radio" th:field="*{category}" value="FREE"> 자유
+                        </label>
+                        <label class="post-category-radio">
+                            <input type="radio" th:field="*{category}" value="ANONYMOUS"> 익명
+                        </label>
+                        <label class="post-category-radio">
+                            <input type="radio" th:field="*{category}" value="QNA"> 질의응답
+                        </label>
+                    </div>
+                    <p id="postCategoryHint" class="post-category-hint"></p>
+                </div>
+                <div class="post-field">
+                    <label>제목</label>
+                    <input type="text" id="postTitleInput" th:field="*{title}" placeholder="제목을 입력하세요" maxlength="100" required>
+                </div>
+                <div class="post-field">
+                    <label>내용</label>
+                    <p id="postContentGuide" class="post-content-guide"></p>
+                    <textarea id="postContentTextarea" th:field="*{content}" rows="12" placeholder="내용을 입력하세요" maxlength="4000" required></textarea>
+                </div>
+
+                <div class="post-field" th:if="${mode == 'edit' and !existingImages.empty}">
+                    <label>기존 이미지 (체크하면 저장 시 삭제됩니다)</label>
+                    <div class="post-image-existing-grid">
+                        <label class="post-image-existing-item" th:each="image : ${existingImages}">
+                            <img th:src="${image.url}" alt="첨부 이미지">
+                            <span class="post-image-existing-remove">
+                                <input type="checkbox" name="removeImageIds" th:value="${image.id}"> 삭제
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="post-field">
+                    <label>이미지 첨부 (jpg/jpeg/png/gif/webp, 장당 5MB 이하, 여러 장 가능)</label>
+                    <input type="file" id="postImageInput" name="images" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                    <div id="postImagePreview" class="post-image-preview-grid"></div>
+                </div>
+
+                <div class="post-form-actions">
+                    <a th:href="${mode == 'edit'} ? @{'/posts/' + ${postUuid}} : @{/posts}" class="btn btn-outline-brand">취소</a>
+                    <button type="submit" class="btn btn-brand" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/post-form.js}"></script>
+</body>
+</html>

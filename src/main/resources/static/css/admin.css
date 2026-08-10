@@ -1,0 +1,225 @@
+* { box-sizing: border-box; }
+
+/* 페이지 레이아웃 (post.css의 .post-page 톤을 그대로 유지) */
+.admin-page {
+    min-height: calc(100vh - 64px);
+    padding: 32px 16px 60px;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(14, 165, 233, 0.10) 0%, transparent 40%),
+        radial-gradient(circle at 90% 10%, rgba(79, 70, 229, 0.10) 0%, transparent 40%);
+}
+
+.admin-container {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.admin-container-narrow {
+    max-width: 640px;
+}
+
+.admin-page-heading h1 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 4px;
+}
+
+.admin-page-heading h1 i { color: var(--brand-1); margin-right: 6px; }
+
+.admin-page-heading .page-sub {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin: 0 0 20px;
+}
+
+.admin-empty {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+/* 목록 테이블 */
+.admin-table-wrap {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid #f0f1fa;
+    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.08);
+    overflow: hidden;
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px 16px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.admin-table thead th {
+    background: #f8f9fc;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.admin-table tbody tr + tr td { border-top: 1px solid var(--border); }
+
+.admin-table-title {
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.admin-table-title:hover { color: var(--brand-1); }
+
+.admin-comment-content-cell {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink);
+}
+
+.admin-search-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    max-width: 360px;
+}
+
+.admin-search-form input[type="text"] {
+    flex: 1;
+    padding: 9px 14px;
+    border-radius: 9px;
+    border: 1.5px solid #dcdfef;
+    font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.admin-search-form input[type="text"]:focus { border-color: var(--brand-1); }
+
+.admin-search-form button {
+    width: 42px;
+    border-radius: 9px;
+    border: none;
+    background: var(--brand-gradient);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.admin-user-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.admin-user-actions form { margin: 0; }
+
+.admin-user-self-label {
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-style: italic;
+}
+
+.admin-user-actions .btn,
+.admin-user-actions .post-delete-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+/* 상태 배지 */
+.admin-status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    margin-right: 6px;
+}
+
+.admin-status-pending { background: #fff7ed; color: #c2410c; }
+.admin-status-blind { background: #fee2e2; color: #b91c1c; }
+.admin-status-cleared { background: #dcfce7; color: #15803d; }
+
+/* 상세 화면 */
+.admin-detail-card {
+    background: var(--surface);
+    border-radius: 18px;
+    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
+    border: 1px solid #f0f1fa;
+    padding: 32px;
+    margin-top: 16px;
+    margin-bottom: 20px;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-actions form { margin: 0; }
+
+.admin-report-section {
+    background: var(--surface);
+    border-radius: 18px;
+    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
+    border: 1px solid #f0f1fa;
+    padding: 24px 28px 28px;
+}
+
+.admin-report-item {
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border);
+}
+
+.admin-report-item:last-child { border-bottom: none; }
+
+.admin-report-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.admin-comment-clear-form {
+    margin: 0 0 0 auto;
+}
+
+.admin-comment-clear-form button {
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 0.9rem;
+    transition: color 0.15s ease;
+}
+
+.admin-comment-clear-form button:hover { color: #15803d; }
+
+.admin-report-reason {
+    font-size: 0.9rem;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+@media (max-width: 560px) {
+    .admin-detail-card, .admin-report-section { padding: 22px; }
+}

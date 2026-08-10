@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: webschool
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/webschool?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: '1234'
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 30MB
+
+server:
+  port: 8888
+
+neis:
+  api:
+    key: 52b4001f50da4fdcae53dfa7f77c02ee
+
+app:
+  upload:
+    dir: ../uploads # 프로젝트 폴더(webproject-main/webproject-main) 밖, 게시글 이미지 저장 위치

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+
+<div class="mypage-page">
+    <div class="mypage-container">
+        <div class="mypage-card">
+            <div class="mypage-avatar"
+                 th:text="${loginUser != null and !#strings.isEmpty(loginUser.nickname)} ? ${#strings.substring(loginUser.nickname,0,1)} : '?'">?</div>
+
+            <h2 class="mypage-name" th:text="${loginUser != null ? loginUser.nickname : '회원'}">회원</h2>
+            <p class="mypage-username">@<span th:text="${loginUser != null ? loginUser.username : ''}"></span></p>
+
+            <span class="mypage-role-badge"
+                  th:text="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'} ? '관리자' : '학생'">학생</span>
+
+            <div class="mypage-info-list">
+                <div class="mypage-info-row">
+                    <span class="mypage-info-label"><i class="fa-solid fa-school"></i> 관심 학교</span>
+                    <span class="mypage-info-value"
+                          th:if="${loginUser != null and !#strings.isEmpty(loginUser.schoolName)}"
+                          th:text="${loginUser.schoolName}">-</span>
+                    <span class="mypage-info-value"
+                          th:unless="${loginUser != null and !#strings.isEmpty(loginUser.schoolName)}">설정되지 않음</span>
+                </div>
+                <div class="mypage-info-row">
+                    <span class="mypage-info-label"><i class="fa-solid fa-layer-group"></i> 학년 / 반</span>
+                    <span class="mypage-info-value"
+                          th:if="${loginUser != null and !#strings.isEmpty(loginUser.grade)}"
+                          th:text="${loginUser.grade + '학년 ' + (loginUser.classNum != null ? loginUser.classNum : '?') + '반'}">-</span>
+                    <span class="mypage-info-value"
+                          th:unless="${loginUser != null and !#strings.isEmpty(loginUser.grade)}">설정되지 않음</span>
+                </div>
+            </div>
+
+            <div th:if="${param.updated}" class="mypage-alert mypage-alert-success">정보가 저장되었습니다.</div>
+
+            <a href="/mypage/edit" class="mypage-edit-btn">
+                <i class="fa-solid fa-user-pen"></i> 내 정보 수정
+            </a>
+
+            <a href="/school/calendar" class="mypage-cal-btn">
+                <i class="fa-solid fa-calendar-days"></i> 캘린더 바로가기
+            </a>
+
+            <form th:action="@{/logout}" method="post" class="mypage-logout-form">
+                <button type="submit" class="mypage-logout-btn">로그아웃</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
