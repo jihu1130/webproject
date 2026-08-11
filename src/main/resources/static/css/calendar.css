@@ -17,27 +17,59 @@
 
 .page-heading {
     margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(14, 165, 233, 0.06));
+    border: 1px solid #e6e8fb;
+    border-radius: 18px;
+    padding: 18px 22px;
+    position: relative;
+    overflow: hidden;
 }
 
+.page-heading::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--brand-gradient);
+}
+
+.page-heading-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: var(--brand-gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.28);
+}
+
+.page-heading-text { min-width: 0; }
+
 .page-heading h1 {
-    font-size: 1.35rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: var(--ink);
     letter-spacing: -0.02em;
     margin: 0 0 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.page-heading h1 i {
-    color: var(--brand-1);
 }
 
 .page-sub {
     color: var(--muted);
-    font-size: 0.84rem;
+    font-size: 0.86rem;
     margin: 0;
+}
+
+@media (max-width: 560px) {
+    .page-heading { padding: 16px; gap: 12px; }
+    .page-heading-icon { width: 42px; height: 42px; font-size: 1.15rem; border-radius: 13px; }
+    .page-heading h1 { font-size: 1.15rem; }
 }
 
 /* 컨트롤 바: 학교 검색 + 학년/반 */
@@ -46,12 +78,12 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.82);
+    background: var(--brand-gradient-soft);
     padding: 12px 16px;
     border-radius: 14px;
     margin-bottom: 12px;
-    border: 1px solid var(--border);
-    backdrop-filter: blur(8px);
+    border: 1px solid #e6e8fb;
+    box-shadow: 0 4px 16px rgba(30, 27, 58, 0.05);
 }
 
 .cal-control-item {
@@ -65,9 +97,18 @@
     position: relative;
 }
 
-.cal-control-wide > i {
+.cal-control-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: white;
     color: var(--brand-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
     flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12);
 }
 
 .cal-control-wide .school-search-box {
@@ -115,12 +156,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(255, 255, 255, 0.82);
+    background: white;
     border-radius: 14px;
     padding: 10px 16px;
     margin-bottom: 16px;
     border: 1px solid var(--border);
-    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px rgba(30, 27, 58, 0.05);
     flex-wrap: wrap;
     gap: 8px;
 }
@@ -262,18 +303,50 @@
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
     padding: 8px 6px 10px;
-    min-height: 92px;
+    min-height: 98px;
     cursor: pointer;
     transition: background-color 0.12s ease;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .cal-day:nth-child(7n) { border-right: none; }
 .cal-day:nth-last-child(-n+7) { border-bottom: none; }
 
 .cal-day:hover { background-color: #f8f8ff; }
+
+/* 학사일정 띠 (시험, 방학, "OO주간" 등 그 날짜에 잡힌 일정 전부 - 토요휴업일 제외).
+   하루짜리든 여러 날에 걸친 것이든 항상 칸 폭 전체를 꽉 채워서(.cal-day 좌우
+   padding 6px을 음수 마진으로 상쇄) 크기가 전부 똑같은 "띠"로 보이게 하고, 같은
+   일정이 옆 칸까지 이어지면 그 쪽 모서리만 각지게 둬서(border-radius 0) 끊김
+   없이 붙어 보이게 한다. 진짜 시작/끝 칸만 살짝 둥글게 캡을 씌운다. */
+.cal-day-event-bar {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 4px 6px;
+    margin: 0 -6px;
+    border-radius: 0;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cal-day-event-bar-start {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.cal-day-event-bar-end {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+@media (max-width: 640px) {
+    .cal-day-event-bar { font-size: 0.56rem; padding-top: 1px; padding-bottom: 1px; }
+}
 
 .cal-day-selected { background-color: rgba(79, 70, 229, 0.04); }
 
@@ -736,6 +809,7 @@ a.comment-nickname:hover { text-decoration: underline; }
 
 .cal-legend-dot-today { background: rgba(250, 204, 21, 0.42); }
 .cal-legend-dot-selected { background: var(--brand-gradient); }
+.cal-legend-dot-event { background: linear-gradient(135deg, rgba(79, 70, 229, 0.14), rgba(14, 165, 233, 0.14)); }
 
 @media (max-width: 640px) {
     .day-detail-header { padding: 16px 16px 12px; }

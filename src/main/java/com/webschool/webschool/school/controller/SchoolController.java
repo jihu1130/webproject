@@ -1,5 +1,6 @@
 package com.webschool.webschool.school.controller;
 
+import com.webschool.webschool.school.dto.CalendarEventDto;
 import com.webschool.webschool.school.dto.ScheduleCommentDto;
 import com.webschool.webschool.school.dto.ScheduleCommentReportResultDto;
 import com.webschool.webschool.school.dto.SchoolCalendarDto;
@@ -79,6 +80,21 @@ public class SchoolController {
             @RequestParam(defaultValue = "1") String classNm) {
 
         return schoolService.getCalendarDetails(atptCode, schoolCode, date, grade, classNm);
+    }
+
+    // 4-1. 캘린더 월 그리드용 학사일정 - 기본은 해당 월(+그리드에 보이는 앞뒤 달
+    // 날짜까지) 전체 학사일정을 다 보여준다. keyword를 넘기면 이름에 그 키워드가
+    // 포함된 것만 걸러서 보고 싶을 때 쓸 수 있도록 남겨둠(예: "주간"만 보기).
+    @GetMapping("/api/calendar-events")
+    @ResponseBody
+    public List<CalendarEventDto> getCalendarEventsApi(
+            @RequestParam(defaultValue = "N10") String atptCode,
+            @RequestParam(defaultValue = "8181104") String schoolCode,
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam(defaultValue = "") String keyword) {
+
+        return schoolService.getMonthlyEvents(atptCode, schoolCode, year, month, keyword);
     }
 
     // 5. 날짜별 한마디 댓글 조회 (같은 학년·같은 반끼리만 공유)

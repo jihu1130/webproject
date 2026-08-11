@@ -8,11 +8,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var currentMonth = today.getMonth() + 1; // 1~12
 
     var selectedSchool = null; // { schoolName, schoolCode, officeCode, schoolKind }
-    var selectedDateStr = formatLocalDate(today); // 방금 클릭한(선택된) 날짜 ('YYYY-MM-DD') - 아직 아무 날짜도
-    // 클릭하지 않았다면 오늘이 기본 선택 상태 (그리드 강조 표시용, 패널은 클릭 전엔 열리지 않음)
+    var selectedDateStr = formatLocalDate(today); // 방금 클릭한(선택된) 날짜 ('YYYY-MM-DD') - 페이지를 열면
+    // 자동으로 오늘 날짜가 선택되어 상세 패널까지 곧바로 열린다(아래 handleDayClick(selectedDateStr) 참고)
     var currentCommentDate = null; // 현재 패널에 열려있는 날짜 ('YYYYMMDD', 댓글 API용)
     var currentCommentGrade = null; // 댓글이 공유되는 학년
     var currentCommentClassNm = null; // 댓글이 공유되는 반
+    var currentMonthEventMap = {}; // 'YYYY-MM-DD' -> 학사일정명 배열 (하루에 여러 일정이 겹칠 수 있음, 현재 보이는 42칸 그리드 범위)
 
     var DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -32,6 +33,8 @@ document.addEventListener('DOMContentLoaded', function () {
     initSchoolSearch();
     initQuicknav();
     updateTitle();
+    loadMonthEvents(); // 로그인 사용자의 저장된 학교(있다면)가 반영된 뒤에 조회해야 정확함
+    handleDayClick(selectedDateStr); // 페이지를 열자마자 오늘 날짜를 클릭한 것처럼 상세 패널을 바로 연다
 
     document.getElementById('dayDetailClose').addEventListener('click', closePanel);
 
@@ -105,6 +108,116 @@ document.addEventListener('DOMContentLoaded', function () {
             cell.addEventListener('click', function () { handleDayClick(day.date); });
             calGridBody.appendChild(cell);
         });
+
+        applyMonthEventChips(currentMonthEventMap);
+    }
+
+    // 현재 학교의 학사일정(시험, 방학, 각종 "OO주간" 등 특정 날짜/기간에 잡힌 일정
+    // 전부)을 조회해서 그리드에 걸쳐 있는 해당 날짜 칸마다 작은 배지로 표시한다.
+    // 서버가 기간 전체를 이미 걸러서 내려주므로 프론트에서 추가 필터링은 안 함.
+    function loadMonthEvents() {
+        var params = new URLSearchParams({ year: currentYear, month: currentMonth });
+        if (selectedSchool) {
+            params.set('atptCode', selectedSchool.officeCode);
+            params.set('schoolCode', selectedSchool.schoolCode);
+        }
+
+        fetch(`/school/api/calendar-events?${params.toString()}`)
+            .then(function (res) { return res.ok ? res.json() : []; })
+            .then(function (events) {
+                var map = {};
+                (events || []).forEach(function (e) {
+                    if (!e.eventName) return;
+                    if (!map[e.date]) map[e.date] = [];
+                    if (map[e.date].indexOf(e.eventName) === -1) map[e.date].push(e.eventName);
+                });
+                currentMonthEventMap = map;
+                applyMonthEventChips(currentMonthEventMap);
+            })
+            .catch(function () {
+                // 부가 표시 기능이라 실패해도 조용히 무시 - 날짜 클릭 시 상세 조회는 별개로 동작함
+            });
+    }
+
+    // 매주 반복되는 토요휴업일 자체는 표시하면 오히려 매주 눈에 띄어 정작 중요한
+    // 방학/시험/행사 기간이 묻히므로 계속 숨긴다. 다만 예전 버그처럼 같은 날의
+    // 다른 진짜 일정까지 함께 가려지면 안 되므로, 이제는 이름 하나만 걸러내고
+    // 나머지 일정은 그대로 보여준다(아래 applyMonthEventChips 참고).
+    var SATURDAY_CLOSURE_NAME = '토요휴업일';
+
+    var EVENT_COLOR_PALETTE = [
+        { bg: '#ede9fe', fg: '#4f46e5' }, // 인디고
+        { bg: '#ffebee', fg: '#e53935' }, // 레드(공휴일류)
+        { bg: '#fee2e2', fg: '#dc2626' }, // 진한 레드(시험류)
+        { bg: '#d1fae5', fg: '#059669' }, // 그린
+        { bg: '#f3e8ff', fg: '#7c3aed' }, // 퍼플
+        { bg: '#e0f2fe', fg: '#0284c7' }, // 스카이
+        { bg: '#fef3c7', fg: '#b45309' }  // 앰버
+    ];
+
+    // 같은 이름의 일정이 (같은 주 안에서) 연속된 날짜에 걸쳐 있으면 칸 경계를 넘어
+    // 하나의 색깔 띠처럼 이어 보이게 하고, 일정마다 다른 색을 배정한다. 하루에
+    // 여러 일정이 겹치면(예: "학부모 상담주"이면서 "학교교육과정설명회"인 날)
+    // 띠를 세로로 여러 개 쌓아서 전부 보여준다. 토요휴업일이라는 이름의 일정만
+    // 걸러내고, 그 날 다른 진짜 일정이 있으면 그건 그대로 보여준다.
+    function applyMonthEventChips(map) {
+        var cells = Array.prototype.slice.call(calGridBody.querySelectorAll('.cal-day'));
+
+        // 이 화면에 보이는 일정명 전체(토요휴업일 제외)에 등장 순서대로 색을 고정
+        // 배정 - 같은 일정은 항상 같은 색, 재렌더링돼도 유지됨
+        var colorByName = {};
+        var distinctNames = [];
+        cells.forEach(function (cell) {
+            (map[cell.dataset.date] || []).forEach(function (name) {
+                if (name && name !== SATURDAY_CLOSURE_NAME && distinctNames.indexOf(name) === -1) {
+                    distinctNames.push(name);
+                }
+            });
+        });
+        distinctNames.forEach(function (name, idx) {
+            colorByName[name] = EVENT_COLOR_PALETTE[idx % EVENT_COLOR_PALETTE.length];
+        });
+
+        cells.forEach(function (cell) {
+            var existingBars = Array.prototype.slice.call(cell.querySelectorAll('.cal-day-event-chip, .cal-day-event-bar'));
+            existingBars.forEach(function (bar) { bar.remove(); });
+            cell.style.borderRightColor = '';
+        });
+
+        function visibleNames(dateStr) {
+            return (map[dateStr] || []).filter(function (name) { return name !== SATURDAY_CLOSURE_NAME; });
+        }
+
+        cells.forEach(function (cell, i) {
+            var names = visibleNames(cell.dataset.date);
+            var col = i % 7; // 같은 주(행) 안에서만 이어붙임 - 주가 바뀌면 새로 시작
+            var prevNames = col > 0 ? visibleNames(cells[i - 1].dataset.date) : [];
+            var nextNames = col < 6 ? visibleNames(cells[i + 1].dataset.date) : [];
+            var stillConnecting = false;
+
+            names.forEach(function (name) {
+                var isStart = prevNames.indexOf(name) === -1;
+                var isEnd = nextNames.indexOf(name) === -1;
+
+                var color = colorByName[name];
+                var bar = document.createElement('span');
+                bar.className = 'cal-day-event-bar'
+                    + (isStart ? ' cal-day-event-bar-start' : '')
+                    + (isEnd ? ' cal-day-event-bar-end' : '');
+                bar.style.background = color.bg;
+                bar.style.color = color.fg;
+                bar.title = name;
+                // 연결된 칸들 중 시작 칸에만 이름을 적어서 하나의 띠처럼 읽히게 함
+                bar.textContent = isStart ? name : '';
+                cell.appendChild(bar);
+
+                if (!isEnd) stillConnecting = true;
+            });
+
+            if (stillConnecting) {
+                cell.style.borderRightColor = 'transparent'; // 이어지는 칸 사이의 경계선을 지워 끊김 없이 보이게 함
+            }
+        });
     }
 
     function handleDayClick(dateStr) {
@@ -152,6 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
             currentYear = parseInt(yearSelect.value, 10);
             currentMonth = parseInt(monthSelect.value, 10);
             renderGrid();
+            loadMonthEvents();
         }
 
         yearSelect.addEventListener('change', jumpToSelected);
@@ -161,21 +275,25 @@ document.addEventListener('DOMContentLoaded', function () {
             currentYear -= 1;
             renderGrid();
             syncQuicknav();
+            loadMonthEvents();
         });
         document.getElementById('quickNextYear').addEventListener('click', function () {
             currentYear += 1;
             renderGrid();
             syncQuicknav();
+            loadMonthEvents();
         });
         document.getElementById('quickPrevMonth').addEventListener('click', function () {
             if (currentMonth === 1) { currentMonth = 12; currentYear -= 1; } else { currentMonth -= 1; }
             renderGrid();
             syncQuicknav();
+            loadMonthEvents();
         });
         document.getElementById('quickNextMonth').addEventListener('click', function () {
             if (currentMonth === 12) { currentMonth = 1; currentYear += 1; } else { currentMonth += 1; }
             renderGrid();
             syncQuicknav();
+            loadMonthEvents();
         });
         document.getElementById('quickTodayBtn').addEventListener('click', function () {
             var now = new Date();
@@ -184,6 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
             selectedDateStr = formatLocalDate(now);
             renderGrid();
             syncQuicknav();
+            loadMonthEvents();
         });
 
         syncQuicknav();
@@ -262,6 +381,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 updateTitle();
                 refreshClassOptions();
+                loadMonthEvents();
             },
             onClear: function () {
                 selectedSchool = null;
@@ -270,6 +390,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 fillClassSelect(classSelect, '반 선택', fallbackClassList());
                 updateTitle();
+                loadMonthEvents();
             }
         });
     }

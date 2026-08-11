@@ -2,6 +2,7 @@ package com.webschool.webschool.school.service;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import com.webschool.webschool.school.dto.CalendarEventDto;
 import com.webschool.webschool.school.dto.SchoolSearchResultDto;
 import com.webschool.webschool.school.dto.TimetableDto;
 import org.springframework.stereotype.Service;
@@ -223,7 +224,57 @@ public class NeisApiService {
         return "등록된 급식 정보가 없습니다.";
     }
 
-    // 학사일정 조회 메서드 추가
+    // 기간 조회 학사일정 - 캘린더 월 그리드에 배지로 보여주기 위한 용도. keyword가
+    // 비어있으면(기본값) 그 기간의 학사일정을 전부 반환하고, keyword를 넘기면 이름에
+    // 그 키워드가 포함된 것만 걸러서 반환한다(처음엔 "주간"류만 보여주는 걸로
+    // 시작했는데, 사용자가 "특수하게 일이 정해진 날 모두 표시해달라"고 넓혀달라고
+    // 요청해서 기본은 전체 표시로 바꾸고 필터는 옵션으로만 남김). 새로 추가하는 NEIS
+    // 연동이라 신버전(Jackson) 파싱 방식을 따름 - fetchEventFromNeis(구버전, 문자열
+    // 자르기)와는 별도 메서드.
+    public List<CalendarEventDto> fetchEventsInRange(String atptCode, String schoolCode,
+                                                       String fromYmd, String toYmd, String keyword) {
+        List<CalendarEventDto> events = new ArrayList<>();
+        if (atptCode == null || atptCode.isBlank() || schoolCode == null || schoolCode.isBlank()) {
+            return events;
+        }
+
+        String url = String.format(
+                "https://open.neis.go.kr/hub/SchoolSchedule?KEY=%s&Type=json&pSize=100&ATPT_OFCDC_SC_CODE=%s&SD_SCHUL_CODE=%s&AA_FROM_YMD=%s&AA_TO_YMD=%s",
+                apiKey, atptCode, schoolCode, fromYmd, toYmd
+        );
+
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.body());
+            JsonNode rows = root.path("SchoolSchedule").path(1).path("row");
+
+            if (rows.isArray()) {
+                for (JsonNode row : rows) {
+                    String eventName = row.path("EVENT_NM").asText("");
+                    String ymd = row.path("AA_YMD").asText("");
+                    if (eventName.isBlank() || ymd.length() != 8) continue;
+                    if (keyword != null && !keyword.isBlank() && !eventName.contains(keyword)) continue;
+
+                    String isoDate = ymd.substring(0, 4) + "-" + ymd.substring(4, 6) + "-" + ymd.substring(6, 8);
+                    events.add(CalendarEventDto.builder().date(isoDate).eventName(eventName).build());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return events;
+    }
+
+    // 학사일정 조회 메서드 - 특정 날짜에 일정이 여러 개 겹칠 수 있어서(예: "학부모
+    // 상담주"이면서 "학교교육과정설명회"인 날) row 전체를 순회해 전부 모은 뒤
+    // " · "로 이어붙여 반환한다. 예전엔 EVENT_NM 첫 등장만 문자열 자르기로
+    // 가져와서 겹치는 일정 중 하나만 보였던 버그가 있었음 - 새 NEIS 연동 규칙대로
+    // Jackson 파싱으로 교체하면서 함께 고침.
     public String fetchEventFromNeis(String atptCode, String schoolCode, String date) {
         String url = String.format(
                 "https://open.neis.go.kr/hub/SchoolSchedule?KEY=%s&Type=json&ATPT_OFCDC_SC_CODE=%s&SD_SCHUL_CODE=%s&AA_YMD=%s",
@@ -234,10 +285,22 @@ public class NeisApiService {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            String json = response.body();
 
-            if (json.contains("\"row\":[")) {
-                return extractValue(json, "EVENT_NM");
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.body());
+            JsonNode rows = root.path("SchoolSchedule").path(1).path("row");
+
+            if (rows.isArray()) {
+                List<String> names = new ArrayList<>();
+                for (JsonNode row : rows) {
+                    String eventName = row.path("EVENT_NM").asText("");
+                    if (!eventName.isBlank() && !names.contains(eventName)) {
+                        names.add(eventName);
+                    }
+                }
+                if (!names.isEmpty()) {
+                    return String.join(" · ", names);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
