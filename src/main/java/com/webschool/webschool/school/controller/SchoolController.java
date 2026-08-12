@@ -10,6 +10,7 @@ import com.webschool.webschool.school.service.NeisApiService;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.school.service.SchoolService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -95,6 +96,21 @@ public class SchoolController {
             @RequestParam(defaultValue = "") String keyword) {
 
         return schoolService.getMonthlyEvents(atptCode, schoolCode, year, month, keyword);
+    }
+
+    // 4-2. 일정 이름으로 검색 - 학사일정은 매년 반복되는 이름이 많아서(예:
+    // "기말고사") 전체 검색 결과를 다 보여주면 어느 해 것인지 헷갈리므로, 오늘
+    // 날짜와 가장 가까운 단 하나만 찾아 반환한다. 프론트는 이 날짜로 캘린더
+    // 화면을 이동시키는 용도로 쓴다. 못 찾으면 404.
+    @GetMapping("/api/calendar-events/search")
+    @ResponseBody
+    public ResponseEntity<CalendarEventDto> searchNearestEventApi(
+            @RequestParam(defaultValue = "N10") String atptCode,
+            @RequestParam(defaultValue = "8181104") String schoolCode,
+            @RequestParam String keyword) {
+
+        CalendarEventDto nearest = schoolService.findNearestEvent(atptCode, schoolCode, keyword);
+        return nearest != null ? ResponseEntity.ok(nearest) : ResponseEntity.notFound().build();
     }
 
     // 5. 날짜별 한마디 댓글 조회 (같은 학년·같은 반끼리만 공유)

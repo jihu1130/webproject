@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     applyMySchoolIfAvailable();
     initSchoolSearch();
+    initEventSearch();
     initQuicknav();
     updateTitle();
     loadMonthEvents(); // 로그인 사용자의 저장된 학교(있다면)가 반영된 뒤에 조회해야 정확함
@@ -91,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (day.date === selectedDateStr) classes.push('cal-day-selected');
             cell.className = classes.join(' ');
             cell.dataset.date = day.date;
+            cell.dataset.inMonth = day.isCurrentMonth ? '1' : '0'; // 색 충돌 해소 시 "이 달에만 속한 일정인지" 판단용
 
             var num = document.createElement('span');
             var numClasses = ['cal-day-num'];
@@ -145,41 +147,116 @@ document.addEventListener('DOMContentLoaded', function () {
     // 나머지 일정은 그대로 보여준다(아래 applyMonthEventChips 참고).
     var SATURDAY_CLOSURE_NAME = '토요휴업일';
 
+    // 7가지였을 때는 이름이 조금만 많아져도(한 달에 10개 넘는 일정) 해시값이
+    // 겹쳐서 서로 다른 일정인데 같은 색으로 보이는 경우가 잦았다 - 팔레트를
+    // 16가지로 넓혀서 겹칠 확률을 낮춘다.
     var EVENT_COLOR_PALETTE = [
         { bg: '#ede9fe', fg: '#4f46e5' }, // 인디고
-        { bg: '#ffebee', fg: '#e53935' }, // 레드(공휴일류)
-        { bg: '#fee2e2', fg: '#dc2626' }, // 진한 레드(시험류)
+        { bg: '#ffebee', fg: '#e53935' }, // 레드
+        { bg: '#fee2e2', fg: '#dc2626' }, // 진한 레드
         { bg: '#d1fae5', fg: '#059669' }, // 그린
         { bg: '#f3e8ff', fg: '#7c3aed' }, // 퍼플
         { bg: '#e0f2fe', fg: '#0284c7' }, // 스카이
-        { bg: '#fef3c7', fg: '#b45309' }  // 앰버
+        { bg: '#fef3c7', fg: '#b45309' }, // 앰버
+        { bg: '#fce7f3', fg: '#db2777' }, // 핑크
+        { bg: '#ccfbf1', fg: '#0d9488' }, // 틸
+        { bg: '#ffedd5', fg: '#ea580c' }, // 오렌지
+        { bg: '#ecfccb', fg: '#65a30d' }, // 라임
+        { bg: '#cffafe', fg: '#0891b2' }, // 시안
+        { bg: '#ffe4e6', fg: '#e11d48' }, // 로즈
+        { bg: '#dbeafe', fg: '#2563eb' }, // 블루
+        { bg: '#fef9c3', fg: '#ca8a04' }, // 옐로우
+        { bg: '#f1f5f9', fg: '#475569' }  // 슬레이트
     ];
+
+    // 일정명 문자열 자체를 해시해서 팔레트 인덱스를 고정 배정한다 - 등장 순서에
+    // 의존하지 않으므로, 같은 이름의 일정이면 몇 월에 나타나든(달을 이동해서
+    // 다시 렌더링해도) 항상 같은 색이 된다. 이 "원래 색"은 앞뒤 달로 이어지는
+    // 일정에는 절대 바뀌지 않고 그대로 쓰인다(아래 resolveColorOverrides 참고).
+    function paletteIndexForName(name) {
+        var hash = 0;
+        for (var i = 0; i < name.length; i++) {
+            hash = (hash * 31 + name.charCodeAt(i)) | 0;
+        }
+        return Math.abs(hash) % EVENT_COLOR_PALETTE.length;
+    }
+
+    function colorForEventName(name) {
+        return EVENT_COLOR_PALETTE[paletteIndexForName(name)];
+    }
+
+    // 이번 달 화면 안에서 서로 다른 이름인데 해시가 겹쳐 같은 색이 된 일정들을
+    // 구분되는 색으로 재배정한다. 단, 앞뒤 달로 이어지는(그리드의 회색 패딩
+    // 칸까지 걸쳐 있는) 일정은 절대 재배정하지 않고 항상 이름 해시로 정해지는
+    // "원래 색"을 그대로 쓴다 - 안 그러면 이번 달에서만 다른 색으로 바뀌었다가
+    // 다음 달로 넘어가서 보면(그 달 기준으로는 겹치는 상대가 없어서) 다시
+    // 원래 색으로 돌아와, 같은 일정인데 달을 넘길 때마다 색이 바뀌어 보이게 된다.
+    function resolveColorOverrides(cells, visibleNames) {
+        var namesInOrder = [];
+        var seen = {};
+        var touchesPadding = {};
+
+        cells.forEach(function (cell) {
+            var inMonth = cell.dataset.inMonth === '1';
+            visibleNames(cell.dataset.date).forEach(function (name) {
+                if (!seen[name]) {
+                    seen[name] = true;
+                    namesInOrder.push(name);
+                }
+                if (!inMonth) touchesPadding[name] = true;
+            });
+        });
+
+        var usedSlots = {};
+        var override = {};
+
+        // 이어지는 일정들의 원래 색 자리를 먼저 전부 예약해서, 재배정 대상(아래)이
+        // 그 자리를 새치기하지 못하게 막는다
+        namesInOrder.forEach(function (name) {
+            if (touchesPadding[name]) {
+                usedSlots[paletteIndexForName(name)] = true;
+            }
+        });
+
+        namesInOrder.forEach(function (name) {
+            if (touchesPadding[name]) return; // 이어지는 일정은 항상 원래 색 유지
+
+            var idx = paletteIndexForName(name);
+            if (!usedSlots[idx]) {
+                usedSlots[idx] = true;
+                return; // 겹치는 상대가 없으면 원래 색 그대로
+            }
+
+            var next = (idx + 1) % EVENT_COLOR_PALETTE.length;
+            while (usedSlots[next] && next !== idx) {
+                next = (next + 1) % EVENT_COLOR_PALETTE.length;
+            }
+            usedSlots[next] = true;
+            if (next !== idx) override[name] = EVENT_COLOR_PALETTE[next];
+        });
+
+        return override;
+    }
 
     // 같은 이름의 일정이 (같은 주 안에서) 연속된 날짜에 걸쳐 있으면 칸 경계를 넘어
     // 하나의 색깔 띠처럼 이어 보이게 하고, 일정마다 다른 색을 배정한다. 하루에
     // 여러 일정이 겹치면(예: "학부모 상담주"이면서 "학교교육과정설명회"인 날)
     // 띠를 세로로 여러 개 쌓아서 전부 보여준다. 토요휴업일이라는 이름의 일정만
     // 걸러내고, 그 날 다른 진짜 일정이 있으면 그건 그대로 보여준다.
+    //
+    // 세로 위치(행)는 하루 단위가 아니라 **같은 주 전체를 한 번에 보고** 배정한다.
+    // 예전에는 그날의 일정 배열에서 몇 번째인지로만 행이 정해져서, "1회고사"가
+    // 끝나는 칸 바로 다음 칸에서 전혀 다른 "현장체험학습"이 시작돼도 둘 다 첫 번째
+    // 자리를 차지해 마치 하나의 띠가 이어지는 것처럼 보이는 문제가 있었다(사용자
+    // 스크린샷으로 확인). 이제는 서로 다른 일정이 바로 옆 칸에서 맞닿으면 같은
+    // 행을 재사용하지 않고 한 칸 아래로 내려서 배정한다 - 최소 한 칸 이상 떨어져
+    // 있어야만 같은 행을 다시 쓸 수 있다.
     function applyMonthEventChips(map) {
         var cells = Array.prototype.slice.call(calGridBody.querySelectorAll('.cal-day'));
 
-        // 이 화면에 보이는 일정명 전체(토요휴업일 제외)에 등장 순서대로 색을 고정
-        // 배정 - 같은 일정은 항상 같은 색, 재렌더링돼도 유지됨
-        var colorByName = {};
-        var distinctNames = [];
         cells.forEach(function (cell) {
-            (map[cell.dataset.date] || []).forEach(function (name) {
-                if (name && name !== SATURDAY_CLOSURE_NAME && distinctNames.indexOf(name) === -1) {
-                    distinctNames.push(name);
-                }
-            });
-        });
-        distinctNames.forEach(function (name, idx) {
-            colorByName[name] = EVENT_COLOR_PALETTE[idx % EVENT_COLOR_PALETTE.length];
-        });
-
-        cells.forEach(function (cell) {
-            var existingBars = Array.prototype.slice.call(cell.querySelectorAll('.cal-day-event-chip, .cal-day-event-bar'));
+            var existingBars = Array.prototype.slice.call(
+                cell.querySelectorAll('.cal-day-event-chip, .cal-day-event-bar'));
             existingBars.forEach(function (bar) { bar.remove(); });
             cell.style.borderRightColor = '';
         });
@@ -188,36 +265,126 @@ document.addEventListener('DOMContentLoaded', function () {
             return (map[dateStr] || []).filter(function (name) { return name !== SATURDAY_CLOSURE_NAME; });
         }
 
-        cells.forEach(function (cell, i) {
-            var names = visibleNames(cell.dataset.date);
-            var col = i % 7; // 같은 주(행) 안에서만 이어붙임 - 주가 바뀌면 새로 시작
-            var prevNames = col > 0 ? visibleNames(cells[i - 1].dataset.date) : [];
-            var nextNames = col < 6 ? visibleNames(cells[i + 1].dataset.date) : [];
-            var stillConnecting = false;
+        var colorOverride = resolveColorOverrides(cells, visibleNames);
+        function colorFor(name) {
+            return colorOverride[name] || colorForEventName(name);
+        }
 
-            names.forEach(function (name) {
-                var isStart = prevNames.indexOf(name) === -1;
-                var isEnd = nextNames.indexOf(name) === -1;
+        // 이번 주(7칸) 안에서 이름이 연속된 구간을 하나의 "일정 구간"으로 묶는다
+        function buildWeekEpisodes(weekCells) {
+            var episodes = [];
+            var openByName = {}; // 이름 -> 현재 이어지고 있는 구간
 
-                var color = colorByName[name];
-                var bar = document.createElement('span');
-                bar.className = 'cal-day-event-bar'
-                    + (isStart ? ' cal-day-event-bar-start' : '')
-                    + (isEnd ? ' cal-day-event-bar-end' : '');
-                bar.style.background = color.bg;
-                bar.style.color = color.fg;
-                bar.title = name;
-                // 연결된 칸들 중 시작 칸에만 이름을 적어서 하나의 띠처럼 읽히게 함
-                bar.textContent = isStart ? name : '';
-                cell.appendChild(bar);
+            weekCells.forEach(function (cell, col) {
+                var namesToday = visibleNames(cell.dataset.date);
 
-                if (!isEnd) stillConnecting = true;
+                namesToday.forEach(function (name) {
+                    if (openByName[name]) {
+                        openByName[name].endCol = col;
+                    } else {
+                        var ep = { name: name, startCol: col, endCol: col };
+                        episodes.push(ep);
+                        openByName[name] = ep;
+                    }
+                });
+
+                Object.keys(openByName).forEach(function (name) {
+                    if (namesToday.indexOf(name) === -1) delete openByName[name]; // 오늘 끊긴 구간은 닫는다
+                });
             });
 
-            if (stillConnecting) {
-                cell.style.borderRightColor = 'transparent'; // 이어지는 칸 사이의 경계선을 지워 끊김 없이 보이게 함
+            return episodes;
+        }
+
+        // 구간마다 세로 행(row)을 배정한다. 여러 날짜에 걸친(기간이 긴) 일정을
+        // 먼저 배정해서 되도록 위쪽 행을 차지하게 한다 - 그래야 하루짜리 사소한
+        // 일정이 그 며칠 전에 먼저 시작했다는 이유만으로 시험기간처럼 여러 날짜에
+        // 걸친 일정을 아래로 밀어내는 일이 없다(실사용 사례: "1,2학년 2학기
+        // 1회고사"(3일짜리)가 그보다 며칠 전 하루짜리 "대체공휴일" 때문에 아래
+        // 행으로 밀리고, 정작 하루짜리인 "현장체험학습"이 위 행을 차지해서
+        // 이상해 보이는 문제가 있었음 - 시작일 순서로만 배정하던 이전 방식의
+        // 한계). 기간이 같으면(하루짜리끼리 등) 원래 순서(먼저 있던 일정)를
+        // 그대로 유지한다.
+        //
+        // 행을 재사용하려면 그 행에 이미 배정된 모든 구간과 최소 한 칸은 떨어져
+        // 있어야 한다(바로 옆 칸이면 다른 일정끼리 이어 보여서 혼동됨). 처리
+        // 순서가 시간순이 아니라 기간이 긴 것부터라서, 각 행마다 마지막 구간
+        // 하나만이 아니라 배정된 구간 목록 전체와 비교해야 정확하다.
+        function assignRows(episodes) {
+            var ordered = episodes.map(function (ep, i) { return { ep: ep, i: i }; });
+            ordered.sort(function (a, b) {
+                var durA = a.ep.endCol - a.ep.startCol;
+                var durB = b.ep.endCol - b.ep.startCol;
+                if (durA !== durB) return durB - durA; // 긴 구간 먼저
+                return a.i - b.i; // 같은 기간이면 원래 순서 유지(안정 정렬)
+            });
+
+            var rowIntervals = []; // rowIntervals[row] = 그 행에 배정된 구간들의 [startCol, endCol] 목록
+            ordered.forEach(function (item) {
+                var ep = item.ep;
+                var row = 0;
+                while (true) {
+                    var intervals = rowIntervals[row];
+                    var fits = !intervals || intervals.every(function (iv) {
+                        return ep.endCol < iv.startCol - 1 || ep.startCol > iv.endCol + 1;
+                    });
+                    if (fits) break;
+                    row++;
+                }
+                ep.row = row;
+                if (!rowIntervals[row]) rowIntervals[row] = [];
+                rowIntervals[row].push({ startCol: ep.startCol, endCol: ep.endCol });
+            });
+        }
+
+        function renderWeek(weekCells, episodes) {
+            var maxRow = -1;
+            episodes.forEach(function (ep) { if (ep.row > maxRow) maxRow = ep.row; });
+
+            for (var row = 0; row <= maxRow; row++) {
+                weekCells.forEach(function (cell, col) {
+                    var ep = episodes.find(function (e) {
+                        return e.row === row && col >= e.startCol && col <= e.endCol;
+                    });
+
+                    var bar = document.createElement('span');
+
+                    if (!ep) {
+                        // 이 행엔 오늘 일정이 없음 - 아래 행들의 세로 위치가 요일마다
+                        // 어긋나지 않도록 보이지 않는 자리만 차지하는 빈 칸을 넣는다
+                        bar.className = 'cal-day-event-bar cal-day-event-bar-spacer';
+                        bar.textContent = ' ';
+                        cell.appendChild(bar);
+                        return;
+                    }
+
+                    var isStart = col === ep.startCol;
+                    var isEnd = col === ep.endCol;
+                    var color = colorFor(ep.name);
+
+                    bar.className = 'cal-day-event-bar'
+                        + (isStart ? ' cal-day-event-bar-start' : '')
+                        + (isEnd ? ' cal-day-event-bar-end' : '');
+                    bar.style.background = color.bg;
+                    bar.style.color = color.fg;
+                    bar.title = ep.name;
+                    // 연결된 칸들 중 시작 칸에만 이름을 적어서 하나의 띠처럼 읽히게 함
+                    bar.textContent = isStart ? ep.name : '';
+                    cell.appendChild(bar);
+
+                    if (!isEnd) {
+                        cell.style.borderRightColor = 'transparent'; // 이어지는 칸 사이의 경계선을 지워 끊김 없이 보이게 함
+                    }
+                });
             }
-        });
+        }
+
+        for (var weekStart = 0; weekStart < cells.length; weekStart += 7) {
+            var weekCells = cells.slice(weekStart, weekStart + 7);
+            var episodes = buildWeekEpisodes(weekCells);
+            assignRows(episodes);
+            renderWeek(weekCells, episodes);
+        }
     }
 
     function handleDayClick(dateStr) {
@@ -392,6 +559,66 @@ document.addEventListener('DOMContentLoaded', function () {
                 updateTitle();
                 loadMonthEvents();
             }
+        });
+    }
+
+    // 2-1. 일정 이름 검색 - "기말고사"처럼 해마다 반복되는 이름을 검색하면 결과가
+    // 여러 해에 걸쳐 나올 수 있어 헷갈리므로, 서버가 오늘과 가장 가까운 단 하나만
+    // 찾아서 돌려준다(/api/calendar-events/search). 찾으면 그 날짜가 있는 달로
+    // 캘린더를 이동시키고 상세 패널까지 자동으로 연다.
+    function initEventSearch() {
+        var form = document.getElementById('eventSearchForm');
+        if (!form) return;
+
+        var input = document.getElementById('eventSearchInput');
+        var status = document.getElementById('eventSearchStatus');
+
+        function showStatus(text, ok) {
+            status.textContent = text;
+            status.className = 'event-search-status ' + (ok ? 'event-search-status-ok' : 'event-search-status-error');
+            status.style.display = 'block';
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var keyword = input.value.trim();
+            if (!keyword) return;
+
+            if (!selectedSchool) {
+                showStatus('먼저 학교를 검색해서 선택해주세요.', false);
+                return;
+            }
+
+            var params = new URLSearchParams({
+                atptCode: selectedSchool.officeCode,
+                schoolCode: selectedSchool.schoolCode,
+                keyword: keyword
+            });
+
+            fetch(`/school/api/calendar-events/search?${params.toString()}`)
+                .then(function (res) {
+                    if (res.status === 404) return null;
+                    if (!res.ok) throw new Error('검색 실패');
+                    return res.json();
+                })
+                .then(function (event) {
+                    if (!event) {
+                        showStatus(`'${keyword}'과(와) 일치하는 일정을 찾지 못했어요.`, false);
+                        return;
+                    }
+
+                    var dateParts = event.date.split('-');
+                    currentYear = parseInt(dateParts[0], 10);
+                    currentMonth = parseInt(dateParts[1], 10);
+                    syncQuicknav();
+                    loadMonthEvents();
+                    handleDayClick(event.date);
+
+                    showStatus(`오늘과 가장 가까운 '${event.eventName}' 일정으로 이동했어요 (${event.date}).`, true);
+                })
+                .catch(function () {
+                    showStatus('검색 중 오류가 발생했습니다.', false);
+                });
         });
     }
 

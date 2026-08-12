@@ -151,6 +151,56 @@
     flex-shrink: 0;
 }
 
+/* 일정 이름 검색 (학사일정은 매년 반복되므로 오늘과 가장 가까운 것 하나만
+   찾아서 그 날짜로 캘린더를 이동시키는 용도 - loadMonthEvents()에서 쓰는
+   calendar-events API와는 별개의 /api/calendar-events/search 사용) */
+.event-search-form {
+    display: flex;
+    flex: 1;
+    gap: 6px;
+}
+
+.event-search-form input {
+    flex: 1;
+    min-width: 0;
+}
+
+.event-search-btn {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: none;
+    background: var(--brand-gradient);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.event-search-btn:hover { filter: brightness(1.06); }
+.event-search-btn:active { transform: translateY(1px); }
+
+.event-search-status {
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+.event-search-status-ok {
+    background: rgba(5, 150, 105, 0.1);
+    color: #059669;
+}
+
+.event-search-status-error {
+    background: rgba(220, 38, 38, 0.08);
+    color: #dc2626;
+}
+
 /* 월 이동 네비게이션 */
 .cal-navbar {
     display: flex;
@@ -342,6 +392,14 @@
 .cal-day-event-bar-end {
     border-top-right-radius: 6px;
     border-bottom-right-radius: 6px;
+}
+
+/* 이 행에 오늘 표시할 일정이 없을 때 자리만 차지하는 투명한 빈 칸 - 아래 행에
+   배정된 다른 요일의 일정이 세로로 어긋나 보이지 않도록 높이만 맞춰준다 */
+.cal-day-event-bar-spacer {
+    background: transparent;
+    color: transparent;
+    pointer-events: none;
 }
 
 @media (max-width: 640px) {

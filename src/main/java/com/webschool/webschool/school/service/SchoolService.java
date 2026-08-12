@@ -15,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -115,5 +117,43 @@ public class SchoolService {
         DateTimeFormatter ymd = DateTimeFormatter.ofPattern("yyyyMMdd");
         return neisApiService.fetchEventsInRange(
                 atptCode, schoolCode, rangeStart.format(ymd), rangeEnd.format(ymd), keyword);
+    }
+
+    // 학사일정은 매년 비슷한 이름으로 반복되기 때문에("기말고사"가 작년에도,
+    // 올해도, 내년에도 있음) 단순 이름 검색은 어느 해의 일정인지 헷갈릴 수 있다.
+    // 그래서 검색 결과를 전부 보여주는 대신, 오늘 날짜와 가장 가까운 단 하나만
+    // 찾아서 그 날짜로 캘린더를 이동시키는 용도로 쓴다. 작년/올해/내년 1년치씩을
+    // 각각 조회해서 합친 뒤(연도 하나로는 "올해 이미 지나간 일정"을 검색했을 때
+    // 내년 것도, "작년에만 있었던" 것도 놓칠 수 있어서), 오늘과의 날짜 차이가
+    // 가장 작은 것을 고른다 - 차이가 같으면(이론상 드묾) 이미 지난 것보다 앞으로
+    // 다가올 일정을 우선한다.
+    private static final int SEARCH_YEAR_RADIUS = 1;
+
+    public CalendarEventDto findNearestEvent(String atptCode, String schoolCode, String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter ymd = DateTimeFormatter.ofPattern("yyyyMMdd");
+        List<CalendarEventDto> matches = new ArrayList<>();
+
+        for (int offset = -SEARCH_YEAR_RADIUS; offset <= SEARCH_YEAR_RADIUS; offset++) {
+            int year = today.getYear() + offset;
+            LocalDate from = LocalDate.of(year, 1, 1);
+            LocalDate to = LocalDate.of(year, 12, 31);
+            matches.addAll(neisApiService.fetchEventsInRange(
+                    atptCode, schoolCode, from.format(ymd), to.format(ymd), keyword));
+        }
+
+        return matches.stream()
+                .min(Comparator
+                        .<CalendarEventDto>comparingLong(e -> Math.abs(daysFromToday(e, today)))
+                        .thenComparing(e -> daysFromToday(e, today) < 0)) // 같은 거리면 미래(false) 우선
+                .orElse(null);
+    }
+
+    private long daysFromToday(CalendarEventDto event, LocalDate today) {
+        return ChronoUnit.DAYS.between(today, LocalDate.parse(event.getDate()));
     }
 }

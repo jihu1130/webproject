@@ -1,3 +1,89 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Commands
+
+이 저장소가 실제 활성 작업 폴더인지부터 확인할 것 — 아래 "0. 저장소 위치"
+참고. 명령은 전부 이 폴더(`webproject-main/webproject-main`)에서 실행한다.
+
+**빌드/컴파일**
+- 전체 컴파일: `./gradlew compileJava`
+- 자바 변경 없이 정적 리소스(템플릿/CSS/JS)만 반영: `./gradlew processResources -q`
+- 테스트 코드만 컴파일 확인: `./gradlew compileTestJava`
+
+**실행**
+- `./gradlew bootRun` (기본 포트 8888, `application.yml`의 `server.port`).
+  MySQL(`jdbc:mysql://localhost:3306/webschool`, 계정 `root`/`1234`, 평문 —
+  `application.yml`)이 로컬에 떠 있어야 함. `ddl-auto: update`라 엔티티
+  변경 시 테이블이 자동 반영됨.
+- **8888 포트에 이미 떠 있는 프로세스를 함부로 끄지 말 것.** devtools가
+  붙어있어서, 이미 `bootRun`으로 떠 있는 서버가 있다면 재시작 없이
+  `./gradlew compileJava processResources -q`만 실행해도 클래스/리소스가
+  자동 재로드된다. 꼭 새로 띄워야 하면 `--args='--server.port=8899'`처럼
+  다른 포트를 쓸 것.
+- `mysql` 클라이언트가 PATH에 없어 전체 경로로 직접 실행해야 함
+  (PowerShell 기준): `& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p1234 -D webschool --default-character-set=utf8mb4 -e "..."`
+  (한글 데이터를 확인할 땐 `--default-character-set=utf8mb4`를 꼭 붙일 것
+  — 안 붙이면 터미널에 깨져 보일 뿐 실제 DB 값은 정상인 경우가 많음).
+
+**테스트**
+- 전체 테스트: `./gradlew test`
+- 단일 테스트 클래스: `./gradlew test --tests "com.webschool.webschool.TestDataSeeder"`
+  (메서드 단위는 `"com.webschool.webschool.TestDataSeeder.seedTestData"`처럼 이어붙임)
+- Gradle이 입력 변화 없으면 `UP-TO-DATE`로 스킵하고 실제로 재실행하지
+  않으므로, 강제로 다시 돌리려면 `--rerun` 플래그를 추가할 것.
+- 린트/포매터(checkstyle, spotless 등)는 설정되어 있지 않음.
+
+**개발용 테스트 데이터 시더** (`src/test/java/com/webschool/webschool/`, 일반
+테스트가 아니라 `@SpringBootTest`로 DB에 직접 데이터를 심는 실행용 클래스임)
+- `TestDataSeeder`: `user1`~`user5`(아이디=비밀번호) 계정 + 계정별 한마디
+  1개, `admin`/`admin`(`ROLE_ADMIN`) 계정, 카테고리별 게시글 3개씩 + 공지
+  1개 생성. 이미 있는 데이터는 건너뛰므로 여러 번 실행해도 안전(멱등).
+- `SuperAdminSeeder`: `username=admin` 계정을 `ROLE_SUPER_ADMIN`으로 승격
+  (`TestDataSeeder`로 admin 계정이 먼저 존재해야 함). 이미 총관리자면
+  아무 것도 하지 않음(멱등).
+
+## Architecture Highlights
+
+자세한 패키지별 구조는 아래 "4. 패키지/파일 구조", 핵심 동작 원리는
+"5. 핵심 동작 원리 메모"를 참고. 여기서는 여러 파일을 같이 봐야만 보이는
+큰 그림만 정리한다.
+
+- **패키지는 레이어가 아니라 기능 단위로 분리**(`user`/`school`/`post`
+  각각이 자기 controller/service/domain/dto/repository를 가짐). 최초
+  설계 문서(`파일구조도.txt`)는 `report`/`comment`를 별도 패키지로
+  뒀지만, 실제로는 게시글이라는 애그리거트에 강하게 종속돼 있다고 판단해
+  전부 `post` 패키지 안(`post.domain.PostComment`, `post.domain.PostReport`
+  등)에 넣었다.
+- **권한 체계 3단계**: `ROLE_USER` / `ROLE_ADMIN`(부관리자, `User`의
+  `canManageReports`/`canManagePosts`/`canManageScheduleComments` 플래그로
+  기능별 권한을 개별 On/Off) / `ROLE_SUPER_ADMIN`(총관리자, `username="admin"`
+  계정 전용 — 앱 안에 이 롤을 부여하는 UI/API가 없어 DB 직접 수정 또는
+  `SuperAdminSeeder`로만 승격 가능). `/admin/**` 하위 경로별 실제 접근
+  제어는 `global.security.AdminAccessInterceptor`가 담당하고,
+  `global.advice.GlobalModelAdvice`가 모든 화면에 `loginUser` 엔티티를
+  주입해 템플릿에서 권한 플래그를 바로 쓸 수 있게 한다.
+- **삭제는 전부 소프트 딜리트**: `Post`/`PostComment`/`ScheduleComment`/`User`
+  모두 물리 삭제 없이 `deleted`/`deletedAt` 플래그만 바꾼다(하드 삭제로 인한
+  FK 500 에러를 겪고 나서 통일된 패턴).
+- **신고→자동 블라인드 패턴이 3곳에 동일하게 반복 구현됨**: 게시글
+  (`PostReport`), 댓글(`CommentReport`), 한마디(`ScheduleCommentReport`) —
+  전부 "대상 id + 신고자 id" 유니크 제약으로 중복 신고 방지, 서로 다른
+  사용자 3명이 신고하면 대상의 `blind=true`, 관리자가 "문제없음" 처리하면
+  `reportCleared=true`(내용이 실제로 수정되면 자동 리셋). 새로운 신고
+  대상을 추가할 땐 이 세 구현을 그대로 복제하는 것이 이 코드베이스의
+  기존 관례다.
+- **Jackson 3 네임스페이스 주의**: Spring Boot 4.1부터 패키지가
+  `com.fasterxml.jackson.*`이 아니라 `tools.jackson.*`로 바뀌었다
+  (`school.service.NeisApiService`에서 확인 가능).
+- **NEIS Open API는 별도 클라이언트 라이브러리 없이 JDK 내장
+  `java.net.http.HttpClient`로 직접 호출**(`NeisApiService`). 시간표/급식은
+  DB 캐시(`Timetable`/`Meal`)를 먼저 조회하는 패턴이지만 TTL 만료 로직은
+  아직 없음(한번 캐시되면 영구 반환 — 8번 항목 백로그 참고).
+
+---
+
 # WebSchool 프로젝트 — Claude 작업 메모
 
 다음 세션의 Claude(나 자신)가 맥락을 다시 파악하지 않고 바로 이어서 코딩할

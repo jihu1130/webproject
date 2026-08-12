@@ -238,8 +238,12 @@ public class NeisApiService {
             return events;
         }
 
+        // pSize를 넉넉하게(1000) 잡음 - 일정명 키워드 필터링은 NEIS 응답을 받아온
+        // "뒤에" 자바 쪽에서 하기 때문에(서버가 EVENT_NM 부분일치 검색을 지원하지
+        // 않음), 조회 범위가 1년 전체처럼 넓어지면 100건으로는 원하는 일정이
+        // 아예 응답에 안 담겨 와서 필터링 이전에 이미 누락될 수 있다.
         String url = String.format(
-                "https://open.neis.go.kr/hub/SchoolSchedule?KEY=%s&Type=json&pSize=100&ATPT_OFCDC_SC_CODE=%s&SD_SCHUL_CODE=%s&AA_FROM_YMD=%s&AA_TO_YMD=%s",
+                "https://open.neis.go.kr/hub/SchoolSchedule?KEY=%s&Type=json&pSize=1000&ATPT_OFCDC_SC_CODE=%s&SD_SCHUL_CODE=%s&AA_FROM_YMD=%s&AA_TO_YMD=%s",
                 apiKey, atptCode, schoolCode, fromYmd, toYmd
         );
 
