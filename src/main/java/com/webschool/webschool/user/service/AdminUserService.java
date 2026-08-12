@@ -33,6 +33,7 @@ public class AdminUserService {
     private final PostRepository postRepository;
     private final PostCommentRepository postCommentRepository;
     private final NotificationService notificationService;
+    private final UserPenaltyService userPenaltyService;
 
     // keyword: 아이디/닉네임/학교명 검색 - 다른 관리자 목록(AdminPostService 등)과 동일하게 DB 쿼리가
     // 아니라 메모리에서 필터링한다(계정 수가 적을 걸 가정). **버그 수정**: user-list.html엔 검색창이
@@ -92,6 +93,7 @@ public class AdminUserService {
                 .postCount(postRepository.countByAuthor_IdAndDeletedFalse(id))
                 .commentCount(postCommentRepository.countByAuthor_IdAndDeletedFalse(id))
                 .recentPosts(recentPosts)
+                .penalties(userPenaltyService.getHistory(id))
                 .build();
     }
 

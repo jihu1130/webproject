@@ -17,6 +17,8 @@ import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
+import com.webschool.webschool.user.service.UserBlockService;
+import com.webschool.webschool.user.service.UserPenaltyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,8 @@ public class PostCommentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final UserPenaltyService userPenaltyService;
+    private final UserBlockService userBlockService;
 
     public List<PostCommentDto> getComments(Long postId, String currentUsername) {
         return postCommentRepository.findByPost_IdAndDeletedFalseOrderByCreatedAtAsc(postId)
@@ -62,6 +66,14 @@ public class PostCommentService {
         }
         User author = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+
+        userPenaltyService.assertCanComment(author);
+
+        // 차단은 익명 게시물에는 적용하지 않는다(작성자 식별 자체가 가려져 있어서 차단이라는
+        // 개념이 성립하지 않음 - UserBlockService 클래스 주석 참고)
+        if (post.getCategory() != Post.Category.ANONYMOUS) {
+            userBlockService.assertNotBlocked(author, post.getAuthor());
+        }
 
         PostComment comment = new PostComment();
         comment.setPost(post);

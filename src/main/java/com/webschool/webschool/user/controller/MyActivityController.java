@@ -7,6 +7,7 @@ import com.webschool.webschool.user.dto.MyCommentSummaryDto;
 import com.webschool.webschool.user.dto.MyPostSummaryDto;
 import com.webschool.webschool.user.dto.MyScheduleCommentSummaryDto;
 import com.webschool.webschool.user.service.MyActivityService;
+import com.webschool.webschool.user.service.UserBlockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
@@ -33,6 +34,7 @@ public class MyActivityController {
     private final PostService postService;
     private final PostCommentService postCommentService;
     private final ScheduleCommentService scheduleCommentService;
+    private final UserBlockService userBlockService;
 
     @GetMapping
     public String activity(@RequestParam(defaultValue = "posts") String tab,
@@ -75,6 +77,8 @@ public class MyActivityController {
                 model.addAttribute("likes", likes);
             }
             model.addAttribute("likeType", type);
+        } else if ("blocks".equals(tab)) {
+            model.addAttribute("blocks", userBlockService.getMyBlocks(username));
         } else {
             tab = "posts";
             Page<MyPostSummaryDto> posts = myActivityService.getMyPosts(username, page, keyword);

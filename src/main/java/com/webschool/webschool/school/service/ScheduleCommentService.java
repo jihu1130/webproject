@@ -14,6 +14,7 @@ import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.school.repository.SchoolRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
+import com.webschool.webschool.user.service.UserPenaltyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,7 @@ public class ScheduleCommentService {
     private final ScheduleCommentBookmarkRepository scheduleCommentBookmarkRepository;
     private final SchoolRepository schoolRepository;
     private final UserRepository userRepository;
+    private final UserPenaltyService userPenaltyService;
 
     public List<ScheduleCommentDto> getComments(String atptCode, String schoolCode, LocalDate date,
                                                  String grade, String classNm, String currentUsername) {
@@ -58,6 +60,8 @@ public class ScheduleCommentService {
         School school = findOrCreateSchool(atptCode, schoolCode);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+
+        userPenaltyService.assertCanComment(user);
 
         ScheduleComment comment = new ScheduleComment();
         comment.setSchool(school);

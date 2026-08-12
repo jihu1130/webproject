@@ -3,7 +3,9 @@ package com.webschool.webschool.user.controller;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.user.dto.AdminUserSummaryDto;
 import com.webschool.webschool.user.domain.User;
+import com.webschool.webschool.user.domain.UserPenalty;
 import com.webschool.webschool.user.service.AdminUserService;
+import com.webschool.webschool.user.service.UserPenaltyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
@@ -21,6 +23,7 @@ import java.util.List;
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
+    private final UserPenaltyService userPenaltyService;
 
     @GetMapping
     public String list(@RequestParam(required = false) String keyword,
@@ -110,6 +113,28 @@ public class AdminUserController {
     public String activate(@PathVariable Long id, @ModelAttribute ListState state) {
         adminUserService.activateUser(id);
         return state.redirect();
+    }
+
+    @PostMapping("/{id}/penalties")
+    public String issuePenalty(@PathVariable Long id,
+                                @RequestParam UserPenalty.Type type,
+                                @RequestParam String reason,
+                                @RequestParam(required = false) Integer durationDays,
+                                Authentication authentication) {
+        try {
+            userPenaltyService.issue(id, type, reason, durationDays, authentication.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        return "redirect:/admin/users/" + id + "/profile";
+    }
+
+    @PostMapping("/{id}/penalties/{penaltyId}/revoke")
+    public String revokePenalty(@PathVariable Long id, @PathVariable Long penaltyId) {
+        try {
+            userPenaltyService.revoke(penaltyId);
+        } catch (IllegalArgumentException ignored) {
+        }
+        return "redirect:/admin/users/" + id + "/profile";
     }
 
     // 액션(승격/해제/탈퇴/복구/비활성화/활성화) 처리 후 검색어/페이지를 유지한 채 목록으로 돌아가기

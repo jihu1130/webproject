@@ -31,6 +31,9 @@
                 <span><i class="fa-solid fa-user"></i>
                     <a th:if="${post.authorLinkable}" th:href="@{'/users/' + ${post.authorId}}" class="post-list-nickname" th:text="${post.nickname}">작성자</a>
                     <span th:unless="${post.authorLinkable}" th:text="${post.nickname}">작성자</span>
+                    <button type="button" id="postAuthorBlockBtn" class="post-author-block-btn"
+                            th:if="${post.authorLinkable and !post.mine}" th:data-author-id="${post.authorId}"
+                            sec:authorize="isAuthenticated()">차단</button>
                 </span>
                 <span><i class="fa-solid fa-clock"></i> <span id="postCreatedAt" th:text="${post.createdAt}">날짜</span></span>
                 <span th:if="${post.edited}" class="post-edited-badge">수정됨</span>

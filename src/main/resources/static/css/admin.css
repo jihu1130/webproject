@@ -348,3 +348,35 @@
     .admin-profile-grid { grid-template-columns: 1fr; }
     .admin-profile-stats { gap: 12px; }
 }
+
+/* 계정 제재 부여 폼 */
+.admin-penalty-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.admin-penalty-form select,
+.admin-penalty-form input[type="number"] {
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: 1.5px solid #dcdfef;
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+.admin-penalty-form textarea {
+    flex: 1 1 100%;
+    min-height: 60px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: 1.5px solid #dcdfef;
+    font-family: inherit;
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
+.admin-penalty-form select:focus,
+.admin-penalty-form input:focus,
+.admin-penalty-form textarea:focus { border-color: var(--brand-1); outline: none; }

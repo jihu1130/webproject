@@ -47,13 +47,15 @@ document.addEventListener('DOMContentLoaded', function () {
             var nicknameHtml = c.authorLinkable
                 ? '<a href="/users/' + c.authorId + '" class="post-comment-nickname">' + escapeHtml(c.nickname) + '</a>'
                 : '<span class="post-comment-nickname">' + escapeHtml(c.nickname) + '</span>';
+            var canBlock = !c.mine && isLoggedIn && !isAnonymousPost && c.authorLinkable;
             var actionsHtml = c.mine
                 ? '<button type="button" class="post-comment-edit-btn" title="수정"><i class="fa-solid fa-pen"></i></button>' +
                   '<button type="button" class="post-comment-delete-btn" title="삭제"><i class="fa-solid fa-xmark"></i></button>'
                 : (isLoggedIn
-                    ? (c.reportedByMe
+                    ? ((canBlock ? '<button type="button" class="post-comment-block-btn" title="차단"><i class="fa-solid fa-user-slash"></i></button>' : '') +
+                       (c.reportedByMe
                         ? '<button type="button" class="post-comment-report-btn" title="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
-                        : '<button type="button" class="post-comment-report-btn" title="신고"><i class="fa-solid fa-flag"></i></button>')
+                        : '<button type="button" class="post-comment-report-btn" title="신고"><i class="fa-solid fa-flag"></i></button>'))
                     : '');
             var likeBookmarkHtml = isLoggedIn
                 ? '<button type="button" class="post-comment-like-btn' + (c.likedByMe ? ' active' : '') + '" title="좋아요">' +
@@ -86,6 +88,11 @@ document.addEventListener('DOMContentLoaded', function () {
             var reportBtn = item.querySelector('.post-comment-report-btn');
             if (reportBtn) {
                 reportBtn.addEventListener('click', function () { reportComment(c.id, reportBtn); });
+            }
+
+            var blockBtn = item.querySelector('.post-comment-block-btn');
+            if (blockBtn) {
+                blockBtn.addEventListener('click', function () { blockUser(c.authorId, c.nickname); });
             }
 
             var likeBtn = item.querySelector('.post-comment-like-btn');
@@ -177,6 +184,47 @@ document.addEventListener('DOMContentLoaded', function () {
                     btn.disabled = true;
                 }
             });
+    }
+
+    // ---- 사용자 차단 ----
+    // 익명 게시물에는 차단 버튼 자체가 렌더링되지 않으므로(canBlock 계산 참고) 여기선 별도로
+    // isAnonymousPost를 다시 확인하지 않는다.
+    function blockUser(targetId, nickname) {
+        if (!confirm(nickname + '님을 차단하시겠어요? 이 사람은 회원님의 모든 게시글/댓글에 댓글을 달 수 없게 돼요.')) return;
+        var daysInput = prompt('차단 기간(일)을 입력하세요. 영구 차단은 비워두고 확인을 누르세요.', '');
+        if (daysInput === null) return;
+        var days = daysInput.trim() === '' ? '' : parseInt(daysInput, 10);
+
+        var body = 'targetId=' + encodeURIComponent(targetId);
+        if (days) body += '&durationDays=' + encodeURIComponent(days);
+
+        fetch('/users/blocks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body
+        })
+            .then(function (res) {
+                return res.json().then(function (b) {
+                    if (!res.ok) throw new Error(b.error || '차단 처리에 실패했습니다.');
+                    return b;
+                });
+            })
+            .then(function () {
+                alert(nickname + '님을 차단했습니다.');
+                loadComments();
+            })
+            .catch(function (err) {
+                alert(err.message || '차단 처리에 실패했습니다.');
+            });
+    }
+
+    var postAuthorBlockBtn = document.getElementById('postAuthorBlockBtn');
+    if (postAuthorBlockBtn) {
+        postAuthorBlockBtn.addEventListener('click', function () {
+            var targetId = postAuthorBlockBtn.getAttribute('data-author-id');
+            var nickname = document.querySelector('.post-detail-meta .post-list-nickname');
+            blockUser(targetId, nickname ? nickname.textContent : '작성자');
+        });
     }
 
     // ---- 댓글 좋아요/북마크 ----

@@ -17,6 +17,7 @@ import com.webschool.webschool.post.repository.PostReportRepository;
 import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
+import com.webschool.webschool.user.service.UserPenaltyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,6 +47,7 @@ public class PostService {
     private final PostBookmarkRepository postBookmarkRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final UserPenaltyService userPenaltyService;
 
     // pageSize: 사용자가 "페이지당 N개 보기"로 고를 수 있는 페이지 크기 (PageUtils.normalizeSize()로
     // 컨트롤러 단에서 이미 5~100 사이로 정규화된 값이 넘어온다).
@@ -117,6 +119,8 @@ public class PostService {
 
         User author = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+
+        userPenaltyService.assertCanCreatePost(author);
 
         // 공지사항(NOTICE)은 관리자만 작성 가능 - 폼에서 라디오 자체를 관리자에게만 보여주지만(post/form.html),
         // 요청을 조작해서 우회하는 경우를 막기 위해 서비스 단에서도 한 번 더 검증한다(AdminUserService와 동일 패턴)

@@ -29,9 +29,10 @@
             <a th:href="@{/mypage/activity(tab='schedule')}" class="post-category-tab" th:classappend="${tab == 'schedule'} ? ' active' : ''">오늘의 한마디</a>
             <a th:href="@{/mypage/activity(tab='likes')}" class="post-category-tab" th:classappend="${tab == 'likes'} ? ' active' : ''">좋아요</a>
             <a th:href="@{/mypage/activity(tab='bookmarks')}" class="post-category-tab" th:classappend="${tab == 'bookmarks'} ? ' active' : ''">북마크</a>
+            <a th:href="@{/mypage/activity(tab='blocks')}" class="post-category-tab" th:classappend="${tab == 'blocks'} ? ' active' : ''">차단 목록</a>
         </div>
 
-        <div class="list-toolbar">
+        <div class="list-toolbar" th:unless="${tab == 'blocks'}">
             <form th:action="@{/mypage/activity}" method="get" class="admin-search-form">
                 <input type="hidden" name="tab" th:value="${tab}">
                 <input type="hidden" name="type" th:if="${tab == 'bookmarks'}" th:value="${bookmarkType}">
@@ -319,6 +320,25 @@
                     </a>
                 </div>
             </div>
+        </div>
+
+        <!-- 차단 목록 탭 -->
+        <div th:if="${tab == 'blocks'}">
+            <div th:if="${#lists.isEmpty(blocks)}" class="admin-empty">차단한 사용자가 없어요.</div>
+
+            <ul class="post-list" th:unless="${#lists.isEmpty(blocks)}">
+                <li class="post-list-item" th:each="b : ${blocks}">
+                    <span class="post-list-title" th:text="${b.nickname}">닉네임</span>
+                    <span class="post-list-meta">
+                        <span th:text="${b.permanent} ? '영구 차단' : (${b.expiresAt} + '까지')">기간</span>
+                        <span class="post-list-date" th:text="${b.createdAt} + ' 차단'">차단일</span>
+                        <form th:action="@{'/users/blocks/' + ${b.id} + '/unblock'}" method="post" class="my-activity-delete-form"
+                              onsubmit="return confirm('차단을 해제할까요?');">
+                            <button type="submit" class="post-delete-btn">차단 해제</button>
+                        </form>
+                    </span>
+                </li>
+            </ul>
         </div>
 
         <div class="auth-footer" style="margin-top: 20px;"><a href="/mypage">마이페이지로 돌아가기</a></div>

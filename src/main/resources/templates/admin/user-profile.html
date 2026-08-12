@@ -72,6 +72,46 @@
             </div>
         </div>
 
+        <div class="admin-report-section" th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN' and profile.role != 'ROLE_SUPER_ADMIN'}"
+             style="margin-bottom: 20px;">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-gavel"></i> 제재 부여</h3>
+            <form th:action="@{'/admin/users/' + ${profile.id} + '/penalties'}" method="post" class="admin-penalty-form"
+                  onsubmit="return confirm('이 계정에 제재를 부여할까요?');">
+                <select name="type" required>
+                    <option value="WARNING">경고</option>
+                    <option value="POST_SUSPENSION">게시글 작성정지</option>
+                    <option value="COMMUNITY_SUSPENSION">커뮤니티 임시차단</option>
+                    <option value="DEACTIVATION">계정 비활성화</option>
+                </select>
+                <input type="number" name="durationDays" min="1" placeholder="기간(일) - 비우면 영구, 경고는 무시됨">
+                <textarea name="reason" maxlength="300" placeholder="제재 사유를 입력하세요" required></textarea>
+                <button type="submit" class="btn btn-outline-brand">제재 부여</button>
+            </form>
+        </div>
+
+        <div class="admin-report-section" th:if="${!#lists.isEmpty(profile.penalties)}" style="margin-bottom: 20px;">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-clock-rotate-left"></i> 제재 내역</h3>
+            <div class="admin-report-list">
+                <div class="admin-report-item" th:each="p : ${profile.penalties}">
+                    <div class="admin-report-item-header">
+                        <span class="admin-status-badge"
+                              th:classappend="${p.revoked} ? ' admin-status-cleared' : (${p.active} ? ' admin-status-blind' : ' admin-status-pending')"
+                              th:text="${p.typeLabel} + (${p.revoked} ? ' · 해제됨' : (${p.active} ? ' · 적용중' : ' · 만료'))">유형</span>
+                        <span class="post-comment-time" th:text="${p.issuedAt}">일시</span>
+                    </div>
+                    <div class="admin-report-reason" th:text="${p.reason}">사유</div>
+                    <div class="post-list-meta">
+                        <span th:text="${p.expiresAt != null ? (p.expiresAt + '까지') : '영구'}">기간</span>
+                        <span th:text="'부여: ' + ${p.issuedByNickname}">관리자</span>
+                        <form th:if="${p.active}" th:action="@{'/admin/users/' + ${profile.id} + '/penalties/' + ${p.id} + '/revoke'}"
+                              method="post" style="display:inline" onsubmit="return confirm('제재를 조기 해제할까요?');">
+                            <button type="submit" class="post-delete-btn">조기 해제</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="admin-report-section">
             <h3 class="post-comment-heading"><i class="fa-solid fa-file-lines"></i> 최근 작성 게시글</h3>
 
