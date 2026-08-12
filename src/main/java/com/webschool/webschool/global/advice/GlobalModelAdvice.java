@@ -1,7 +1,7 @@
 package com.webschool.webschool.global.advice;
 
 import com.webschool.webschool.notification.service.NotificationService;
-import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

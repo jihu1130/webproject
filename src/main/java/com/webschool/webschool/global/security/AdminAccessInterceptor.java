@@ -1,6 +1,6 @@
 package com.webschool.webschool.global.security;
 
-import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

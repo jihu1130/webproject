@@ -8,7 +8,7 @@ import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.user.dto.AdminUserProfileDto;
 import com.webschool.webschool.user.dto.AdminUserProfilePostDto;
 import com.webschool.webschool.user.dto.AdminUserSummaryDto;
-import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

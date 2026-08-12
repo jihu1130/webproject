@@ -2,7 +2,7 @@ package com.webschool.webschool.user.controller;
 
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.user.dto.AdminUserSummaryDto;
-import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.service.AdminUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

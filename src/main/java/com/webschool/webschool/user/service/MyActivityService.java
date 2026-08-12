@@ -14,7 +14,7 @@ import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.dto.MyCommentSummaryDto;
 import com.webschool.webschool.user.dto.MyPostSummaryDto;
 import com.webschool.webschool.user.dto.MyScheduleCommentSummaryDto;
-import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

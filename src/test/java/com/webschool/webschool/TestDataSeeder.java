@@ -7,7 +7,7 @@ import com.webschool.webschool.post.service.PostService;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.user.dto.RegisterDto;
-import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserService;
 import org.junit.jupiter.api.Test;

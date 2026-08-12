@@ -1,4 +1,4 @@
-package com.webschool.webschool.user.entity;
+package com.webschool.webschool.user.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;

@@ -15,7 +15,7 @@ import com.webschool.webschool.post.repository.PostLikeRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.post.repository.PostReportRepository;
 import com.webschool.webschool.post.util.BannedWordFilter;
-import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

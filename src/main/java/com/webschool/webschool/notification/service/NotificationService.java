@@ -3,7 +3,7 @@ package com.webschool.webschool.notification.service;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.dto.NotificationDto;
 import com.webschool.webschool.notification.repository.NotificationRepository;
-import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

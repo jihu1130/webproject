@@ -1,6 +1,6 @@
 package com.webschool.webschool.school.domain;
 
-import com.webschool.webschool.user.entity.User;
+import com.webschool.webschool.user.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
