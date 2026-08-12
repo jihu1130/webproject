@@ -72,6 +72,53 @@
     .page-heading h1 { font-size: 1.15rem; }
 }
 
+/* 방학 D-Day 배지 - 학교 선택 시 page-heading 오른쪽에 표시. 방학 중(D+N)은 따뜻한
+   앰버 톤, 방학 전 카운트다운(D-N)은 브랜드 인디고 톤으로 구분한다 */
+.vacation-dday-badge {
+    flex-shrink: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 14px;
+    background: white;
+    border: 1.5px solid #fde68a;
+    box-shadow: 0 4px 14px rgba(180, 83, 9, 0.12);
+}
+
+.vacation-dday-badge-icon { font-size: 1.3rem; }
+
+.vacation-dday-badge-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.vacation-dday-badge-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.vacation-dday-badge-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #b45309;
+}
+
+.vacation-dday-badge--upcoming {
+    border-color: #c7d2fe;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.1);
+}
+
+.vacation-dday-badge--upcoming .vacation-dday-badge-value { color: var(--brand-1); }
+
+@media (max-width: 720px) {
+    .page-heading { flex-wrap: wrap; }
+    .vacation-dday-badge { margin-left: 0; width: 100%; justify-content: center; }
+}
+
 /* 컨트롤 바: 학교 검색 + 학년/반 */
 .cal-controls-bar {
     display: flex;

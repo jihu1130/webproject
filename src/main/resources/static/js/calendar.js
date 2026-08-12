@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initQuicknav();
     updateTitle();
     loadMonthEvents(); // 로그인 사용자의 저장된 학교(있다면)가 반영된 뒤에 조회해야 정확함
+    loadVacationDday();
     handleDayClick(selectedDateStr); // 페이지를 열자마자 오늘 날짜를 클릭한 것처럼 상세 패널을 바로 연다
 
     document.getElementById('dayDetailClose').addEventListener('click', closePanel);
@@ -138,6 +139,47 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(function () {
                 // 부가 표시 기능이라 실패해도 조용히 무시 - 날짜 클릭 시 상세 조회는 별개로 동작함
+            });
+    }
+
+    // 방학 D-Day 배지 - 학교가 선택돼 있을 때만 조회한다(선택 안 됐으면 배지 숨김).
+    // 서버가 없음(404)을 주면(방학 정보를 못 찾음) 배지를 숨긴다.
+    function loadVacationDday() {
+        var badge = document.getElementById('vacationDdayBadge');
+        if (!badge) return;
+
+        if (!selectedSchool) {
+            badge.style.display = 'none';
+            return;
+        }
+
+        var params = new URLSearchParams({
+            atptCode: selectedSchool.officeCode,
+            schoolCode: selectedSchool.schoolCode
+        });
+
+        fetch(`/school/api/vacation-dday?${params.toString()}`)
+            .then(function (res) { return res.status === 404 ? null : res.json(); })
+            .then(function (dday) {
+                if (!dday) {
+                    badge.style.display = 'none';
+                    return;
+                }
+
+                badge.className = 'vacation-dday-badge' + (dday.inVacation ? '' : ' vacation-dday-badge--upcoming');
+                var valueText = `${dday.label}까지 D-${dday.dday}`;
+
+                badge.innerHTML = `
+                    <span class="vacation-dday-badge-icon">${dday.inVacation ? '🏖️' : '📅'}</span>
+                    <span class="vacation-dday-badge-text">
+                        <span class="vacation-dday-badge-label">${dday.inVacation ? '방학 중' : '다가오는 방학'}</span>
+                        <span class="vacation-dday-badge-value">${escapeHtml(valueText)}</span>
+                    </span>
+                `;
+                badge.style.display = 'flex';
+            })
+            .catch(function () {
+                badge.style.display = 'none';
             });
     }
 
@@ -549,6 +591,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 updateTitle();
                 refreshClassOptions();
                 loadMonthEvents();
+                loadVacationDday();
             },
             onClear: function () {
                 selectedSchool = null;
@@ -558,6 +601,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 fillClassSelect(classSelect, '반 선택', fallbackClassList());
                 updateTitle();
                 loadMonthEvents();
+                loadVacationDday();
             }
         });
     }

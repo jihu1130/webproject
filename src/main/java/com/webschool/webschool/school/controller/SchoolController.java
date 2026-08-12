@@ -6,6 +6,7 @@ import com.webschool.webschool.school.dto.ScheduleCommentReportResultDto;
 import com.webschool.webschool.school.dto.SchoolCalendarDto;
 import com.webschool.webschool.school.dto.SchoolSearchResultDto;
 import com.webschool.webschool.school.dto.TimetableDto;
+import com.webschool.webschool.school.dto.VacationDdayDto;
 import com.webschool.webschool.school.service.NeisApiService;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.school.service.SchoolService;
@@ -111,6 +112,18 @@ public class SchoolController {
 
         CalendarEventDto nearest = schoolService.findNearestEvent(atptCode, schoolCode, keyword);
         return nearest != null ? ResponseEntity.ok(nearest) : ResponseEntity.notFound().build();
+    }
+
+    // 4-3. 방학 D-Day - 오늘이 방학 중이면 며칠째인지(D+N), 아니면 다가올 방학(식)까지
+    // 며칠 남았는지(D-N). 캘린더 페이지에서 학교 선택 시 배지로 보여준다. 못 찾으면 404.
+    @GetMapping("/api/vacation-dday")
+    @ResponseBody
+    public ResponseEntity<VacationDdayDto> getVacationDdayApi(
+            @RequestParam(defaultValue = "N10") String atptCode,
+            @RequestParam(defaultValue = "8181104") String schoolCode) {
+
+        VacationDdayDto dday = schoolService.getVacationDday(atptCode, schoolCode);
+        return dday != null ? ResponseEntity.ok(dday) : ResponseEntity.notFound().build();
     }
 
     // 5. 날짜별 한마디 댓글 조회 (같은 학년·같은 반끼리만 공유)
