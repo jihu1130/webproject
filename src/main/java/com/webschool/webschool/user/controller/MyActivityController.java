@@ -63,8 +63,18 @@ public class MyActivityController {
             }
             model.addAttribute("bookmarkType", type);
         } else if ("likes".equals(tab)) {
-            Page<MyPostSummaryDto> likes = myActivityService.getLikedPosts(username, page, keyword);
-            model.addAttribute("likes", likes);
+            // bookmarks 탭과 동일한 서브탭 구조(게시글/한마디) - 좋아요한 한마디를 볼 방법이 없다는
+            // 버그 리포트로 추가됨.
+            boolean scheduleType = "schedule".equals(type);
+            if (scheduleType) {
+                Page<MyScheduleCommentSummaryDto> scheduleLikes = myActivityService.getLikedScheduleComments(username, page, keyword);
+                model.addAttribute("scheduleLikes", scheduleLikes);
+            } else {
+                type = "post";
+                Page<MyPostSummaryDto> likes = myActivityService.getLikedPosts(username, page, keyword);
+                model.addAttribute("likes", likes);
+            }
+            model.addAttribute("likeType", type);
         } else {
             tab = "posts";
             Page<MyPostSummaryDto> posts = myActivityService.getMyPosts(username, page, keyword);
@@ -140,7 +150,18 @@ public class MyActivityController {
             postService.removeLike(postService.resolveIdByUuid(uuid), authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
-        return redirect("likes", null, keyword, page);
+        return redirect("likes", "post", keyword, page);
+    }
+
+    @PostMapping("/likes/schedule/{id}/remove")
+    public String removeScheduleLike(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                                      @RequestParam(required = false) String keyword,
+                                      Authentication authentication) {
+        try {
+            scheduleCommentService.removeLike(id, authentication.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        return redirect("likes", "schedule", keyword, page);
     }
 
     private String redirect(String tab, String type, String keyword, int page) {

@@ -213,6 +213,20 @@ public class ScheduleCommentService {
                 .ifPresent(scheduleCommentBookmarkRepository::delete);
     }
 
+    // 마이페이지 "좋아요" 탭(한마디)의 "취소" 버튼 전용 - PostService.removeLike()와 동일한 이유로
+    // 토글이 아닌 항상 "제거"만 하는 멱등 동작으로 분리.
+    @Transactional
+    public void removeLike(Long id, String username) {
+        ScheduleComment comment = scheduleCommentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        scheduleCommentLikeRepository.findByComment_IdAndUser_Id(id, user.getId()).ifPresent(like -> {
+            scheduleCommentLikeRepository.delete(like);
+            comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+        });
+    }
+
     private boolean isAdmin(String username) {
         if (username == null) {
             return false;

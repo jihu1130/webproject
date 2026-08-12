@@ -78,7 +78,7 @@ public class Post {
     }
 
     public enum Category {
-        FREE("자유"), ANONYMOUS("익명"), QNA("질의응답");
+        FREE("자유"), ANONYMOUS("익명"), QNA("질의응답"), NOTICE("공지");
 
         private final String label;
 

@@ -49,6 +49,13 @@ public class PostController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("scope", scope == null ? "" : scope);
         model.addAttribute("sort", sort == null ? "" : sort);
+
+        // 공지사항 상단 고정 노출은 "전체" 탭 첫 페이지, 검색어 없을 때만 보여준다 - 특정 카테고리를
+        // 고른 화면이나 검색 결과, 2페이지 이후까지 매번 끼워 넣으면 오히려 어색하다.
+        if (categoryFilter == null && (keyword == null || keyword.isBlank()) && page == 0) {
+            model.addAttribute("pinnedNotices", postService.getPinnedNotices());
+        }
+
         return "post/list";
     }
 

@@ -8,6 +8,8 @@ import com.webschool.webschool.post.dto.PostDetailDto;
 import com.webschool.webschool.post.dto.PostFormDto;
 import com.webschool.webschool.post.dto.PostListItemDto;
 import com.webschool.webschool.post.dto.PostReportResultDto;
+import com.webschool.webschool.notification.domain.Notification;
+import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.repository.PostBookmarkRepository;
 import com.webschool.webschool.post.repository.PostLikeRepository;
 import com.webschool.webschool.post.repository.PostRepository;
@@ -25,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +45,7 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final PostBookmarkRepository postBookmarkRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     // pageSize: 사용자가 "페이지당 N개 보기"로 고를 수 있는 페이지 크기 (PageUtils.normalizeSize()로
     // 컨트롤러 단에서 이미 5~100 사이로 정규화된 값이 넘어온다).
@@ -62,6 +67,14 @@ public class PostService {
             return Sort.by(Sort.Direction.DESC, "viewCount").and(Sort.by(Sort.Direction.DESC, "createdAt"));
         }
         return Sort.by(Sort.Direction.DESC, "createdAt");
+    }
+
+    // 커뮤니티 목록 상단 고정 노출용 공지사항 (전체 카테고리 + 검색어 없음 + 첫 페이지에서만 PostController가 호출)
+    public List<PostListItemDto> getPinnedNotices() {
+        return postRepository.findTop5ByCategoryAndDeletedFalseAndBlindFalseOrderByCreatedAtDesc(Post.Category.NOTICE)
+                .stream()
+                .map(this::toListItemDto)
+                .collect(Collectors.toList());
     }
 
     // 공개 URL(/posts/{uuid})을 내부 PK로 변환 - 컨트롤러가 요청을 받자마자 제일 먼저 호출한다
@@ -105,13 +118,26 @@ public class PostService {
         User author = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
 
+        // 공지사항(NOTICE)은 관리자만 작성 가능 - 폼에서 라디오 자체를 관리자에게만 보여주지만(post/form.html),
+        // 요청을 조작해서 우회하는 경우를 막기 위해 서비스 단에서도 한 번 더 검증한다(AdminUserService와 동일 패턴)
+        if (category == Post.Category.NOTICE && !author.isAdmin()) {
+            throw new IllegalArgumentException("공지사항은 관리자만 작성할 수 있습니다.");
+        }
+
         Post post = new Post();
         post.setTitle(title);
         post.setContent(content);
         post.setCategory(category);
         post.setAuthor(author);
 
-        return postRepository.save(post).getUuid();
+        String uuid = postRepository.save(post).getUuid();
+
+        if (category == Post.Category.NOTICE) {
+            notificationService.broadcastAnnouncement(
+                    "[공지] " + title, "/posts/" + uuid, username);
+        }
+
+        return uuid;
     }
 
     public PostFormDto getForEdit(Long id, String username) {
@@ -148,6 +174,10 @@ public class PostService {
 
         if (!post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물만 수정할 수 있습니다.");
+        }
+
+        if (category == Post.Category.NOTICE && !post.getAuthor().isAdmin()) {
+            throw new IllegalArgumentException("공지사항은 관리자만 작성할 수 있습니다.");
         }
 
         boolean changed = !title.equals(post.getTitle()) || !content.equals(post.getContent())
@@ -214,9 +244,13 @@ public class PostService {
         report.setReason(trimmedReason);
         postReportRepository.save(report);
 
+        boolean wasBlind = post.isBlind();
         post.setReportCount(post.getReportCount() + 1);
-        if (post.getReportCount() >= BLIND_THRESHOLD) {
+        if (!wasBlind && post.getReportCount() >= BLIND_THRESHOLD) {
             post.setBlind(true);
+            notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
+                    "'" + truncate(post.getTitle()) + "' 글이 신고 누적으로 블라인드 처리되었습니다.",
+                    "/posts/" + post.getUuid());
         }
 
         return new PostReportResultDto(post.getReportCount(), post.isBlind());
@@ -245,6 +279,9 @@ public class PostService {
             postLikeRepository.save(like);
             post.setLikeCount(post.getLikeCount() + 1);
             liked = true;
+            notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.LIKE,
+                    user.getNickname() + "님이 회원님의 글 '" + truncate(post.getTitle()) + "'을(를) 좋아합니다.",
+                    "/posts/" + post.getUuid());
         }
         return Map.of("liked", liked, "likeCount", post.getLikeCount());
     }
@@ -295,13 +332,22 @@ public class PostService {
         });
     }
 
+    // **버그 수정**: 예전엔 ROLE_ADMIN(부관리자)만 확인해서 총관리자(ROLE_SUPER_ADMIN)가 블라인드된
+    // 글을 일반 커뮤니티 화면(/posts/{uuid})에서 못 보고 관리자 페이지를 거쳐야 하는 문제가 있었다.
+    // User.isAdmin()은 두 역할을 모두 포함하므로 그대로 위임한다.
     private boolean isAdmin(String username) {
         if (username == null) {
             return false;
         }
         return userRepository.findByUsername(username)
-                .map(u -> u.getRole() == User.Role.ROLE_ADMIN)
+                .map(User::isAdmin)
                 .orElse(false);
+    }
+
+    // 알림 메시지에 제목을 넣을 때 너무 길어지지 않도록 자르는 용도 (Notification.message는 200자 제한)
+    private String truncate(String text) {
+        int limit = 40;
+        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     private Post.Category parseCategory(String value) {

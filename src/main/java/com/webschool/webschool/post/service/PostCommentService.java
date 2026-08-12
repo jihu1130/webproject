@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.notification.domain.Notification;
+import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.CommentBookmark;
 import com.webschool.webschool.post.domain.CommentLike;
 import com.webschool.webschool.post.domain.CommentReport;
@@ -40,6 +42,7 @@ public class PostCommentService {
     private final CommentBookmarkRepository commentBookmarkRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public List<PostCommentDto> getComments(Long postId, String currentUsername) {
         return postCommentRepository.findByPost_IdAndDeletedFalseOrderByCreatedAtAsc(postId)
@@ -66,6 +69,12 @@ public class PostCommentService {
         comment.setContent(trimmed);
 
         postCommentRepository.save(comment);
+
+        String label = post.getCategory() == Post.Category.ANONYMOUS ? "답변" : "댓글";
+        notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.COMMENT,
+                author.getNickname() + "님이 회원님의 글에 " + label + "을 남겼어요: " + truncate(post.getTitle()),
+                "/posts/" + post.getUuid());
+
         return toDto(comment, username);
     }
 
@@ -147,9 +156,13 @@ public class PostCommentService {
         report.setReason(trimmedReason);
         commentReportRepository.save(report);
 
+        boolean wasBlind = comment.isBlind();
         comment.setReportCount(comment.getReportCount() + 1);
-        if (comment.getReportCount() >= BLIND_THRESHOLD) {
+        if (!wasBlind && comment.getReportCount() >= BLIND_THRESHOLD) {
             comment.setBlind(true);
+            notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
+                    "작성하신 댓글이 신고 누적으로 블라인드 처리되었습니다.",
+                    "/posts/" + comment.getPost().getUuid());
         }
 
         return new CommentReportResultDto(comment.getReportCount(), comment.isBlind());
@@ -176,6 +189,9 @@ public class PostCommentService {
             commentLikeRepository.save(like);
             comment.setLikeCount(comment.getLikeCount() + 1);
             liked = true;
+            notificationService.notifyIfNotSelf(comment.getAuthor(), username, Notification.Type.LIKE,
+                    user.getNickname() + "님이 회원님의 댓글을 좋아합니다.",
+                    "/posts/" + comment.getPost().getUuid());
         }
         return Map.of("liked", liked, "likeCount", comment.getLikeCount());
     }
@@ -199,13 +215,19 @@ public class PostCommentService {
         return true;
     }
 
+    // PostService.isAdmin()과 동일한 버그 수정 - 총관리자도 블라인드된 댓글 원본을 볼 수 있어야 한다
     private boolean isAdmin(String username) {
         if (username == null) {
             return false;
         }
         return userRepository.findByUsername(username)
-                .map(u -> u.getRole() == User.Role.ROLE_ADMIN)
+                .map(User::isAdmin)
                 .orElse(false);
+    }
+
+    private String truncate(String text) {
+        int limit = 40;
+        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     private String validateContent(String content) {

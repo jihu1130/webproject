@@ -35,6 +35,7 @@
             <form th:action="@{/mypage/activity}" method="get" class="admin-search-form">
                 <input type="hidden" name="tab" th:value="${tab}">
                 <input type="hidden" name="type" th:if="${tab == 'bookmarks'}" th:value="${bookmarkType}">
+            <input type="hidden" name="type" th:if="${tab == 'likes'}" th:value="${likeType}">
                 <input type="text" name="keyword" placeholder="내용 검색" th:value="${keyword}">
                 <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
@@ -156,38 +157,84 @@
 
         <!-- 좋아요 탭 -->
         <div th:if="${tab == 'likes'}">
-            <div th:if="${likes.empty}" class="admin-empty">좋아요한 게시글이 없어요.</div>
+            <div class="post-category-tabs my-activity-subtabs">
+                <a th:href="@{/mypage/activity(tab='likes', type='post')}" class="post-category-tab" th:classappend="${likeType == 'post'} ? ' active' : ''">게시글</a>
+                <a th:href="@{/mypage/activity(tab='likes', type='schedule')}" class="post-category-tab" th:classappend="${likeType == 'schedule'} ? ' active' : ''">오늘의 한마디</a>
+            </div>
 
-            <ul class="post-list" th:unless="${likes.empty}">
-                <li class="post-list-item" th:each="post : ${likes}">
-                    <a th:href="@{'/posts/' + ${post.uuid}}" class="post-list-link">
-                        <span class="post-category-badge" th:text="${post.categoryLabel}">자유</span>
-                        <span class="post-list-title" th:text="${post.title}">제목</span>
+            <!-- 좋아요한 게시글 -->
+            <div th:if="${likeType == 'post'}">
+                <div th:if="${likes.empty}" class="admin-empty">좋아요한 게시글이 없어요.</div>
+
+                <ul class="post-list" th:unless="${likes.empty}">
+                    <li class="post-list-item" th:each="post : ${likes}">
+                        <a th:href="@{'/posts/' + ${post.uuid}}" class="post-list-link">
+                            <span class="post-category-badge" th:text="${post.categoryLabel}">자유</span>
+                            <span class="post-list-title" th:text="${post.title}">제목</span>
+                        </a>
+                        <span class="post-list-meta">
+                            <span class="post-list-date" th:text="${post.createdAt}">날짜</span>
+                            <span class="post-list-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>
+                            <form th:action="@{'/mypage/activity/likes/' + ${post.uuid} + '/remove'}" method="post" class="my-activity-delete-form"
+                                  onsubmit="return confirm('좋아요를 취소할까요?');">
+                                <input type="hidden" name="page" th:value="${likes.number}">
+                                <input type="hidden" name="keyword" th:value="${keyword}">
+                                <button type="submit" class="post-delete-btn">좋아요 취소</button>
+                            </form>
+                        </span>
+                    </li>
+                </ul>
+
+                <div class="post-pagination" th:if="${likes.totalPages > 1}">
+                    <a th:if="${likes.hasPrevious()}" th:href="@{/mypage/activity(tab='likes', type='post', page=${likes.number - 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-left"></i>
                     </a>
-                    <span class="post-list-meta">
-                        <span class="post-list-date" th:text="${post.createdAt}">날짜</span>
-                        <span class="post-list-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>
-                        <form th:action="@{'/mypage/activity/likes/' + ${post.uuid} + '/remove'}" method="post" class="my-activity-delete-form"
-                              onsubmit="return confirm('좋아요를 취소할까요?');">
-                            <input type="hidden" name="page" th:value="${likes.number}">
-                            <input type="hidden" name="keyword" th:value="${keyword}">
-                            <button type="submit" class="post-delete-btn">좋아요 취소</button>
-                        </form>
-                    </span>
-                </li>
-            </ul>
+                    <a th:each="i : ${#numbers.sequence(0, likes.totalPages - 1)}"
+                       th:href="@{/mypage/activity(tab='likes', type='post', page=${i}, keyword=${keyword})}" th:text="${i + 1}"
+                       th:classappend="${i == likes.number} ? ' active' : ''"
+                       class="post-page-link"></a>
+                    <a th:if="${likes.hasNext()}" th:href="@{/mypage/activity(tab='likes', type='post', page=${likes.number + 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
 
-            <div class="post-pagination" th:if="${likes.totalPages > 1}">
-                <a th:if="${likes.hasPrevious()}" th:href="@{/mypage/activity(tab='likes', page=${likes.number - 1}, keyword=${keyword})}" class="post-page-link">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </a>
-                <a th:each="i : ${#numbers.sequence(0, likes.totalPages - 1)}"
-                   th:href="@{/mypage/activity(tab='likes', page=${i}, keyword=${keyword})}" th:text="${i + 1}"
-                   th:classappend="${i == likes.number} ? ' active' : ''"
-                   class="post-page-link"></a>
-                <a th:if="${likes.hasNext()}" th:href="@{/mypage/activity(tab='likes', page=${likes.number + 1}, keyword=${keyword})}" class="post-page-link">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </a>
+            <!-- 좋아요한 오늘의 한마디 -->
+            <div th:if="${likeType == 'schedule'}">
+                <div th:if="${scheduleLikes.empty}" class="admin-empty">좋아요한 한마디가 없어요.</div>
+
+                <ul class="post-list" th:unless="${scheduleLikes.empty}">
+                    <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleLikes}">
+                        <div class="my-activity-comment-body">
+                            <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
+                            <span th:text="${comment.content}">한마디 내용</span>
+                        </div>
+                        <span class="post-list-meta">
+                            <span class="post-list-title"
+                                  th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</span>
+                            <span class="post-list-date" th:text="${comment.createdAt}">작성일</span>
+                            <form th:action="@{'/mypage/activity/likes/schedule/' + ${comment.id} + '/remove'}" method="post" class="my-activity-delete-form"
+                                  onsubmit="return confirm('좋아요를 취소할까요?');">
+                                <input type="hidden" name="page" th:value="${scheduleLikes.number}">
+                                <input type="hidden" name="keyword" th:value="${keyword}">
+                                <button type="submit" class="post-delete-btn">좋아요 취소</button>
+                            </form>
+                        </span>
+                    </li>
+                </ul>
+
+                <div class="post-pagination" th:if="${scheduleLikes.totalPages > 1}">
+                    <a th:if="${scheduleLikes.hasPrevious()}" th:href="@{/mypage/activity(tab='likes', type='schedule', page=${scheduleLikes.number - 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                    <a th:each="i : ${#numbers.sequence(0, scheduleLikes.totalPages - 1)}"
+                       th:href="@{/mypage/activity(tab='likes', type='schedule', page=${i}, keyword=${keyword})}" th:text="${i + 1}"
+                       th:classappend="${i == scheduleLikes.number} ? ' active' : ''"
+                       class="post-page-link"></a>
+                    <a th:if="${scheduleLikes.hasNext()}" th:href="@{/mypage/activity(tab='likes', type='schedule', page=${scheduleLikes.number + 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
             </div>
         </div>
 

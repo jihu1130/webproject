@@ -37,6 +37,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 관리자용: 삭제되지 않은 전체 글 목록(신고 여부 무관) - "전체 게시글" 탭
     List<Post> findAllByDeletedFalseOrderByCreatedAtDesc();
 
+    // 커뮤니티 목록 상단 고정 노출용 - 블라인드되지 않은 최신 공지사항 몇 개만 (전체 카테고리/키워드 없음 첫 페이지에서만 보여줌, PostController 참고)
+    List<Post> findTop5ByCategoryAndDeletedFalseAndBlindFalseOrderByCreatedAtDesc(Post.Category category);
+
     // 관리자용: 계정 프로필 화면 - 작성 글 수 / 최근 작성 글 미리보기
     long countByAuthor_IdAndDeletedFalse(Long authorId);
 

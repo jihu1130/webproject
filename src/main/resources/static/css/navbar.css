@@ -102,6 +102,43 @@
     color: #fff;
 }
 
+.site-nav-bell {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1rem;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.site-nav-bell:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.site-nav-bell-badge {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--danger, #e11d48);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+}
+
+.site-nav-bell-badge.is-hidden { display: none; }
+
 .site-nav-greeting {
     color: #fff;
     font-weight: 600;

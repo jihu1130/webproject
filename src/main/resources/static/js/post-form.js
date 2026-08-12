@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', function () {
             hint: '',
             guide: '질문 요약 / 상세 내용을 함께 적어주시면 답변받기 더 쉬워요.',
             placeholder: '무엇이 궁금한가요?'
+        },
+        NOTICE: {
+            hint: '작성하면 커뮤니티 목록 상단에 고정되고, 전체 회원에게 알림이 발송됩니다.',
+            guide: '',
+            placeholder: '공지 제목을 입력하세요'
         }
     };
 

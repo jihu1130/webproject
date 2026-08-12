@@ -9,6 +9,7 @@ import com.webschool.webschool.post.repository.PostLikeRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.school.domain.ScheduleComment;
 import com.webschool.webschool.school.repository.ScheduleCommentBookmarkRepository;
+import com.webschool.webschool.school.repository.ScheduleCommentLikeRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.dto.MyCommentSummaryDto;
 import com.webschool.webschool.user.dto.MyPostSummaryDto;
@@ -43,6 +44,7 @@ public class MyActivityService {
     private final PostBookmarkRepository postBookmarkRepository;
     private final PostLikeRepository postLikeRepository;
     private final ScheduleCommentBookmarkRepository scheduleCommentBookmarkRepository;
+    private final ScheduleCommentLikeRepository scheduleCommentLikeRepository;
 
     public Page<MyPostSummaryDto> getMyPosts(String username, int page, String keyword) {
         Long userId = resolveUserId(username);
@@ -102,8 +104,7 @@ public class MyActivityService {
         return PageUtils.paginate(filtered, page, PAGE_SIZE);
     }
 
-    // 마이페이지 "좋아요" 탭 - getBookmarkedPosts()와 동일한 패턴, 좋아요한 게시글만 대상(댓글/한마디
-    // 좋아요는 북마크와 마찬가지로 이 라운드에서는 목록 화면을 만들지 않음).
+    // 마이페이지 "좋아요" 탭(게시글 서브탭) - getBookmarkedPosts()와 동일한 패턴, 좋아요한 게시글만 대상.
     public Page<MyPostSummaryDto> getLikedPosts(String username, int page, String keyword) {
         Long userId = resolveUserId(username);
         List<MyPostSummaryDto> filtered = postLikeRepository.findByUser_IdOrderByCreatedAtDesc(userId)
@@ -111,6 +112,20 @@ public class MyActivityService {
                 .map(like -> like.getPost())
                 .filter(p -> matches(keyword, p.getTitle(), p.getContent()))
                 .map(this::toPostDto)
+                .collect(Collectors.toList());
+        return PageUtils.paginate(filtered, page, PAGE_SIZE);
+    }
+
+    // 마이페이지 "좋아요" 탭(한마디 서브탭) - getBookmarkedScheduleComments()와 동일한 패턴, 좋아요한
+    // 오늘의 한마디 대상. **버그 수정**: 예전엔 이 목록 화면 자체가 없어서 한마디를 좋아요해도 마이페이지
+    // 활동내역 "좋아요" 탭에는 게시글만 보이고 한마디는 어디서도 확인할 수 없었다.
+    public Page<MyScheduleCommentSummaryDto> getLikedScheduleComments(String username, int page, String keyword) {
+        Long userId = resolveUserId(username);
+        List<MyScheduleCommentSummaryDto> filtered = scheduleCommentLikeRepository.findByUser_IdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(like -> like.getComment())
+                .filter(c -> matches(keyword, c.getContent()))
+                .map(this::toScheduleCommentDto)
                 .collect(Collectors.toList());
         return PageUtils.paginate(filtered, page, PAGE_SIZE);
     }

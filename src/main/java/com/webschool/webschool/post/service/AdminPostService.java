@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.notification.domain.Notification;
+import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostComment;
 import com.webschool.webschool.post.domain.PostReport;
@@ -31,6 +33,7 @@ public class AdminPostService {
     private final PostReportRepository postReportRepository;
     private final PostCommentRepository postCommentRepository;
     private final PostImageService postImageService;
+    private final NotificationService notificationService;
 
     public List<AdminPostSummaryDto> getReportedPosts(String keyword) {
         return postRepository.findReportedOrBlindPosts().stream()
@@ -138,6 +141,13 @@ public class AdminPostService {
         if (blind) {
             // 다시 블라인드 처리한다는 건 "문제없음" 판결을 뒤집는 것과 같다
             post.setReportCleared(false);
+            notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
+                    "'" + truncate(post.getTitle()) + "' 글이 관리자에 의해 블라인드 처리되었습니다.",
+                    "/posts/" + post.getUuid());
+        } else {
+            notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
+                    "'" + truncate(post.getTitle()) + "' 글의 블라인드 처리가 해제되었습니다.",
+                    "/posts/" + post.getUuid());
         }
     }
 
@@ -149,6 +159,9 @@ public class AdminPostService {
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
         post.setReportCleared(true);
         post.setBlind(false);
+        notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
+                "'" + truncate(post.getTitle()) + "' 글이 검토 결과 문제없음으로 처리되었습니다.",
+                "/posts/" + post.getUuid());
     }
 
     // "문제없음" 판결 철회 - 잘못 눌렀거나 재검토가 필요할 때 되돌리는 용도. reportCount는 그대로
@@ -167,6 +180,9 @@ public class AdminPostService {
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
         comment.setReportCleared(true);
         comment.setBlind(false);
+        notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
+                "작성하신 댓글이 검토 결과 문제없음으로 처리되었습니다.",
+                "/posts/" + comment.getPost().getUuid());
     }
 
     // 댓글 신고 "문제없음" 판결 철회 - 게시물과 동일한 패턴
@@ -187,6 +203,13 @@ public class AdminPostService {
         comment.setBlind(blind);
         if (blind) {
             comment.setReportCleared(false);
+            notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
+                    "작성하신 댓글이 관리자에 의해 블라인드 처리되었습니다.",
+                    "/posts/" + comment.getPost().getUuid());
+        } else {
+            notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
+                    "작성하신 댓글의 블라인드 처리가 해제되었습니다.",
+                    "/posts/" + comment.getPost().getUuid());
         }
     }
 
@@ -223,6 +246,11 @@ public class AdminPostService {
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
         post.setDeleted(false);
         post.setDeletedAt(null);
+    }
+
+    private String truncate(String text) {
+        int limit = 40;
+        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     private AdminPostSummaryDto toSummaryDto(Post post) {

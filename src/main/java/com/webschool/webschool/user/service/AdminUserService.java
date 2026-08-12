@@ -1,5 +1,7 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.notification.domain.Notification;
+import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.post.domain.Post;
@@ -30,6 +32,7 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostCommentRepository postCommentRepository;
+    private final NotificationService notificationService;
 
     // keyword: 아이디/닉네임/학교명 검색 - 다른 관리자 목록(AdminPostService 등)과 동일하게 DB 쿼리가
     // 아니라 메모리에서 필터링한다(계정 수가 적을 걸 가정). **버그 수정**: user-list.html엔 검색창이
@@ -124,6 +127,10 @@ public class AdminUserService {
             user.setCanManageReports(false);
             user.setCanManagePosts(false);
             user.setCanManageScheduleComments(false);
+            notificationService.notify(user, Notification.Type.ACCOUNT, "관리자 권한이 해제되었습니다.", "/mypage");
+        } else if (role == User.Role.ROLE_ADMIN) {
+            notificationService.notify(user, Notification.Type.ACCOUNT,
+                    "부관리자로 승격되었습니다. 총관리자가 켜준 권한만 사용할 수 있어요.", "/mypage");
         }
     }
 
@@ -192,6 +199,9 @@ public class AdminUserService {
         }
 
         user.setActive(false);
+        // 링크를 안 넣는 이유: 비활성화된 동안은 로그인 자체가 막혀서 어차피 못 열어본다 - 다시
+        // 활성화된 뒤 로그인하면 알림 목록에서 확인할 수 있다.
+        notificationService.notify(user, Notification.Type.ACCOUNT, "계정이 비활성화(정지)되었습니다.", null);
     }
 
     @Transactional
@@ -199,6 +209,7 @@ public class AdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         user.setActive(true);
+        notificationService.notify(user, Notification.Type.ACCOUNT, "계정이 다시 활성화되었습니다. 로그인할 수 있어요.", "/mypage");
     }
 
     private AdminUserSummaryDto toSummaryDto(User user) {

@@ -2,7 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
 <body>
 
-<nav th:fragment="navbar(active)" class="site-nav">
+<th:block th:fragment="navbar(active)">
+<nav class="site-nav">
     <div class="site-nav-inner">
         <a href="/" class="site-nav-brand"><i class="fa-solid fa-graduation-cap"></i> WebSchool</a>
 
@@ -20,6 +21,12 @@
                 <a href="/register" class="btn-nav btn-nav-accent">회원가입</a>
             </div>
             <div class="site-nav-user" sec:authorize="isAuthenticated()">
+                <a href="/notifications" class="site-nav-bell" title="알림">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notificationBadge" class="site-nav-bell-badge"
+                          th:classappend="${unreadNotificationCount == 0} ? ' is-hidden'"
+                          th:text="${unreadNotificationCount > 99} ? '99+' : ${unreadNotificationCount}">0</span>
+                </a>
                 <a href="/mypage" class="site-nav-greeting">
                     <span th:text="${loginUser != null ? loginUser.nickname : '회원'}">회원</span>님 안녕하세요
                 </a>
@@ -30,6 +37,8 @@
         </div>
     </div>
 </nav>
+<script th:if="${loginUser != null}" th:src="@{/js/notification.js}"></script>
+</th:block>
 
 </body>
 </html>

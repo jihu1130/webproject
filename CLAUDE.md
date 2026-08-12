@@ -2192,9 +2192,11 @@ POST 호출 → DB에서 `report_cleared`가 0으로 바뀐 것 확인(원래 �
    구현됨.
 4. **좋아요 및 북마크 기능 구현** (미착수) — Post/PostComment에 좋아요
    테이블 신설 필요, 북마크는 User-Post 다대다 관계로 설계 예상.
-5. **알림 기능 구현 (공지사항 포함)** (미착수) — 댓글/좋아요/관리자
-   조치에 대한 실시간 또는 폴링 알림 + 공지사항 게시판(현재 Post.Category
-   에 공지 카테고리가 없음, 상단 고정 노출 로직 필요).
+5. **알림 기능 구현 (공지사항 포함)** (완료, 2026-08-12) — 댓글/좋아요/
+   관리자 조치(블라인드/문제없음/계정 정지/권한 변경) 알림 + 공지사항
+   게시판(`Post.Category.NOTICE`, 목록 상단 고정) 구현. 실시간 대신
+   폴링 방식(20초 간격) 선택. 자세한 내용은 맨 아래 "2026-08-12 라운드"
+   섹션 참고.
 6. **계정 프로필 확인 기능 구현 (일반계정)** (완료) — 5차 라운드
    (`/users/{id}`, 최소 정보만) + 6차 라운드(소개글 추가)로 완성.
 7. **계정정지 신고 기능 구현** (부분 완료) — `User.active` 필드로 총
@@ -2682,3 +2684,213 @@ NEIS 데이터가 전부 배지로 뜨는 것을 `get_page_text`로 확인, 콘�
 구간, 학부모 상담 주간, 광복절, 대체공휴일 등)의 렌더링 폭을 전부 찍어봐서
 칸 너비와 동일하게 통일된 것 확인 → 날짜 숫자와 띠가 겹치지 않는 것 확인,
 콘솔 에러 없음.
+
+---
+
+## 2026-08-12 라운드 — 알림 기능 + 공지사항 게시판 구현 (✅ 완료)
+
+사용자 요청: "알림 기능 구현 공지사항 포함 구현시작하자" — 로드맵(위 "향후
+기능/인프라 로드맵") 5번 항목을 그대로 착수. 별도 설계 확인 없이 로드맵에
+이미 적혀있던 방향(폴링 방식, `Post.Category`에 공지 카테고리 추가, 상단
+고정 노출)대로 바로 구현.
+
+**1) 신규 `notification` 패키지** (`domain`/`repository`/`service`/`dto`/`controller`,
+`post`/`user`/`school`과 동일한 계층 구조)
+- `Notification` 엔티티: `recipient`(User FK), `type`(COMMENT/LIKE/
+  REPORT_ACTION/ACCOUNT/ANNOUNCEMENT), `message`, `link`(클릭 시 이동할 경로,
+  없으면 알림 목록에 머무름), `read`, `createdAt`.
+- **버그(빌드 후 발견)**: `read`라는 자바 필드명을 컬럼명으로 그대로 썼더니
+  `read`가 MySQL 예약어라서 Hibernate가 생성한 `CREATE TABLE notifications`
+  구문이 조용히 실패 — `ddl-auto=update`가 개별 DDL 실패를 무시하고 넘어가서
+  앱은 정상 기동됐지만 `notifications` 테이블 자체가 안 만들어짐(로그인 후
+  모든 페이지에서 알림 개수를 조회하려 시도하면 터질 수 있는 상황이었음).
+  `@Column(name = "is_read")`로 컬럼명만 분리해서 해결 — 자바 필드/getter/
+  setter는 `read`/`isRead()`/`setRead()` 그대로 유지. **교훈**: 이 프로젝트에서
+  엔티티 필드명을 정할 때 SQL 예약어(read/order/group/key/date 등)와 겹치는지
+  한 번씩 의식할 것 — `ddl-auto=update`는 이런 실패를 조용히 삼킨다(9번 버그
+  항목의 enum 확장 실패와 같은 계열의 함정).
+- `NotificationService`: `notify()`(단순 생성), `notifyIfNotSelf()`(행위자
+  본인이 알림 대상이면 스킵 - 자기 글에 자기가 댓글/좋아요 다는 경우 방지),
+  `broadcastAnnouncement()`(공지 작성 시 탈퇴하지 않은 전체 사용자에게, 작성자
+  본인 제외하고 일괄 생성), `getPage()`/`getUnreadCount()`/`markRead()`/
+  `markAllRead()`.
+- `NotificationController`: `GET /notifications`(목록, 페이지네이션),
+  `POST /notifications/{id}/read`(읽음 처리 후 알림의 `link`로 리다이렉트,
+  링크 없으면 목록에 머무름), `POST /notifications/read-all`, `GET
+  /notifications/unread-count`(JSON, 네비바 배지 폴링용 - 비로그인이면 0).
+  `/notifications/**`는 `SecurityConfig`의 `anyRequest().authenticated()`에
+  자동으로 걸려서 별도 매처 추가 안 함.
+
+**2) 알림이 발생하는 지점 (기존 서비스에 훅 추가)**
+- `PostCommentService.createComment()` — 댓글/답변 작성 시 게시글 작성자에게
+  알림(본인 글에 본인 댓글이면 스킵). 익명 게시물(`ANONYMOUS`)이면 "답변",
+  아니면 "댓글"로 문구만 다르게(기존 UI 명칭 규칙과 동일).
+- `PostService.toggleLike()` / `PostCommentService.toggleLike()` — 좋아요
+  누를 때(취소 시엔 알림 안 보냄)만 게시글/댓글 작성자에게 알림.
+- `PostService.reportPost()` / `PostCommentService.reportComment()` — 신고
+  누적으로 **처음** 블라인드 전환되는 순간에만 작성자에게 알림(이미 블라인드인
+  글에 추가 신고가 들어와도 매번 알림 가지 않도록 `wasBlind` 플래그로 가드).
+- `AdminPostService` — 관리자의 블라인드/블라인드 해제, "문제없음" 처리(게시글
+  `clearReport`/댓글 `clearCommentReport`) 시 대상 작성자에게 알림. "문제없음
+  철회"(`unclearReport`/`unclearCommentReport`)는 재검토 중간 상태라 판단해
+  알림 없이 조용히 처리(기존 신고 카운트 로직과 동일하게 비대칭 설계).
+- `AdminUserService` — `setRole()`(승격/강등), `deactivateUser()`(정지 -
+  로그인 자체가 막히므로 `link`를 `null`로 둬서 다시 로그인했을 때만 확인
+  가능), `activateUser()`(재활성화) 시 대상 계정에게 알림.
+- **부수 버그 수정**: `PostService.isAdmin()`/`PostCommentService.isAdmin()`이
+  `role == ROLE_ADMIN`만 확인해서, 총관리자(`ROLE_SUPER_ADMIN`)가 일반
+  커뮤니티 화면(`/posts/{uuid}`)에서 블라인드된 글의 원본을 못 보고 관리자
+  페이지를 거쳐야 하는 문제가 있었음(공지사항 작성 권한 체크를 추가하다가
+  발견) — `User.isAdmin()`(두 역할 다 포함하는 헬퍼, 이미 엔티티에 있었음)에
+  위임하도록 수정. 브라우저로 총관리자 계정이 `/posts/{uuid}`에서 블라인드
+  게시물 원본을 직접 보는 것까지 확인.
+
+**3) 공지사항(`Post.Category.NOTICE`) 게시판**
+- `Post.Category`에 `NOTICE("공지")` 추가 - 이번엔 `ddl-auto=update`가
+  `posts.category` enum에 `NOTICE`를 알아서 잘 추가함(`role` enum 확장 실패
+  사례와 달리 - 컬럼이 이미 있고 값만 늘어나는 케이스라 잘 되는 듯, 그래도
+  매번 `DESCRIBE`로 확인하는 습관은 유지할 것).
+- 작성 권한: `PostService.createPost()`/`updatePost()`에서 `category ==
+  NOTICE`면 작성자가 `isAdmin()`이 아닐 때 예외 - `post/form.html`의 카테고리
+  라디오도 `sec:authorize="hasAnyRole('ADMIN','SUPER_ADMIN')"`로 일반 사용자
+  에게는 아예 안 보이게 숨김(AdminUserService와 동일한 "화면에서도 막고
+  서비스에서도 한 번 더 막는" 이중 방어 패턴).
+- 공지 작성 성공 시 `NotificationService.broadcastAnnouncement()` 호출 →
+  탈퇴하지 않은 전체 사용자(작성자 본인 제외)에게 `ANNOUNCEMENT` 알림.
+- 상단 고정 노출: `PostRepository.findTop5ByCategoryAndDeletedFalseAndBlindFalse
+  OrderByCreatedAtDesc()` 신설, `PostController.list()`가 "전체" 탭 + 검색어
+  없음 + 첫 페이지일 때만 `pinnedNotices`를 모델에 추가 → `post/list.html`
+  최상단에 압정 아이콘 배지로 별도 렌더링(일반 페이지네이션 목록과는 별개 -
+  같은 공지가 카테고리 필터 없는 일반 목록에도 최신순으로 자연스럽게 다시
+  나타나는 건 의도된 동작, 일반 포럼의 "고정 + 최신" 패턴과 동일).
+- `post/list.html`에 "공지" 탭 추가(전체/자유/익명/질의응답/공지).
+
+**4) 네비바 종 아이콘 + 알림 목록 페이지**
+- `GlobalModelAdvice`에 `unreadNotificationCount` `@ModelAttribute` 추가 -
+  `loginUser`와 동일한 패턴으로 매 요청마다 계산되지만, 비로그인이면 DB 조회
+  없이 바로 0 반환.
+- `fragments/navbar.html`을 `<nav>` 하나짜리 fragment에서 `th:block`으로
+  감싸서 `<nav>` + `<script>`(로그인 상태일 때만)를 함께 반환하도록 변경 -
+  `th:replace`는 매치된 요소 하나만 가져오므로, 폴링 스크립트를 모든 페이지에
+  공통으로 실어 보내려면 이 방법이 필요했음.
+  - 종 아이콘(`/notifications` 링크) + 배지(`#notificationBadge`, 초기값은
+    서버 렌더링, 이후 `notification.js`가 20초 간격으로
+    `/notifications/unread-count`를 폴링해서 갱신 - "실시간 또는 폴링" 중
+    폴링 선택, 이 프로젝트 규모에 WebSocket까지는 과하다고 판단).
+- `templates/notification/list.html` 신설 - 알림 한 줄 한 줄이 `POST
+  /notifications/{id}/read`로 제출되는 `<form>`(버튼처럼 스타일링, 클릭하면
+  읽음 처리 후 알림의 `link`로 자동 리다이렉트) - 이 프로젝트가 관리자
+  액션들에서 이미 쓰던 "폼 전체가 버튼" 패턴을 그대로 재사용해서 별도 JS 없이
+  서버 렌더링만으로 동작. "모두 읽음 처리" 버튼(`POST /notifications/read-all`)
+  도 동일 패턴. 유형별 아이콘(댓글/하트/방패/톱니/압정), 안 읽은 항목은 왼쪽에
+  점 표시 + 옅은 배경.
+- 신규 CSS: `notification.css`(목록 페이지), `navbar.css`에 `.site-nav-bell*`
+  추가. 신규 JS: `notification.js`(배지 폴링만 담당, `setInterval` 20초).
+
+**검증**: `./gradlew compileJava`(에러 없음) → `./gradlew compileJava
+processResources -q`로 devtools 핫리로드 → `posts.category` enum에 `NOTICE`가
+자동으로 추가된 것까지는 확인했으나 `notifications` 테이블이 안 보여서
+위 1)의 `read` 예약어 버그를 발견/수정 → 재빌드 후 `DESCRIBE notifications`로
+`is_read` 컬럼과 함께 테이블 생성 확인. 브라우저(Claude_Browser)로:
+- admin 로그인 → `/posts/new`에서 "공지" 라디오가 보이는 것 확인 → 공지 작성
+  → 커뮤니티 목록 최상단에 압정 배지로 고정 노출되는 것 확인.
+- user1 로그인 → 종 배지에 "1" 표시 확인(`#notificationBadge`의 `textContent`/
+  `className` 직접 조회) → `/notifications`에서 공지 알림 확인 → 공지 글에
+  댓글 작성.
+- admin으로 재로그인 → 종 배지 "1" → `/notifications`에서 "user1님이 회원님의
+  글에 댓글을 남겼어요" 알림 확인 → 클릭 시 읽음 처리되고 원문 게시글로
+  리다이렉트되는 것 확인 → "모두 읽음 처리" 클릭 후 배지가 0/`is-hidden`으로
+  바뀌는 것 확인.
+- admin으로 `/admin/posts/14`(user1의 질의응답 테스트글)를 블라인드 처리
+  (fetch로 직접 POST - `confirm()` 다이얼로그가 이 브라우저 자동화 환경에서
+  안 먹히는 기존에 기록된 한계, 3차 라운드 참고) → **총관리자 계정으로
+  `/posts/{uuid}`에 직접 접속해 블라인드된 글 원본이 보이는 것 확인**(위
+  `isAdmin()` 버그 수정 검증) → user1으로 로그인해 "관리자에 의해 블라인드
+  처리되었습니다" 알림 수신 확인 → 다시 admin으로 unblind 처리해 원상 복구.
+- 테스트로 만든 공지 게시물은 확인 후 소프트 삭제로 정리(기존 세션들의
+  "테스트 게시글은 확인 후 삭제해둔다" 관례 유지), 나머지 시드 데이터(user1~5,
+  카테고리별 테스트 게시글 9개)는 그대로 보존.
+
+**다음에 이어서 할 때 참고할 것**: 좋아요 취소/댓글 삭제/신고 철회 같은
+"되돌리는" 액션에는 의도적으로 알림을 보내지 않았다(문제없음 철회도 동일) -
+알림 목록이 "취소했다는 알림"으로 시끄러워지는 것보다 조용한 게 낫다고 판단한
+설계 선택이라, 나중에 사용자가 다르게 요구하면 그때 바꾸면 됨. 계정
+승격/강등/정지/재활성화 알림은 로드맵 원문에 명시되진 않았지만 "관리자
+조치"의 자연스러운 확장으로 포함시켰다 - 범위가 과하다고 판단되면 쉽게 뺄 수
+있음(`AdminUserService`의 `notificationService.notify(...)` 호출 4곳만
+제거하면 됨).
+
+---
+
+## 2026-08-12(2차) 라운드 — 좋아요 탭에 "오늘의 한마디" 누락 버그 수정, index 페이지 장식 요소 정리 (✅ 완료)
+
+사용자 요청: "내 활동내역에 좋아요부분 오늘의 한마디가 안보여" + index
+페이지 스크린샷 5장과 함께 "index 페이지 수정하자 / 마지막 사진은 보이는
+흑점을 안보이게 수정하고 나머지 사진에 나온부분은 삭제하고 다른거로
+대체하거나 없에줘".
+
+**1) 마이페이지 "내 활동내역" → 좋아요 탭에 한마디 좋아요 목록이 없던 버그**
+- 코드에 이미 주석으로 남아있던 기존 한계였음(`MyActivityService.
+  getLikedPosts()` 바로 위 주석 "댓글/한마디 좋아요는 북마크와 마찬가지로
+  이 라운드에서는 목록 화면을 만들지 않음") - 좋아요 토글 자체는
+  `ScheduleCommentService.toggleLike()`로 이미 되는데, 그걸 모아보는 화면이
+  없어서 좋아요한 한마디를 다시 찾을 방법이 없었다. **북마크 탭이 이미
+  게시글/한마디 서브탭 구조로 되어있었던 것과 정확히 같은 패턴으로 좋아요
+  탭도 확장**해서 해결.
+- `ScheduleCommentLikeRepository.findByUser_IdOrderByCreatedAtDesc()` 신설
+  (`ScheduleCommentBookmarkRepository`와 동일 패턴).
+- `ScheduleCommentService.removeLike()` 신설 - 토글이 아니라 "취소" 버튼
+  전용의 멱등 제거 동작(`PostService.removeLike()`/기존 `removeBookmark()`와
+  동일한 이유로 분리).
+- `MyActivityService.getLikedScheduleComments()` 신설.
+- `MyActivityController`: `likes` 탭도 `bookmarks` 탭과 동일하게
+  `type=post`/`type=schedule` 서브탭 파라미터를 받도록 변경, 신규
+  `POST /mypage/activity/likes/schedule/{id}/remove` 엔드포인트 추가.
+- `user/my-activity.html`: 좋아요 탭에 북마크 탭과 동일한 서브탭 UI(게시글/
+  오늘의 한마디) + 한마디 좋아요 목록 블록 추가.
+- **검증**: 브라우저(admin 계정, 기존에 좋아요해둔 한마디 데이터 있음)로
+  `/mypage/activity?tab=likes&type=schedule`에서 한마디 2건이 정상적으로
+  뜨는 것 확인, `type=post`(기본값)도 여전히 정상 동작(빈 상태 문구) 확인.
+
+**2) index 페이지 장식 요소 정리**
+- 사용자가 스크린샷 5장으로 짚어준 위치를 그대로 대응:
+  1. 마퀴 티커(`.marquee-band`, 기능 이름 반복 스크롤 배너) — **완전 삭제**
+     (HTML 블록 + `.marquee-*`/`@keyframes marquee-scroll` CSS 전부 제거).
+  2. 히어로 우측 시간표 목업 카드 + 떠다니는 칩 2개(`.hero-visual`/
+     `.hero-mockup*`/`.hero-chip*`) — **완전 삭제**, 마우스 3D 틸트를 주던
+     `index.js`의 관련 코드 블록도 함께 제거(죽은 코드 방치 안 함).
+  3. 히어로 하단 "아래로 스크롤" 마우스 아이콘(`.hero-scroll-cue`) — **완전
+     삭제**.
+  4. 히어로 상단 "NEIS Open API 실시간 연동" 배지(`.hero-eyebrow`) — **완전
+     삭제**.
+  - 위 4개를 들어내면서 `.hero-inner`가 원래 2단 그리드(카피 + 시각 요소)
+    였는데 오른쪽 칼럼이 통째로 없어지므로, 1단 중앙 정렬 레이아웃(
+    `max-width: 720px; margin: 0 auto; text-align: center;`)으로 바꾸고
+    `.hero-cta-group`/`.hero-badges`도 가운데 정렬로 맞춤. 반응형 미디어
+    쿼리에 남아있던 `.hero-visual`/`.hero-chip`/`.hero-scroll-cue` 관련
+    규칙도 정리.
+  5. "마지막 사진"(오늘의 급식 벤토 카드) — 사용자가 "검은 점"이라고
+     짚었지만 코드만으로는 정확한 위치 특정이 안 돼서(같은 클래스가 다른
+     카드에도 다 있어서 스크린샷 하나로는 이 카드만의 문제인지 판단 불가)
+     **AskUserQuestion으로 위치를 먼저 확인**("오른쪽 위") → 벤토 카드마다
+     들어있는 `.bento-card-glow`(카드 우상단에 보라색 은은한 글로우를
+     hover 시 보여주는 장식용 div, `top:-40%; right:-20%`로 정확히 우상단에
+     위치)와 정확히 일치 → 모든 벤토 카드(`bento-card-glow` div 5개)에서
+     제거하고 관련 CSS(`.bento-card-glow`, `.bento-card:hover
+     .bento-card-glow`)도 삭제. 다른 장식 요소들과 마찬가지로 "완전히 안
+     보이게" 만드는 가장 확실한 방법은 삭제였음(투명도만 낮추는 식으로
+     남겨두면 재발 여지가 있다고 판단).
+- 정리 후 살아있는 히어로 구성: 배경 블롭 애니메이션(`.hero-blob`) + 격자
+  패턴 + 타이틀/서브카피/CTA 버튼 2개/체크마크 배지 3개 — 장식은 줄었지만
+  핵심 카피와 CTA는 그대로 유지됨.
+- **검증**: `./gradlew compileJava processResources -q`로 반영 →
+  브라우저로 `/` 방문해서 `get_page_text`에 마퀴/NEIS 배지/시간표 목업/스크롤
+  큐 문구가 전혀 없는 것 확인 → `document.querySelectorAll()`로
+  `.bento-card-glow`/`.hero-visual`/`.marquee-band`/`.hero-scroll-cue`/
+  `.hero-eyebrow`가 전부 0개인 것과 `.hero-inner`가 `text-align: center`로
+  적용된 것 직접 확인, 콘솔 에러 없음.
+
+**다음에 이어서 할 때 참고할 것**: 히어로가 지금은 카피 중심의 미니멀한
+구성이라, 나중에 사용자가 "너무 밋밋하다"고 하면 그때 다른 시각 요소(정적
+일러스트, 스크린샷 등)를 다시 추가하는 방향으로 논의하면 됨 - 이번엔
+"삭제하거나 대체"라는 선택지 중 삭제 쪽으로 확실하게 정리했다.

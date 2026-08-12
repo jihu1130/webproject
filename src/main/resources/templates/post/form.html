@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -34,6 +34,9 @@
                         </label>
                         <label class="post-category-radio">
                             <input type="radio" th:field="*{category}" value="QNA"> 질의응답
+                        </label>
+                        <label class="post-category-radio" sec:authorize="hasAnyRole('ADMIN', 'SUPER_ADMIN')">
+                            <input type="radio" th:field="*{category}" value="NOTICE"> 공지
                         </label>
                     </div>
                     <p id="postCategoryHint" class="post-category-hint"></p>

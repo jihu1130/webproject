@@ -69,12 +69,9 @@ html { scroll-behavior: smooth; }
 
 .hero-inner {
     position: relative;
-    max-width: 1180px;
+    max-width: 720px;
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
-    gap: 56px;
-    align-items: center;
+    text-align: center;
 }
 
 .hero-pop {
@@ -86,21 +83,6 @@ html { scroll-behavior: smooth; }
     from { opacity: 0; transform: translateY(22px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
-.hero-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    color: #fff;
-    padding: 0.4rem 1rem;
-    border-radius: 50px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    margin-bottom: 1.3rem;
-}
-.hero-eyebrow i { color: #facc15; }
 
 .hero-title {
     font-size: 2.7rem;
@@ -115,11 +97,11 @@ html { scroll-behavior: smooth; }
     color: rgba(255, 255, 255, 0.78);
     font-size: 1.08rem;
     line-height: 1.65;
-    margin: 0 0 1.8rem;
+    margin: 0 auto 1.8rem;
     max-width: 480px;
 }
 
-.hero-cta-group { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 1.6rem; }
+.hero-cta-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 1.6rem; }
 
 .hero-cta-primary,
 .hero-cta-secondary {
@@ -142,6 +124,7 @@ html { scroll-behavior: smooth; }
 .hero-badges {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 16px;
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.88rem;
@@ -149,158 +132,15 @@ html { scroll-behavior: smooth; }
 }
 .hero-badges i { color: #4ade80; margin-right: 5px; }
 
-/* ─ 히어로 목업 카드: 마우스 움직임에 따라 index.js가 3D 틸트를 준다 ─ */
-.hero-visual { position: relative; perspective: 1200px; min-height: 320px; display: flex; align-items: center; justify-content: center; }
-
-.hero-mockup {
-    position: relative;
-    width: min(360px, 90%);
-    background: #fff;
-    border-radius: 1.25rem;
-    box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.45);
-    overflow: hidden;
-    transform-style: preserve-3d;
-    transition: transform 0.2s ease-out;
-    will-change: transform;
-}
-
-.hero-mockup-glare {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(115deg, rgba(255, 255, 255, 0.35) 0%, transparent 30%);
-    pointer-events: none;
-}
-
-.hero-mockup-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 14px 16px;
-    background: #f4f5fb;
-}
-.hero-mockup-header span:not(.hero-mockup-title) { width: 9px; height: 9px; border-radius: 50%; background: #d8dae8; }
-.hero-mockup-header span:nth-child(1) { background: #f87171; }
-.hero-mockup-header span:nth-child(2) { background: #facc15; }
-.hero-mockup-header span:nth-child(3) { background: #4ade80; }
-.hero-mockup-title { margin-left: auto; font-size: 0.75rem; font-weight: 700; color: var(--muted); }
-
-.hero-mockup-body { padding: 22px 20px; display: flex; flex-direction: column; gap: 15px; }
-.hero-mockup-row { display: flex; align-items: center; gap: 10px; }
-.hero-mockup-chip {
-    flex-shrink: 0;
-    width: 30px;
-    text-align: center;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--muted);
-    background: #f1f2f8;
-    padding: 4px 0;
-    border-radius: 999px;
-}
-.hero-mockup-chip-brand { color: #fff; background: var(--brand-gradient); }
-.hero-mockup-bar { flex: 1; height: 10px; border-radius: 999px; background: var(--brand-gradient-soft); }
-
-.hero-chip {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: #fff;
-    color: var(--ink);
-    font-size: 0.76rem;
-    font-weight: 700;
-    padding: 8px 14px;
-    border-radius: 999px;
-    box-shadow: 0 0.6rem 1.5rem rgba(0, 0, 0, 0.3);
-    white-space: nowrap;
-    animation: chip-float 5s ease-in-out infinite;
-}
-.hero-chip i { color: var(--brand-1); }
-.hero-chip-1 { top: 2%; left: -4%; animation-delay: 0.3s; }
-.hero-chip-2 { bottom: 6%; right: -6%; animation-delay: 1s; }
-
-@keyframes chip-float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-9px); }
-}
-
-.hero-scroll-cue {
-    position: absolute;
-    left: 50%;
-    bottom: 22px;
-    transform: translateX(-50%);
-    width: 26px;
-    height: 42px;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-radius: 20px;
-}
-.hero-scroll-cue span {
-    display: block;
-    width: 4px;
-    height: 8px;
-    margin: 6px auto 0;
-    background: #fff;
-    border-radius: 2px;
-    animation: scroll-cue-dot 1.6s ease infinite;
-}
-@keyframes scroll-cue-dot {
-    0% { transform: translateY(0); opacity: 1; }
-    70% { transform: translateY(14px); opacity: 0; }
-    100% { opacity: 0; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .hero-blob, .hero-chip, .hero-scroll-cue span, .hero-pop { animation: none; opacity: 1; }
+    .hero-blob, .hero-pop { animation: none; opacity: 1; }
 }
 
 @media (max-width: 880px) {
-    .hero-inner { grid-template-columns: 1fr; }
-    .hero-visual { order: -1; }
     .hero-title { font-size: 2.2rem; }
 }
 @media (max-width: 560px) {
     .hero { padding: 80px 20px 56px; }
-    .hero-chip { display: none; }
-    .hero-scroll-cue { display: none; }
-}
-
-/* ══════════ 마퀴 ══════════ */
-.marquee-band {
-    background: #eef0fb;
-    padding: 18px 0;
-    overflow: hidden;
-    border-bottom: 1px solid var(--border);
-}
-.marquee-track {
-    display: flex;
-    width: max-content;
-    gap: 14px;
-    animation: marquee-scroll 26s linear infinite;
-}
-.marquee-band:hover .marquee-track { animation-play-state: paused; }
-
-.marquee-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: #fff;
-    color: var(--ink);
-    font-weight: 700;
-    font-size: 0.88rem;
-    padding: 0.55rem 1.1rem;
-    border-radius: 999px;
-    box-shadow: 0 0.2rem 0.6rem rgba(30, 27, 58, 0.06);
-    white-space: nowrap;
-}
-.marquee-item i { color: var(--brand-1); }
-
-@keyframes marquee-scroll {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .marquee-track { animation: none; }
 }
 
 /* ══════════ 벤토 기능 그리드 ══════════ */
@@ -347,19 +187,6 @@ html { scroll-behavior: smooth; }
 }
 .bento-card-lg h3 { font-size: 1.4rem; }
 .bento-card-lg p { max-width: 320px; }
-
-.bento-card-glow {
-    position: absolute;
-    top: -40%;
-    right: -20%;
-    width: 60%;
-    height: 140%;
-    background: radial-gradient(circle, rgba(79, 70, 229, 0.12), transparent 70%);
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    pointer-events: none;
-}
-.bento-card:hover .bento-card-glow { opacity: 1; }
 
 .bento-icon {
     width: 48px;
