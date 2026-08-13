@@ -55,7 +55,8 @@
                     <dd th:if="${profile.role == 'ROLE_ADMIN'}">
                         <span th:text="${profile.canManageReports} ? '신고관리 O' : '신고관리 X'">-</span> ·
                         <span th:text="${profile.canManagePosts} ? '게시글관리 O' : '게시글관리 X'">-</span> ·
-                        <span th:text="${profile.canManageScheduleComments} ? '한마디관리 O' : '한마디관리 X'">-</span>
+                        <span th:text="${profile.canManageScheduleComments} ? '한마디관리 O' : '한마디관리 X'">-</span> ·
+                        <span th:text="${profile.canManageNotices} ? '공지사항관리 O' : '공지사항관리 X'">-</span>
                     </dd>
                 </div>
             </dl>

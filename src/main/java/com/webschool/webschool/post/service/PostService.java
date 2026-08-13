@@ -28,9 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -69,14 +67,6 @@ public class PostService {
             return Sort.by(Sort.Direction.DESC, "viewCount").and(Sort.by(Sort.Direction.DESC, "createdAt"));
         }
         return Sort.by(Sort.Direction.DESC, "createdAt");
-    }
-
-    // 커뮤니티 목록 상단 고정 노출용 공지사항 (전체 카테고리 + 검색어 없음 + 첫 페이지에서만 PostController가 호출)
-    public List<PostListItemDto> getPinnedNotices() {
-        return postRepository.findTop5ByCategoryAndDeletedFalseAndBlindFalseOrderByCreatedAtDesc(Post.Category.NOTICE)
-                .stream()
-                .map(this::toListItemDto)
-                .collect(Collectors.toList());
     }
 
     // 공개 URL(/posts/{uuid})을 내부 PK로 변환 - 컨트롤러가 요청을 받자마자 제일 먼저 호출한다
@@ -122,26 +112,13 @@ public class PostService {
 
         userPenaltyService.assertCanCreatePost(author);
 
-        // 공지사항(NOTICE)은 관리자만 작성 가능 - 폼에서 라디오 자체를 관리자에게만 보여주지만(post/form.html),
-        // 요청을 조작해서 우회하는 경우를 막기 위해 서비스 단에서도 한 번 더 검증한다(AdminUserService와 동일 패턴)
-        if (category == Post.Category.NOTICE && !author.isAdmin()) {
-            throw new IllegalArgumentException("공지사항은 관리자만 작성할 수 있습니다.");
-        }
-
         Post post = new Post();
         post.setTitle(title);
         post.setContent(content);
         post.setCategory(category);
         post.setAuthor(author);
 
-        String uuid = postRepository.save(post).getUuid();
-
-        if (category == Post.Category.NOTICE) {
-            notificationService.broadcastAnnouncement(
-                    "[공지] " + title, "/posts/" + uuid, username);
-        }
-
-        return uuid;
+        return postRepository.save(post).getUuid();
     }
 
     public PostFormDto getForEdit(Long id, String username) {
@@ -178,10 +155,6 @@ public class PostService {
 
         if (!post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물만 수정할 수 있습니다.");
-        }
-
-        if (category == Post.Category.NOTICE && !post.getAuthor().isAdmin()) {
-            throw new IllegalArgumentException("공지사항은 관리자만 작성할 수 있습니다.");
         }
 
         boolean changed = !title.equals(post.getTitle()) || !content.equals(post.getContent())

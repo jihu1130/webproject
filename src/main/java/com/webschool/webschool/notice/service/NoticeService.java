@@ -1,0 +1,116 @@
+package com.webschool.webschool.notice.service;
+
+import com.webschool.webschool.global.util.PageUtils;
+import com.webschool.webschool.notice.domain.Notice;
+import com.webschool.webschool.notice.dto.NoticeDto;
+import com.webschool.webschool.notice.repository.NoticeRepository;
+import com.webschool.webschool.notification.service.NotificationService;
+import com.webschool.webschool.post.util.BannedWordFilter;
+import com.webschool.webschool.user.domain.User;
+import com.webschool.webschool.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+// 공지사항 - Post와 완전히 분리된 별도 모델(todo.md "공지사항(Notice) 기능 재설계" 요구사항).
+// 이전에 있던 Post.Category.NOTICE(게시글 카테고리 방식) 공지 기능은 이 기능으로 완전히 대체됐다.
+@Service
+@RequiredArgsConstructor
+public class NoticeService {
+
+    private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("MM.dd HH:mm");
+    private static final int MAX_TITLE_LENGTH = 100;
+    private static final int MAX_CONTENT_LENGTH = 4000;
+
+    private final NoticeRepository noticeRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
+
+    // 새 공지 작성 - 이전 활성 공지가 있으면 먼저 비활성화(보관)하고, 새 공지를 활성 상태로 만든다.
+    // 작성 권한은 총관리자이거나 canManageNotices 권한을 받은 부관리자만 - 컨트롤러/인터셉터가 이미
+    // 막아주지만(AdminAccessInterceptor의 "/admin/notices" 분기), 다른 관리자 기능과 동일하게 서비스
+    // 단에서도 한 번 더 방어적으로 검증한다.
+    @Transactional
+    public void createNotice(String username, String title, String content) {
+        User author = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+
+        if (!author.isSuperAdmin() && !author.isCanManageNotices()) {
+            throw new IllegalArgumentException("공지사항 작성 권한이 없습니다.");
+        }
+
+        String validTitle = validateTitle(title);
+        String validContent = validateContent(content);
+
+        noticeRepository.findByActiveTrue().ifPresent(prev -> prev.setActive(false));
+
+        Notice notice = new Notice();
+        notice.setTitle(validTitle);
+        notice.setContent(validContent);
+        notice.setAuthor(author);
+        notice.setActive(true);
+        noticeRepository.save(notice);
+
+        notificationService.broadcastAnnouncement("[공지] " + validTitle, "/notices", username);
+    }
+
+    // 사용자 화면 고정 노출용 - 활성 공지가 하나도 없으면 빈 값
+    public Optional<NoticeDto> getActiveNotice() {
+        return noticeRepository.findByActiveTrue().map(this::toDto);
+    }
+
+    // 관리자 이력 조회 + 공개 "공지" 탭 목록에서 공용으로 사용(최신순)
+    public Page<NoticeDto> getHistory(int page, int size) {
+        List<NoticeDto> all = noticeRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+        return PageUtils.paginate(all, page, size);
+    }
+
+    public NoticeDto getDetail(Long id) {
+        return noticeRepository.findById(id)
+                .map(this::toDto)
+                .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+    }
+
+    private String validateTitle(String title) {
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("제목을 입력해주세요.");
+        }
+        if (title.length() > MAX_TITLE_LENGTH) {
+            throw new IllegalArgumentException("제목은 " + MAX_TITLE_LENGTH + "자 이내로 입력해주세요.");
+        }
+        String trimmed = title.trim();
+        BannedWordFilter.validate(trimmed);
+        return trimmed;
+    }
+
+    private String validateContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("내용을 입력해주세요.");
+        }
+        if (content.length() > MAX_CONTENT_LENGTH) {
+            throw new IllegalArgumentException("내용은 " + MAX_CONTENT_LENGTH + "자 이내로 입력해주세요.");
+        }
+        String trimmed = content.trim();
+        BannedWordFilter.validate(trimmed);
+        return trimmed;
+    }
+
+    private NoticeDto toDto(Notice n) {
+        return NoticeDto.builder()
+                .id(n.getId())
+                .title(n.getTitle())
+                .content(n.getContent())
+                .authorNickname(n.getAuthor().getNickname())
+                .active(n.isActive())
+                .createdAt(n.getCreatedAt().format(DISPLAY_FORMAT))
+                .build();
+    }
+}

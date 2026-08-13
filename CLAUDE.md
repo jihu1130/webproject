@@ -59,8 +59,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   공개 프로필 조회)은 기존 서비스(`UserService`/`AdminUserService`)와
   분리해 새 서비스로 뽑는 게 이 코드베이스의 컨벤션.
 - **권한 체계 3단계**: `ROLE_USER` / `ROLE_ADMIN`(부관리자, `User`의
-  `canManageReports`/`canManagePosts`/`canManageScheduleComments` 플래그로
-  기능별 권한을 개별 On/Off) / `ROLE_SUPER_ADMIN`(총관리자, `username="admin"`
+  `canManageReports`/`canManagePosts`/`canManageScheduleComments`/
+  `canManageNotices` 플래그로 기능별 권한을 개별 On/Off) / `ROLE_SUPER_ADMIN`(총관리자, `username="admin"`
   계정 전용 — 앱 안에 이 롤을 부여하는 UI/API가 없어 DB 직접 수정 또는
   `SuperAdminSeeder`로만 승격 가능, 유일하게 이 계정만 총관리자가 될 수
   있도록 고정된 설계). `/admin/**` 하위 경로별 실제 접근 제어는
@@ -147,13 +147,20 @@ com.webschool.webschool
 ├── school           : 캘린더 페이지, NEIS 연동(NeisApiService), 시간표/급식 DB
 │                       캐시(SchoolService), 학사일정 조회/검색/방학 D-Day, 한줄 댓글
 │                       (ScheduleComment, CRUD+신고+좋아요+북마크), 관리자 한마디 관리
-└── post             : 커뮤니티 — 자유/익명/QnA/공지 카테고리 + 댓글 + 신고/블라인드 +
-                        이미지 첨부 + 관리자 화면(전부 이 패키지 안)
+├── post             : 커뮤니티 — 자유/익명/QnA 카테고리 + 댓글 + 신고/블라인드 +
+│                       이미지 첨부 + 관리자 화면(전부 이 패키지 안)
+├── notice           : 공지사항 — Post와 완전히 분리된 별도 모델. "활성 공지 항상
+│                       1개"(새 공지 작성 시 이전 공지 자동 보관), 관리자 화면
+│                       (/admin/notices, canManageNotices 권한 필요) + 사용자용 화면
+│                       (/notices, 로그인 없이도 조회 가능) 둘 다 이 패키지 안
+└── notification     : 댓글/좋아요/관리자 조치/공지사항에 대한 알림 - 네비바 종
+                        배지 폴링(/notifications/unread-count) 방식, 실시간 아님
 ```
 
-리소스는 `templates/{fragments,school,post,admin,user}` + `static/{css,js}`로
-기능별 대응. 공용 위젯(`school-search.js`/`class-select.js`/`grade-select.js`)은
-캘린더·회원가입·마이페이지수정 3곳에서 재사용되니 수정 시 세 화면 모두 확인할 것.
+리소스는 `templates/{fragments,school,post,notice,notification,admin,user}` +
+`static/{css,js}`로 기능별 대응. 공용 위젯(`school-search.js`/`class-select.js`/
+`grade-select.js`)은 캘린더·회원가입·마이페이지수정 3곳에서 재사용되니 수정 시 세
+화면 모두 확인할 것.
 
 ## 핵심 동작 원리
 
@@ -206,3 +213,8 @@ com.webschool.webschool
 - **PowerShell에서 bcrypt 해시(`$2a$10$...`)를 SQL에 넣을 때 큰따옴표
   문자열은 쓰지 말 것** — `$` 변수 보간이 시도되어 해시가 깨진다. 작은따옴표
   리터럴 + SQL 문자열은 `''`로 이스케이프하는 방식만 안전하다.
+- **`@Enumerated(EnumType.STRING)` 컬럼에서 enum 값을 제거하기 전에 그
+  값을 쓰는 기존 행이 있는지 먼저 확인할 것** — 남아있으면(소프트 삭제된
+  행 포함) Hibernate가 그 행을 조회할 때 "알 수 없는 enum 값"으로 역직렬화
+  실패한다. `Post.Category.NOTICE`를 걷어낼 때 해당 값을 쓰던 행(자식
+  댓글 포함)을 먼저 하드 삭제하고서 enum 상수를 지웠다.

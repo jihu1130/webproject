@@ -18,4 +18,5 @@ public class AdminUserSummaryDto {
     private boolean canManageReports;
     private boolean canManagePosts;
     private boolean canManageScheduleComments;
+    private boolean canManageNotices;
 }

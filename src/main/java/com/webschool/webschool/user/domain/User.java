@@ -61,6 +61,9 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean canManageScheduleComments;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canManageNotices;
+
     public boolean isSuperAdmin() {
         return role == Role.ROLE_SUPER_ADMIN;
     }

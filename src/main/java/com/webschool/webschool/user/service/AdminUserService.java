@@ -90,6 +90,7 @@ public class AdminUserService {
                 .canManageReports(user.isCanManageReports())
                 .canManagePosts(user.isCanManagePosts())
                 .canManageScheduleComments(user.isCanManageScheduleComments())
+                .canManageNotices(user.isCanManageNotices())
                 .postCount(postRepository.countByAuthor_IdAndDeletedFalse(id))
                 .commentCount(postCommentRepository.countByAuthor_IdAndDeletedFalse(id))
                 .recentPosts(recentPosts)
@@ -129,6 +130,7 @@ public class AdminUserService {
             user.setCanManageReports(false);
             user.setCanManagePosts(false);
             user.setCanManageScheduleComments(false);
+            user.setCanManageNotices(false);
             notificationService.notify(user, Notification.Type.ACCOUNT, "관리자 권한이 해제되었습니다.", "/mypage");
         } else if (role == User.Role.ROLE_ADMIN) {
             notificationService.notify(user, Notification.Type.ACCOUNT,
@@ -136,10 +138,10 @@ public class AdminUserService {
         }
     }
 
-    // 부관리자 권한(신고/게시글/한마디 관리) 토글 - 총관리자만 호출 가능(컨트롤러/인터셉터에서 이미 보장)
+    // 부관리자 권한(신고/게시글/한마디/공지사항 관리) 토글 - 총관리자만 호출 가능(컨트롤러/인터셉터에서 이미 보장)
     @Transactional
     public void updatePermissions(Long id, boolean canManageReports, boolean canManagePosts,
-                                   boolean canManageScheduleComments) {
+                                   boolean canManageScheduleComments, boolean canManageNotices) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -150,6 +152,7 @@ public class AdminUserService {
         user.setCanManageReports(canManageReports);
         user.setCanManagePosts(canManagePosts);
         user.setCanManageScheduleComments(canManageScheduleComments);
+        user.setCanManageNotices(canManageNotices);
     }
 
     // 관리자 강제 탈퇴 처리 - 본인 확인(비밀번호) 없이 소프트 삭제한다는 점만 UserService.deleteAccount()와 다름
@@ -227,6 +230,7 @@ public class AdminUserService {
                 .canManageReports(user.isCanManageReports())
                 .canManagePosts(user.isCanManagePosts())
                 .canManageScheduleComments(user.isCanManageScheduleComments())
+                .canManageNotices(user.isCanManageNotices())
                 .build();
     }
 

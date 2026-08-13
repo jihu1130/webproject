@@ -28,6 +28,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/posts/new", "/posts/*/edit").authenticated()
                         .requestMatchers(HttpMethod.GET, "/posts", "/posts/*", "/posts/*/comments").permitAll()
                         .requestMatchers("/posts/**").authenticated()
+                        // 공지사항 조회는 커뮤니티 목록/상세와 동일하게 로그인 없이도 가능(공지는 공개 정보이므로)
+                        .requestMatchers(HttpMethod.GET, "/notices", "/notices/*").permitAll()
                         // 커뮤니티 공개 프로필(작성자 이름 클릭) - 게시글 조회와 동일하게 로그인 없이도 열람 가능
                         .requestMatchers(HttpMethod.GET, "/users/*").permitAll()
                         // 캘린더(학사/급식 조회)는 로그인한 사용자만 이용 가능

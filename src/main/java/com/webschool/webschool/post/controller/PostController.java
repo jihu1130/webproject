@@ -1,5 +1,6 @@
 package com.webschool.webschool.post.controller;
 
+import com.webschool.webschool.notice.service.NoticeService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.dto.PostDetailDto;
 import com.webschool.webschool.post.dto.PostFormDto;
@@ -32,6 +33,7 @@ public class PostController {
 
     private final PostService postService;
     private final PostImageService postImageService;
+    private final NoticeService noticeService;
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page,
@@ -50,10 +52,10 @@ public class PostController {
         model.addAttribute("scope", scope == null ? "" : scope);
         model.addAttribute("sort", sort == null ? "" : sort);
 
-        // 공지사항 상단 고정 노출은 "전체" 탭 첫 페이지, 검색어 없을 때만 보여준다 - 특정 카테고리를
-        // 고른 화면이나 검색 결과, 2페이지 이후까지 매번 끼워 넣으면 오히려 어색하다.
+        // 활성 공지 배너는 "전체" 탭 첫 페이지, 검색어 없을 때만 보여준다 - 예전 Post.Category.NOTICE
+        // 고정 노출과 동일한 노출 조건(post/list.html 참고).
         if (categoryFilter == null && (keyword == null || keyword.isBlank()) && page == 0) {
-            model.addAttribute("pinnedNotices", postService.getPinnedNotices());
+            noticeService.getActiveNotice().ifPresent(notice -> model.addAttribute("activeNotice", notice));
         }
 
         return "post/list";

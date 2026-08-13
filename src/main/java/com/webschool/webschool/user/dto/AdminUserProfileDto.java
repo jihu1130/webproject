@@ -23,6 +23,7 @@ public class AdminUserProfileDto {
     private boolean canManageReports;
     private boolean canManagePosts;
     private boolean canManageScheduleComments;
+    private boolean canManageNotices;
     private long postCount;
     private long commentCount;
     private List<AdminUserProfilePostDto> recentPosts;

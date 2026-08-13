@@ -77,9 +77,10 @@ public class AdminUserController {
     public String permissions(@PathVariable Long id,
                                @RequestParam(defaultValue = "false") boolean canManageReports,
                                @RequestParam(defaultValue = "false") boolean canManagePosts,
-                               @RequestParam(defaultValue = "false") boolean canManageScheduleComments) {
+                               @RequestParam(defaultValue = "false") boolean canManageScheduleComments,
+                               @RequestParam(defaultValue = "false") boolean canManageNotices) {
         try {
-            adminUserService.updatePermissions(id, canManageReports, canManagePosts, canManageScheduleComments);
+            adminUserService.updatePermissions(id, canManageReports, canManagePosts, canManageScheduleComments, canManageNotices);
         } catch (IllegalArgumentException ignored) {
         }
         return "redirect:/admin/users/admins";

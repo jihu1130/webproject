@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 // SecurityConfig가 "/admin/**"은 ROLE_ADMIN/ROLE_SUPER_ADMIN까지만 통과시키는데, 그 안에서도
-// 부관리자(ROLE_ADMIN)는 총관리자가 개별로 켜준 권한(신고/게시글/한마디 관리)만 접근할 수 있고
-// 계정 관리(/admin/users)는 총관리자(ROLE_SUPER_ADMIN) 전용이다. ROLE_SUPER_ADMIN은 항상 전체 허용.
+// 부관리자(ROLE_ADMIN)는 총관리자가 개별로 켜준 권한(신고/게시글/한마디/공지사항 관리)만 접근할 수
+// 있고 계정 관리(/admin/users)는 총관리자(ROLE_SUPER_ADMIN) 전용이다. ROLE_SUPER_ADMIN은 항상 전체 허용.
 // "/admin/comments"(댓글 관리, 2026-08-10(4차) 추가)는 게시글에 종속된 하위 리소스라 별도 권한
 // 플래그 없이 게시글 관리(canManagePosts)와 같은 권한으로 묶는다.
 @Component
@@ -59,6 +59,9 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         }
         if (uri.startsWith("/admin/schedule-comments") && !user.isCanManageScheduleComments()) {
             throw new AccessDeniedException("한마디 관리 권한이 없습니다.");
+        }
+        if (uri.startsWith("/admin/notices") && !user.isCanManageNotices()) {
+            throw new AccessDeniedException("공지사항 작성 권한이 없습니다.");
         }
         return true;
     }

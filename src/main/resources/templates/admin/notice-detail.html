@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${notice.title} + ' - 관리자 - WebSchool'">공지사항 - 관리자 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container admin-container-narrow">
+
+        <div class="post-detail-footer-links">
+            <a th:href="@{/admin/notices(page=${listPage}, size=${listSize})}" class="post-list-back">
+                <i class="fa-solid fa-arrow-left"></i> 관리자 목록으로
+            </a>
+            <a th:href="@{'/notices/' + ${notice.id}}" class="post-list-back">
+                공지사항 페이지에서 보기 <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="admin-detail-card">
+            <span class="admin-status-badge admin-status-cleared" th:if="${notice.active}">활성</span>
+            <span class="admin-status-badge" th:unless="${notice.active}">보관</span>
+            <h1 class="post-detail-title" th:text="${notice.title}">제목</h1>
+
+            <div class="post-detail-meta">
+                <span><i class="fa-solid fa-user"></i> <span th:text="${notice.authorNickname}">작성자</span></span>
+                <span><i class="fa-solid fa-clock"></i> <span th:text="${notice.createdAt}">작성일</span></span>
+            </div>
+
+            <div class="post-detail-content" th:text="${notice.content}">내용</div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

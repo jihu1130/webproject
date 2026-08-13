@@ -9,6 +9,7 @@
     <link rel="stylesheet" th:href="@{/css/theme.css}">
     <link rel="stylesheet" th:href="@{/css/navbar.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/notice.css}">
 </head>
 <body>
 
@@ -26,26 +27,18 @@
             </a>
         </div>
 
+        <a th:if="${activeNotice != null}" th:href="@{'/notices/' + ${activeNotice.id}}" class="notice-banner">
+            <span class="notice-badge"><i class="fa-solid fa-thumbtack"></i> 공지</span>
+            <span class="notice-banner-title" th:text="${activeNotice.title}">공지 제목</span>
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+
         <div class="post-category-tabs">
             <a th:href="@{/posts(keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-category-tab" th:classappend="${selectedCategory == null} ? ' active' : ''">전체</a>
             <a th:href="@{/posts(category='FREE', keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-category-tab" th:classappend="${selectedCategory == 'FREE'} ? ' active' : ''">자유</a>
             <a th:href="@{/posts(category='ANONYMOUS', keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-category-tab" th:classappend="${selectedCategory == 'ANONYMOUS'} ? ' active' : ''">익명</a>
             <a th:href="@{/posts(category='QNA', keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-category-tab" th:classappend="${selectedCategory == 'QNA'} ? ' active' : ''">질의응답</a>
-            <a th:href="@{/posts(category='NOTICE', keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-category-tab" th:classappend="${selectedCategory == 'NOTICE'} ? ' active' : ''">공지</a>
         </div>
-
-        <ul class="post-list post-pinned-list" th:if="${pinnedNotices != null and !pinnedNotices.empty}">
-            <li class="post-list-item post-list-item-pinned" th:each="post : ${pinnedNotices}">
-                <a th:href="@{'/posts/' + ${post.uuid}}" class="post-list-link">
-                    <span class="post-pinned-badge"><i class="fa-solid fa-thumbtack"></i> 공지</span>
-                    <span class="post-list-title" th:text="${post.title}">제목</span>
-                </a>
-                <span class="post-list-meta">
-                    <span class="post-list-date" th:text="${post.createdAt}">날짜</span>
-                    <span class="post-list-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>
-                </span>
-            </li>
-        </ul>
 
         <div class="list-toolbar">
             <form th:action="@{/posts}" method="get" class="post-search-form post-search-form-rich">
