@@ -32,6 +32,9 @@
             <span class="mypage-role-badge"
                   th:if="${loginUser == null or loginUser.role == null or loginUser.role.name() == 'ROLE_USER'}"
                   th:text="'학생'">학생</span>
+            <span class="mypage-role-badge" th:if="${loginUser != null and loginUser.provider.name() == 'GOOGLE'}">
+                <i class="fa-brands fa-google"></i> 구글 계정
+            </span>
 
             <div class="mypage-info-list">
                 <div class="mypage-info-row">

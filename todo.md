@@ -6,6 +6,96 @@
 
 ---
 
+## 0. 로그인/회원가입 버그수정 및 리뉴얼 (2026-08-14~15, ✅ 완료)
+
+**구글 소셜 로그인 실사용까지 전부 완료됨.**
+
+- `application.yml`에 실제 구글 client-id/secret 등록 완료, 로그인/회원가입
+  페이지에 "구글 계정으로 로그인" 버튼 노출 확인.
+- `redirect_uri_mismatch`(400 오류) 발생 → 원인은 구글 콘솔 쪽 "승인된
+  리디렉션 URI"에 `https://localhost:8888`(경로 없음, 프로토콜도 https로 오타)만
+  등록돼 있던 것이었음. `http://localhost:8888/login/oauth2/code/google`로
+  정정 후 저장하니 정상 통과 확인(실제 사용자 계정으로 로그인 성공, `users`
+  테이블에 `provider=GOOGLE` 레코드 생성 확인).
+- 로그인/회원가입 HTML 재배치: 기존엔 구글 버튼이 폼 **아래**(회원가입은
+  학교/학년/반까지 다 입력한 뒤)에 있어서 원래 목적(폼 생략)에 안 맞았음 →
+  로그인/회원가입 둘 다 구글 버튼을 폼 **위쪽**으로 이동(`login.html`,
+  `register.html`).
+- **구글 첫 로그인 시 학교 설정 강제 화면 추가**(2026-08-15): 구글로 처음
+  가입하면 학교/학년/반이 빈 채로 계정이 생성되는데, 이 상태로 커뮤니티/
+  캘린더 등 "우리 학교" 기준 기능을 쓰면 의미가 없어서 막았다.
+  - `User.needsSchoolSetup()`: schoolCode/grade/classNum 중 하나라도
+    비어있으면 true.
+  - `SchoolSetupInterceptor`(`global.security`, `AdminAccessInterceptor`와
+    같은 패턴): 로그인한 사용자가 `needsSchoolSetup()`이면 `/school-setup`,
+    `/logout`, `/notifications/unread-count`(네비바 배지 폴링) 외 모든 경로를
+    `/school-setup`으로 강제 리다이렉트. `WebConfig`에 `addPathPatterns("/**")`
+    로 등록하되 정적 리소스·oauth2 엔드포인트·학교 검색/반목록 API는 제외
+    (안 그러면 설정 화면 자체가 못 뜸).
+  - 새 화면 `user/school-setup.html` + `AuthController`의
+    `GET/POST /school-setup` + `UserService.setupSchool()`(학교/학년/반만
+    다루는 전용 메서드, 아이디·비밀번호는 안 건드림) — register.html의
+    "우리 학교 설정" 블록과 위젯(`school-search.js`/`class-select.js`/
+    `grade-select.js`)을 그대로 재사용.
+  - `user1` 테스트 계정으로 게이트 동작 검증 완료(학교 정보 임시로 비우고
+    로그인 → `/school-setup`으로 강제 이동 → `/posts` 등 다른 경로 접근 시도
+    시 다시 튕겨나가는 것 확인 → 설정 완료 후 정상 접근 확인 → 원래 데이터로
+    복원).
+
+아래는 최초 구현 시점(2026-08-13) 정리 내용, 참고용으로 보존:
+
+**코드 구현은 끝났지만, 실제로 "구글로 로그인" 버튼이 뜨려면 사용자가 구글 클라우드
+콘솔에서 OAuth 클라이언트를 직접 만들어 `client-id`/`client-secret`을 발급받아야
+한다 - 이건 Claude가 대신 해줄 수 없는 부분(외부 콘솔 가입/설정)이라 여기 정리해둔다.**
+
+- 지원 범위: 구글만(사용자 확정, 카카오는 나중에 필요하면 같은 패턴으로 추가).
+- 계정 연동 정책: 로컬 계정(아이디/비번 가입)과 완전히 별개로 취급(사용자 확정) -
+  이메일이 같아도 자동 연동하지 않음. `User`에 이메일 필드 자체를 추가하지 않았다.
+- 새 필드: `User.provider`(LOCAL/GOOGLE), `User.providerId`(구글 "sub" 클레임) -
+  `(provider, provider_id)` 유니크 제약.
+- 처음 로그인하는 구글 계정은 그 자리에서 바로 `User` 레코드가 만들어진다(별도
+  회원가입 폼 없음) - 아이디는 이메일 로컬파트에서 자동 생성(영문/숫자만, 중복이면
+  숫자 접미사), 비밀번호는 본인도 모르는 임의값(BCrypt 인코딩), 닉네임은 구글
+  프로필 이름, 학교/학년/반은 비워둔 채로 시작 - 나중에 마이페이지에서 채우면 됨.
+- 구글 계정은 폼 로그인용 비밀번호가 없으므로 "현재 비밀번호 확인"이 필요했던
+  화면(내 정보 수정, 계정 탈퇴)에서 그 절차를 건너뛰도록 이미 처리해뒀다.
+- **앱은 구글 자격증명 없이도 정상 기동/동작한다** - `ClientRegistrationRepository`
+  빈이 없으면(`spring.security.oauth2.client.registration.google.*` 설정 자체가
+  없으면) `SecurityConfig`가 `.oauth2Login()`을 아예 안 붙이고, 로그인/회원가입
+  페이지도 "구글로 로그인" 버튼을 숨긴다(`AuthController`가 같은 방식으로 판단).
+
+**사용자가 직접 해야 할 것 (Claude는 대행 불가)**:
+1. [Google Cloud Console](https://console.cloud.google.com/) → 새 프로젝트(또는
+   기존 프로젝트) → "APIs & Services" → "OAuth consent screen" 설정(앱 이름,
+   테스트 사용자 등 - 심사 전이면 "테스트" 모드로 충분).
+2. "APIs & Services" → "Credentials" → "Create Credentials" → "OAuth client ID" →
+   애플리케이션 유형 "웹 애플리케이션".
+3. **승인된 리디렉션 URI**에 정확히 이 값을 등록: `http://localhost:8888/login/oauth2/code/google`
+   (배포 후에는 실제 도메인으로 하나 더 추가).
+4. 발급된 클라이언트 ID/보안 비밀번호를 `application.yml`에 아래처럼 추가(또는 더
+   안전하게 환경변수로 분리 - `${GOOGLE_CLIENT_ID}`/`${GOOGLE_CLIENT_SECRET}` 형태로
+   써두고 실행 시 환경변수 주입):
+   ```yaml
+   spring:
+     security:
+       oauth2:
+         client:
+           registration:
+             google:
+               client-id: 발급받은_클라이언트_ID
+               client-secret: 발급받은_클라이언트_시크릿
+               scope: email, profile
+   ```
+   **주의**: 이 키를 빈 문자열(`${GOOGLE_CLIENT_ID:}`처럼 기본값 빈 문자열)로
+   두면 앱 자체가 기동 실패한다(`ClientRegistration.Builder`가 "clientId cannot
+   be empty"로 즉시 예외) - 실제 값이 준비되기 전까지는 이 섹션을 아예
+   `application.yml`에 넣지 말 것(현재 상태).
+5. 추가 후 앱을 재기동(`./gradlew bootRun`, devtools 핫리로드가 아니라 새
+   의존성/설정이라 완전 재기동 필요할 수 있음)하면 로그인/회원가입 페이지에
+   "구글로 로그인" 버튼이 자동으로 나타난다.
+
+---
+
 ## 1. 공지사항(Notice) 기능 재설계 (2026-08-12 요청, ✅ 완료 2026-08-13)
 
 **완료됨** - 아래 요구사항 전부 구현/검증 완료. 기존 `Post.Category.NOTICE` 방식은
@@ -121,8 +211,8 @@ D-Day가 뜨는 경우가 있음. 필요하면 방학식~개학 사이 기간까
   코드 먼저 재확인 필요
 - **신고를 통한 계정정지**: 관리자 수동 정지(`User.active`)는 있음. "여러 명이
   신고 누적 시 자동 정지"는 미구현 — `UserReport` 엔티티 + 누적 기준 설계 필요
-- **소셜 로그인**: Spring Security OAuth2 Client 추가 필요(Google/카카오 등),
-  기존 로컬 계정과의 연동 정책 결정 필요
+- **소셜 로그인**: 코드는 완료, 실제 활성화는 사용자의 구글 자격증명 발급이
+  남아있음 - 맨 위 "0. 소셜 로그인(구글)" 섹션 참고
 - **이메일 인증 및 비밀번호 찾기**: `User`에 이메일 필드 자체가 없음. 필드 추가 +
   인증 메일 발송(SMTP) + 재설정 토큰 흐름 설계 필요
 - **DB 백업/운영**: 정기 백업 스케줄(mysqldump 등), 복구 절차 문서화

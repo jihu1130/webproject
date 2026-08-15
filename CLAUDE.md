@@ -122,6 +122,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   FullCalendar, 순수 Vanilla JS(프레임워크 없음)
 - 게시글 이미지: `app.upload.dir`(프로젝트 폴더 밖, `../uploads`)에 실제
   파일 저장, DB엔 경로만. `WebConfig`가 `/uploads/**`를 정적 서빙
+- **소셜 로그인(구글) 지원**: `spring-boot-starter-oauth2-client` 추가, `User.provider`
+  (LOCAL/GOOGLE)/`providerId`로 로컬 계정과 완전히 별개 취급(이메일 자동 연동 안 함).
+  구글 client-id/secret이 `application.yml`에 없으면 `ClientRegistrationRepository`
+  빈 자체가 생기지 않는데, `SecurityConfig`/`AuthController`가 이를 `ObjectProvider`로
+  확인해서 `.oauth2Login()` 등록과 "구글로 로그인" 버튼 노출을 조건부로 처리한다 -
+  즉 자격증명 없이도 앱이 정상 기동한다. 실제 사용 중인 client-id/secret은
+  `application.yml`에 이미 들어있고(2026-08-15부터 실제 로그인 동작 확인됨),
+  구글 콘솔의 "승인된 리디렉션 URI"는 정확히 `http://localhost:8888/login/oauth2/code/google`
+  로 등록돼 있어야 한다(http/https, 경로 유무까지 한 글자도 다르면 안 됨 -
+  `redirect_uri_mismatch` 400 에러의 거의 유일한 원인).
+- **구글 첫 로그인 시 학교 설정 강제 게이트**: 구글로 처음 가입하면 학교/학년/반이
+  빈 채로 계정이 생성된다(로컬 회원가입은 이 정보가 항상 필수라 이 상태가 안 나옴).
+  `User.needsSchoolSetup()`이 true인 로그인 사용자는 `SchoolSetupInterceptor`
+  (`global.security`, `AdminAccessInterceptor`와 같은 패턴)가 `/school-setup`/
+  `/logout`/`/notifications/unread-count` 외 모든 경로에서 `/school-setup`으로
+  강제 리다이렉트한다(`WebConfig`에 `addPathPatterns("/**")`로 등록, 정적
+  리소스·oauth2 엔드포인트·학교 검색 API는 제외 - 안 그러면 설정 화면 자체가
+  못 뜸). 새로운 "로그인 후 필수 온보딩 단계"를 추가할 일이 있다면 이 인터셉터
+  패턴(User의 boolean/판단 메서드 → 인터셉터의 화이트리스트 → WebConfig 제외
+  경로)을 그대로 복제하는 게 관례가 됐다.
 - **총관리자 테스트 계정**: `username=admin / password=admin`(`TestDataSeeder`로
   생성 후 `SuperAdminSeeder`로 `ROLE_SUPER_ADMIN` 승격). **일반 사용자
   테스트 계정**: `user1`~`user5`(아이디=비밀번호), `TestDataSeeder`가 생성.
@@ -218,3 +238,17 @@ com.webschool.webschool
   행 포함) Hibernate가 그 행을 조회할 때 "알 수 없는 enum 값"으로 역직렬화
   실패한다. `Post.Category.NOTICE`를 걷어낼 때 해당 값을 쓰던 행(자식
   댓글 포함)을 먼저 하드 삭제하고서 enum 상수를 지웠다.
+- **`@Configuration` 클래스 안의 `@Bean`을, 그 설정 클래스가 생성자로
+  주입받는 다른 빈이 필요로 하면 순환 참조로 기동이 실패한다** — `SecurityConfig`
+  안에 있던 `passwordEncoder()` `@Bean`이 정확히 이 케이스였다:
+  `SecurityConfig`가 생성자 주입으로 `CustomOAuth2UserService`를 필요로 하게
+  됐는데, `CustomOAuth2UserService`가 다시 `PasswordEncoder`(=`SecurityConfig`의
+  `@Bean` 메서드 산출물)를 필요로 해서 "빈을 만들려면 나 자신이 먼저 만들어져야
+  함" 순환이 생겼다(`UnsatisfiedDependencyException`, 빌드는 성공하지만 앱 기동은
+  실패). 해결: 그 `@Bean`을 별도의 순수 설정 클래스(`PasswordEncoderConfig`)로
+  분리. **설정 클래스에 새 생성자 의존성을 추가할 때마다, 그 클래스 안의
+  `@Bean`들이 다른 어딘가에서 이미 의존되고 있지 않은지 한 번 의심할 것.**
+  devtools 핫리로드로는 이런 기동 실패가 조용히 묻힐 수 있다 — 새 의존성
+  (build.gradle 변경)을 추가한 뒤에는 핫리로드가 아니라 완전히 재기동해서
+  로그를 직접 확인할 것(devtools는 새 JAR을 클래스패스에 추가하지 못해서
+  포트가 죽어버리기만 하고 에러 로그를 볼 방법이 없다).

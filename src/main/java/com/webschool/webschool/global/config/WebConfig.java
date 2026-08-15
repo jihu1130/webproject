@@ -1,6 +1,7 @@
 package com.webschool.webschool.global.config;
 
 import com.webschool.webschool.global.security.AdminAccessInterceptor;
+import com.webschool.webschool.global.security.SchoolSetupInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
     private String uploadDir;
 
     private final AdminAccessInterceptor adminAccessInterceptor;
+    private final SchoolSetupInterceptor schoolSetupInterceptor;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -30,5 +32,11 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(adminAccessInterceptor).addPathPatterns("/admin/**");
+        // 학교 설정 화면 자체가 쓰는 정적 리소스/학교 검색·반 목록 API는 막으면 그 화면 자체가
+        // 못 뜨게 되므로 반드시 제외해야 한다.
+        registry.addInterceptor(schoolSetupInterceptor).addPathPatterns("/**")
+                .excludePathPatterns("/css/**", "/js/**", "/images/**", "/uploads/**",
+                        "/oauth2/**", "/login/oauth2/**",
+                        "/school/api/search", "/school/api/classes");
     }
 }

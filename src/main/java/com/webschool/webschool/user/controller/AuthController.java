@@ -2,12 +2,15 @@ package com.webschool.webschool.user.controller;
 
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
 import com.webschool.webschool.user.dto.RegisterDto;
+import com.webschool.webschool.user.dto.SchoolSetupDto;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,9 +27,13 @@ import java.util.Map;
 public class AuthController {
 
     private final UserService userService;
+    // 구글 OAuth 클라이언트 등록(client-id/secret)이 안 돼 있으면 이 빈 자체가 없다(SecurityConfig
+    // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
+    private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
 
     @GetMapping("/login")
-    public String loginPage() {
+    public String loginPage(Model model) {
+        model.addAttribute("googleLoginEnabled", clientRegistrationRepositoryProvider.getIfAvailable() != null);
         return "user/login";
     }
 
@@ -72,7 +79,7 @@ public class AuthController {
     }
 
     @PostMapping("/mypage/delete")
-    public String deleteAccount(@RequestParam String password,
+    public String deleteAccount(@RequestParam(required = false) String password,
                                  Authentication authentication,
                                  HttpServletRequest request, HttpServletResponse response,
                                  Model model) {
@@ -119,6 +126,36 @@ public class AuthController {
         }
     }
 
+    // 구글 소셜 로그인 첫 가입 시 비어있는 학교/학년/반을 채우는 화면 - SchoolSetupInterceptor가
+    // 이 정보가 없는 계정을 여기 외에는 접근하지 못하게 강제로 리다이렉트한다.
+    @GetMapping("/school-setup")
+    public String schoolSetupForm(Authentication authentication, Model model) {
+        User user = userService.getByUsername(authentication.getName());
+
+        SchoolSetupDto dto = new SchoolSetupDto();
+        dto.setSchoolName(user.getSchoolName());
+        dto.setSchoolCode(user.getSchoolCode());
+        dto.setAtptCode(user.getAtptCode());
+        dto.setSchoolKind(user.getSchoolKind());
+        dto.setGrade(user.getGrade());
+        dto.setClassNum(user.getClassNum());
+
+        model.addAttribute("setupDto", dto);
+        return "user/school-setup";
+    }
+
+    @PostMapping("/school-setup")
+    public String schoolSetupSubmit(@ModelAttribute("setupDto") SchoolSetupDto dto,
+                                     Authentication authentication, Model model) {
+        try {
+            userService.setupSchool(authentication.getName(), dto);
+            return "redirect:/";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "user/school-setup";
+        }
+    }
+
     // 아이디 중복확인 API
     @GetMapping("/api/users/check-username")
     @ResponseBody
@@ -137,6 +174,7 @@ public class AuthController {
     @GetMapping("/register")
     public String registerPage(Model model) {
         model.addAttribute("registerDto", new RegisterDto());
+        model.addAttribute("googleLoginEnabled", clientRegistrationRepositoryProvider.getIfAvailable() != null);
         return "user/register";
     }
 

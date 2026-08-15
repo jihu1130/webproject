@@ -2,6 +2,7 @@ package com.webschool.webschool.user.service;
 
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
 import com.webschool.webschool.user.dto.RegisterDto;
+import com.webschool.webschool.user.dto.SchoolSetupDto;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -81,9 +82,13 @@ public class UserService {
     public boolean updateProfile(String currentUsername, MyPageUpdateDto dto) {
         User user = getByUsername(currentUsername);
 
-        if (dto.getCurrentPassword() == null || dto.getCurrentPassword().isBlank()
-                || !passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        // 소셜 로그인(GOOGLE) 계정은 본인도 모르는 임의 비밀번호가 들어있어(User.password 필드 주석
+        // 참고) 현재 비밀번호 확인 자체가 성립하지 않는다 - LOCAL 계정에만 이 확인을 요구한다.
+        if (user.getProvider() == User.Provider.LOCAL) {
+            if (dto.getCurrentPassword() == null || dto.getCurrentPassword().isBlank()
+                    || !passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+                throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            }
         }
 
         if (dto.getSchoolName() == null || dto.getSchoolName().isBlank()
@@ -130,6 +135,31 @@ public class UserService {
         return usernameChanged;
     }
 
+    // 구글 소셜 로그인 첫 가입 시 비어있는 학교/학년/반만 채우는 전용 메서드 - 아이디/비밀번호/닉네임은
+    // 건드리지 않는다(그건 updateProfile()의 책임). SchoolSetupInterceptor가 이 정보가 없는 계정을
+    // /school-setup 화면 외에는 접근하지 못하게 막아두므로, 이 메서드가 성공해야 그 게이트가 풀린다.
+    @Transactional
+    public void setupSchool(String username, SchoolSetupDto dto) {
+        User user = getByUsername(username);
+
+        if (dto.getSchoolName() == null || dto.getSchoolName().isBlank()
+                || dto.getSchoolCode() == null || dto.getSchoolCode().isBlank()) {
+            throw new IllegalArgumentException("목록에서 학교를 검색하여 선택해주세요.");
+        }
+
+        if (dto.getGrade() == null || dto.getGrade().isBlank()
+                || dto.getClassNum() == null || dto.getClassNum().isBlank()) {
+            throw new IllegalArgumentException("학년과 반을 선택해주세요.");
+        }
+
+        user.setSchoolName(dto.getSchoolName());
+        user.setSchoolCode(dto.getSchoolCode());
+        user.setAtptCode(dto.getAtptCode());
+        user.setSchoolKind(dto.getSchoolKind());
+        user.setGrade(dto.getGrade());
+        user.setClassNum(dto.getClassNum());
+    }
+
     // "내 프로필 설정" - 남이 보는 프로필(/users/{id})에 노출되는 소개글만 다루는 가벼운 수정.
     // 아이디/비밀번호/학교 정보(updateProfile())와는 목적이 달라서(계정 자체 관리 vs 남에게
     // 보이는 프로필 꾸미기) 별도 메서드로 분리했다 - 현재 비밀번호 재확인도 요구하지 않는다
@@ -148,8 +178,11 @@ public class UserService {
     public void deleteAccount(String username, String password) {
         User user = getByUsername(username);
 
-        if (password == null || password.isBlank() || !passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        // updateProfile()과 동일한 이유로 소셜 로그인 계정은 비밀번호 확인을 건너뛴다.
+        if (user.getProvider() == User.Provider.LOCAL) {
+            if (password == null || password.isBlank() || !passwordEncoder.matches(password, user.getPassword())) {
+                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            }
         }
 
         // 총관리자(admin, ROLE_SUPER_ADMIN)는 앱 안에서 다시 만들어낼 방법이 없는 유일한 계정이라

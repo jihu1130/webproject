@@ -88,12 +88,14 @@
                     </div>
                 </div>
 
-                <hr class="auth-section-divider">
-                <p class="auth-section-label"><i class="fa-solid fa-lock"></i> 본인 확인</p>
-                <div class="auth-field">
-                    <label>현재 비밀번호</label>
-                    <input type="password" th:field="*{currentPassword}" placeholder="변경사항 저장을 위해 현재 비밀번호를 입력하세요" required>
-                </div>
+                <th:block th:if="${loginUser != null and loginUser.provider.name() == 'LOCAL'}">
+                    <hr class="auth-section-divider">
+                    <p class="auth-section-label"><i class="fa-solid fa-lock"></i> 본인 확인</p>
+                    <div class="auth-field">
+                        <label>현재 비밀번호</label>
+                        <input type="password" th:field="*{currentPassword}" placeholder="변경사항 저장을 위해 현재 비밀번호를 입력하세요" required>
+                    </div>
+                </th:block>
 
                 <button type="submit" class="btn btn-brand auth-submit">저장하기</button>
             </form>
@@ -108,7 +110,7 @@
             </p>
             <form th:action="@{/mypage/delete}" method="post" id="deleteAccountForm"
                   onsubmit="return confirm('정말 계정을 삭제하시겠어요? 이 작업은 되돌릴 수 없습니다.');">
-                <div class="auth-field">
+                <div class="auth-field" th:if="${loginUser != null and loginUser.provider.name() == 'LOCAL'}">
                     <label>비밀번호 확인</label>
                     <input type="password" name="password" placeholder="계정 삭제를 위해 비밀번호를 입력하세요" required>
                 </div>

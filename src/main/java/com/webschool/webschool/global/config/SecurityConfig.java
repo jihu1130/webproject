@@ -1,29 +1,37 @@
 package com.webschool.webschool.global.config;
 
+import com.webschool.webschool.user.service.CustomOAuth2UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    private final CustomOAuth2UserService customOAuth2UserService;
+    // spring.security.oauth2.client.registration.google.* 설정이 없으면 Spring Boot가 이 빈을
+    // 아예 만들지 않는다(에러 없이 조용히 생략됨) - 그래서 ObjectProvider로 받아서 있을 때만
+    // .oauth2Login()을 붙인다. 실제 client-id/secret 없이 무작정 등록하면 앱 자체가 기동 실패한다
+    // (ClientRegistration.Builder가 "clientId cannot be empty"로 즉시 예외를 던짐) - 구글 OAuth
+    // 앱을 만들어 자격증명을 받기 전까지는 이 기능이 조용히 비활성 상태로 남아있어야 한다.
+    private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable()) // 개발용
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/register", "/login", "/css/**", "/js/**", "/images/**", "/uploads/**", "/api/users/check-username", "/school/api/search", "/school/api/classes").permitAll()
+                        .requestMatchers("/", "/register", "/login", "/oauth2/**", "/login/oauth2/**",
+                                "/css/**", "/js/**", "/images/**", "/uploads/**",
+                                "/api/users/check-username", "/school/api/search", "/school/api/classes").permitAll()
                         // 게시물 작성/수정/삭제/신고는 로그인 필요, 목록/상세/댓글 조회는 누구나 가능
                         .requestMatchers(HttpMethod.GET, "/posts/new", "/posts/*/edit").authenticated()
                         .requestMatchers(HttpMethod.GET, "/posts", "/posts/*", "/posts/*/comments").permitAll()
@@ -59,6 +67,15 @@ public class SecurityConfig {
                             response.sendRedirect(target);
                         })
                 );
+
+        if (clientRegistrationRepositoryProvider.getIfAvailable() != null) {
+            http.oauth2Login(oauth2 -> oauth2
+                    .loginPage("/login")
+                    .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                    .defaultSuccessUrl("/", false)
+                    .failureUrl("/login?error=true")
+            );
+        }
 
         return http.build();
     }

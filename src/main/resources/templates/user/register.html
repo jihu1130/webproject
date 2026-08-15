@@ -24,6 +24,11 @@
 
             <div th:if="${errorMessage}" class="auth-alert auth-alert-danger" th:text="${errorMessage}"></div>
 
+            <a href="/oauth2/authorization/google" class="auth-google-btn" th:if="${googleLoginEnabled}">
+                <i class="fa-brands fa-google"></i> 구글 계정으로 바로 시작하기
+            </a>
+            <div class="auth-oauth-divider" th:if="${googleLoginEnabled}"><span>또는 아이디로 가입</span></div>
+
             <form th:action="@{/register}" th:object="${registerDto}" method="post" id="registerForm">
                 <div class="auth-field">
                     <label>아이디</label>
