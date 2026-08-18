@@ -15,6 +15,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 테스트 코드만 컴파일 확인: `./gradlew compileTestJava`
 
 **실행**
+- **`application.yml`은 git 추적 대상이 아니다(2026-08-15부터, `.gitignore`).**
+  처음 이 프로젝트를 받았다면 `src/main/resources/application.yml.example`을
+  같은 위치에 `application.yml`로 복사하고 본인 MySQL 비밀번호/NEIS API 키를
+  채울 것 (구글 소셜 로그인 블록은 선택 - 없어도 앱은 그 기능만 꺼진 채 정상
+  기동됨, 발급 절차는 [todo.md](todo.md) "0. 로그인/회원가입 버그수정 및
+  리뉴얼" 참고).
 - `./gradlew bootRun` (기본 포트 8888, `application.yml`의 `server.port`).
   MySQL(`jdbc:mysql://localhost:3306/webschool`, 계정 `root`/`1234`, 평문 —
   `application.yml`)이 로컬에 떠 있어야 함. `ddl-auto: update`라 엔티티

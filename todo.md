@@ -10,6 +10,17 @@
 
 **구글 소셜 로그인 실사용까지 전부 완료됨.**
 
+- **⚠️ `application.yml`은 이제 git 추적 대상이 아니다(2026-08-15부터)** — 원래
+  DB 비밀번호/NEIS 키가 평문으로 그대로 커밋되어 있던 파일인데, 여기에 구글
+  client-id/secret까지 추가해서 커밋했다가 GitHub Push Protection(GH013)에
+  막혀 `git push` 자체가 거부되는 일이 있었다(구글 OAuth 시크릿은 자동 탐지
+  대상 - DB 비밀번호/NEIS 키는 자체 정의값이라 탐지 안 되고 그냥 통과됨).
+  근본적으로 고치기로 하고 `.gitignore`에 `src/main/resources/application.yml`을
+  추가 + `git rm --cached`로 추적 해제했다. **앞으로 이 파일은 로컬에만 있고
+  절대 커밋되지 않는다** - 새로 이 프로젝트를 받으면
+  `application.yml.example`을 `application.yml`로 복사해서 본인 DB
+  비밀번호/NEIS 키/구글 자격증명을 채워야 한다(구글 블록은 선택 - 없어도
+  앱은 정상 기동하고 그 기능만 꺼짐).
 - `application.yml`에 실제 구글 client-id/secret 등록 완료, 로그인/회원가입
   페이지에 "구글 계정으로 로그인" 버튼 노출 확인.
 - `redirect_uri_mismatch`(400 오류) 발생 → 원인은 구글 콘솔 쪽 "승인된
