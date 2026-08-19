@@ -1,5 +1,7 @@
 package com.webschool.webschool;
 
+import com.webschool.webschool.notice.repository.NoticeRepository;
+import com.webschool.webschool.notice.service.NoticeService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.dto.PostFormDto;
 import com.webschool.webschool.post.repository.PostRepository;
@@ -17,7 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.time.LocalDate;
 
 // 개발용 테스트 데이터 생성기. 실행하면 user1~user5(아이디=비밀번호) 계정 + 계정별 한마디 1개,
-// admin/admin(ROLE_ADMIN) 계정, 카테고리별 게시글 3개씩(공지 제외) + 공지(NOTICE) 게시글 1개를
+// admin/admin(ROLE_ADMIN) 계정, 카테고리별 게시글 3개씩 + 공지사항(별도 모델) 1개를
 // 만든다. 이미 있는 데이터는 건너뛰므로 여러 번 실행해도 안전하다.
 @SpringBootTest
 class TestDataSeeder {
@@ -51,6 +53,12 @@ class TestDataSeeder {
     @Autowired
     private ScheduleCommentRepository scheduleCommentRepository;
 
+    @Autowired
+    private NoticeService noticeService;
+
+    @Autowired
+    private NoticeRepository noticeRepository;
+
     @Test
     void seedTestData() {
         for (int i = 1; i <= USER_COUNT; i++) {
@@ -63,9 +71,6 @@ class TestDataSeeder {
 
         String authorUsername = "user1";
         for (Post.Category category : Post.Category.values()) {
-            if (category == Post.Category.NOTICE) {
-                continue; // 공지는 관리자만 작성 가능 - createNoticeIfAbsent()에서 admin 명의로 별도 생성
-            }
             for (int i = 1; i <= POSTS_PER_CATEGORY; i++) {
                 createPostIfAbsent(authorUsername, category, i);
             }
@@ -108,50 +113,48 @@ class TestDataSeeder {
                 username, content);
     }
 
-    // admin 계정이 없으면 회원가입시키고 ROLE_ADMIN으로 직접 승격한다. UserService.register()는
+    // admin 계정이 없으면 회원가입시키고, 있으면 기존 계정을 그대로 쓴다. UserService.register()는
     // 항상 ROLE_USER로 고정하므로(관리자 승격 UI 없음), SuperAdminSeeder와 동일하게 리포지토리를
-    // 직접 써서 우회한다 - 공지(NOTICE) 게시글은 관리자만 작성할 수 있어 필요. 총관리자(ROLE_SUPER_ADMIN)
-    // 승격은 기존 설계대로 SuperAdminSeeder의 책임으로 남겨둔다.
+    // 직접 써서 우회해 ROLE_ADMIN + canManageNotices=true로 승격한다 - NoticeService.createNotice()가
+    // isSuperAdmin() 또는 canManageNotices==true를 요구하기 때문. 계정 존재 여부와 무관하게 매번
+    // 승격 상태를 보장해야 한다(이미 있는 admin 행이 과거에 ROLE_USER로만 만들어졌을 수 있음).
+    // 총관리자(ROLE_SUPER_ADMIN) 승격은 기존 설계대로 SuperAdminSeeder의 책임으로 남겨둔다.
     private void createAdminIfAbsent() {
-        if (userRepository.existsByUsername(ADMIN_USERNAME)) {
-            return;
+        if (!userRepository.existsByUsername(ADMIN_USERNAME)) {
+            RegisterDto dto = new RegisterDto();
+            dto.setUsername(ADMIN_USERNAME);
+            dto.setPassword(ADMIN_PASSWORD);
+            dto.setConfirmPassword(ADMIN_PASSWORD);
+            dto.setNickname(ADMIN_USERNAME);
+            dto.setSchoolName(SCHOOL_NAME);
+            dto.setSchoolCode(SCHOOL_CODE);
+            dto.setAtptCode(ATPT_CODE);
+            dto.setSchoolKind(SCHOOL_KIND);
+            dto.setGrade(GRADE);
+            dto.setClassNum(CLASS_NUM);
+
+            userService.register(dto);
         }
-
-        RegisterDto dto = new RegisterDto();
-        dto.setUsername(ADMIN_USERNAME);
-        dto.setPassword(ADMIN_PASSWORD);
-        dto.setConfirmPassword(ADMIN_PASSWORD);
-        dto.setNickname(ADMIN_USERNAME);
-        dto.setSchoolName(SCHOOL_NAME);
-        dto.setSchoolCode(SCHOOL_CODE);
-        dto.setAtptCode(ATPT_CODE);
-        dto.setSchoolKind(SCHOOL_KIND);
-        dto.setGrade(GRADE);
-        dto.setClassNum(CLASS_NUM);
-
-        userService.register(dto);
 
         User admin = userRepository.findByUsername(ADMIN_USERNAME)
                 .orElseThrow(() -> new IllegalStateException("admin 계정 생성에 실패했습니다."));
-        admin.setRole(User.Role.ROLE_ADMIN);
+        if (admin.getRole() != User.Role.ROLE_ADMIN && admin.getRole() != User.Role.ROLE_SUPER_ADMIN) {
+            admin.setRole(User.Role.ROLE_ADMIN);
+        }
+        admin.setCanManageNotices(true);
         userRepository.save(admin);
     }
 
     private void createNoticeIfAbsent() {
-        String title = "공지 테스트 게시글 1";
+        String title = "공지사항 테스트 1";
 
-        boolean exists = postRepository.findAllByDeletedFalseOrderByCreatedAtDesc().stream()
-                .anyMatch(p -> p.getTitle().equals(title));
+        boolean exists = noticeRepository.findAllByOrderByCreatedAtDesc().stream()
+                .anyMatch(n -> n.getTitle().equals(title));
         if (exists) {
             return;
         }
 
-        PostFormDto form = new PostFormDto();
-        form.setTitle(title);
-        form.setContent("공지 카테고리 테스트 게시글입니다.");
-        form.setCategory(Post.Category.NOTICE.name());
-
-        postService.createPost(ADMIN_USERNAME, form);
+        noticeService.createNotice(ADMIN_USERNAME, title, "공지사항 테스트 내용입니다.");
     }
 
     private void createPostIfAbsent(String authorUsername, Post.Category category, int index) {
