@@ -102,9 +102,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Jackson 3 네임스페이스 주의**: Spring Boot 4.1부터 패키지가
   `com.fasterxml.jackson.*`이 아니라 `tools.jackson.*`로 바뀌었다
   (`school.service.NeisApiService`에서 확인 가능). NEIS 연동은 신/구 두
-  방식이 공존한다 — 시간표/급식/학사일정(구버전, 문자열 자르기 파싱)과
-  학교검색·반목록·기간조회(신버전, Jackson JsonNode 파싱, 더 안전함). 새
-  NEIS 연동을 추가한다면 Jackson 방식을 따를 것.
+  방식이 공존한다 — **시간표/급식만 구버전**(문자열 자르기 파싱,
+  `fetchTimetableFromNeis`/`fetchMealFromNeis`)이고, 학교검색·반목록·기간조회·
+  **학사일정도 이미 신버전**(Jackson JsonNode 파싱, `fetchEventFromNeis` 포함,
+  2026-08-19 확인 — 예전에 이 문서가 학사일정을 구버전으로 적어뒀던 건
+  낡은 설명이었음)이다. 새 NEIS 연동을 추가한다면 Jackson 방식을 따를 것.
+  참고: 시간표 조회(`fetchTimetableFromNeis`)는 NEIS 엔드포인트를
+  `misTimetable`(중학교 전용)로 하드코딩하고 있어 특성화고/마이스터고
+  학생은 시간표가 아예 안 뜨는 버그가 있다(`todo.md` 참고, 수정 예정).
 - **NEIS Open API는 별도 클라이언트 라이브러리 없이 JDK 내장
   `java.net.http.HttpClient`로 직접 호출**(`NeisApiService`). 시간표/급식은
   DB 캐시(`Timetable`/`Meal`)를 먼저 조회하는 패턴이지만 TTL 만료 로직은
@@ -166,15 +171,30 @@ com.webschool.webschool
 │   │                   AdminAccessInterceptor 등록)
 │   ├── security.AdminAccessInterceptor : /admin/** 경로별 부관리자 세부 권한 검사
 │   ├── advice.GlobalModelAdvice        : 모든 화면에 loginUser 엔티티 자동 주입
-│   └── util.PageUtils                  : 관리자 목록(메모리 필터링)을 Page로 변환하는 유틸
+│   ├── util.PageUtils                  : 관리자 목록(메모리 필터링)을 Page로 변환하는 유틸
+│   ├── util.HtmlSanitizer              : 리치 에디터 본문(Post/ScheduleComment)을 저장 전
+│   │                                     정제하는 Jsoup 새니타이저 - th:utext 렌더링의 유일한
+│   │                                     XSS 방어선(아래 "리치 에디터" 항목 참고)
+│   ├── upload       : FileUploadService/EditorUploadController(POST /api/uploads/editor) -
+│   │                   리치 에디터에 파일 삽입 시 쓰는 공용 업로드(위험 확장자만 차단)
+│   └── embed.EmbedResolveController    : 리치 에디터의 "게시물/한마디로 바로가기" 카드가
+│                                         붙여넣은 URL을 실제 게시물/한마디로 확인해주는 조회 전용 API
 ├── user             : 회원가입/로그인/마이페이지, 계정 소프트 삭제/비활성화,
 │                       관리자 계정 관리(권한 승격, 부관리자 권한 토글), 프로필 조회
 │                       (일반/관리자용 분리)
 ├── school           : 캘린더 페이지, NEIS 연동(NeisApiService), 시간표/급식 DB
 │                       캐시(SchoolService), 학사일정 조회/검색/방학 D-Day, 한줄 댓글
-│                       (ScheduleComment, CRUD+신고+좋아요+북마크), 관리자 한마디 관리
-├── post             : 커뮤니티 — 자유/익명/QnA 카테고리 + 댓글 + 신고/블라인드 +
-│                       이미지 첨부 + 관리자 화면(전부 이 패키지 안)
+│                       (ScheduleComment, CRUD+신고+좋아요+북마크+리치 에디터 본문).
+│                       작성/수정은 캘린더 패널 인라인이 아니라 게시글 작성 화면과
+│                       동일 패턴의 전용 페이지(GET/POST /school/comments/new,
+│                       GET/POST /school/comments/{id}/edit, school/comment-form.html
+│                       템플릿 하나를 mode로 분기)로 분리돼 있음(2026-08-19). 한마디
+│                       퍼머링크(GET /school/comments/{id}, 자체 상세 페이지가
+│                       없어서 캘린더로 리다이렉트+하이라이트 - 작성/수정 성공 후에도
+│                       이 리다이렉트를 그대로 재사용), 관리자 한마디 관리
+├── post             : 커뮤니티 — 자유/익명/QnA(질문자 답변 채택, PostComment.accepted) +
+│                       댓글 + 신고/블라인드 + 이미지 첨부 + 리치 에디터 본문 +
+│                       관리자 화면(전부 이 패키지 안)
 ├── notice           : 공지사항 — Post와 완전히 분리된 별도 모델. "활성 공지 항상
 │                       1개"(새 공지 작성 시 이전 공지 자동 보관), 관리자 화면
 │                       (/admin/notices, canManageNotices 권한 필요) + 사용자용 화면
@@ -217,12 +237,38 @@ com.webschool.webschool
 
 ## 알려진 함정 (다시 겪지 않기 위한 메모)
 
+- **Jsoup `Safelist.preserveRelativeLinks(true)`는 `Jsoup.clean(html, baseUri, ...)`의
+  `baseUri`가 비어있으면 아무 효과가 없다**: 업로드 파일 URL이 전부 `/uploads/...`
+  같은 상대경로라 이 옵션이 필수인데, `baseUri`를 `""`로 두면 Jsoup이 상대경로를
+  검증(resolve)할 기준점이 없어서 `src`/`href` 속성 자체를 통째로 잘라버린다(처음엔
+  프로토콜 화이트리스트에 `"#relative"`라는 문자열을 추가하면 되는 줄 알았는데 그런
+  API 자체가 없어서 아무 효과가 없었다). 아무 절대 URL이나(`"http://localhost/"`
+  등, 실제로 그 주소로 요청을 보내지 않으므로 값 자체는 중요하지 않음) 더미
+  `baseUri`로 넘겨야 한다(`global.util.HtmlSanitizer` 참고).
+- **Quill의 `dangerouslyPasteHTML`은 Quill이 모르는 태그/속성을 지우거나 통째로
+  버린다** — `<video>`처럼 Quill 기본 포맷에 없는 태그를 이걸로 삽입하면 겉보기엔
+  삽입되는 것처럼 보여도 저장 시점(`quill.root.innerHTML` 읽기)엔 아예 사라져
+  있었다(실제로 겪음, 브라우저에서 이미지+굵게만 테스트하고 "검증 완료"라고 넘어갔다가
+  나중에 동영상 삽입이 완전히 깨져있는 걸 뒤늦게 발견함 — 새 임베드 타입을 추가할 때
+  이미지 하나만 테스트하고 넘어가지 말 것). 본문에 삽입되는 요소가 나중에 다시
+  불러왔을 때도(수정 화면 재진입 등) 안전하게 살아남으려면 `quill.insertEmbed()`로
+  넣을 수 있는 정식 Quill 커스텀 블롯(`Quill.import('blots/block/embed')` 상속)으로
+  등록해야 한다 — `static/js/rich-editor.js`의 `RichVideoBlot`/`RichFileBlot`/
+  `RichEmbedBlot`이 예시. 이때 태그명이 Quill이 이미 쓰고 있는 태그(`a`=link 포맷 등)와
+  겹치면 저장된 글을 다시 열었을 때 어느 블롯으로 되살릴지 모호해지므로 블롯마다
+  서로 다른 태그를 쓸 것.
 - **`ddl-auto: update`가 못 잡아내는 스키마 드리프트가 있다**: enum 값
   추가(예: `User.Role`에 새 값 추가)가 자동 반영 안 될 때가 있었고,
   엔티티 필드명이 SQL 예약어(`read`/`order`/`group`/`key` 등)와 겹치면
   `CREATE TABLE`이 조용히 실패한다(에러 로그 없이 테이블 자체가 안 만들어짐).
   원인 불명의 `DataIntegrityViolationException`이나 테이블 관련 500 에러가
   나면 엔티티 코드가 아니라 실제 DB `DESCRIBE 테이블명;`부터 확인할 것.
+  **패턴 정리(2026-08-19 재확인)**: 기존 테이블에 새 컬럼을 "추가"하는 건
+  `ddl-auto: update`가 잘 처리한다(예: `PostComment.accepted` boolean 추가는
+  자동 반영됨) — 문제는 항상 "기존 컬럼의 타입을 바꾸는" 쪽이다(`@Column(length=300)`
+  → `columnDefinition = "MEDIUMTEXT"`처럼). 컬럼 타입을 바꾸는 엔티티 변경을 했다면
+  재기동 후 반드시 `DESCRIBE`로 실제 반영됐는지 확인하고, 안 됐으면
+  `ALTER TABLE ... MODIFY COLUMN ...`을 직접 실행할 것.
 - **하드 삭제는 FK 있는 자식 테이블에서 500 에러를 유발한다** — 그래서
   소프트 딜리트가 기본 패턴이 됨(위 Architecture Highlights 참고).
 - **커스텀 CSS 클래스명이 Bootstrap 예약 클래스(`btn-*`, `form-*` 등)와

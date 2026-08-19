@@ -51,13 +51,15 @@ public class MyActivityController {
             Page<MyScheduleCommentSummaryDto> scheduleComments = myActivityService.getMyScheduleComments(username, page, keyword);
             model.addAttribute("scheduleComments", scheduleComments);
         } else if ("bookmarks".equals(tab)) {
-            // 북마크 탭은 게시글/한마디 두 콘텐츠 타입을 다루는 서브탭 구조(신고 관리 화면의
-            // type=comment/schedule 패턴과 동일) - 한 화면에 둘 다 페이지네이션하면 "page" 파라미터가
+            // 북마크 탭은 게시글/한마디/댓글 세 콘텐츠 타입을 다루는 서브탭 구조(신고 관리 화면의
+            // type=comment/schedule 패턴과 동일) - 한 화면에 다 페이지네이션하면 "page" 파라미터가
             // 어느 목록 기준인지 애매해지므로 한 번에 하나의 서브탭만 보여준다.
-            boolean scheduleType = "schedule".equals(type);
-            if (scheduleType) {
+            if ("schedule".equals(type)) {
                 Page<MyScheduleCommentSummaryDto> scheduleBookmarks = myActivityService.getBookmarkedScheduleComments(username, page, keyword);
                 model.addAttribute("scheduleBookmarks", scheduleBookmarks);
+            } else if ("comment".equals(type)) {
+                Page<MyCommentSummaryDto> commentBookmarks = myActivityService.getBookmarkedComments(username, page, keyword);
+                model.addAttribute("commentBookmarks", commentBookmarks);
             } else {
                 type = "post";
                 Page<MyPostSummaryDto> bookmarks = myActivityService.getBookmarkedPosts(username, page, keyword);
@@ -65,12 +67,14 @@ public class MyActivityController {
             }
             model.addAttribute("bookmarkType", type);
         } else if ("likes".equals(tab)) {
-            // bookmarks 탭과 동일한 서브탭 구조(게시글/한마디) - 좋아요한 한마디를 볼 방법이 없다는
+            // bookmarks 탭과 동일한 서브탭 구조(게시글/한마디/댓글) - 좋아요한 한마디를 볼 방법이 없다는
             // 버그 리포트로 추가됨.
-            boolean scheduleType = "schedule".equals(type);
-            if (scheduleType) {
+            if ("schedule".equals(type)) {
                 Page<MyScheduleCommentSummaryDto> scheduleLikes = myActivityService.getLikedScheduleComments(username, page, keyword);
                 model.addAttribute("scheduleLikes", scheduleLikes);
+            } else if ("comment".equals(type)) {
+                Page<MyCommentSummaryDto> commentLikes = myActivityService.getLikedComments(username, page, keyword);
+                model.addAttribute("commentLikes", commentLikes);
             } else {
                 type = "post";
                 Page<MyPostSummaryDto> likes = myActivityService.getLikedPosts(username, page, keyword);
@@ -166,6 +170,28 @@ public class MyActivityController {
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("likes", "schedule", keyword, page);
+    }
+
+    @PostMapping("/bookmarks/comment/{id}/remove")
+    public String removeCommentBookmark(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(required = false) String keyword,
+                                         Authentication authentication) {
+        try {
+            postCommentService.removeBookmark(id, authentication.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        return redirect("bookmarks", "comment", keyword, page);
+    }
+
+    @PostMapping("/likes/comment/{id}/remove")
+    public String removeCommentLike(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(required = false) String keyword,
+                                     Authentication authentication) {
+        try {
+            postCommentService.removeLike(id, authentication.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        return redirect("likes", "comment", keyword, page);
     }
 
     private String redirect(String tab, String type, String keyword, int page) {

@@ -46,6 +46,12 @@ public class PostComment {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean reportCleared; // 관리자가 "문제없음"으로 판결했는지 여부 - 댓글이 수정되면 자동으로 false로 리셋됨
 
+    // 질의응답(QNA) 게시글에서 질문자가 채택한 답변인지 여부(네이버 지식인 스타일, 2026-08-19 추가).
+    // 게시글당 항상 최대 1개만 true - PostCommentService.acceptAnswer()가 새로 채택할 때 기존 채택을
+    // 먼저 해제한다. FREE/ANONYMOUS 카테고리 게시글의 댓글에서는 쓰이지 않는다(항상 false로 남음).
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean accepted;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

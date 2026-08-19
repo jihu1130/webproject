@@ -12,6 +12,7 @@ import com.webschool.webschool.school.repository.ScheduleCommentLikeRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentReportRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.school.repository.SchoolRepository;
+import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserPenaltyService;
@@ -30,7 +31,9 @@ import java.util.stream.Collectors;
 public class ScheduleCommentService {
 
     private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("MM.dd HH:mm");
-    private static final int MAX_CONTENT_LENGTH = 300;
+    // 리치 에디터 도입 이후(2026-08-19) 이 값은 "글자 수"가 아니라 정제된 HTML 문자열 길이 기준이다 -
+    // 예전엔 진짜 "한 줄"짜리 300자 제한이었지만, 본문에 사진/동영상/파일 삽입을 지원하면서 넉넉하게 늘림.
+    private static final int MAX_CONTENT_LENGTH = 50000;
     private static final int BLIND_THRESHOLD = 3; // 서로 다른 사용자 3명이 신고하면 자동 블라인드 (PostCommentService와 동일)
     private static final String BLIND_PLACEHOLDER = "신고 누적으로 블라인드 처리된 한마디입니다.";
 
@@ -231,6 +234,32 @@ public class ScheduleCommentService {
         });
     }
 
+    // 게시글 본문에 삽입된 "한마디로 바로가기" 임베드 카드가 가리키는 대상 조회용
+    // (SchoolController.openComment()에서 캘린더 화면으로 리다이렉트하는 데 필요한 정보를 얻는다).
+    public ScheduleComment findForPermalink(Long id) {
+        ScheduleComment comment = scheduleCommentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+        if (comment.isDeleted()) {
+            throw new IllegalArgumentException("한마디를 찾을 수 없습니다.");
+        }
+        return comment;
+    }
+
+    // 수정 페이지(GET /school/comments/{id}/edit) 진입 시 폼에 기존 내용/컨텍스트를 채우기 위한 조회.
+    // updateComment()와 동일한 소유권 검증을 미리 수행해서, 남의 한마디 수정 페이지 URL을 직접 쳐서
+    // 들어와도 내용이 노출되지 않게 막는다(PostController.editForm()의 postService.getForEdit()와 동일 패턴).
+    public ScheduleComment getForEdit(Long id, String username) {
+        ScheduleComment comment = scheduleCommentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+        if (comment.isDeleted()) {
+            throw new IllegalArgumentException("한마디를 찾을 수 없습니다.");
+        }
+        if (!comment.getUser().getUsername().equals(username)) {
+            throw new IllegalArgumentException("본인이 작성한 한마디만 수정할 수 있습니다.");
+        }
+        return comment;
+    }
+
     private boolean isAdmin(String username) {
         if (username == null) {
             return false;
@@ -240,14 +269,21 @@ public class ScheduleCommentService {
                 .orElse(false);
     }
 
+    // PostService.validateContent()와 동일한 정제 로직 - th:utext로 그대로 렌더링하므로 이 단계가
+    // 유일한 XSS 방어선이다.
     private String validateContent(String content) {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("댓글 내용을 입력해주세요.");
         }
-        if (content.length() > MAX_CONTENT_LENGTH) {
+        String sanitized = HtmlSanitizer.sanitize(content.trim());
+        String plainText = HtmlSanitizer.toPlainText(sanitized);
+        if (plainText.isBlank() && !sanitized.contains("<img") && !sanitized.contains("<video")) {
+            throw new IllegalArgumentException("댓글 내용을 입력해주세요.");
+        }
+        if (sanitized.length() > MAX_CONTENT_LENGTH) {
             throw new IllegalArgumentException("댓글은 " + MAX_CONTENT_LENGTH + "자 이내로 입력해주세요.");
         }
-        return content.trim();
+        return sanitized;
     }
 
     private School findOrCreateSchool(String atptCode, String schoolCode) {

@@ -1,5 +1,6 @@
 package com.webschool.webschool.school.service;
 
+import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.school.domain.ScheduleComment;
 import com.webschool.webschool.school.dto.AdminScheduleCommentSummaryDto;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
@@ -110,7 +111,9 @@ public class AdminScheduleCommentService {
                 .targetDate(c.getTargetDate().toString())
                 .grade(c.getGrade())
                 .classNm(c.getClassNm())
-                .content(c.getContent())
+                // 관리자 목록 화면은 여러 건을 한 테이블에 나열하므로 리치 에디터 태그를 걷어낸
+                // 순수 텍스트만 보여준다(2026-08-19, PostComment 관리자 목록과 동일 정책).
+                .content(HtmlSanitizer.toPlainText(c.getContent()))
                 .authorNickname(c.getUser().getNickname())
                 .authorId(c.getUser().getId())
                 .reportCount(c.getReportCount())

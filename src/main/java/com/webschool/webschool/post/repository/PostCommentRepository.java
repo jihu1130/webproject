@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PostCommentRepository extends JpaRepository<PostComment, Long> {
     // 관리자용: 삭제된 댓글까지 전부 포함해서 조회
@@ -38,4 +39,8 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
 
     // 마이페이지("내 활동내역")용 - 본인이 작성한 댓글 목록 (검색어 필터링은 메모리에서 처리)
     List<PostComment> findByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(Long authorId);
+
+    // QnA 답변 채택(네이버 지식인 스타일) - 게시글당 채택된 답변은 항상 최대 1개라
+    // 새로 채택하기 전에 기존 채택을 먼저 찾아 해제해야 한다.
+    Optional<PostComment> findByPost_IdAndAcceptedTrue(Long postId);
 }

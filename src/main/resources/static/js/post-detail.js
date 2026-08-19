@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var postId = page.getAttribute('data-post-id');
     var isLoggedIn = !!document.getElementById('postCommentForm');
     var isAnonymousPost = page.getAttribute('data-post-category') === 'ANONYMOUS';
+    var isQnaPost = page.getAttribute('data-post-category') === 'QNA';
+    var isPostAuthor = page.getAttribute('data-post-mine') === 'true';
     var LABEL = isAnonymousPost ? '답변' : '댓글';
 
     function escapeHtml(str) {
@@ -40,15 +42,22 @@ document.addEventListener('DOMContentLoaded', function () {
         list.innerHTML = '';
         comments.forEach(function (c) {
             var item = document.createElement('div');
-            item.className = 'post-comment-item' + (c.blind ? ' post-comment-item-blind' : '');
+            item.className = 'post-comment-item' + (c.blind ? ' post-comment-item-blind' : '')
+                + (c.accepted ? ' post-comment-item-accepted' : '');
 
             var editedBadge = c.edited ? ' <span class="post-comment-edited">(수정됨)</span>' : '';
             var blindBadge = c.blind ? ' <span class="post-comment-blind-badge">블라인드</span>' : '';
+            var acceptedBadge = c.accepted ? ' <span class="post-comment-accepted-badge"><i class="fa-solid fa-check"></i> 채택된 답변</span>' : '';
             var nicknameHtml = c.authorLinkable
                 ? '<a href="/users/' + c.authorId + '" class="post-comment-nickname">' + escapeHtml(c.nickname) + '</a>'
                 : '<span class="post-comment-nickname">' + escapeHtml(c.nickname) + '</span>';
             var canBlock = !c.mine && isLoggedIn && !isAnonymousPost && c.authorLinkable;
-            var actionsHtml = c.mine
+            // QNA 답변 채택 버튼 - 질문 작성자에게만, 블라인드/삭제 예정 댓글이 아닌 경우에 노출
+            var acceptBtnHtml = (isQnaPost && isPostAuthor && !c.blind)
+                ? '<button type="button" class="post-comment-accept-btn' + (c.accepted ? ' active' : '') + '" title="' +
+                  (c.accepted ? '채택 취소' : '답변으로 채택') + '"><i class="fa-solid fa-check"></i></button>'
+                : '';
+            var actionsHtml = acceptBtnHtml + (c.mine
                 ? '<button type="button" class="post-comment-edit-btn" title="수정"><i class="fa-solid fa-pen"></i></button>' +
                   '<button type="button" class="post-comment-delete-btn" title="삭제"><i class="fa-solid fa-xmark"></i></button>'
                 : (isLoggedIn
@@ -56,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
                        (c.reportedByMe
                         ? '<button type="button" class="post-comment-report-btn" title="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
                         : '<button type="button" class="post-comment-report-btn" title="신고"><i class="fa-solid fa-flag"></i></button>'))
-                    : '');
+                    : ''));
             var likeBookmarkHtml = isLoggedIn
                 ? '<button type="button" class="post-comment-like-btn' + (c.likedByMe ? ' active' : '') + '" title="좋아요">' +
                       '<i class="fa-solid fa-heart"></i> <span class="post-comment-like-count">' + c.likeCount + '</span></button>' +
@@ -67,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
             item.innerHTML =
                 '<div class="post-comment-item-header">' +
                     nicknameHtml +
-                    '<span class="post-comment-time"><span class="post-comment-time-value">' + escapeHtml(c.createdAt) + '</span>' + editedBadge + blindBadge + '</span>' +
+                    '<span class="post-comment-time"><span class="post-comment-time-value">' + escapeHtml(c.createdAt) + '</span>' + editedBadge + blindBadge + acceptedBadge + '</span>' +
                     likeBookmarkHtml +
                     actionsHtml +
                 '</div>' +
@@ -93,6 +102,11 @@ document.addEventListener('DOMContentLoaded', function () {
             var blockBtn = item.querySelector('.post-comment-block-btn');
             if (blockBtn) {
                 blockBtn.addEventListener('click', function () { blockUser(c.authorId, c.nickname); });
+            }
+
+            var acceptBtn = item.querySelector('.post-comment-accept-btn');
+            if (acceptBtn) {
+                acceptBtn.addEventListener('click', function () { toggleAcceptAnswer(c.id); });
             }
 
             var likeBtn = item.querySelector('.post-comment-like-btn');
@@ -225,6 +239,23 @@ document.addEventListener('DOMContentLoaded', function () {
             var nickname = document.querySelector('.post-detail-meta .post-list-nickname');
             blockUser(targetId, nickname ? nickname.textContent : '작성자');
         });
+    }
+
+    // ---- QNA 답변 채택 ----
+    function toggleAcceptAnswer(id) {
+        fetch('/posts/' + postId + '/comments/' + id + '/accept', { method: 'POST' })
+            .then(function (res) {
+                return res.json().then(function (body) {
+                    if (!res.ok) throw new Error(body.error || '채택 처리에 실패했습니다.');
+                    return body;
+                });
+            })
+            .then(function () {
+                loadComments(); // 채택 상태는 댓글 목록 전체의 정렬/배지에 영향을 주므로 통째로 다시 불러온다
+            })
+            .catch(function (err) {
+                alert(err.message || '채택 처리에 실패했습니다.');
+            });
     }
 
     // ---- 댓글 좋아요/북마크 ----

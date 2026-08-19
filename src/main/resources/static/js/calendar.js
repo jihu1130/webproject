@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var currentCommentGrade = null; // 댓글이 공유되는 학년
     var currentCommentClassNm = null; // 댓글이 공유되는 반
     var currentMonthEventMap = {}; // 'YYYY-MM-DD' -> 학사일정명 배열 (하루에 여러 일정이 겹칠 수 있음, 현재 보이는 42칸 그리드 범위)
+    var pendingHighlightCommentId = null; // 게시글의 "한마디로 바로가기" 카드로 들어왔을 때 강조 표시할 댓글 id
 
     var DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -33,6 +34,12 @@ document.addEventListener('DOMContentLoaded', function () {
     initSchoolSearch();
     initEventSearch();
     initQuicknav();
+
+    // 게시글 본문의 "한마디로 바로가기" 카드를 눌러 들어온 경우 - selectedSchool/currentYear/
+    // currentMonth/selectedDateStr을 그 한마디 기준으로 미리 맞춰두기만 한다. 실제 상세 패널을 여는
+    // 건 아래 handleDayClick(selectedDateStr) 한 곳에서만 하도록 남겨서(중복 호출 방지) 이 함수는
+    // handleDayClick을 직접 부르지 않는다.
+    applySharedCommentLinkIfPresent();
     updateTitle();
     loadMonthEvents(); // 로그인 사용자의 저장된 학교(있다면)가 반영된 뒤에 조회해야 정확함
     loadVacationDday();
@@ -577,6 +584,36 @@ document.addEventListener('DOMContentLoaded', function () {
         refreshClassOptions(mySchool.classNum);
     }
 
+    // 0-1. SchoolController.openComment()가 만들어주는 "/school/calendar?...&highlightComment=" 링크로
+    // 들어온 경우 - 그 한마디가 있는 학교/날짜/학년/반으로 캘린더 상태를 미리 맞춰둔다(적용 순서상
+    // applyMySchoolIfAvailable() 이후, handleDayClick(selectedDateStr) 이전에 호출돼야 한다).
+    function applySharedCommentLinkIfPresent() {
+        var params = new URLSearchParams(window.location.search);
+        var highlightId = params.get('highlightComment');
+        if (!highlightId) return;
+
+        var atptCode = params.get('atptCode');
+        var schoolCode = params.get('schoolCode');
+        var schoolName = params.get('schoolName');
+        var date = params.get('date');
+        var grade = params.get('grade');
+        var classNm = params.get('classNm');
+        if (!atptCode || !schoolCode || !date) return;
+
+        selectedSchool = { schoolName: schoolName || '', schoolCode: schoolCode, officeCode: atptCode, schoolKind: '' };
+        document.getElementById('schoolSearchInput').value = schoolName || '';
+
+        var dateParts = date.split('-');
+        currentYear = parseInt(dateParts[0], 10);
+        currentMonth = parseInt(dateParts[1], 10);
+        selectedDateStr = date;
+
+        if (grade) { gradeSelect.value = grade; }
+        refreshClassOptions(classNm || undefined);
+
+        pendingHighlightCommentId = highlightId;
+    }
+
     // 2. 학교 검색 (공용 위젯 사용)
     function initSchoolSearch() {
         initSchoolSearchWidget({
@@ -717,7 +754,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? '<a href="/users/' + c.authorId + '" class="comment-nickname">' + escapeHtml(c.nickname) + '</a>'
                 : '<span class="comment-nickname">' + escapeHtml(c.nickname) + '</span>';
             var actionsHtml = c.mine
-                ? `<button type="button" class="comment-edit-btn" title="수정"><i class="fa-solid fa-pen"></i></button>
+                ? `<a href="/school/comments/${c.id}/edit" class="comment-edit-btn" title="수정"><i class="fa-solid fa-pen"></i></a>
                    <button type="button" class="comment-delete-btn" title="삭제"><i class="fa-solid fa-xmark"></i></button>`
                 : (c.reportedByMe
                     ? '<button type="button" class="comment-report-btn" title="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
@@ -728,8 +765,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 </button>
                 <button type="button" class="comment-bookmark-btn${c.bookmarkedByMe ? ' active' : ''}" title="북마크">
                     <i class="fa-solid fa-bookmark"></i>
+                </button>
+                <button type="button" class="comment-share-btn" title="공유 링크 복사">
+                    <i class="fa-solid fa-link"></i>
                 </button>`;
 
+            item.dataset.commentId = c.id;
             item.innerHTML = `
                 <div class="comment-item-header">
                     ${nicknameHtml}
@@ -737,14 +778,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${likeBookmarkHtml}
                     ${actionsHtml}
                 </div>
-                <div class="comment-content">${escapeHtml(c.content)}</div>
+                <div class="comment-content post-rich-content">${c.content}</div>
             `;
 
             WebSchoolTimeago.apply(item.querySelector('.comment-time-value'));
 
-            var editBtn = item.querySelector('.comment-edit-btn');
-            if (editBtn) {
-                editBtn.addEventListener('click', function () { startEditComment(item, c); });
+            var shareBtn = item.querySelector('.comment-share-btn');
+            if (shareBtn) {
+                shareBtn.addEventListener('click', function () { shareComment(c.id, shareBtn); });
             }
 
             var delBtn = item.querySelector('.comment-delete-btn');
@@ -769,44 +810,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
             commentList.appendChild(item);
         });
-    }
 
-    function startEditComment(item, c) {
-        var contentEl = item.querySelector('.comment-content');
-        contentEl.innerHTML = `
-            <form class="comment-edit-form">
-                <input type="text" class="comment-edit-input" maxlength="300" value="${escapeHtml(c.content)}">
-                <button type="submit">저장</button>
-                <button type="button" class="comment-edit-cancel">취소</button>
-            </form>
-        `;
-
-        var input = contentEl.querySelector('.comment-edit-input');
-        input.focus();
-        input.setSelectionRange(input.value.length, input.value.length);
-
-        contentEl.querySelector('.comment-edit-cancel').addEventListener('click', function () {
-            loadComments();
-        });
-
-        contentEl.querySelector('.comment-edit-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            var newContent = input.value.trim();
-            if (!newContent) return;
-
-            fetch('/school/api/comments/' + c.id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'content=' + encodeURIComponent(newContent)
-            })
-                .then(function (res) {
-                    if (!res.ok) return res.json().then(function (body) { throw new Error(body.error || '수정 실패'); });
-                    loadComments();
-                })
-                .catch(function (err) {
-                    alert(err.message || '댓글 수정에 실패했습니다.');
-                });
-        });
+        if (pendingHighlightCommentId) {
+            var target = commentList.querySelector('[data-comment-id="' + pendingHighlightCommentId + '"]');
+            if (target) {
+                target.classList.add('comment-item-highlighted');
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(function () { target.classList.remove('comment-item-highlighted'); }, 3000);
+            }
+            pendingHighlightCommentId = null;
+        }
     }
 
     function deleteComment(id) {
@@ -878,28 +891,31 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    document.getElementById('commentForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        var input = document.getElementById('commentInput');
-        var content = input.value.trim();
-        if (!content) return;
+    // 게시글 리치 에디터의 "🔗 링크 카드 삽입" 버튼에 붙여넣을 수 있는 이 한마디만의 고유 링크를
+    // 클립보드에 복사한다 - 한마디는 자체 상세 페이지가 없어서 주소창에서 그냥 복사할 방법이 없다.
+    function shareComment(id, btn) {
+        var url = window.location.origin + '/school/comments/' + id;
+        navigator.clipboard.writeText(url).then(function () {
+            var icon = btn.querySelector('i');
+            icon.className = 'fa-solid fa-check';
+            setTimeout(function () { icon.className = 'fa-solid fa-link'; }, 1200);
+        }).catch(function () {
+            prompt('아래 링크를 복사하세요:', url);
+        });
+    }
 
-        fetch(`/school/api/comments?${commentParams().toString()}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'content=' + encodeURIComponent(content)
-        })
-            .then(function (res) {
-                if (!res.ok) return res.json().then(function (body) { throw new Error(body.error || '등록 실패'); });
-                return res.json();
-            })
-            .then(function () {
-                input.value = '';
-                loadComments();
-            })
-            .catch(function (err) {
-                alert(err.message || '댓글 등록에 실패했습니다.');
-            });
+    // "새 한마디 작성" - 예전엔 패널 안 인라인 폼으로 바로 등록했지만, 사진/동영상/파일/바로가기
+    // 카드까지 삽입 가능한 리치 에디터를 좁은 패널에 두기 불편하다는 요청(2026-08-19)으로 게시글
+    // 작성 화면과 같은 전용 페이지(/school/comments/new)로 이동시킨다. 현재 패널에 열려있는
+    // 날짜/학년/반 컨텍스트를 쿼리 파라미터로 그대로 넘겨서 그 페이지에서 그대로 등록되게 한다.
+    document.getElementById('newCommentBtn').addEventListener('click', function () {
+        var params = commentParams(); // date(yyyyMMdd)/grade/classNm(+선택된 학교) 포함
+        var isoDate = currentCommentDate.slice(0, 4) + '-' + currentCommentDate.slice(4, 6) + '-' + currentCommentDate.slice(6, 8);
+        params.set('date', isoDate);
+        if (selectedSchool) {
+            params.set('schoolName', selectedSchool.schoolName || '');
+        }
+        window.location.href = '/school/comments/new?' + params.toString();
     });
 
     // 3. 백엔드 REST API 호출 및 상세 패널 바인딩 함수
@@ -910,7 +926,6 @@ document.addEventListener('DOMContentLoaded', function () {
         currentCommentDate = formattedDate;
         currentCommentGrade = grade;
         currentCommentClassNm = classNm;
-        document.getElementById('commentInput').value = '';
 
         var dateParts = displayDate.split('-');
         var dateObj = new Date(displayDate + 'T12:00:00');
@@ -930,6 +945,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (selectedSchool) {
             params.set('atptCode', selectedSchool.officeCode);
             params.set('schoolCode', selectedSchool.schoolCode);
+            if (selectedSchool.schoolKind) {
+                params.set('schoolKind', selectedSchool.schoolKind);
+            }
         }
 
         var url = `/school/api/calendar-details?${params.toString()}`;

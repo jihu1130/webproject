@@ -16,8 +16,10 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
   servlet:
     multipart:
-      max-file-size: 5MB
-      max-request-size: 30MB
+      # 리치 에디터(게시글/한마디 본문 삽입)의 동영상 업로드 한도(300MB, FileUploadService 기준)를
+      # 감당하려면 이 두 값이 그보다 커야 한다.
+      max-file-size: 300MB
+      max-request-size: 320MB
   # 구글 소셜 로그인을 켜고 싶을 때만 이 블록을 추가할 것 - 이 블록 자체가 없으면 앱이
   # 구글 로그인 기능만 비활성화한 채로 정상 기동한다(발급 절차는 todo.md "0. 로그인/회원가입
   # 버그수정 및 리뉴얼" 참고). 값이 비어있으면 오히려 기동이 실패하니 주의.

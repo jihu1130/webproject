@@ -9,6 +9,7 @@
     <link rel="stylesheet" th:href="@{/css/theme.css}">
     <link rel="stylesheet" th:href="@{/css/navbar.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css">
 </head>
 <body>
 
@@ -45,7 +46,9 @@
                 <div class="post-field">
                     <label>내용</label>
                     <p id="postContentGuide" class="post-content-guide"></p>
-                    <textarea id="postContentTextarea" th:field="*{content}" rows="12" placeholder="내용을 입력하세요" maxlength="4000" required></textarea>
+                    <p class="post-content-guide">🖼/🎬/📎 버튼으로 본문 중간에 사진·동영상·파일을 삽입할 수 있어요 (사진 15MB, 동영상 300MB, 그 외 파일 50MB 이하)</p>
+                    <div id="postContentEditor" class="rich-editor-container"></div>
+                    <input type="hidden" id="postContentHidden" th:field="*{content}">
                 </div>
 
                 <div class="post-field" th:if="${mode == 'edit' and !existingImages.empty}">
@@ -75,6 +78,16 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script th:src="@{/js/rich-editor.js}"></script>
 <script th:src="@{/js/post-form.js}"></script>
+<script>
+    initRichEditor({
+        editorId: 'postContentEditor',
+        hiddenId: 'postContentHidden',
+        placeholder: '내용을 입력하세요',
+        required: true
+    });
+</script>
 </body>
 </html>
