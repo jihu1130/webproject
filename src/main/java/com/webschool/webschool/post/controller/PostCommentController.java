@@ -75,6 +75,16 @@ public class PostCommentController {
         return Map.of("bookmarked", bookmarked);
     }
 
+    // QNA 답변 채택(네이버 지식인 스타일) - 질문 작성자만 호출 가능, 서비스 단에서 검증하고 실패하면
+    // 아래 handleBadRequest()가 처리한다.
+    @PostMapping("/{commentId}/accept")
+    @ResponseBody
+    public Map<String, Object> accept(@PathVariable String postUuid, @PathVariable Long commentId,
+                                       Authentication authentication) {
+        boolean accepted = postCommentService.acceptAnswer(commentId, authentication.getName());
+        return Map.of("accepted", accepted);
+    }
+
     private String extractUsername(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {

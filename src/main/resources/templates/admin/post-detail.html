@@ -49,7 +49,7 @@
                 <span><i class="fa-solid fa-flag"></i> 신고 <span th:text="${post.reportCount}">0</span>회</span>
             </div>
 
-            <div class="post-detail-content" th:text="${post.content}">내용</div>
+            <div class="post-detail-content post-rich-content" th:utext="${post.content}">내용</div>
 
             <div class="post-image-gallery" th:if="${!post.images.empty}">
                 <a class="post-image-gallery-item" th:each="image : ${post.images}" th:href="${image.url}" target="_blank">

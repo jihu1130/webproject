@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,9 +50,12 @@ public class PostCommentService {
     private final UserBlockService userBlockService;
 
     public List<PostCommentDto> getComments(Long postId, String currentUsername) {
+        // QNA 채택 답변(네이버 지식인 스타일)이 있으면 항상 맨 위로 - Stream.sorted()는 안정 정렬이라
+        // 채택 여부가 같은 댓글끼리는 원래의 작성일순(오름차순)이 그대로 유지된다.
         return postCommentRepository.findByPost_IdAndDeletedFalseOrderByCreatedAtAsc(postId)
                 .stream()
                 .map(c -> toDto(c, currentUsername))
+                .sorted(Comparator.comparing(PostCommentDto::isAccepted).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -227,6 +231,62 @@ public class PostCommentService {
         return true;
     }
 
+    // QNA 답변 채택(네이버 지식인 스타일, 2026-08-19 추가) - 질문 작성자만 채택할 수 있고, 새로
+    // 채택하면 기존에 채택돼 있던 답변은 자동으로 해제된다(공지사항 "활성 공지 항상 1개" 패턴과
+    // 동일하게 "채택 항상 최대 1개"). 이미 채택된 답변을 다시 누르면 채택이 취소된다(토글).
+    @Transactional
+    public boolean acceptAnswer(Long commentId, String username) {
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+        if (comment.isDeleted()) {
+            throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
+        }
+
+        Post post = comment.getPost();
+        if (post.getCategory() != Post.Category.QNA) {
+            throw new IllegalArgumentException("질의응답 게시글에서만 답변을 채택할 수 있습니다.");
+        }
+        if (!post.getAuthor().getUsername().equals(username)) {
+            throw new IllegalArgumentException("질문 작성자만 답변을 채택할 수 있습니다.");
+        }
+
+        if (comment.isAccepted()) {
+            comment.setAccepted(false);
+            return false;
+        }
+
+        postCommentRepository.findByPost_IdAndAcceptedTrue(post.getId())
+                .ifPresent(prev -> prev.setAccepted(false));
+        comment.setAccepted(true);
+        notificationService.notifyIfNotSelf(comment.getAuthor(), username, Notification.Type.ACCEPTED,
+                "회원님의 답변이 채택됐어요: " + truncate(post.getTitle()),
+                "/posts/" + post.getUuid());
+        return true;
+    }
+
+    // 마이페이지 "북마크" 탭(댓글 서브탭)의 "해제" 버튼 전용 - PostService.removeBookmark()와 동일한
+    // 이유로 토글이 아닌 항상 "제거"만 하는 멱등 동작으로 분리.
+    @Transactional
+    public void removeBookmark(Long commentId, String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        commentBookmarkRepository.findByComment_IdAndUser_Id(commentId, user.getId())
+                .ifPresent(commentBookmarkRepository::delete);
+    }
+
+    // 마이페이지 "좋아요" 탭(댓글 서브탭)의 "취소" 버튼 전용 - PostService.removeLike()와 동일한 패턴.
+    @Transactional
+    public void removeLike(Long commentId, String username) {
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        commentLikeRepository.findByComment_IdAndUser_Id(commentId, user.getId()).ifPresent(like -> {
+            commentLikeRepository.delete(like);
+            comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+        });
+    }
+
     // PostService.isAdmin()과 동일한 버그 수정 - 총관리자도 블라인드된 댓글 원본을 볼 수 있어야 한다
     private boolean isAdmin(String username) {
         if (username == null) {
@@ -279,6 +339,7 @@ public class PostCommentService {
                 .likeCount(c.getLikeCount())
                 .likedByMe(likedByMe)
                 .bookmarkedByMe(bookmarkedByMe)
+                .accepted(c.isAccepted())
                 .build();
     }
 }

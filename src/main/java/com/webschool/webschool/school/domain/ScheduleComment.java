@@ -36,7 +36,10 @@ public class ScheduleComment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 300)
+    // 리치 에디터(Quill) 산출물 - 저장 전 ScheduleCommentService가 HtmlSanitizer로 정제한 안전한
+    // HTML만 들어간다(Post.content와 동일 패턴). 사진/동영상/파일 삽입을 지원하면서 300자 제한이던
+    // 예전 "한줄 댓글" 컬럼으로는 부족해져서 MEDIUMTEXT로 확장.
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String content;
 
     @Column(nullable = false, columnDefinition = "boolean default false")

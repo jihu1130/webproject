@@ -14,7 +14,8 @@
 
 <div th:replace="~{fragments/navbar :: navbar('community')}"></div>
 
-<div class="post-page" id="postDetailPage" th:data-post-id="${post.uuid}" th:data-post-category="${post.category}">
+<div class="post-page" id="postDetailPage" th:data-post-id="${post.uuid}" th:data-post-category="${post.category}"
+     th:data-post-mine="${post.mine}">
     <div class="post-container post-container-narrow">
 
         <div class="post-blind-banner" th:if="${post.blind}">
@@ -40,7 +41,7 @@
                 <span class="post-detail-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>
             </div>
 
-            <div class="post-detail-content" th:text="${post.content}">내용</div>
+            <div class="post-detail-content post-rich-content" th:utext="${post.content}">내용</div>
 
             <div class="post-image-gallery" th:if="${!images.empty}">
                 <a class="post-image-gallery-item" th:each="image : ${images}" th:href="${image.url}" target="_blank">

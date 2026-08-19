@@ -29,7 +29,9 @@ public class Post {
     @Column(nullable = false, length = 100)
     private String title;
 
-    @Column(nullable = false, length = 4000)
+    // 리치 에디터(Quill) 산출물 - 저장 전 PostService가 HtmlSanitizer로 정제한 안전한 HTML만 들어간다.
+    // 본문 중간에 이미지/동영상/파일 링크가 섞여 들어갈 수 있어 길이가 커질 수 있으므로 MEDIUMTEXT 사용.
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)

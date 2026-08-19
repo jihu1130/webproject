@@ -12,6 +12,7 @@
     <link rel="stylesheet" th:href="@{/css/navbar.css}">
     <link rel="stylesheet" th:href="@{/css/school-search.css}">
     <link rel="stylesheet" th:href="@{/css/calendar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
 </head>
 <body>
 
@@ -166,12 +167,13 @@
                     </div>
 
                     <div class="day-detail-section">
-                        <h4><i class="fa-solid fa-comments"></i> 오늘의 한마디</h4>
+                        <div class="comment-section-header">
+                            <h4><i class="fa-solid fa-comments"></i> 오늘의 한마디</h4>
+                            <button type="button" id="newCommentBtn" class="comment-new-btn">
+                                <i class="fa-solid fa-pen"></i> 새 한마디 작성
+                            </button>
+                        </div>
                         <div id="commentList" class="comment-list"></div>
-                        <form id="commentForm" class="comment-form">
-                            <input type="text" id="commentInput" maxlength="300" placeholder="이 날에 대한 의견을 남겨보세요" required>
-                            <button type="submit">등록</button>
-                        </form>
                     </div>
                 </div>
             </div>

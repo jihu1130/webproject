@@ -119,12 +119,20 @@ public class NeisApiService {
     }
 
     public List<TimetableDto> fetchTimetableFromNeis(String atptCode, String schoolCode, String date, Integer grade, String classNm) {
+        return fetchTimetableFromNeis(atptCode, schoolCode, date, grade, classNm, null);
+    }
+
+    // schoolKind(SCHUL_KND_SC_NM, searchSchools()가 이미 가져오는 값)에 따라 NEIS 시간표
+    // 엔드포인트가 달라진다 - 예전엔 misTimetable(중학교 전용)로만 고정돼있어서 고등학교
+    // 계열(특성화고/마이스터고 포함 - NEIS는 이들도 SCHUL_KND_SC_NM="고등학교"로 반환하므로
+    // 별도 분기 불필요)과 특수학교 학생은 시간표가 아예 안 나왔다.
+    public List<TimetableDto> fetchTimetableFromNeis(String atptCode, String schoolCode, String date, Integer grade, String classNm, String schoolKind) {
         List<TimetableDto> timetableList = new ArrayList<>();
 
         // 💡 핵심 수정: ALL_YMD -> ALL_TI_YMD (나이스 시간표 API 공식 일자 파라미터)
         String url = String.format(
-                "https://open.neis.go.kr/hub/misTimetable?KEY=%s&Type=json&ATPT_OFCDC_SC_CODE=%s&SD_SCHUL_CODE=%s&ALL_TI_YMD=%s&GRADE=%d&CLASS_NM=%s",
-                apiKey, atptCode, schoolCode, date, grade, classNm
+                "https://open.neis.go.kr/hub/%s?KEY=%s&Type=json&ATPT_OFCDC_SC_CODE=%s&SD_SCHUL_CODE=%s&ALL_TI_YMD=%s&GRADE=%d&CLASS_NM=%s",
+                resolveTimetableEndpoint(schoolKind), apiKey, atptCode, schoolCode, date, grade, classNm
         );
 
         try {
@@ -174,6 +182,23 @@ public class NeisApiService {
         }
 
         return timetableList;
+    }
+
+    // 학교급별 NEIS 시간표 API 엔드포인트 선택. NEIS Open API 문서 기준
+    // 고등학교=hisTimetable, 특수학교=spsTimetable, 그 외(중학교 포함, 값이
+    // 비어있거나 알 수 없는 경우)는 기존 기본값인 misTimetable을 그대로 유지한다
+    // (초등학교는 searchSchools()에서 애초에 검색 결과에서 제외되므로 여기서 다루지 않음).
+    private String resolveTimetableEndpoint(String schoolKind) {
+        if (schoolKind == null) {
+            return "misTimetable";
+        }
+        if (schoolKind.contains("고등")) {
+            return "hisTimetable";
+        }
+        if (schoolKind.contains("특수")) {
+            return "spsTimetable";
+        }
+        return "misTimetable";
     }
 
     // JSON 텍스트 파싱용 헬퍼 메서드

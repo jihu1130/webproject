@@ -8,6 +8,7 @@ import com.webschool.webschool.post.dto.PostDetailDto;
 import com.webschool.webschool.post.dto.PostFormDto;
 import com.webschool.webschool.post.dto.PostListItemDto;
 import com.webschool.webschool.post.dto.PostReportResultDto;
+import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.repository.PostBookmarkRepository;
@@ -36,7 +37,9 @@ public class PostService {
 
     private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("MM.dd HH:mm");
     private static final int MAX_TITLE_LENGTH = 100;
-    private static final int MAX_CONTENT_LENGTH = 4000;
+    // 리치 에디터 도입 이후 이 값은 "글자 수"가 아니라 정제된 HTML 문자열 길이 기준이다(본문 중간에
+    // 삽입된 이미지/동영상/파일 링크 태그까지 포함) - 순수 텍스트 4000자보다 훨씬 넉넉하게 잡음.
+    private static final int MAX_CONTENT_LENGTH = 50000;
     private static final int BLIND_THRESHOLD = 3; // 서로 다른 사용자 3명이 신고하면 자동 블라인드
 
     private final PostRepository postRepository;
@@ -350,16 +353,23 @@ public class PostService {
         return trimmed;
     }
 
+    // 리치 에디터(Quill)가 보낸 HTML을 저장 전에 항상 여기서 정제한다 - th:utext로 그대로 렌더링하므로
+    // 이 단계를 거치지 않은 값이 저장되면 안 된다(HtmlSanitizer가 유일한 XSS 방어선).
     private String validateContent(String content) {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("내용을 입력해주세요.");
         }
-        if (content.length() > MAX_CONTENT_LENGTH) {
+        String sanitized = HtmlSanitizer.sanitize(content.trim());
+        String plainText = HtmlSanitizer.toPlainText(sanitized);
+        // Quill은 빈 에디터도 "<p><br></p>"처럼 빈 태그를 보낼 수 있어 순수 텍스트 기준으로 판단한다.
+        if (plainText.isBlank() && !sanitized.contains("<img") && !sanitized.contains("<video")) {
+            throw new IllegalArgumentException("내용을 입력해주세요.");
+        }
+        if (sanitized.length() > MAX_CONTENT_LENGTH) {
             throw new IllegalArgumentException("내용은 " + MAX_CONTENT_LENGTH + "자 이내로 입력해주세요.");
         }
-        String trimmed = content.trim();
-        BannedWordFilter.validate(trimmed);
-        return trimmed;
+        BannedWordFilter.validate(plainText);
+        return sanitized;
     }
 
     private String displayNickname(Post p) {

@@ -1,8 +1,11 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostComment;
+import com.webschool.webschool.post.repository.CommentBookmarkRepository;
+import com.webschool.webschool.post.repository.CommentLikeRepository;
 import com.webschool.webschool.post.repository.PostBookmarkRepository;
 import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostLikeRepository;
@@ -45,6 +48,8 @@ public class MyActivityService {
     private final PostLikeRepository postLikeRepository;
     private final ScheduleCommentBookmarkRepository scheduleCommentBookmarkRepository;
     private final ScheduleCommentLikeRepository scheduleCommentLikeRepository;
+    private final CommentBookmarkRepository commentBookmarkRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
     public Page<MyPostSummaryDto> getMyPosts(String username, int page, String keyword) {
         Long userId = resolveUserId(username);
@@ -77,10 +82,7 @@ public class MyActivityService {
         return PageUtils.paginate(filtered, page, PAGE_SIZE);
     }
 
-    // 마이페이지 "북마크" 탭(게시글 서브탭) - 내가 북마크한 게시글 목록. 댓글 북마크는 토글 자체는
-    // 지원하지만(게시글 상세에서 아이콘으로 켜고 끌 수 있음) 목록 화면은 아직 없다 - 필요해지면
-    // CommentBookmarkRepository에 findByUser_IdOrderByCreatedAtDesc를 추가하고 여기 한마디 서브탭과
-    // 동일한 패턴으로 세 번째 서브탭을 붙이면 된다.
+    // 마이페이지 "북마크" 탭(게시글 서브탭) - 내가 북마크한 게시글 목록.
     public Page<MyPostSummaryDto> getBookmarkedPosts(String username, int page, String keyword) {
         Long userId = resolveUserId(username);
         List<MyPostSummaryDto> filtered = postBookmarkRepository.findByUser_IdOrderByCreatedAtDesc(userId)
@@ -100,6 +102,18 @@ public class MyActivityService {
                 .map(bookmark -> bookmark.getComment())
                 .filter(c -> matches(keyword, c.getContent()))
                 .map(this::toScheduleCommentDto)
+                .collect(Collectors.toList());
+        return PageUtils.paginate(filtered, page, PAGE_SIZE);
+    }
+
+    // 마이페이지 "북마크" 탭(댓글 서브탭) - getBookmarkedPosts()와 동일한 패턴, 댓글 대상.
+    public Page<MyCommentSummaryDto> getBookmarkedComments(String username, int page, String keyword) {
+        Long userId = resolveUserId(username);
+        List<MyCommentSummaryDto> filtered = commentBookmarkRepository.findByUser_IdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(bookmark -> bookmark.getComment())
+                .filter(c -> matches(keyword, c.getContent(), c.getPost().getTitle()))
+                .map(this::toCommentDto)
                 .collect(Collectors.toList());
         return PageUtils.paginate(filtered, page, PAGE_SIZE);
     }
@@ -126,6 +140,18 @@ public class MyActivityService {
                 .map(like -> like.getComment())
                 .filter(c -> matches(keyword, c.getContent()))
                 .map(this::toScheduleCommentDto)
+                .collect(Collectors.toList());
+        return PageUtils.paginate(filtered, page, PAGE_SIZE);
+    }
+
+    // 마이페이지 "좋아요" 탭(댓글 서브탭) - getBookmarkedComments()와 동일한 패턴, 좋아요한 댓글 대상.
+    public Page<MyCommentSummaryDto> getLikedComments(String username, int page, String keyword) {
+        Long userId = resolveUserId(username);
+        List<MyCommentSummaryDto> filtered = commentLikeRepository.findByUser_IdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(like -> like.getComment())
+                .filter(c -> matches(keyword, c.getContent(), c.getPost().getTitle()))
+                .map(this::toCommentDto)
                 .collect(Collectors.toList());
         return PageUtils.paginate(filtered, page, PAGE_SIZE);
     }
@@ -174,7 +200,9 @@ public class MyActivityService {
     private MyScheduleCommentSummaryDto toScheduleCommentDto(ScheduleComment c) {
         return MyScheduleCommentSummaryDto.builder()
                 .id(c.getId())
-                .content(c.getContent())
+                // 한마디 본문이 리치 에디터 HTML이라(2026-08-19) 목록 미리보기에서는 태그를 걷어낸
+                // 순수 텍스트만 보여준다 - 이미지/동영상까지 그대로 렌더링하면 목록이 너무 무거워짐.
+                .content(HtmlSanitizer.toPlainText(c.getContent()))
                 .targetDate(c.getTargetDate().format(DATE_ONLY))
                 .createdAt(c.getCreatedAt().format(DATE_TIME))
                 .schoolName(c.getSchool().getSchoolName())

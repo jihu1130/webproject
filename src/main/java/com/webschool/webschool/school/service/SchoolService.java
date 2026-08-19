@@ -44,6 +44,11 @@ public class SchoolService {
 
     @Transactional
     public SchoolCalendarDto getCalendarDetails(String atptCode, String schoolCode, String dateStr, Integer grade, String classNm) {
+        return getCalendarDetails(atptCode, schoolCode, dateStr, grade, classNm, null);
+    }
+
+    @Transactional
+    public SchoolCalendarDto getCalendarDetails(String atptCode, String schoolCode, String dateStr, Integer grade, String classNm, String schoolKind) {
         LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
 
         // 1. 학교 엔티티 조회 (없으면 기본 생성 및 저장)
@@ -73,7 +78,7 @@ public class SchoolService {
             timetableDtos = new ArrayList<>();
         } else {
             // DB에 없으면 나이스 API 호출 후 DB에 저장
-            timetableDtos = neisApiService.fetchTimetableFromNeis(atptCode, schoolCode, dateStr, grade, classNm);
+            timetableDtos = neisApiService.fetchTimetableFromNeis(atptCode, schoolCode, dateStr, grade, classNm, schoolKind);
             for (TimetableDto dto : timetableDtos) {
                 int periodInt = Integer.parseInt(dto.getPerio().replace("교시", "").trim());
                 timetableRepository.save(Timetable.builder()

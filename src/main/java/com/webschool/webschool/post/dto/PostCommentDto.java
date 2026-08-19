@@ -19,4 +19,5 @@ public class PostCommentDto {
     private int likeCount;
     private boolean likedByMe;
     private boolean bookmarkedByMe;
+    private boolean accepted; // QNA 게시글에서 질문자가 채택한 답변인지 여부
 }

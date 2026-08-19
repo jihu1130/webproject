@@ -6,6 +6,97 @@
 
 ---
 
+## -2. 오늘의 한마디 작성/수정 전용 페이지 분리 (2026-08-19 요청, ✅ 완료)
+
+**요구사항 원문**: "오늘의 한마디는 작성 페이지 따로 보이는거 따로 해서 작성페이지를
+추가해 수정페이지도 추가하면 좋겠어" — 바로 아래 -1번 항목에서 한마디에 리치
+에디터(사진/동영상/파일/바로가기 카드 삽입)를 붙였더니, 캘린더 날짜 패널 안 좁은
+공간에 인라인으로 끼워넣은 폼이 답답해졌다는 후속 요청.
+
+- [x] 캘린더 날짜 패널의 인라인 작성 폼(`commentForm`)과 인라인 수정 폼
+  (`startEditComment()`가 댓글 아이템 안에 동적으로 만들던 에디터)을 전부 제거하고,
+  게시글 작성 화면(`post/form.html`)과 동일한 패턴의 전용 페이지로 분리했다:
+  `GET/POST /school/comments/new`(작성), `GET/POST /school/comments/{id}/edit`(수정).
+  새 템플릿 `templates/school/comment-form.html` 하나를 mode(create/edit)로 분기해서
+  둘 다 렌더링(post.css의 `post-form-card`/`post-field`/`post-form-actions` 클래스
+  재사용).
+- [x] 작성 페이지는 어느 학교/날짜/학년/반에 쓰는 한마디인지(캘린더에서 이미 선택된
+  컨텍스트)를 읽기 전용으로 보여주고 숨긴 필드로만 들고 다닌다 - 사용자가 그 값을
+  바꿀 방법은 없다(URL을 직접 조작하지 않는 한).
+- [x] 작성/수정 성공 시 각각 새로 만든/수정한 한마디의 퍼머링크(`GET
+  /school/comments/{id}`, -1번 항목에서 이미 만든 캘린더 리다이렉트+하이라이트
+  로직)로 리다이렉트하도록 해서, 게시물의 "바로가기" 임베드 카드나 공유 링크와
+  똑같이 캘린더로 돌아가며 방금 쓴/고친 한마디가 자동으로 스크롤+하이라이트된다
+  (별도 리다이렉트 로직을 새로 안 만들고 기존 걸 재사용).
+- [x] 검증 실패(내용 없음 등) 시 `PostController.create()`/`update()`와 동일하게
+  컨트롤러 메서드 안에서 직접 `IllegalArgumentException`을 잡아 에러 메시지와 함께
+  같은 폼을 다시 그린다 - `SchoolController`의 클래스 레벨
+  `@ExceptionHandler(IllegalArgumentException.class)`는 JSON API용이라 페이지
+  요청에 그대로 걸리면 안 됨(JSON이 그대로 화면에 노출되는 문제).
+  브라우저에서 빈 내용으로 직접 POST해서 에러 배너 렌더링 확인.
+- [x] 캘린더 페이지(`calendar.html`)에서 Quill CDN/`rich-editor.js` 스크립트와
+  인라인 에디터용 DOM을 전부 제거하고 "새 한마디 작성" 버튼(날짜 패널이 아니라
+  새 페이지로 이동)만 남김, 댓글 목록의 수정 버튼도 JS 핸들러 대신 `/school/
+  comments/{id}/edit`로 가는 `<a>` 링크로 교체. 브라우저로 작성→목록에 뜨는지,
+  수정→"(수정됨)" 배지 뜨는지, 검증 에러 재렌더까지 전부 확인.
+
+---
+
+## -1. 리치 에디터 + 파일 업로드 전면 확장 + QnA 채택 + 게시물↔한마디 임베드 (2026-08-19 요청, ✅ 완료)
+
+**요구사항 원문 요약**: 글쓰기/오늘의 한마디 작성 시 모든 파일형식 업로드(사진·동영상
+미리보기, 파일 최대용량은 알아서 결정), 파일을 본문 중간에 삽입하는 블로그 스타일
+에디터, QnA는 네이버 지식인처럼 질문자가 답변을 채택하는 방식, 한마디↔커뮤니티
+게시글 상호 "바로가기"(제목 미리보기 카드).
+
+- [x] **파일 업로드 인프라**(`global.upload.FileUploadService`/`EditorUploadController`,
+  `POST /api/uploads/editor`): 위험한 실행/스크립트 확장자만 차단(exe/bat/sh/jar/
+  ps1/php 등)하고 나머지는 전부 허용(사용자 확정). 크기 제한은 이미지 15MB/동영상
+  300MB/기타 파일 50MB로 직접 정함(`spring.servlet.multipart.max-file-size`도
+  300MB로 상향). 실제 업로드(정상/위험확장자 차단/미인증 차단) 전부 curl로 검증.
+- [x] **HTML 새니타이저**(`global.util.HtmlSanitizer`, Jsoup 기반): `Post.content`/
+  `ScheduleComment.content`를 `VARCHAR`→`MEDIUMTEXT`로 확장하고 저장 전 항상 이
+  새니타이저를 거친다(`th:utext`로 그대로 렌더링하므로 이게 유일한 XSS 방어선).
+  `<script>`/`onerror=` 등은 제거하고 `<img>`/`<video>`/파일 링크는 보존하도록
+  실제 XSS 페이로드로 검증. **알려진 함정 추가**: Jsoup `preserveRelativeLinks(true)`는
+  baseUri가 빈 문자열이면 무효(상대경로 src/href가 통째로 잘림) — 반드시 더미
+  baseUri("http://localhost/")를 함께 써야 함, `Jsoup.clean(html, "", ...)`처럼
+  baseUri를 비워두면 안 됨.
+  둘 다 `ddl-auto: update`가 컬럼 타입 변경을 못 잡아내서(CLAUDE.md 기존 함정) 수동
+  `ALTER TABLE ... MODIFY COLUMN content MEDIUMTEXT`로 고쳤음 — 배포 시 운영 DB에도
+  같은 조치 필요.
+- [x] **Quill 리치 에디터**(`static/js/rich-editor.js`, CDN `quill@2.0.2`): 게시글
+  작성(`post/form.html`)과 오늘의 한마디 작성/수정(`school/calendar.html`) 둘 다
+  적용. 🖼(이미지)/🎬(동영상)/📎(파일)/🔗(바로가기 카드) 커스텀 툴바 버튼.
+  **알려진 함정**: Quill의 `dangerouslyPasteHTML`은 Quill이 모르는 태그/속성
+  (class, download 등)을 지우거나 - 심하면 `<video>`처럼 아예 인식 못 하는 태그는
+  통째로 버린다(실제로 확인됨, "미리 테스트 없이 verified라고 하지 말 것"의 정확한
+  사례). 그래서 동영상/파일카드/바로가기카드 3개를 전부 Quill 커스텀 블롯
+  (`RichVideoBlot`=`<video>`, `RichFileBlot`=`<figure class="rich-file-attachment">`,
+  `RichEmbedBlot`=`<aside>`, `quill.insertEmbed()`로 삽입)으로 등록해서 저장/재편집
+  왕복이 안전하게 보존되도록 고쳤음 - 새 임베드 타입을 추가할 땐 이 3개와 동일하게
+  커스텀 블롯으로 만들 것(dangerouslyPasteHTML로 절대 넣지 말 것).
+- [x] **QnA 답변 채택**(`PostComment.accepted`, `PostCommentService.acceptAnswer()`,
+  `POST /posts/{uuid}/comments/{id}/accept`): 질문 작성자만 채택 가능(서버 검증),
+  새로 채택하면 기존 채택 자동 해제(공지사항 "활성 1개" 패턴과 동일), 채택된 답변은
+  댓글 목록 맨 위로 정렬 + "채택된 답변" 배지, 알림 발송(`Notification.Type.ACCEPTED`
+  신규 추가). QNA 아닌 카테고리·질문자 아닌 사용자가 시도하면 차단되는 것까지 curl로
+  검증.
+- [x] **게시물↔한마디 상호 "바로가기" 임베드**: 한마디는 자체 상세 페이지가 없어서
+  새 퍼머링크 `GET /school/comments/{id}`(`SchoolController.openComment`)를 추가 -
+  그 한마디의 학교/날짜/학년/반으로 캘린더를 리다이렉트하고 `highlightComment`
+  파라미터로 해당 한마디를 스크롤+강조 표시(`calendar.js`
+  `applySharedCommentLinkIfPresent`/`pendingHighlightCommentId`). 링크 카드 삽입은
+  `GET /api/embed/resolve?url=`(`global.embed.EmbedResolveController`)로 붙여넣은
+  URL이 실제 게시물/한마디를 가리키는지 확인 후 제목(게시물)/내용 미리보기(한마디)를
+  스냅샷으로 카드에 박아넣는 방식(대상이 나중에 수정/삭제돼도 카드 문구는 안 바뀜 -
+  실시간 동기화는 범위 밖). 한마디 목록에 🔗 "공유 링크 복사" 버튼도 추가.
+
+**이번 라운드 범위 밖으로 명시적으로 제외**: 대댓글(답글) 기능 - 사용자가 "답글도
+같이 뛰어넘고 다음 기능 추가하자"고 명시적으로 요청함(6번 섹션에 별도 기록).
+
+---
+
 ## 0. 로그인/회원가입 버그수정 및 리뉴얼 (2026-08-14~15, ✅ 완료)
 
 **구글 소셜 로그인 실사용까지 전부 완료됨.**
@@ -217,11 +308,12 @@ D-Day가 뜨는 경우가 있음. 필요하면 방학식~개학 사이 기간까
 
 (전부 사용자가 "이것들 전부 할거야"라고 확정한 목록 — 착수 순서는 미정)
 
-- **좋아요·북마크 기능**: 문서엔 "미착수"로 적혀있었지만 실제로는 이후 세션에서
-  한마디/게시글 좋아요·북마크, 마이페이지 탭까지 상당히 구현됨 — 남은 게 뭔지
-  코드 먼저 재확인 필요
-- **신고를 통한 계정정지**: 관리자 수동 정지(`User.active`)는 있음. "여러 명이
-  신고 누적 시 자동 정지"는 미구현 — `UserReport` 엔티티 + 누적 기준 설계 필요
+- **좋아요·북마크 기능**(✅ 2026-08-19 완료): 게시글/한마디는 이미 완전
+  구현돼 있었고, 댓글(PostComment)만 빠져있던 마이페이지 조회를 추가함
+  (`CommentLikeRepository`/`CommentBookmarkRepository`에 사용자별 조회
+  메서드, `MyActivityService.getLikedComments`/`getBookmarkedComments`,
+  `my-activity.html` "댓글" 서브탭). 실제 좋아요/북마크 → 마이페이지 노출 →
+  해제까지 브라우저로 end-to-end 검증 완료.
 - **소셜 로그인**: 코드는 완료, 실제 활성화는 사용자의 구글 자격증명 발급이
   남아있음 - 맨 위 "0. 소셜 로그인(구글)" 섹션 참고
 - **이메일 인증 및 비밀번호 찾기**: `User`에 이메일 필드 자체가 없음. 필드 추가 +
@@ -237,15 +329,37 @@ D-Day가 뜨는 경우가 있음. 필요하면 방학식~개학 사이 기간까
   자체는 아직 없음
 - 파일 저장소(S3)·클라우드 서버·CI/CD는 순서상 서로 의존적(CI/CD는 원격 저장소
   필요 - 이건 이제 충족됨, 클라우드 서버가 있어야 HTTPS도 의미 있음)
+- **2026-08-19 착수 순서 확정**: 외부 계정/비용 결정이 필요 없는 것부터
+  로그/모니터링 → CI(빌드+테스트) → HTTPS 코드측(CSRF 재활성화) → DB 백업
+  스크립트 → 이메일 인증/비밀번호 찾기(Gmail SMTP로 시작, 추후 AWS SES 등
+  으로 교체 가능하게 `JavaMailSender` 추상화) 순으로 진행. 클라우드 서버 →
+  S3 → 실제 HTTPS 인증서 → CD(배포)는 프로바이더 결정 전까지 보류.
 
 ## 6. 그 외 자잘한 후보
 
-- **대댓글(1depth 답글)**: `PostComment.parentComment` 추가 필요, 관리자 화면에서
-  익명글 실제 작성자 조회 기능도 같이 미구현
-- **게시글 리치 에디터**: 본문 이미지 삽입(Quill/Toast UI + Jsoup sanitize)
-- **캘린더 "기간별 일정 밑줄 표시"**: `Event`가 단일 날짜만 가짐, `CalendarEvent`는
-  정의만 있고 미사용 — 데이터 모델부터 필요
-- **`NeisApiService` deprecated 경고 해결**, 특성화고/마이스터고 시간표·급식
-  미조회 원인 분석
+- **대댓글(1depth 답글)**: `PostComment.parentComment` 추가 필요. 2026-08-19에
+  "다음 기능 뛰어넘고"라는 사용자 지시로 이번 라운드에서 명시적으로 제외됨
+  (관리자 화면의 익명글 실제 작성자 조회는 `AdminPostDetailDto`/
+  `admin/post-detail.html`에 이미 구현되어 있음 — 예전 메모가 낡았던 것,
+  2026-08-19 확인)
+- ~~게시글 리치 에디터~~(✅ 2026-08-19 완료, 아래 "리치 에디터 + 파일 업로드
+  전면 확장" 항목 참고)
+- **캘린더 "기간별 일정 밑줄 표시"**: `CalendarEventDto`가 단일 `date` 필드만
+  가짐(기간 표현 불가), `CalendarEvent` 엔티티/레포지토리는 정의만 있고
+  어디서도 참조되지 않는 죽은 코드로 확정(2026-08-19 확인) — 구현하려면
+  DTO에 기간 필드 추가부터, 아니면 죽은 코드 삭제 검토
+- ~~특성화고/마이스터고 시간표 미조회~~(✅ 2026-08-19 완료 — `NeisApiService`에
+  `resolveTimetableEndpoint(schoolKind)` 추가해 고등학교 계열은 `hisTimetable`,
+  특수학교는 `spsTimetable`로 분기. 실제 마이스터고/일반 중학교 두 케이스로
+  회귀 없이 검증)
 - **조회수 어뷰징 방지 강화**: 지금은 세션 기반이라 우회 가능 — IP+쿠키 또는 DB
   조회 이력 방식 검토
+- **개인 대 개인 차단(UserBlock) 기능에 버그가 있음** — 사용자가 2026-08-19에
+  "고쳐야 할 버그가 있다"고만 언급하고 구체적인 증상은 아직 안 알려줌. 다음
+  세션에서 먼저 재현 방법/증상부터 확인할 것(예: 차단해도 상대방 글이
+  계속 보이는지, 차단이 안 풀리는지, 차단한 사람에게 알림이 계속 가는지 등).
+- **리치 에디터로 올린 파일 중 "저장 안 된 임시 업로드" 정리 안 됨**: `/api/uploads/
+  editor`로 올린 파일은 즉시 디스크에 저장되는데, 사용자가 그 파일을 삽입한
+  글 작성을 중간에 취소하면 파일만 `uploads/editor/`에 고아로 남는다(2026-08-19,
+  파일 업로드 기능 추가하면서 확인된 설계상 한계 — 이번 라운드 범위 밖으로
+  남겨둠). 필요해지면 일정 기간 지난 미참조 파일을 정리하는 배치 작업 검토.

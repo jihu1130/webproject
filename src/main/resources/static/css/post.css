@@ -434,6 +434,67 @@ a.post-list-nickname:hover { text-decoration: underline; }
     margin-bottom: 28px;
 }
 
+/* 리치 에디터(Quill) 산출물 렌더링 - 본문이 이미 <p>/<br> 등 블록 태그를 갖고 있으므로
+   post-detail-content의 pre-wrap을 여기서만 되돌린다. */
+.post-rich-content {
+    white-space: normal;
+}
+.post-rich-content img,
+.post-rich-content video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin: 8px 0;
+}
+.post-rich-content p { margin: 0 0 12px; }
+
+/* 파일 다운로드 카드 (rich-editor.js의 RichFileBlot, <figure class="rich-file-attachment"><a>...) */
+.rich-file-attachment { margin: 8px 0; }
+.rich-file-attachment a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--line, #e5e7eb);
+    border-radius: 9px;
+    color: var(--brand-1-dark);
+    text-decoration: none;
+    font-weight: 600;
+}
+.rich-file-attachment a:hover { border-color: var(--brand-1); }
+
+/* "게시물/한마디로 바로가기" 임베드 카드 (rich-editor.js의 RichEmbedBlot, <aside><a class="content-embed-card">...) */
+.post-rich-content aside { margin: 8px 0; }
+.content-embed-card {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border: 1.5px solid #dcdfef;
+    border-left: 4px solid var(--brand-1);
+    border-radius: 8px;
+    text-decoration: none;
+    background: rgba(79, 70, 229, 0.04);
+    max-width: 100%;
+}
+.content-embed-card:hover { border-color: var(--brand-1); background: rgba(79, 70, 229, 0.08); }
+.content-embed-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-1);
+    text-transform: uppercase;
+}
+.content-embed-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+/* 게시글/한마디 작성 화면 공용 리치 에디터 컨테이너 */
+.rich-editor-container .ql-toolbar { border-radius: 9px 9px 0 0; }
+.rich-editor-container .ql-container { border-radius: 0 0 9px 9px; font-size: 0.98rem; }
+.rich-editor-container .ql-editor { min-height: 220px; }
+
 .post-detail-actions {
     display: flex;
     align-items: center;
@@ -818,6 +879,24 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 }
 
 .post-comment-item-blind .post-comment-content { color: var(--muted); font-style: italic; }
+
+/* QNA 답변 채택(네이버 지식인 스타일) */
+.post-comment-item-accepted {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+.post-comment-accepted-badge {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 4px;
+}
+.post-comment-accept-btn.active, .post-comment-accept-btn.active:hover { color: #15803d !important; background: #dcfce7 !important; }
 
 .post-comment-content {
     font-size: 0.9rem;

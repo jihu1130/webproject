@@ -783,6 +783,8 @@ a.comment-nickname:hover { text-decoration: underline; }
 .comment-edit-btn,
 .comment-report-btn,
 .comment-like-btn { margin-left: auto; }
+/* comment-edit-btn은 수정 페이지로 이동하는 <a>라 버튼들과 달리 텍스트 밑줄/기본 색이 붙는다 */
+.comment-edit-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .comment-edit-btn:hover { color: var(--brand-1); background: rgba(79, 70, 229, 0.08); transform: translateY(-1px); }
 .comment-delete-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
 .comment-report-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
@@ -803,6 +805,16 @@ a.comment-nickname:hover { text-decoration: underline; }
 
 .comment-item-blind .comment-content { color: var(--muted); font-style: italic; }
 
+/* 게시글의 "한마디로 바로가기" 카드를 통해 들어왔을 때 대상 한마디를 잠시 강조 */
+.comment-item-highlighted {
+    animation: comment-highlight-pulse 1.5s ease-in-out 2;
+    border-radius: 8px;
+}
+@keyframes comment-highlight-pulse {
+    0%, 100% { background: transparent; }
+    50% { background: rgba(79, 70, 229, 0.12); }
+}
+
 .comment-content {
     font-size: 13px;
     color: var(--ink);
@@ -810,70 +822,33 @@ a.comment-nickname:hover { text-decoration: underline; }
     word-break: break-word;
 }
 
-.comment-edit-form {
+/* 한마디 작성/수정은 리치 에디터가 필요해 전용 페이지(/school/comments/new, /{id}/edit)로 분리됐다
+   (2026-08-19) - 이 섹션 헤더의 버튼은 그 페이지로 이동시키는 링크일 뿐이다. */
+.comment-section-header {
     display: flex;
-    gap: 5px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
 }
+.comment-section-header h4 { margin: 0; }
 
-.comment-edit-input {
-    flex: 1;
-    min-width: 0;
-    padding: 5px 8px;
-    border: 1.5px solid var(--brand-1);
-    border-radius: 6px;
-    font-size: 13px;
-    font-family: inherit;
-    outline: none;
-}
-
-.comment-edit-form button {
-    flex-shrink: 0;
+.comment-new-btn {
     border: none;
-    border-radius: 6px;
-    padding: 0 8px;
+    border-radius: 999px;
+    padding: 6px 14px;
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
-}
-.comment-edit-form button[type="submit"] {
     background: var(--brand-gradient);
     color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: filter 0.15s ease, transform 0.1s ease;
 }
-.comment-edit-form .comment-edit-cancel {
-    background: #f1f2f6;
-    color: var(--muted);
-}
-
-.comment-form {
-    display: flex;
-    gap: 6px;
-}
-
-.comment-form input {
-    flex: 1;
-    min-width: 0;
-    padding: 8px 10px;
-    border: 1.5px solid #dcdfef;
-    border-radius: 8px;
-    font-size: 13px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.15s ease;
-}
-.comment-form input:focus { border-color: var(--brand-1); }
-
-.comment-form button {
-    padding: 0 14px;
-    border: none;
-    border-radius: 8px;
-    background: var(--brand-gradient);
-    color: white;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-.comment-form button:hover { filter: brightness(1.06); }
+.comment-new-btn:hover { filter: brightness(1.06); }
+.comment-new-btn:active { transform: translateY(1px); }
 
 /* 범례 */
 .cal-legend {
