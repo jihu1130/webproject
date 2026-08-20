@@ -207,6 +207,15 @@ public class PostCommentService {
         return new CommentReportResultDto(newReportCount, comment.isBlind());
     }
 
+    // 신고 취소 - PostService.cancelReport()와 동일한 이유/패턴(자동 언블라인드는 하지 않음).
+    @Transactional
+    public void cancelReport(Long commentId, String username) {
+        commentReportRepository.findByComment_IdAndReporter_Username(commentId, username).ifPresent(report -> {
+            commentReportRepository.delete(report);
+            postCommentRepository.decrementReportCount(commentId);
+        });
+    }
+
     // PostService.toggleLike()/toggleBookmark()와 동일한 패턴
     @Transactional
     public Map<String, Object> toggleLike(Long commentId, String username) {

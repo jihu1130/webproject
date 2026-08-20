@@ -2,16 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<!-- 관리자 7단계 대분류 탭: 1)신고 관리 2)게시글 관리 3)댓글 관리 4)한마디 관리 5)공지사항 관리
-     6)계정 관리 7)관리자 권한 (이 순서 고정). 총관리자(loginUser.role.name() == 'ROLE_SUPER_ADMIN')는
-     7개 전부 보이고, 부관리자는 총관리자가 켜준 권한에 해당하는 탭만 보인다 - 계정 관리/관리자 권한은
-     부관리자에게 항상 숨김(총관리자 전용). "3. 댓글 관리"(/admin/comments, 2026-08-10(4차) 추가)는
-     게시글에 종속된 하위 리소스라 별도 권한 플래그 없이 게시글 관리(canManagePosts)와 같은 조건으로
-     노출한다(AdminAccessInterceptor도 동일하게 묶어서 검사). "5. 공지사항 관리"(/admin/notices,
-     todo.md 요구사항 - 예전 Post.Category.NOTICE 방식을 완전히 대체)는 canManageNotices 권한으로
-     별도 게이팅한다. "7. 관리자 권한"(/admin/users/admins)은 예전엔 이 탭 바에 없어서 /admin/users
-     페이지 안의 링크를 눌러야만 찾을 수 있었다(총관리자 본인도 못 찾겠다고 지적) - 이제 다른 탭과
-     동일하게 상단에 항상 노출한다.
+<!-- 관리자 8단계 대분류 탭: 1)신고 관리 2)게시글 관리 3)댓글 관리 4)한마디 관리 5)공지사항 관리
+     6)계정 관리 7)관리자 권한 8)감사 로그 (이 순서 고정). 총관리자(loginUser.role.name() ==
+     'ROLE_SUPER_ADMIN')는 8개 전부 보이고, 부관리자는 총관리자가 켜준 권한에 해당하는 탭만 보인다 -
+     계정 관리/관리자 권한/감사 로그는 부관리자에게 항상 숨김(총관리자 전용). "3. 댓글 관리"
+     (/admin/comments, 2026-08-10(4차) 추가)는 게시글에 종속된 하위 리소스라 별도 권한 플래그 없이
+     게시글 관리(canManagePosts)와 같은 조건으로 노출한다(AdminAccessInterceptor도 동일하게 묶어서
+     검사). "5. 공지사항 관리"(/admin/notices, todo.md 요구사항 - 예전 Post.Category.NOTICE 방식을
+     완전히 대체)는 canManageNotices 권한으로 별도 게이팅한다. "7. 관리자 권한"(/admin/users/admins)은
+     예전엔 이 탭 바에 없어서 /admin/users 페이지 안의 링크를 눌러야만 찾을 수 있었다(총관리자 본인도
+     못 찾겠다고 지적) - 이제 다른 탭과 동일하게 상단에 항상 노출한다. "8. 감사 로그"
+     (/admin/audit-log)는 관리자 조치 이력이 아예 없었다는 감사 지적으로 신설됨.
      주의: loginUser는 DTO가 아니라 실제 User 엔티티라 role이 String이 아니라 User.Role enum이다.
      다른 관리자 화면(AdminUserSummaryDto 등)은 서비스 단에서 role을 미리 .name()으로 문자열
      변환해두지만, 여기서는 엔티티를 그대로 쓰므로 반드시 .name()을 붙여 문자열로 비교해야 한다
@@ -31,6 +32,8 @@
        href="/admin/users" class="post-category-tab" th:classappend="${active == 'users'} ? ' active' : ''">6. 계정 관리</a>
     <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
        href="/admin/users/admins" class="post-category-tab" th:classappend="${active == 'admins'} ? ' active' : ''">7. 관리자 권한</a>
+    <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+       href="/admin/audit-log" class="post-category-tab" th:classappend="${active == 'audit-log'} ? ' active' : ''">8. 감사 로그</a>
 </nav>
 
 </body>

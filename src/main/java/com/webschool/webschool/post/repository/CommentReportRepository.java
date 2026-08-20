@@ -6,9 +6,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CommentReportRepository extends JpaRepository<CommentReport, Long> {
     boolean existsByComment_IdAndReporter_Username(Long commentId, String username);
+
+    // 마이페이지 "신고" 탭(댓글 서브탭) - 내가 신고한 댓글 목록(최신순).
+    List<CommentReport> findByReporter_IdOrderByCreatedAtDesc(Long reporterId);
+
+    // 신고 취소용 - PostReportRepository.findByPost_IdAndReporter_Username()와 동일 패턴.
+    Optional<CommentReport> findByComment_IdAndReporter_Username(Long commentId, String username);
 
     // 버그 수정(N+1) - PostCommentService.getComments()가 댓글마다 existsBy...를 따로 호출하던 것을
     // 댓글 목록 전체에 대해 한 번에 조회하도록 배치 처리. 이 목록에 포함된 id만 "내가 신고한 댓글".

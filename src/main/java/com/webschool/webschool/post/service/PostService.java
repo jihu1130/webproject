@@ -244,6 +244,18 @@ public class PostService {
         return new PostReportResultDto(newReportCount, post.isBlind());
     }
 
+    // 신고 취소 - UserBlockService.unblock()과 동일한 모양(본인 확인 -> 신고 row 삭제). 신고 수만
+    // 원자적으로 감소시키고, 이미 블라인드된 글을 자동으로 해제하지는 않는다(취소 한 번으로 조용히
+    // 블라인드가 풀리면 신고 누적으로 걸린 조치를 신고자가 스스로 무력화할 수 있어 악용 소지가 있다
+    // - 언블라인드는 관리자 "문제없음" 판결로만 가능, AdminPostService 참고).
+    @Transactional
+    public void cancelReport(Long id, String username) {
+        postReportRepository.findByPost_IdAndReporter_Username(id, username).ifPresent(report -> {
+            postReportRepository.delete(report);
+            postRepository.decrementReportCount(id);
+        });
+    }
+
     // 좋아요 토글 - 이미 눌렀으면 취소, 안 눌렀으면 추가. PostLike 유니크 제약(post_id, user_id)
     // 덕분에 같은 사람이 두 번 좋아요를 쌓을 수 없다. 카운트는 Post.likeCount에 비정규화해서
     // 목록/상세 조회 때마다 COUNT 쿼리를 따로 안 날려도 되게 한다.

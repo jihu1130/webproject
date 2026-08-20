@@ -24,6 +24,10 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
     @Query("UPDATE PostComment c SET c.reportCount = c.reportCount + 1 WHERE c.id = :id")
     void incrementReportCount(@Param("id") Long id);
 
+    @Modifying
+    @Query("UPDATE PostComment c SET c.reportCount = CASE WHEN c.reportCount > 0 THEN c.reportCount - 1 ELSE 0 END WHERE c.id = :id")
+    void decrementReportCount(@Param("id") Long id);
+
     // 관리자용: 삭제된 댓글까지 전부 포함해서 조회
     List<PostComment> findByPost_IdOrderByCreatedAtAsc(Long postId);
 

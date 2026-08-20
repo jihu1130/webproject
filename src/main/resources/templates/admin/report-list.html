@@ -27,23 +27,29 @@
         <div th:replace="~{admin/fragments/nav :: tabs('reports')}"></div>
 
         <div class="post-category-tabs admin-status-tabs">
-            <a th:href="@{/admin/reports(keyword=${keyword})}" class="post-category-tab" th:classappend="${!commentView and !scheduleView} ? ' active' : ''">게시물</a>
-            <a th:href="@{/admin/reports(type='comment', keyword=${keyword})}" class="post-category-tab" th:classappend="${commentView} ? ' active' : ''">댓글</a>
-            <a th:href="@{/admin/reports(type='schedule', keyword=${keyword})}" class="post-category-tab" th:classappend="${scheduleView} ? ' active' : ''">오늘의 한마디</a>
+            <a th:href="@{/admin/reports(keyword=${keyword}, from=${from}, to=${to})}" class="post-category-tab" th:classappend="${!commentView and !scheduleView} ? ' active' : ''">게시물</a>
+            <a th:href="@{/admin/reports(type='comment', keyword=${keyword}, from=${from}, to=${to})}" class="post-category-tab" th:classappend="${commentView} ? ' active' : ''">댓글</a>
+            <a th:href="@{/admin/reports(type='schedule', keyword=${keyword}, from=${from}, to=${to})}" class="post-category-tab" th:classappend="${scheduleView} ? ' active' : ''">오늘의 한마디</a>
         </div>
 
         <div class="list-toolbar">
+            <!-- 버그 수정: 키워드 검색만 있고 "이번 주 신고만 보기" 같은 날짜 필터가 없었다 -
+                 신고 날짜(작성일) 범위로 좁혀볼 수 있게 from/to 추가. -->
             <form th:action="@{/admin/reports}" method="get" class="admin-search-form">
                 <input type="hidden" name="type" th:value="${typeParam}">
                 <input type="text" name="keyword"
                        th:placeholder="${scheduleView or commentView} ? '내용/작성자 검색' : '제목/작성자 검색'"
                        th:value="${keyword}">
+                <input type="date" name="from" th:value="${from}" title="시작일">
+                <input type="date" name="to" th:value="${to}" title="종료일">
                 <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
             <form th:action="@{/admin/reports}" method="get" class="page-size-select">
                 <input type="hidden" name="type" th:value="${typeParam}">
                 <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="from" th:value="${from}">
+                <input type="hidden" name="to" th:value="${to}">
                 <label for="admin-report-page-size">페이지당</label>
                 <select id="admin-report-page-size" name="size" onchange="this.form.submit()">
                     <option value="10" th:selected="${currentSize == 10}">10개</option>
@@ -95,14 +101,14 @@
             </div>
 
             <div class="post-pagination" th:if="${posts.totalPages > 1}">
-                <a th:if="${posts.hasPrevious()}" th:href="@{/admin/reports(page=${posts.number - 1}, keyword=${keyword}, size=${posts.size})}" class="post-page-link">
+                <a th:if="${posts.hasPrevious()}" th:href="@{/admin/reports(page=${posts.number - 1}, keyword=${keyword}, size=${posts.size}, from=${from}, to=${to})}" class="post-page-link">
                     <i class="fa-solid fa-chevron-left"></i>
                 </a>
                 <a th:each="i : ${#numbers.sequence(0, posts.totalPages - 1)}"
-                   th:href="@{/admin/reports(page=${i}, keyword=${keyword}, size=${posts.size})}" th:text="${i + 1}"
+                   th:href="@{/admin/reports(page=${i}, keyword=${keyword}, size=${posts.size}, from=${from}, to=${to})}" th:text="${i + 1}"
                    th:classappend="${i == posts.number} ? ' active' : ''"
                    class="post-page-link"></a>
-                <a th:if="${posts.hasNext()}" th:href="@{/admin/reports(page=${posts.number + 1}, keyword=${keyword}, size=${posts.size})}" class="post-page-link">
+                <a th:if="${posts.hasNext()}" th:href="@{/admin/reports(page=${posts.number + 1}, keyword=${keyword}, size=${posts.size}, from=${from}, to=${to})}" class="post-page-link">
                     <i class="fa-solid fa-chevron-right"></i>
                 </a>
             </div>
@@ -145,14 +151,14 @@
             </div>
 
             <div class="post-pagination" th:if="${comments.totalPages > 1}">
-                <a th:if="${comments.hasPrevious()}" th:href="@{/admin/reports(type='comment', page=${comments.number - 1}, keyword=${keyword}, size=${comments.size})}" class="post-page-link">
+                <a th:if="${comments.hasPrevious()}" th:href="@{/admin/reports(type='comment', page=${comments.number - 1}, keyword=${keyword}, size=${comments.size}, from=${from}, to=${to})}" class="post-page-link">
                     <i class="fa-solid fa-chevron-left"></i>
                 </a>
                 <a th:each="i : ${#numbers.sequence(0, comments.totalPages - 1)}"
-                   th:href="@{/admin/reports(type='comment', page=${i}, keyword=${keyword}, size=${comments.size})}" th:text="${i + 1}"
+                   th:href="@{/admin/reports(type='comment', page=${i}, keyword=${keyword}, size=${comments.size}, from=${from}, to=${to})}" th:text="${i + 1}"
                    th:classappend="${i == comments.number} ? ' active' : ''"
                    class="post-page-link"></a>
-                <a th:if="${comments.hasNext()}" th:href="@{/admin/reports(type='comment', page=${comments.number + 1}, keyword=${keyword}, size=${comments.size})}" class="post-page-link">
+                <a th:if="${comments.hasNext()}" th:href="@{/admin/reports(type='comment', page=${comments.number + 1}, keyword=${keyword}, size=${comments.size}, from=${from}, to=${to})}" class="post-page-link">
                     <i class="fa-solid fa-chevron-right"></i>
                 </a>
             </div>
@@ -196,14 +202,14 @@
             </div>
 
             <div class="post-pagination" th:if="${scheduleComments.totalPages > 1}">
-                <a th:if="${scheduleComments.hasPrevious()}" th:href="@{/admin/reports(type='schedule', page=${scheduleComments.number - 1}, keyword=${keyword}, size=${scheduleComments.size})}" class="post-page-link">
+                <a th:if="${scheduleComments.hasPrevious()}" th:href="@{/admin/reports(type='schedule', page=${scheduleComments.number - 1}, keyword=${keyword}, size=${scheduleComments.size}, from=${from}, to=${to})}" class="post-page-link">
                     <i class="fa-solid fa-chevron-left"></i>
                 </a>
                 <a th:each="i : ${#numbers.sequence(0, scheduleComments.totalPages - 1)}"
-                   th:href="@{/admin/reports(type='schedule', page=${i}, keyword=${keyword}, size=${scheduleComments.size})}" th:text="${i + 1}"
+                   th:href="@{/admin/reports(type='schedule', page=${i}, keyword=${keyword}, size=${scheduleComments.size}, from=${from}, to=${to})}" th:text="${i + 1}"
                    th:classappend="${i == scheduleComments.number} ? ' active' : ''"
                    class="post-page-link"></a>
-                <a th:if="${scheduleComments.hasNext()}" th:href="@{/admin/reports(type='schedule', page=${scheduleComments.number + 1}, keyword=${keyword}, size=${scheduleComments.size})}" class="post-page-link">
+                <a th:if="${scheduleComments.hasNext()}" th:href="@{/admin/reports(type='schedule', page=${scheduleComments.number + 1}, keyword=${keyword}, size=${scheduleComments.size}, from=${from}, to=${to})}" class="post-page-link">
                     <i class="fa-solid fa-chevron-right"></i>
                 </a>
             </div>

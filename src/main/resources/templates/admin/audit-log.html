@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 감사 로그 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-shield-halved"></i> 관리자 대시보드</h1>
+            <p class="page-sub">어떤 관리자가 언제 어떤 조치를 했는지 기록이에요 (총관리자 전용)</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('audit-log')}"></div>
+
+        <div class="list-toolbar" style="margin-top: 12px;">
+            <form th:action="@{/admin/audit-log}" method="get" class="admin-search-form">
+                <input type="text" name="adminUsername" placeholder="관리자 아이디" th:value="${adminUsername}">
+                <select name="targetType">
+                    <option value="" th:selected="${targetType == null or targetType == ''}">전체 대상</option>
+                    <option value="POST" th:selected="${targetType == 'POST'}">게시글</option>
+                    <option value="COMMENT" th:selected="${targetType == 'COMMENT'}">댓글</option>
+                    <option value="SCHEDULE_COMMENT" th:selected="${targetType == 'SCHEDULE_COMMENT'}">한마디</option>
+                    <option value="USER" th:selected="${targetType == 'USER'}">계정</option>
+                </select>
+                <input type="date" name="from" th:value="${from}" title="시작일">
+                <input type="date" name="to" th:value="${to}" title="종료일">
+                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+
+        <div th:if="${logs.empty}" class="admin-empty">기록된 관리자 조치가 없어요.</div>
+
+        <div class="admin-table-wrap" th:unless="${logs.empty}">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>일시</th>
+                    <th>관리자</th>
+                    <th>대상</th>
+                    <th>조치</th>
+                    <th>비고</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="log : ${logs}">
+                    <td th:text="${log.createdAt}">날짜</td>
+                    <td th:text="${log.adminUsername}">관리자</td>
+                    <td th:text="${log.targetTypeLabel} + ' #' + ${log.targetId}">대상</td>
+                    <td>
+                        <span class="admin-status-badge"
+                              th:classappend="${log.action == 'BLIND' or log.action == 'DELETE' or log.action == 'DEACTIVATE' or log.action == 'DEMOTE'} ? ' admin-status-blind' : ' admin-status-cleared'"
+                              th:text="${log.actionLabel}">조치</span>
+                    </td>
+                    <td th:text="${log.detail} ?: '-'">비고</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="post-pagination" th:if="${logs.totalPages > 1}">
+            <a th:if="${logs.hasPrevious()}" th:href="@{/admin/audit-log(page=${logs.number - 1}, adminUsername=${adminUsername}, targetType=${targetType}, from=${from}, to=${to})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}"
+               th:href="@{/admin/audit-log(page=${i}, adminUsername=${adminUsername}, targetType=${targetType}, from=${from}, to=${to})}" th:text="${i + 1}"
+               th:classappend="${i == logs.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${logs.hasNext()}" th:href="@{/admin/audit-log(page=${logs.number + 1}, adminUsername=${adminUsername}, targetType=${targetType}, from=${from}, to=${to})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

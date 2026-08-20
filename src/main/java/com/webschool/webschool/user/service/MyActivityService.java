@@ -6,13 +6,16 @@ import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostComment;
 import com.webschool.webschool.post.repository.CommentBookmarkRepository;
 import com.webschool.webschool.post.repository.CommentLikeRepository;
+import com.webschool.webschool.post.repository.CommentReportRepository;
 import com.webschool.webschool.post.repository.PostBookmarkRepository;
 import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostLikeRepository;
+import com.webschool.webschool.post.repository.PostReportRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.school.domain.ScheduleComment;
 import com.webschool.webschool.school.repository.ScheduleCommentBookmarkRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentLikeRepository;
+import com.webschool.webschool.school.repository.ScheduleCommentReportRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.dto.MyCommentSummaryDto;
 import com.webschool.webschool.user.dto.MyPostSummaryDto;
@@ -50,6 +53,9 @@ public class MyActivityService {
     private final ScheduleCommentLikeRepository scheduleCommentLikeRepository;
     private final CommentBookmarkRepository commentBookmarkRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final PostReportRepository postReportRepository;
+    private final CommentReportRepository commentReportRepository;
+    private final ScheduleCommentReportRepository scheduleCommentReportRepository;
 
     public Page<MyPostSummaryDto> getMyPosts(String username, int page, String keyword) {
         Long userId = resolveUserId(username);
@@ -150,6 +156,43 @@ public class MyActivityService {
         List<MyCommentSummaryDto> filtered = commentLikeRepository.findByUser_IdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(like -> like.getComment())
+                .filter(c -> matches(keyword, c.getContent(), c.getPost().getTitle()))
+                .map(this::toCommentDto)
+                .collect(Collectors.toList());
+        return PageUtils.paginate(filtered, page, PAGE_SIZE);
+    }
+
+    // 마이페이지 "신고" 탭(게시글 서브탭) - 내가 신고한 게시글 목록. 신고 취소 시 PostService
+    // .cancelReport()로 신고 row 자체가 삭제되므로 그 이후엔 이 목록에서 자연히 빠진다.
+    public Page<MyPostSummaryDto> getReportedPosts(String username, int page, String keyword) {
+        Long userId = resolveUserId(username);
+        List<MyPostSummaryDto> filtered = postReportRepository.findByReporter_IdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(report -> report.getPost())
+                .filter(p -> matches(keyword, p.getTitle(), p.getContent()))
+                .map(this::toPostDto)
+                .collect(Collectors.toList());
+        return PageUtils.paginate(filtered, page, PAGE_SIZE);
+    }
+
+    // 마이페이지 "신고" 탭(한마디 서브탭) - getReportedPosts()와 동일한 패턴.
+    public Page<MyScheduleCommentSummaryDto> getReportedScheduleComments(String username, int page, String keyword) {
+        Long userId = resolveUserId(username);
+        List<MyScheduleCommentSummaryDto> filtered = scheduleCommentReportRepository.findByReporter_IdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(report -> report.getComment())
+                .filter(c -> matches(keyword, c.getContent()))
+                .map(this::toScheduleCommentDto)
+                .collect(Collectors.toList());
+        return PageUtils.paginate(filtered, page, PAGE_SIZE);
+    }
+
+    // 마이페이지 "신고" 탭(댓글 서브탭) - getReportedPosts()와 동일한 패턴.
+    public Page<MyCommentSummaryDto> getReportedComments(String username, int page, String keyword) {
+        Long userId = resolveUserId(username);
+        List<MyCommentSummaryDto> filtered = commentReportRepository.findByReporter_IdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(report -> report.getComment())
                 .filter(c -> matches(keyword, c.getContent(), c.getPost().getTitle()))
                 .map(this::toCommentDto)
                 .collect(Collectors.toList());

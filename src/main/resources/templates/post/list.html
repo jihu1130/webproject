@@ -57,6 +57,9 @@
                     <label class="post-search-scope">
                         <input type="radio" name="scope" value="content" th:checked="${scope == 'content'}"> 내용만
                     </label>
+                    <label class="post-search-scope">
+                        <input type="radio" name="scope" value="author" th:checked="${scope == 'author'}"> 작성자
+                    </label>
                     <select name="sort" class="post-search-sort" onchange="this.form.submit()">
                         <option value="" th:selected="${sort == ''}">최신순</option>
                         <option value="oldest" th:selected="${sort == 'oldest'}">오래된순</option>

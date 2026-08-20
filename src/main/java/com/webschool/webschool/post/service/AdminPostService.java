@@ -1,5 +1,6 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.Post;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -34,17 +36,23 @@ public class AdminPostService {
     private final PostCommentRepository postCommentRepository;
     private final PostImageService postImageService;
     private final NotificationService notificationService;
+    private final AdminActionLogService adminActionLogService;
 
-    public List<AdminPostSummaryDto> getReportedPosts(String keyword) {
+    // from/to(둘 다 선택)로 신고 날짜 범위를 좁힐 수 있다 - 버그 수정: 예전엔 키워드 검색만 있고
+    // "이번 주 신고만 보기" 같은 날짜 필터가 없었다(AdminScheduleCommentService.getReportedComments()
+    // 와 동일 패턴).
+    public List<AdminPostSummaryDto> getReportedPosts(String keyword, LocalDate from, LocalDate to) {
         return postRepository.findReportedOrBlindPosts().stream()
+                .filter(p -> matchesDateRange(p.getCreatedAt(), from, to))
                 .map(this::toSummaryDto)
                 .filter(dto -> matches(keyword, dto.getTitle(), dto.getAuthorNickname()))
                 .collect(Collectors.toList());
     }
 
     // 신고 관리 > 댓글 탭 - 게시글 신고 관리와 동일한 패턴, 게시글 아이디로 상세(부모 게시글) 이동
-    public List<AdminCommentReportSummaryDto> getReportedComments(String keyword) {
+    public List<AdminCommentReportSummaryDto> getReportedComments(String keyword, LocalDate from, LocalDate to) {
         return postCommentRepository.findReportedOrBlindComments().stream()
+                .filter(c -> matchesDateRange(c.getCreatedAt(), from, to))
                 .map(this::toCommentReportSummaryDto)
                 .filter(dto -> matches(keyword, dto.getContent(), dto.getAuthorNickname()))
                 .collect(Collectors.toList());
@@ -98,6 +106,20 @@ public class AdminPostService {
         return false;
     }
 
+    private boolean matchesDateRange(LocalDateTime createdAt, LocalDate from, LocalDate to) {
+        if (createdAt == null) {
+            return true;
+        }
+        LocalDate date = createdAt.toLocalDate();
+        if (from != null && date.isBefore(from)) {
+            return false;
+        }
+        if (to != null && date.isAfter(to)) {
+            return false;
+        }
+        return true;
+    }
+
     // 소프트 삭제된 게시물도 id로 직접 조회 가능 (postRepository.findById()는 deleted 여부를 필터링하지 않음)
     public AdminPostDetailDto getPostDetail(Long id) {
         Post post = postRepository.findById(id)
@@ -144,10 +166,12 @@ public class AdminPostService {
             notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
                     "'" + truncate(post.getTitle()) + "' 글이 관리자에 의해 블라인드 처리되었습니다.",
                     "/posts/" + post.getUuid());
+            adminActionLogService.log("POST", id, "BLIND", truncate(post.getTitle()));
         } else {
             notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
                     "'" + truncate(post.getTitle()) + "' 글의 블라인드 처리가 해제되었습니다.",
                     "/posts/" + post.getUuid());
+            adminActionLogService.log("POST", id, "UNBLIND", truncate(post.getTitle()));
         }
     }
 
@@ -162,6 +186,7 @@ public class AdminPostService {
         notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
                 "'" + truncate(post.getTitle()) + "' 글이 검토 결과 문제없음으로 처리되었습니다.",
                 "/posts/" + post.getUuid());
+        adminActionLogService.log("POST", id, "REPORT_CLEAR", truncate(post.getTitle()));
     }
 
     // "문제없음" 판결 철회 - 잘못 눌렀거나 재검토가 필요할 때 되돌리는 용도. reportCount는 그대로
@@ -171,6 +196,7 @@ public class AdminPostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
         post.setReportCleared(false);
+        adminActionLogService.log("POST", id, "REPORT_UNCLEAR", truncate(post.getTitle()));
     }
 
     // 댓글 신고 "문제없음" 판결 - 게시물과 동일한 패턴
@@ -183,6 +209,7 @@ public class AdminPostService {
         notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
                 "작성하신 댓글이 검토 결과 문제없음으로 처리되었습니다.",
                 "/posts/" + comment.getPost().getUuid());
+        adminActionLogService.log("COMMENT", commentId, "REPORT_CLEAR", null);
     }
 
     // 댓글 신고 "문제없음" 판결 철회 - 게시물과 동일한 패턴
@@ -191,6 +218,7 @@ public class AdminPostService {
         PostComment comment = postCommentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
         comment.setReportCleared(false);
+        adminActionLogService.log("COMMENT", commentId, "REPORT_UNCLEAR", null);
     }
 
     // 아래 3개는 "댓글 관리"(/admin/comments) 전용 화면에서 댓글 하나를 게시글 상세로 들어가지
@@ -206,10 +234,12 @@ public class AdminPostService {
             notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
                     "작성하신 댓글이 관리자에 의해 블라인드 처리되었습니다.",
                     "/posts/" + comment.getPost().getUuid());
+            adminActionLogService.log("COMMENT", commentId, "BLIND", null);
         } else {
             notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
                     "작성하신 댓글의 블라인드 처리가 해제되었습니다.",
                     "/posts/" + comment.getPost().getUuid());
+            adminActionLogService.log("COMMENT", commentId, "UNBLIND", null);
         }
     }
 
@@ -219,6 +249,7 @@ public class AdminPostService {
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
         comment.setDeleted(true);
         comment.setDeletedAt(LocalDateTime.now());
+        adminActionLogService.log("COMMENT", commentId, "DELETE", null);
     }
 
     @Transactional
@@ -227,6 +258,7 @@ public class AdminPostService {
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
         comment.setDeleted(false);
         comment.setDeletedAt(null);
+        adminActionLogService.log("COMMENT", commentId, "RESTORE", null);
     }
 
     // 관리자 강제 삭제 - 사용자 본인 삭제와 동일하게 소프트 딜리트로 처리한다(누구나의 글이든 삭제 가능하다는 점만 다름).
@@ -237,6 +269,7 @@ public class AdminPostService {
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
         post.setDeleted(true);
         post.setDeletedAt(LocalDateTime.now());
+        adminActionLogService.log("POST", id, "DELETE", truncate(post.getTitle()));
     }
 
     // 소프트 삭제 복구
@@ -246,6 +279,7 @@ public class AdminPostService {
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
         post.setDeleted(false);
         post.setDeletedAt(null);
+        adminActionLogService.log("POST", id, "RESTORE", truncate(post.getTitle()));
     }
 
     private String truncate(String text) {

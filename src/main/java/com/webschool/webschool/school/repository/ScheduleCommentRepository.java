@@ -23,6 +23,10 @@ public interface ScheduleCommentRepository extends JpaRepository<ScheduleComment
     @Query("UPDATE ScheduleComment c SET c.reportCount = c.reportCount + 1 WHERE c.id = :id")
     void incrementReportCount(@Param("id") Long id);
 
+    @Modifying
+    @Query("UPDATE ScheduleComment c SET c.reportCount = CASE WHEN c.reportCount > 0 THEN c.reportCount - 1 ELSE 0 END WHERE c.id = :id")
+    void decrementReportCount(@Param("id") Long id);
+
     // 일반 사용자용: 삭제되지 않은 한마디만 조회
     List<ScheduleComment> findBySchool_IdAndTargetDateAndGradeAndClassNmAndDeletedFalseOrderByCreatedAtAsc(
             Long schoolId, LocalDate targetDate, String grade, String classNm);

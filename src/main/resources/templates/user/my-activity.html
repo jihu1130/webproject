@@ -29,6 +29,7 @@
             <a th:href="@{/mypage/activity(tab='schedule')}" class="post-category-tab" th:classappend="${tab == 'schedule'} ? ' active' : ''">오늘의 한마디</a>
             <a th:href="@{/mypage/activity(tab='likes')}" class="post-category-tab" th:classappend="${tab == 'likes'} ? ' active' : ''">좋아요</a>
             <a th:href="@{/mypage/activity(tab='bookmarks')}" class="post-category-tab" th:classappend="${tab == 'bookmarks'} ? ' active' : ''">북마크</a>
+            <a th:href="@{/mypage/activity(tab='reports')}" class="post-category-tab" th:classappend="${tab == 'reports'} ? ' active' : ''">신고</a>
             <a th:href="@{/mypage/activity(tab='blocks')}" class="post-category-tab" th:classappend="${tab == 'blocks'} ? ' active' : ''">차단 목록</a>
         </div>
 
@@ -37,6 +38,7 @@
                 <input type="hidden" name="tab" th:value="${tab}">
                 <input type="hidden" name="type" th:if="${tab == 'bookmarks'}" th:value="${bookmarkType}">
             <input type="hidden" name="type" th:if="${tab == 'likes'}" th:value="${likeType}">
+                <input type="hidden" name="type" th:if="${tab == 'reports'}" th:value="${reportType}">
                 <input type="text" name="keyword" placeholder="내용 검색" th:value="${keyword}">
                 <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
@@ -392,6 +394,126 @@
                        th:classappend="${i == scheduleBookmarks.number} ? ' active' : ''"
                        class="post-page-link"></a>
                     <a th:if="${scheduleBookmarks.hasNext()}" th:href="@{/mypage/activity(tab='bookmarks', type='schedule', page=${scheduleBookmarks.number + 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 신고 탭 -->
+        <div th:if="${tab == 'reports'}">
+            <div class="post-category-tabs my-activity-subtabs">
+                <a th:href="@{/mypage/activity(tab='reports', type='post')}" class="post-category-tab" th:classappend="${reportType == 'post'} ? ' active' : ''">게시글</a>
+                <a th:href="@{/mypage/activity(tab='reports', type='comment')}" class="post-category-tab" th:classappend="${reportType == 'comment'} ? ' active' : ''">댓글</a>
+                <a th:href="@{/mypage/activity(tab='reports', type='schedule')}" class="post-category-tab" th:classappend="${reportType == 'schedule'} ? ' active' : ''">오늘의 한마디</a>
+            </div>
+
+            <!-- 신고한 게시글 -->
+            <div th:if="${reportType == 'post'}">
+                <div th:if="${reports.empty}" class="admin-empty">신고한 게시글이 없어요.</div>
+
+                <ul class="post-list" th:unless="${reports.empty}">
+                    <li class="post-list-item" th:each="post : ${reports}">
+                        <a th:href="@{'/posts/' + ${post.uuid}}" class="post-list-link">
+                            <span class="post-category-badge" th:text="${post.categoryLabel}">자유</span>
+                            <span class="post-list-title" th:text="${post.title}">제목</span>
+                        </a>
+                        <span class="post-list-meta">
+                            <span class="post-list-date" th:text="${post.createdAt}">날짜</span>
+                            <form th:action="@{'/mypage/activity/reports/' + ${post.uuid} + '/cancel'}" method="post" class="my-activity-delete-form"
+                                  onsubmit="return confirm('신고를 취소할까요?');">
+                                <input type="hidden" name="page" th:value="${reports.number}">
+                                <input type="hidden" name="keyword" th:value="${keyword}">
+                                <button type="submit" class="post-delete-btn">신고 취소</button>
+                            </form>
+                        </span>
+                    </li>
+                </ul>
+
+                <div class="post-pagination" th:if="${reports.totalPages > 1}">
+                    <a th:if="${reports.hasPrevious()}" th:href="@{/mypage/activity(tab='reports', type='post', page=${reports.number - 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                    <a th:each="i : ${#numbers.sequence(0, reports.totalPages - 1)}"
+                       th:href="@{/mypage/activity(tab='reports', type='post', page=${i}, keyword=${keyword})}" th:text="${i + 1}"
+                       th:classappend="${i == reports.number} ? ' active' : ''"
+                       class="post-page-link"></a>
+                    <a th:if="${reports.hasNext()}" th:href="@{/mypage/activity(tab='reports', type='post', page=${reports.number + 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 신고한 댓글 -->
+            <div th:if="${reportType == 'comment'}">
+                <div th:if="${commentReports.empty}" class="admin-empty">신고한 댓글이 없어요.</div>
+
+                <ul class="post-list" th:unless="${commentReports.empty}">
+                    <li class="post-list-item my-activity-comment-item" th:each="comment : ${commentReports}">
+                        <div class="my-activity-comment-body">
+                            <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
+                            <span th:text="${comment.content}">댓글 내용</span>
+                        </div>
+                        <span class="post-list-meta">
+                            <a th:href="@{'/posts/' + ${comment.postUuid}}" class="post-list-title" th:text="${comment.postTitle}">게시글 제목</a>
+                            <span class="post-list-date" th:text="${comment.createdAt}">날짜</span>
+                            <form th:action="@{'/mypage/activity/reports/comment/' + ${comment.id} + '/cancel'}" method="post" class="my-activity-delete-form"
+                                  onsubmit="return confirm('신고를 취소할까요?');">
+                                <input type="hidden" name="page" th:value="${commentReports.number}">
+                                <input type="hidden" name="keyword" th:value="${keyword}">
+                                <button type="submit" class="post-delete-btn">신고 취소</button>
+                            </form>
+                        </span>
+                    </li>
+                </ul>
+
+                <div class="post-pagination" th:if="${commentReports.totalPages > 1}">
+                    <a th:if="${commentReports.hasPrevious()}" th:href="@{/mypage/activity(tab='reports', type='comment', page=${commentReports.number - 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                    <a th:each="i : ${#numbers.sequence(0, commentReports.totalPages - 1)}"
+                       th:href="@{/mypage/activity(tab='reports', type='comment', page=${i}, keyword=${keyword})}" th:text="${i + 1}"
+                       th:classappend="${i == commentReports.number} ? ' active' : ''"
+                       class="post-page-link"></a>
+                    <a th:if="${commentReports.hasNext()}" th:href="@{/mypage/activity(tab='reports', type='comment', page=${commentReports.number + 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 신고한 오늘의 한마디 -->
+            <div th:if="${reportType == 'schedule'}">
+                <div th:if="${scheduleReports.empty}" class="admin-empty">신고한 한마디가 없어요.</div>
+
+                <ul class="post-list" th:unless="${scheduleReports.empty}">
+                    <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleReports}">
+                        <div class="my-activity-comment-body">
+                            <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
+                            <span th:text="${comment.content}">한마디 내용</span>
+                        </div>
+                        <span class="post-list-meta">
+                            <span class="post-list-title"
+                                  th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</span>
+                            <span class="post-list-date" th:text="${comment.createdAt}">작성일</span>
+                            <form th:action="@{'/mypage/activity/reports/schedule/' + ${comment.id} + '/cancel'}" method="post" class="my-activity-delete-form"
+                                  onsubmit="return confirm('신고를 취소할까요?');">
+                                <input type="hidden" name="page" th:value="${scheduleReports.number}">
+                                <input type="hidden" name="keyword" th:value="${keyword}">
+                                <button type="submit" class="post-delete-btn">신고 취소</button>
+                            </form>
+                        </span>
+                    </li>
+                </ul>
+
+                <div class="post-pagination" th:if="${scheduleReports.totalPages > 1}">
+                    <a th:if="${scheduleReports.hasPrevious()}" th:href="@{/mypage/activity(tab='reports', type='schedule', page=${scheduleReports.number - 1}, keyword=${keyword})}" class="post-page-link">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                    <a th:each="i : ${#numbers.sequence(0, scheduleReports.totalPages - 1)}"
+                       th:href="@{/mypage/activity(tab='reports', type='schedule', page=${i}, keyword=${keyword})}" th:text="${i + 1}"
+                       th:classappend="${i == scheduleReports.number} ? ' active' : ''"
+                       class="post-page-link"></a>
+                    <a th:if="${scheduleReports.hasNext()}" th:href="@{/mypage/activity(tab='reports', type='schedule', page=${scheduleReports.number + 1}, keyword=${keyword})}" class="post-page-link">
                         <i class="fa-solid fa-chevron-right"></i>
                     </a>
                 </div>

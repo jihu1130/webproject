@@ -35,16 +35,29 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("UPDATE Post p SET p.reportCount = p.reportCount + 1 WHERE p.id = :id")
     void incrementReportCount(@Param("id") Long id);
 
+    // 신고 취소용(cancelReport()) - incrementLikeCount()/decrementLikeCount() 쌍과 동일한 이유.
+    @Modifying
+    @Query("UPDATE Post p SET p.reportCount = CASE WHEN p.reportCount > 0 THEN p.reportCount - 1 ELSE 0 END WHERE p.id = :id")
+    void decrementReportCount(@Param("id") Long id);
 
     // 커뮤니티 목록 - 카테고리 필터/검색어 둘 다 선택 사항(null이면 무시). scope로 검색 대상을
-    // 제목만("title")/내용만("content")/제목+내용(그 외 값 - 기본)으로 좁힐 수 있다. 정렬은 쿼리에
-    // 고정하지 않고 Pageable의 Sort를 그대로 따른다(PostService.getList()에서 정렬 옵션에 맞는
-    // Sort를 만들어 넘김) - "최신순/오래된순/조회수순" 같은 여러 정렬을 이 메서드 하나로 지원하기 위함.
+    // 제목만("title")/내용만("content")/작성자 닉네임만("author")/제목+내용(그 외 값 - 기본)으로
+    // 좁힐 수 있다. 정렬은 쿼리에 고정하지 않고 Pageable의 Sort를 그대로 따른다(PostService.getList()
+    // 에서 정렬 옵션에 맞는 Sort를 만들어 넘김) - "최신순/오래된순/조회수순" 같은 여러 정렬을 이
+    // 메서드 하나로 지원하기 위함.
+    // 작성자 검색(scope='author')은 익명(ANONYMOUS) 글을 항상 제외한다 - 포함시키면 "이 사람이 이
+    // 익명 글을 썼다"는 게 검색으로 드러나서 익명 기능의 취지가 깨진다(findByAuthor_IdAndCategoryNot...
+    // 공개 프로필 조회 메서드와 동일한 익명성 보호 원칙, CLAUDE.md 참고). 그래서 제목/내용 검색과
+    // 다르게 OR 체인에 단순히 조건 하나를 추가하는 방식이 아니라 scope='author'일 때 통째로 분기한다.
     @Query("SELECT p FROM Post p WHERE p.deleted = false AND p.blind = false "
             + "AND (:category IS NULL OR p.category = :category) "
-            + "AND (:keyword IS NULL OR :keyword = '' "
+            + "AND (" +
+            "  (:scope = 'author' AND p.category <> com.webschool.webschool.post.domain.Post.Category.ANONYMOUS "
+            + "     AND (:keyword IS NULL OR :keyword = '' OR LOWER(p.author.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')))) "
+            + "  OR (:scope <> 'author' AND (:keyword IS NULL OR :keyword = '' "
             + "     OR (:scope <> 'content' AND LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) "
-            + "     OR (:scope <> 'title' AND LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')))) ")
+            + "     OR (:scope <> 'title' AND LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')))))" +
+            ") ")
     Page<Post> search(@Param("category") Post.Category category, @Param("keyword") String keyword,
                        @Param("scope") String scope, Pageable pageable);
 
