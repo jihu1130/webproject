@@ -47,6 +47,16 @@ public class NotificationController {
         return "redirect:/notifications";
     }
 
+    // 버그수정 프롬포트 요청 - 개별 알림 삭제(그동안 "모두 읽음 처리"만 있었음)
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable Long id, Authentication authentication) {
+        try {
+            notificationService.delete(id, authentication.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        return "redirect:/notifications";
+    }
+
     // 네비바 종 아이콘 배지 폴링용 (비로그인 상태면 0)
     @GetMapping("/unread-count")
     @ResponseBody

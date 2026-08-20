@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (classSelect && (classSelect.disabled || !classSelect.value)) {
             e.preventDefault();
-            alert('학년과 반을 선택해주세요.');
+            WebSchoolModal.alert('학년과 반을 선택해주세요.');
             if (gradeSelect) gradeSelect.focus();
         }
     });

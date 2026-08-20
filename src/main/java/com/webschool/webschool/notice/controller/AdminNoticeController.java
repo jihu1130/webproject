@@ -61,4 +61,45 @@ public class AdminNoticeController {
         model.addAttribute("listSize", PageUtils.normalizeSize(size));
         return "admin/notice-detail";
     }
+
+    // 버그수정 프롬포트 요청 - 예전엔 작성 후 수정 자체가 없어서 오타 하나 나도 새 공지를 다시
+    // 올려야 했다(그러면 전체 알림이 또 발송됨).
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model) {
+        try {
+            NoticeDto notice = noticeService.getDetail(id);
+            model.addAttribute("mode", "edit");
+            model.addAttribute("noticeId", id);
+            model.addAttribute("title", notice.getTitle());
+            model.addAttribute("content", notice.getContent());
+        } catch (IllegalArgumentException e) {
+            return "redirect:/admin/notices";
+        }
+        return "admin/notice-form";
+    }
+
+    @PostMapping("/{id}")
+    public String update(@PathVariable Long id, @RequestParam String title, @RequestParam String content,
+                          Authentication authentication, Model model) {
+        try {
+            noticeService.updateNotice(id, authentication.getName(), title, content);
+            return "redirect:/admin/notices/" + id;
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("mode", "edit");
+            model.addAttribute("noticeId", id);
+            model.addAttribute("title", title);
+            model.addAttribute("content", content);
+            return "admin/notice-form";
+        }
+    }
+
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable Long id, Authentication authentication) {
+        try {
+            noticeService.deleteNotice(id, authentication.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        return "redirect:/admin/notices";
+    }
 }

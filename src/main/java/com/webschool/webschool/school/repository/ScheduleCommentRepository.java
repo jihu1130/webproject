@@ -2,12 +2,31 @@ package com.webschool.webschool.school.repository;
 
 import com.webschool.webschool.school.domain.ScheduleComment;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface ScheduleCommentRepository extends JpaRepository<ScheduleComment, Long> {
+    // PostRepository.incrementLikeCount()와 동일한 이유(lost update 방지) - 벌크 UPDATE로 원자적 증감.
+    @Modifying
+    @Query("UPDATE ScheduleComment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :id")
+    void incrementLikeCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE ScheduleComment c SET c.likeCount = CASE WHEN c.likeCount > 0 THEN c.likeCount - 1 ELSE 0 END WHERE c.id = :id")
+    void decrementLikeCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE ScheduleComment c SET c.reportCount = c.reportCount + 1 WHERE c.id = :id")
+    void incrementReportCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE ScheduleComment c SET c.reportCount = CASE WHEN c.reportCount > 0 THEN c.reportCount - 1 ELSE 0 END WHERE c.id = :id")
+    void decrementReportCount(@Param("id") Long id);
+
     // 일반 사용자용: 삭제되지 않은 한마디만 조회
     List<ScheduleComment> findBySchool_IdAndTargetDateAndGradeAndClassNmAndDeletedFalseOrderByCreatedAtAsc(
             Long schoolId, LocalDate targetDate, String grade, String classNm);

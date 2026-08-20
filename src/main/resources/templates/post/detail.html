@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
 <head>
     <meta charset="UTF-8">
@@ -13,6 +13,7 @@
 <body>
 
 <div th:replace="~{fragments/navbar :: navbar('community')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
 
 <div class="post-page" id="postDetailPage" th:data-post-id="${post.uuid}" th:data-post-category="${post.category}"
      th:data-post-mine="${post.mine}">
@@ -50,7 +51,7 @@
             </div>
 
             <div class="post-like-bookmark-row" sec:authorize="isAuthenticated()">
-                <button type="button" id="postLikeBtn" class="post-like-btn" th:classappend="${post.likedByMe} ? ' active' : ''">
+                <button type="button" id="postLikeBtn" class="post-like-btn" aria-label="좋아요" th:classappend="${post.likedByMe} ? ' active' : ''">
                     <i class="fa-solid fa-heart"></i> <span id="postLikeCount" th:text="${post.likeCount}">0</span>
                 </button>
                 <button type="button" id="postBookmarkBtn" class="post-bookmark-btn" th:classappend="${post.bookmarkedByMe} ? ' active' : ''">
@@ -64,7 +65,7 @@
                         <i class="fa-solid fa-pen"></i> 수정
                     </a>
                     <form th:action="@{'/posts/' + ${post.uuid} + '/delete'}" method="post"
-                          onsubmit="return confirm('정말 삭제하시겠어요?');" class="post-delete-form">
+                          data-confirm="정말 삭제하시겠어요?" data-confirm-danger="true" class="post-delete-form">
                         <button type="submit" class="post-delete-btn"><i class="fa-solid fa-trash"></i> 삭제</button>
                     </form>
                 </div>
@@ -97,7 +98,7 @@
             <form id="postCommentForm" class="post-comment-form" sec:authorize="isAuthenticated()">
                 <input type="text" id="postCommentInput" maxlength="500"
                        th:placeholder="${post.category == 'ANONYMOUS'} ? '답변을 남겨보세요' : '댓글을 남겨보세요'" required>
-                <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+                <button type="submit" aria-label="댓글 등록"><i class="fa-solid fa-paper-plane"></i></button>
             </form>
             <p class="post-comment-login-notice" sec:authorize="!isAuthenticated()">
                 <span th:text="${post.category == 'ANONYMOUS'} ? '답변' : '댓글'">댓글</span>을 작성하려면 <a href="/login">로그인</a>이 필요해요.
@@ -106,6 +107,7 @@
     </div>
 </div>
 
+<script th:src="@{/js/modal.js}"></script>
 <script th:src="@{/js/timeago.js}"></script>
 <script th:src="@{/js/post-detail.js}"></script>
 </body>

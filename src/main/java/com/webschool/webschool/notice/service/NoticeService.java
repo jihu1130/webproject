@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -48,7 +49,7 @@ public class NoticeService {
         String validTitle = validateTitle(title);
         String validContent = validateContent(content);
 
-        noticeRepository.findByActiveTrue().ifPresent(prev -> prev.setActive(false));
+        noticeRepository.findByActiveTrueAndDeletedFalse().ifPresent(prev -> prev.setActive(false));
 
         Notice notice = new Notice();
         notice.setTitle(validTitle);
@@ -62,21 +63,64 @@ public class NoticeService {
 
     // 사용자 화면 고정 노출용 - 활성 공지가 하나도 없으면 빈 값
     public Optional<NoticeDto> getActiveNotice() {
-        return noticeRepository.findByActiveTrue().map(this::toDto);
+        return noticeRepository.findByActiveTrueAndDeletedFalse().map(this::toDto);
     }
 
     // 관리자 이력 조회 + 공개 "공지" 탭 목록에서 공용으로 사용(최신순)
     public Page<NoticeDto> getHistory(int page, int size) {
-        List<NoticeDto> all = noticeRepository.findAllByOrderByCreatedAtDesc().stream()
+        List<NoticeDto> all = noticeRepository.findAllByDeletedFalseOrderByCreatedAtDesc().stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
         return PageUtils.paginate(all, page, size);
     }
 
     public NoticeDto getDetail(Long id) {
-        return noticeRepository.findById(id)
-                .map(this::toDto)
+        Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+        if (notice.isDeleted()) {
+            throw new IllegalArgumentException("공지사항을 찾을 수 없습니다.");
+        }
+        return toDto(notice);
+    }
+
+    // 공지 수정 - todo.md 요구사항("오타 하나 나도 못 고치고, 고치려면 새 공지를 다시 올려야 하는데
+    // 그럼 전체 유저에게 알림이 또 간다"). 활성/보관 상태와 무관하게 아무 공지나 수정할 수 있고,
+    // createNotice()와 달리 재알림은 보내지 않는다(단순 오타 수정에도 전체 알림이 또 가면 스팸처럼
+    // 느껴짐 - 실질적으로 새 소식이 아니라 기존 공지의 정정이므로).
+    @Transactional
+    public void updateNotice(Long id, String username, String title, String content) {
+        User actor = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        if (!actor.isSuperAdmin() && !actor.isCanManageNotices()) {
+            throw new IllegalArgumentException("공지사항 수정 권한이 없습니다.");
+        }
+
+        Notice notice = noticeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+        if (notice.isDeleted()) {
+            throw new IllegalArgumentException("공지사항을 찾을 수 없습니다.");
+        }
+
+        notice.setTitle(validateTitle(title));
+        notice.setContent(validateContent(content));
+        notice.setUpdatedAt(LocalDateTime.now());
+    }
+
+    // 공지 삭제 - Post/PostComment와 동일한 소프트 삭제 패턴(물리적으로 지우지 않음). 활성 공지를
+    // 삭제하면 활성 공지가 0개인 상태가 되는데, getActiveNotice()가 이미 Optional이라 그 경우
+    // 사용자 화면에 배너가 그냥 안 뜰 뿐 에러로 이어지지 않는다.
+    @Transactional
+    public void deleteNotice(Long id, String username) {
+        User actor = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        if (!actor.isSuperAdmin() && !actor.isCanManageNotices()) {
+            throw new IllegalArgumentException("공지사항 삭제 권한이 없습니다.");
+        }
+
+        Notice notice = noticeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+        notice.setDeleted(true);
+        notice.setDeletedAt(LocalDateTime.now());
     }
 
     private String validateTitle(String title) {

@@ -1,5 +1,6 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.repository.PostCommentRepository;
@@ -34,6 +35,7 @@ public class AdminUserService {
     private final PostCommentRepository postCommentRepository;
     private final NotificationService notificationService;
     private final UserPenaltyService userPenaltyService;
+    private final AdminActionLogService adminActionLogService;
 
     // keyword: 아이디/닉네임/학교명 검색 - 다른 관리자 목록(AdminPostService 등)과 동일하게 DB 쿼리가
     // 아니라 메모리에서 필터링한다(계정 수가 적을 걸 가정). **버그 수정**: user-list.html엔 검색창이
@@ -132,9 +134,11 @@ public class AdminUserService {
             user.setCanManageScheduleComments(false);
             user.setCanManageNotices(false);
             notificationService.notify(user, Notification.Type.ACCOUNT, "관리자 권한이 해제되었습니다.", "/mypage");
+            adminActionLogService.log("USER", id, "DEMOTE", user.getUsername() + " -> ROLE_USER");
         } else if (role == User.Role.ROLE_ADMIN) {
             notificationService.notify(user, Notification.Type.ACCOUNT,
                     "부관리자로 승격되었습니다. 총관리자가 켜준 권한만 사용할 수 있어요.", "/mypage");
+            adminActionLogService.log("USER", id, "PROMOTE", user.getUsername() + " -> ROLE_ADMIN");
         }
     }
 
@@ -153,6 +157,9 @@ public class AdminUserService {
         user.setCanManagePosts(canManagePosts);
         user.setCanManageScheduleComments(canManageScheduleComments);
         user.setCanManageNotices(canManageNotices);
+        adminActionLogService.log("USER", id, "PERMISSIONS", user.getUsername()
+                + " (신고:" + canManageReports + " 게시글:" + canManagePosts
+                + " 한마디:" + canManageScheduleComments + " 공지:" + canManageNotices + ")");
     }
 
     // 관리자 강제 탈퇴 처리 - 본인 확인(비밀번호) 없이 소프트 삭제한다는 점만 UserService.deleteAccount()와 다름
@@ -174,6 +181,7 @@ public class AdminUserService {
 
         user.setDeleted(true);
         user.setDeletedAt(LocalDateTime.now());
+        adminActionLogService.log("USER", id, "DELETE", user.getUsername());
     }
 
     @Transactional
@@ -182,6 +190,7 @@ public class AdminUserService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         user.setDeleted(false);
         user.setDeletedAt(null);
+        adminActionLogService.log("USER", id, "RESTORE", user.getUsername());
     }
 
     // 계정 비활성화(정지) - 탈퇴와 달리 계정/작성 글은 전부 그대로 둔 채 로그인만 막는다. 총관리자가
@@ -207,6 +216,7 @@ public class AdminUserService {
         // 링크를 안 넣는 이유: 비활성화된 동안은 로그인 자체가 막혀서 어차피 못 열어본다 - 다시
         // 활성화된 뒤 로그인하면 알림 목록에서 확인할 수 있다.
         notificationService.notify(user, Notification.Type.ACCOUNT, "계정이 비활성화(정지)되었습니다.", null);
+        adminActionLogService.log("USER", id, "DEACTIVATE", user.getUsername());
     }
 
     @Transactional
@@ -215,6 +225,7 @@ public class AdminUserService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         user.setActive(true);
         notificationService.notify(user, Notification.Type.ACCOUNT, "계정이 다시 활성화되었습니다. 로그인할 수 있어요.", "/mypage");
+        adminActionLogService.log("USER", id, "ACTIVATE", user.getUsername());
     }
 
     private AdminUserSummaryDto toSummaryDto(User user) {

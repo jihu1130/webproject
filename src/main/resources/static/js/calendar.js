@@ -753,20 +753,21 @@ document.addEventListener('DOMContentLoaded', function () {
             var nicknameHtml = c.authorLinkable
                 ? '<a href="/users/' + c.authorId + '" class="comment-nickname">' + escapeHtml(c.nickname) + '</a>'
                 : '<span class="comment-nickname">' + escapeHtml(c.nickname) + '</span>';
+            // 버그수정 프롬포트 요청 - 아이콘 전용 버튼에 title만 있고 aria-label이 없었다.
             var actionsHtml = c.mine
-                ? `<a href="/school/comments/${c.id}/edit" class="comment-edit-btn" title="수정"><i class="fa-solid fa-pen"></i></a>
-                   <button type="button" class="comment-delete-btn" title="삭제"><i class="fa-solid fa-xmark"></i></button>`
+                ? `<a href="/school/comments/${c.id}/edit" class="comment-edit-btn" title="수정" aria-label="수정"><i class="fa-solid fa-pen"></i></a>
+                   <button type="button" class="comment-delete-btn" title="삭제" aria-label="삭제"><i class="fa-solid fa-xmark"></i></button>`
                 : (c.reportedByMe
-                    ? '<button type="button" class="comment-report-btn" title="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
-                    : '<button type="button" class="comment-report-btn" title="신고"><i class="fa-solid fa-flag"></i></button>');
+                    ? '<button type="button" class="comment-report-btn" title="이미 신고했어요" aria-label="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
+                    : '<button type="button" class="comment-report-btn" title="신고" aria-label="신고"><i class="fa-solid fa-flag"></i></button>');
             var likeBookmarkHtml = `
-                <button type="button" class="comment-like-btn${c.likedByMe ? ' active' : ''}" title="좋아요">
+                <button type="button" class="comment-like-btn${c.likedByMe ? ' active' : ''}" title="좋아요" aria-label="좋아요">
                     <i class="fa-solid fa-heart"></i> <span class="comment-like-count">${c.likeCount}</span>
                 </button>
-                <button type="button" class="comment-bookmark-btn${c.bookmarkedByMe ? ' active' : ''}" title="북마크">
+                <button type="button" class="comment-bookmark-btn${c.bookmarkedByMe ? ' active' : ''}" title="북마크" aria-label="북마크">
                     <i class="fa-solid fa-bookmark"></i>
                 </button>
-                <button type="button" class="comment-share-btn" title="공유 링크 복사">
+                <button type="button" class="comment-share-btn" title="공유 링크 복사" aria-label="공유 링크 복사">
                     <i class="fa-solid fa-link"></i>
                 </button>`;
 
@@ -822,8 +823,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function deleteComment(id) {
-        if (!confirm('댓글을 삭제할까요?')) return;
+    async function deleteComment(id) {
+        if (!(await WebSchoolModal.confirm('한마디를 삭제할까요?', { danger: true }))) return;
 
         fetch('/school/api/comments/' + id, { method: 'DELETE' })
             .then(function (res) {
@@ -831,13 +832,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 loadComments();
             })
             .catch(function () {
-                alert('댓글 삭제에 실패했습니다.');
+                WebSchoolModal.alert('한마디 삭제에 실패했습니다.');
             });
     }
 
-    function reportComment(id, btn) {
-        if (!confirm('이 한마디를 신고하시겠어요?')) return;
-        var reason = prompt('신고 사유를 입력해주세요 (선택 사항입니다. 비워두고 확인해도 신고가 접수됩니다).', '') || '';
+    async function reportComment(id, btn) {
+        if (!(await WebSchoolModal.confirm('이 한마디를 신고하시겠어요?'))) return;
+        var reason = (await WebSchoolModal.prompt(
+            '신고 사유를 입력해주세요 (선택 사항입니다. 비워두고 확인해도 신고가 접수됩니다).',
+            { inputPlaceholder: '신고 사유 (선택)' }
+        )) || '';
 
         fetch('/school/api/comments/' + id + '/report', {
             method: 'POST',
@@ -851,11 +855,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             })
             .then(function (body) {
-                alert(body.blind ? '신고가 접수되었습니다. 신고 누적으로 한마디가 블라인드 처리되었습니다.' : '신고가 접수되었습니다.');
+                WebSchoolModal.alert(body.blind ? '신고가 접수되었습니다. 신고 누적으로 한마디가 블라인드 처리되었습니다.' : '신고가 접수되었습니다.');
                 loadComments();
             })
             .catch(function (err) {
-                alert(err.message || '신고 처리에 실패했습니다.');
+                WebSchoolModal.alert(err.message || '신고 처리에 실패했습니다.');
                 if (btn) {
                     btn.disabled = true;
                 }
@@ -873,7 +877,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 btn.querySelector('.comment-like-count').textContent = body.likeCount;
             })
             .catch(function () {
-                alert('좋아요 처리에 실패했습니다.');
+                WebSchoolModal.alert('좋아요 처리에 실패했습니다.');
             });
     }
 
@@ -887,7 +891,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 btn.classList.toggle('active', body.bookmarked);
             })
             .catch(function () {
-                alert('북마크 처리에 실패했습니다.');
+                WebSchoolModal.alert('북마크 처리에 실패했습니다.');
             });
     }
 
@@ -900,7 +904,7 @@ document.addEventListener('DOMContentLoaded', function () {
             icon.className = 'fa-solid fa-check';
             setTimeout(function () { icon.className = 'fa-solid fa-link'; }, 1200);
         }).catch(function () {
-            prompt('아래 링크를 복사하세요:', url);
+            WebSchoolModal.prompt('클립보드 복사에 실패했어요. 아래 링크를 직접 선택해서 복사하세요:', { inputValue: url, inputReadonly: true });
         });
     }
 
@@ -938,7 +942,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('dayDetailClass').textContent = `${grade}학년 ${classNm}반`;
 
         document.getElementById('mealContent').textContent = '급식 정보를 불러오는 중...';
-        document.getElementById('timetableList').innerHTML = '';
+        document.getElementById('timetableList').innerHTML = '<div class="timetable-empty">시간표를 불러오는 중...</div>';
         document.getElementById('eventBadge').style.display = 'none';
 
         var params = new URLSearchParams({ date: formattedDate, grade: grade, classNm: classNm });
@@ -1029,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => {
                 console.error('상세 에러 로그:', error);
-                alert('정보를 불러오는 중 오류가 발생했습니다.');
+                WebSchoolModal.alert('정보를 불러오는 중 오류가 발생했습니다.');
             });
     }
 });

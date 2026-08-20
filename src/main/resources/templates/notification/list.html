@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -52,24 +52,33 @@
                         <span class="notif-item-dot" th:if="${!n.read}"></span>
                     </button>
                 </form>
+                <!-- 버그수정 프롬포트 요청 - "모두 읽음 처리"만 있고 개별 삭제가 없어서 알림함이
+                     계속 쌓이기만 했다. -->
+                <form th:action="@{'/notifications/' + ${n.id} + '/delete'}" method="post" class="notif-item-delete-form"
+                      data-confirm="이 알림을 삭제할까요?" data-confirm-danger="true">
+                    <button type="submit" class="notif-item-delete-btn" title="삭제" aria-label="알림 삭제">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </form>
             </li>
         </ul>
 
         <div class="post-pagination" th:if="${notifications.totalPages > 1}">
-            <a th:if="${notifications.hasPrevious()}" th:href="@{/notifications(page=${notifications.number - 1})}" class="post-page-link">
+            <a th:if="${notifications.hasPrevious()}" th:href="@{/notifications(page=${notifications.number - 1})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, notifications.totalPages - 1)}"
                th:href="@{/notifications(page=${i})}" th:text="${i + 1}"
                th:classappend="${i == notifications.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${notifications.hasNext()}" th:href="@{/notifications(page=${notifications.number + 1})}" class="post-page-link">
+            <a th:if="${notifications.hasNext()}" th:href="@{/notifications(page=${notifications.number + 1})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>
     </div>
 </div>
 
+<script th:src="@{/js/modal.js}"></script>
 <script th:src="@{/js/timeago.js}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {

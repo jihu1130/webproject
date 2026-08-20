@@ -192,14 +192,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (schoolCodeHidden && !schoolCodeHidden.value) {
             e.preventDefault();
-            alert('목록에서 학교를 검색하여 선택해주세요.');
+            WebSchoolModal.alert('목록에서 학교를 검색하여 선택해주세요.');
             if (schoolSearchInput) schoolSearchInput.focus();
             return;
         }
 
         if (classSelect && (classSelect.disabled || !classSelect.value)) {
             e.preventDefault();
-            alert('학년과 반을 선택해주세요.');
+            WebSchoolModal.alert('학년과 반을 선택해주세요.');
             if (gradeSelect) gradeSelect.focus();
         }
     });

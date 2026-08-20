@@ -4,6 +4,7 @@ import com.webschool.webschool.post.domain.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,16 +14,50 @@ import java.util.Optional;
 public interface PostRepository extends JpaRepository<Post, Long> {
     Optional<Post> findByUuid(String uuid); // 공개 URL(/posts/{uuid}) 조회용
 
+    // 버그 수정 - 예전엔 PostService가 엔티티를 읽어서 count+1 계산 후 그대로 save()하는 방식이라, 두
+    // 요청이 거의 동시에 들어오면(좋아요/조회수/신고 전부 해당) 하나의 +1이 사라지는 lost update가
+    // 가능했다. DB 레벨에서 원자적으로 증감하는 벌크 UPDATE로 교체 - 호출부는 이 메서드 실행 후 반환
+    // 값(응답용 표시 카운트)을 로컬 변수로 따로 계산해야 한다(엔티티 필드를 같이 건드리면 트랜잭션
+    // 커밋 시점에 Hibernate dirty-check가 이 벌크 업데이트를 덮어써서 race가 재발할 수 있음).
+    @Modifying
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :id")
+    void incrementLikeCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.likeCount = CASE WHEN p.likeCount > 0 THEN p.likeCount - 1 ELSE 0 END WHERE p.id = :id")
+    void decrementLikeCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.viewCount = p.viewCount + 1 WHERE p.id = :id")
+    void incrementViewCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.reportCount = p.reportCount + 1 WHERE p.id = :id")
+    void incrementReportCount(@Param("id") Long id);
+
+    // 신고 취소용(cancelReport()) - incrementLikeCount()/decrementLikeCount() 쌍과 동일한 이유.
+    @Modifying
+    @Query("UPDATE Post p SET p.reportCount = CASE WHEN p.reportCount > 0 THEN p.reportCount - 1 ELSE 0 END WHERE p.id = :id")
+    void decrementReportCount(@Param("id") Long id);
 
     // 커뮤니티 목록 - 카테고리 필터/검색어 둘 다 선택 사항(null이면 무시). scope로 검색 대상을
-    // 제목만("title")/내용만("content")/제목+내용(그 외 값 - 기본)으로 좁힐 수 있다. 정렬은 쿼리에
-    // 고정하지 않고 Pageable의 Sort를 그대로 따른다(PostService.getList()에서 정렬 옵션에 맞는
-    // Sort를 만들어 넘김) - "최신순/오래된순/조회수순" 같은 여러 정렬을 이 메서드 하나로 지원하기 위함.
+    // 제목만("title")/내용만("content")/작성자 닉네임만("author")/제목+내용(그 외 값 - 기본)으로
+    // 좁힐 수 있다. 정렬은 쿼리에 고정하지 않고 Pageable의 Sort를 그대로 따른다(PostService.getList()
+    // 에서 정렬 옵션에 맞는 Sort를 만들어 넘김) - "최신순/오래된순/조회수순" 같은 여러 정렬을 이
+    // 메서드 하나로 지원하기 위함.
+    // 작성자 검색(scope='author')은 익명(ANONYMOUS) 글을 항상 제외한다 - 포함시키면 "이 사람이 이
+    // 익명 글을 썼다"는 게 검색으로 드러나서 익명 기능의 취지가 깨진다(findByAuthor_IdAndCategoryNot...
+    // 공개 프로필 조회 메서드와 동일한 익명성 보호 원칙, CLAUDE.md 참고). 그래서 제목/내용 검색과
+    // 다르게 OR 체인에 단순히 조건 하나를 추가하는 방식이 아니라 scope='author'일 때 통째로 분기한다.
     @Query("SELECT p FROM Post p WHERE p.deleted = false AND p.blind = false "
             + "AND (:category IS NULL OR p.category = :category) "
-            + "AND (:keyword IS NULL OR :keyword = '' "
+            + "AND (" +
+            "  (:scope = 'author' AND p.category <> com.webschool.webschool.post.domain.Post.Category.ANONYMOUS "
+            + "     AND (:keyword IS NULL OR :keyword = '' OR LOWER(p.author.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')))) "
+            + "  OR (:scope <> 'author' AND (:keyword IS NULL OR :keyword = '' "
             + "     OR (:scope <> 'content' AND LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) "
-            + "     OR (:scope <> 'title' AND LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')))) ")
+            + "     OR (:scope <> 'title' AND LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')))))" +
+            ") ")
     Page<Post> search(@Param("category") Post.Category category, @Param("keyword") String keyword,
                        @Param("scope") String scope, Pageable pageable);
 

@@ -78,4 +78,30 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
+
+    // ---- 글쓰기 중 실수로 페이지 이탈 시 경고 ----
+    // 버그수정 프롬포트 요청: 경고도 임시저장도 없이 뒤로가기/이탈하면 쓰던 글이 흔적도 없이
+    // 사라졌다. 임시저장까지는 이번 범위 밖이라 최소한 브라우저 기본 이탈 확인창이라도 띄운다.
+    // 제목 입력이나 리치 에디터(contenteditable) 안에서 타이핑이 감지되면 dirty로 표시하고,
+    // 폼이 정상 제출되는 경우(submit 이벤트)에는 경고를 띄우지 않는다.
+    var postForm = document.getElementById('postForm');
+    if (postForm) {
+        var formDirty = false;
+        var formSubmitting = false;
+
+        postForm.addEventListener('input', function () {
+            formDirty = true;
+        });
+
+        postForm.addEventListener('submit', function () {
+            formSubmitting = true;
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (formDirty && !formSubmitting) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    }
 });

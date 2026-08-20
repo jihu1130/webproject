@@ -81,6 +81,21 @@ public class MyActivityController {
                 model.addAttribute("likes", likes);
             }
             model.addAttribute("likeType", type);
+        } else if ("reports".equals(tab)) {
+            // likes/bookmarks 탭과 동일한 서브탭 구조(게시글/한마디/댓글) - 내가 신고한 글을 다시
+            // 확인하거나 취소할 방법이 없다는 버그 리포트로 추가됨.
+            if ("schedule".equals(type)) {
+                Page<MyScheduleCommentSummaryDto> scheduleReports = myActivityService.getReportedScheduleComments(username, page, keyword);
+                model.addAttribute("scheduleReports", scheduleReports);
+            } else if ("comment".equals(type)) {
+                Page<MyCommentSummaryDto> commentReports = myActivityService.getReportedComments(username, page, keyword);
+                model.addAttribute("commentReports", commentReports);
+            } else {
+                type = "post";
+                Page<MyPostSummaryDto> reports = myActivityService.getReportedPosts(username, page, keyword);
+                model.addAttribute("reports", reports);
+            }
+            model.addAttribute("reportType", type);
         } else if ("blocks".equals(tab)) {
             model.addAttribute("blocks", userBlockService.getMyBlocks(username));
         } else {
@@ -192,6 +207,39 @@ public class MyActivityController {
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("likes", "comment", keyword, page);
+    }
+
+    @PostMapping("/reports/{uuid}/cancel")
+    public String cancelReport(@PathVariable String uuid, @RequestParam(defaultValue = "0") int page,
+                                @RequestParam(required = false) String keyword,
+                                Authentication authentication) {
+        try {
+            postService.cancelReport(postService.resolveIdByUuid(uuid), authentication.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        return redirect("reports", "post", keyword, page);
+    }
+
+    @PostMapping("/reports/schedule/{id}/cancel")
+    public String cancelScheduleReport(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(required = false) String keyword,
+                                        Authentication authentication) {
+        try {
+            scheduleCommentService.cancelReport(id, authentication.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        return redirect("reports", "schedule", keyword, page);
+    }
+
+    @PostMapping("/reports/comment/{id}/cancel")
+    public String cancelCommentReport(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(required = false) String keyword,
+                                       Authentication authentication) {
+        try {
+            postCommentService.cancelReport(id, authentication.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        return redirect("reports", "comment", keyword, page);
     }
 
     private String redirect(String tab, String type, String keyword, int page) {

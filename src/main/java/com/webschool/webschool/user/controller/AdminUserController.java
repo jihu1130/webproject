@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -54,21 +55,28 @@ public class AdminUserController {
         }
     }
 
+    // 버그 수정: 예전엔 여기 8개 액션 전부 성공/실패 여부가 화면에 전혀 안 보이고 그냥 새로고침만
+    // 됐다(체크박스 하나 잘못 눌러도 아무 표시 없이 반영됨). flash 메시지로 결과를 알려준다.
     @PostMapping("/{id}/promote")
-    public String promote(@PathVariable Long id, Authentication authentication, @ModelAttribute ListState state) {
+    public String promote(@PathVariable Long id, Authentication authentication, @ModelAttribute ListState state,
+                           RedirectAttributes redirectAttributes) {
         try {
             adminUserService.setRole(id, User.Role.ROLE_ADMIN, authentication.getName());
-        } catch (IllegalArgumentException ignored) {
-            // 목록으로 돌아가서 상태 그대로 보여주면 충분 (자기 자신 변경 시도 등)
+            redirectAttributes.addFlashAttribute("flashSuccess", "부관리자로 승격했습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
         }
         return state.redirect();
     }
 
     @PostMapping("/{id}/demote")
-    public String demote(@PathVariable Long id, Authentication authentication, @ModelAttribute ListState state) {
+    public String demote(@PathVariable Long id, Authentication authentication, @ModelAttribute ListState state,
+                          RedirectAttributes redirectAttributes) {
         try {
             adminUserService.setRole(id, User.Role.ROLE_USER, authentication.getName());
-        } catch (IllegalArgumentException ignored) {
+            redirectAttributes.addFlashAttribute("flashSuccess", "일반 회원으로 강등했습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
         }
         return state.redirect();
     }
@@ -78,41 +86,52 @@ public class AdminUserController {
                                @RequestParam(defaultValue = "false") boolean canManageReports,
                                @RequestParam(defaultValue = "false") boolean canManagePosts,
                                @RequestParam(defaultValue = "false") boolean canManageScheduleComments,
-                               @RequestParam(defaultValue = "false") boolean canManageNotices) {
+                               @RequestParam(defaultValue = "false") boolean canManageNotices,
+                               RedirectAttributes redirectAttributes) {
         try {
             adminUserService.updatePermissions(id, canManageReports, canManagePosts, canManageScheduleComments, canManageNotices);
-        } catch (IllegalArgumentException ignored) {
+            redirectAttributes.addFlashAttribute("flashSuccess", "권한이 저장되었습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
         }
         return "redirect:/admin/users/admins";
     }
 
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable Long id, Authentication authentication, @ModelAttribute ListState state) {
+    public String delete(@PathVariable Long id, Authentication authentication, @ModelAttribute ListState state,
+                          RedirectAttributes redirectAttributes) {
         try {
             adminUserService.deleteUser(id, authentication.getName());
-        } catch (IllegalArgumentException ignored) {
+            redirectAttributes.addFlashAttribute("flashSuccess", "계정을 탈퇴 처리했습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
         }
         return state.redirect();
     }
 
     @PostMapping("/{id}/restore")
-    public String restore(@PathVariable Long id, @ModelAttribute ListState state) {
+    public String restore(@PathVariable Long id, @ModelAttribute ListState state, RedirectAttributes redirectAttributes) {
         adminUserService.restoreUser(id);
+        redirectAttributes.addFlashAttribute("flashSuccess", "계정을 복구했습니다.");
         return state.redirect();
     }
 
     @PostMapping("/{id}/deactivate")
-    public String deactivate(@PathVariable Long id, Authentication authentication, @ModelAttribute ListState state) {
+    public String deactivate(@PathVariable Long id, Authentication authentication, @ModelAttribute ListState state,
+                              RedirectAttributes redirectAttributes) {
         try {
             adminUserService.deactivateUser(id, authentication.getName());
-        } catch (IllegalArgumentException ignored) {
+            redirectAttributes.addFlashAttribute("flashSuccess", "계정을 비활성화(정지)했습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
         }
         return state.redirect();
     }
 
     @PostMapping("/{id}/activate")
-    public String activate(@PathVariable Long id, @ModelAttribute ListState state) {
+    public String activate(@PathVariable Long id, @ModelAttribute ListState state, RedirectAttributes redirectAttributes) {
         adminUserService.activateUser(id);
+        redirectAttributes.addFlashAttribute("flashSuccess", "계정을 다시 활성화했습니다.");
         return state.redirect();
     }
 

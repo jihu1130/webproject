@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -109,7 +109,7 @@
                 삭제되지 않고 남지만, 작성자는 "탈퇴한 사용자"로 표시됩니다.
             </p>
             <form th:action="@{/mypage/delete}" method="post" id="deleteAccountForm"
-                  onsubmit="return confirm('정말 계정을 삭제하시겠어요? 이 작업은 되돌릴 수 없습니다.');">
+                  data-confirm="정말 계정을 삭제하시겠어요? 이 작업은 되돌릴 수 없습니다." data-confirm-danger="true">
                 <div class="auth-field" th:if="${loginUser != null and loginUser.provider.name() == 'LOCAL'}">
                     <label>비밀번호 확인</label>
                     <input type="password" name="password" placeholder="계정 삭제를 위해 비밀번호를 입력하세요" required>
@@ -120,6 +120,7 @@
     </div>
 </div>
 
+<script th:src="@{/js/modal.js}"></script>
 <script th:src="@{/js/school-search.js}"></script>
 <script th:src="@{/js/class-select.js}"></script>
 <script th:src="@{/js/grade-select.js}"></script>

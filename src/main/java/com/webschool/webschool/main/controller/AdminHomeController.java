@@ -2,9 +2,11 @@ package com.webschool.webschool.main.controller;
 
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 // "/admin" 진입점 - 계정이 접근 가능한 첫 번째 메뉴로 자동 이동시킨다(총관리자는 항상 신고 관리부터).
@@ -34,7 +36,14 @@ public class AdminHomeController {
     }
 
     @GetMapping("/admin/access-denied")
-    public String accessDenied() {
+    public String accessDenied(HttpSession session, Model model) {
+        // SecurityConfig의 accessDeniedHandler가 세션에 심어둔 구체적인 사유 - 한 번 보여주면
+        // 바로 지운다(진짜 flash와 동일하게 새로고침하면 다시 안 보여야 함).
+        Object reason = session.getAttribute("flashError");
+        if (reason != null) {
+            model.addAttribute("flashError", reason);
+            session.removeAttribute("flashError");
+        }
         return "admin/access-denied";
     }
 }

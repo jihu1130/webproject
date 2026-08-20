@@ -58,7 +58,7 @@
             <div class="mypage-profile-box">
                 <div class="mypage-profile-box-header">
                     <span th:text="${loginUser != null ? loginUser.nickname : '회원'} + ' 소개글'">소개글</span>
-                    <a href="/mypage/profile" class="mypage-profile-edit-link" title="소개글 수정"><i class="fa-solid fa-pen"></i></a>
+                    <a href="/mypage/profile" class="mypage-profile-edit-link" title="소개글 수정" aria-label="소개글 수정"><i class="fa-solid fa-pen"></i></a>
                 </div>
                 <p class="mypage-profile-bio"
                    th:if="${loginUser != null and !#strings.isEmpty(loginUser.bio)}"

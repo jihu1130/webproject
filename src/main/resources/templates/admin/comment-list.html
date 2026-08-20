@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -34,7 +34,7 @@
             <form th:action="@{/admin/comments}" method="get" class="admin-search-form">
                 <input type="hidden" name="status" th:value="${viewMode == 'deleted'} ? 'deleted' : ''">
                 <input type="text" name="keyword" placeholder="내용/작성자 검색" th:value="${keyword}">
-                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
             <form th:action="@{/admin/comments}" method="get" class="page-size-select">
@@ -88,33 +88,33 @@
                     <td>
                         <div class="admin-user-actions" th:with="stateStatus=${viewMode == 'deleted'} ? 'deleted' : null">
                             <form th:if="${comment.deleted}" th:action="@{'/admin/comments/' + ${comment.id} + '/restore'}" method="post"
-                                  onsubmit="return confirm('이 댓글을 복구할까요?');">
+                                  data-confirm="이 댓글을 복구할까요?">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
                                 <button type="submit" class="btn btn-outline-brand">복구</button>
                             </form>
                             <th:block th:unless="${comment.deleted}">
                                 <form th:unless="${comment.reportCleared}" th:action="@{'/admin/comments/' + ${comment.id} + '/clear-report'}" method="post"
-                                      onsubmit="return confirm('이 댓글을 검토 결과 \'문제없음\'으로 판결할까요?');">
+                                      data-confirm="이 댓글을 검토 결과 '문제없음'으로 판결할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
                                     <button type="submit" class="btn btn-outline-brand">문제없음 처리</button>
                                 </form>
                                 <form th:if="${comment.reportCleared}" th:action="@{'/admin/comments/' + ${comment.id} + '/unclear-report'}" method="post"
-                                      onsubmit="return confirm('\'문제없음\' 판결을 철회할까요?');">
+                                      data-confirm="'문제없음' 판결을 철회할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
                                     <button type="submit" class="btn btn-outline-brand">문제없음 철회</button>
                                 </form>
                                 <form th:if="${!comment.blind}" th:action="@{'/admin/comments/' + ${comment.id} + '/blind'}" method="post"
-                                      onsubmit="return confirm('이 댓글을 블라인드 처리할까요?');">
+                                      data-confirm="이 댓글을 블라인드 처리할까요?" data-confirm-danger="true">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
                                     <button type="submit" class="btn btn-outline-brand">블라인드</button>
                                 </form>
                                 <form th:if="${comment.blind}" th:action="@{'/admin/comments/' + ${comment.id} + '/unblind'}" method="post"
-                                      onsubmit="return confirm('블라인드를 해제할까요?');">
+                                      data-confirm="블라인드를 해제할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
                                     <button type="submit" class="btn btn-outline-brand">블라인드 해제</button>
                                 </form>
                                 <form th:action="@{'/admin/comments/' + ${comment.id} + '/delete'}" method="post"
-                                      onsubmit="return confirm('이 댓글을 삭제할까요? (소프트 삭제 - 삭제됨 탭에서 다시 복구할 수 있습니다)');">
+                                      data-confirm="이 댓글을 삭제할까요? (소프트 삭제 - 삭제됨 탭에서 다시 복구할 수 있습니다)" data-confirm-danger="true">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
                                     <button type="submit" class="post-delete-btn">삭제</button>
                                 </form>
@@ -127,19 +127,20 @@
         </div>
 
         <div class="post-pagination" th:if="${comments.totalPages > 1}">
-            <a th:if="${comments.hasPrevious()}" th:href="@{/admin/comments(page=${comments.number - 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" class="post-page-link">
+            <a th:if="${comments.hasPrevious()}" th:href="@{/admin/comments(page=${comments.number - 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, comments.totalPages - 1)}"
                th:href="@{/admin/comments(page=${i}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" th:text="${i + 1}"
                th:classappend="${i == comments.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${comments.hasNext()}" th:href="@{/admin/comments(page=${comments.number + 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" class="post-page-link">
+            <a th:if="${comments.hasNext()}" th:href="@{/admin/comments(page=${comments.number + 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>
     </div>
 </div>
 
+<script th:src="@{/js/modal.js}"></script>
 </body>
 </html>

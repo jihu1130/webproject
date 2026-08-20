@@ -150,7 +150,7 @@
                         && hidden.value.indexOf('<video') === -1 && hidden.value.indexOf('<figure') === -1
                         && hidden.value.indexOf('<aside') === -1) {
                     e.preventDefault();
-                    alert('내용을 입력해주세요.');
+                    WebSchoolModal.alert('내용을 입력해주세요.');
                 }
             });
         }
@@ -198,14 +198,17 @@
                 quill.setSelection(range.index + 1, 0, 'user');
             })
             .catch(function (err) {
-                alert(err.message || '파일 업로드에 실패했습니다.');
+                WebSchoolModal.alert(err.message || '파일 업로드에 실패했습니다.');
             });
     }
 
     // "게시물/한마디로 바로가기" 카드 삽입 - 사용자가 붙여넣은 URL을 서버(/api/embed/resolve)에 물어서
     // 실제로 존재하는 대상인지 확인하고, 제목(또는 한마디 내용 미리보기)을 카드에 박아넣는다.
-    function insertEmbedCard(quill) {
-        var url = prompt('공유할 게시물 또는 오늘의 한마디 링크를 붙여넣으세요.\n예) https://.../posts/xxxx-...\n예) https://.../school/comments/123');
+    async function insertEmbedCard(quill) {
+        var url = await WebSchoolModal.prompt(
+            '공유할 게시물 또는 오늘의 한마디 링크를 붙여넣으세요.',
+            { inputPlaceholder: '예) https://.../posts/xxxx-... 또는 /school/comments/123' }
+        );
         if (!url) return;
 
         var range = quill.getSelection(true) || { index: quill.getLength() };
@@ -222,7 +225,7 @@
                 quill.setSelection(range.index + 1, 0, 'user');
             })
             .catch(function (err) {
-                alert(err.message || '링크를 확인할 수 없어요.');
+                WebSchoolModal.alert(err.message || '링크를 확인할 수 없어요.');
             });
     }
 

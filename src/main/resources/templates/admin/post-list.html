@@ -34,7 +34,7 @@
             <form th:action="@{/admin/posts}" method="get" class="admin-search-form">
                 <input type="hidden" name="status" th:value="${viewMode == 'deleted'} ? 'deleted' : ''">
                 <input type="text" name="keyword" placeholder="제목/작성자 검색" th:value="${keyword}">
-                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
             <form th:action="@{/admin/posts}" method="get" class="page-size-select">
@@ -95,14 +95,14 @@
         </div>
 
         <div class="post-pagination" th:if="${posts.totalPages > 1}">
-            <a th:if="${posts.hasPrevious()}" th:href="@{/admin/posts(page=${posts.number - 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${posts.size})}" class="post-page-link">
+            <a th:if="${posts.hasPrevious()}" th:href="@{/admin/posts(page=${posts.number - 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${posts.size})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, posts.totalPages - 1)}"
                th:href="@{/admin/posts(page=${i}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${posts.size})}" th:text="${i + 1}"
                th:classappend="${i == posts.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${posts.hasNext()}" th:href="@{/admin/posts(page=${posts.number + 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${posts.size})}" class="post-page-link">
+            <a th:if="${posts.hasNext()}" th:href="@{/admin/posts(page=${posts.number + 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${posts.size})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>

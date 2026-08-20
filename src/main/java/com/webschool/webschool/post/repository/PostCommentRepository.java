@@ -1,7 +1,9 @@
 package com.webschool.webschool.post.repository;
 
 import com.webschool.webschool.post.domain.PostComment;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -9,10 +11,30 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PostCommentRepository extends JpaRepository<PostComment, Long> {
+    // PostRepository.incrementLikeCount()와 동일한 이유(lost update 방지) - 벌크 UPDATE로 원자적 증감.
+    @Modifying
+    @Query("UPDATE PostComment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :id")
+    void incrementLikeCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE PostComment c SET c.likeCount = CASE WHEN c.likeCount > 0 THEN c.likeCount - 1 ELSE 0 END WHERE c.id = :id")
+    void decrementLikeCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE PostComment c SET c.reportCount = c.reportCount + 1 WHERE c.id = :id")
+    void incrementReportCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE PostComment c SET c.reportCount = CASE WHEN c.reportCount > 0 THEN c.reportCount - 1 ELSE 0 END WHERE c.id = :id")
+    void decrementReportCount(@Param("id") Long id);
+
     // 관리자용: 삭제된 댓글까지 전부 포함해서 조회
     List<PostComment> findByPost_IdOrderByCreatedAtAsc(Long postId);
 
-    // 일반 사용자용: 삭제되지 않은 댓글만 조회
+    // 일반 사용자용: 삭제되지 않은 댓글만 조회. 버그 수정(N+1) - author가 LAZY라 댓글마다 작성자를
+    // 따로 조회했는데, @EntityGraph로 한 번의 JOIN FETCH에 묶었다(PostCommentService.getComments()의
+    // 신고/좋아요/북마크 여부 배치 조회와 함께 적용해야 진짜 효과가 있음).
+    @EntityGraph(attributePaths = "author")
     List<PostComment> findByPost_IdAndDeletedFalseOrderByCreatedAtAsc(Long postId);
 
     // 관리자용: 블라인드 처리됐거나 신고가 있는 댓글 (삭제된 댓글은 제외) - "신고 관리 > 댓글" 탭

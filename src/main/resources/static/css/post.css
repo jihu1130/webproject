@@ -616,6 +616,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
 }
 
 .post-alert-danger { background: #fee2e2; color: #b91c1c; }
+.post-alert-success { background: #dcfce7; color: #15803d; }
 
 .post-field { margin-bottom: 18px; }
 
@@ -970,4 +971,21 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 @media (max-width: 560px) {
     .post-list-item { flex-direction: column; align-items: flex-start; gap: 6px; }
     .post-detail-card, .post-form-card, .post-comment-section { padding: 22px; }
+}
+
+/* 다크모드 - 카드류(.post-detail-card 등)는 이미 var(--surface)를 쓰고 있어서 theme.css의 다크
+   팔레트만으로 자동 대응되지만, 아래 작은 배지/버튼들은 흰 배경을 하드코딩해뒀어서 따로 손봐야
+   다크 배경 위에서 하얗게 튀지 않는다. */
+@media (prefers-color-scheme: dark) {
+    .post-category-tab,
+    .post-page-link,
+    .post-delete-btn,
+    .post-report-btn,
+    .post-like-btn, .post-bookmark-btn,
+    .post-image-existing-remove,
+    .post-comment-edit-form button {
+        background: var(--surface);
+    }
+
+    .post-comment-edit-input { background: var(--surface); color: var(--ink); }
 }

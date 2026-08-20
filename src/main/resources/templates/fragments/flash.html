@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 버그수정 프롬포트 요청 - 이 코드베이스에 flash 메시지 컨벤션이 아예 없어서, 실패한 조치가
+     redirect: 뒤에서는 조용히 사라졌다(PostController의 detail/edit/delete 등). 컨트롤러가
+     RedirectAttributes.addFlashAttribute("flashError"/"flashSuccess", ...)로 채워두면
+     Spring이 다음 요청의 Model에 자동으로 옮겨준다 - 이 조각을 그 값이 있을 때만 렌더링되는
+     화면 어디에나 넣을 수 있는 공용 배너로 쓴다(post.css의 기존 post-alert 스타일 재사용).
+     페이지가 post.css를 안 불러오는 경우(auth.css만 쓰는 로그인류 화면 등)를 위해 최소 인라인
+     대체 스타일도 함께 넣어둔다. -->
+<div th:fragment="flash">
+    <div th:if="${flashError}" class="post-alert post-alert-danger" th:text="${flashError}"
+         style="max-width: 960px; margin: 16px auto 0;"></div>
+    <div th:if="${flashSuccess}" class="post-alert post-alert-success" th:text="${flashSuccess}"
+         style="max-width: 960px; margin: 16px auto 0;"></div>
+</div>
+
+</body>
+</html>

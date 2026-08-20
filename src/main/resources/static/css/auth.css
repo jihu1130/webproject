@@ -218,3 +218,23 @@ body.auth-body {
 }
 
 .mypage-delete-btn:hover { background: #fef2f2; }
+
+@media (prefers-color-scheme: dark) {
+    .auth-field input,
+    .auth-field select,
+    .auth-field textarea {
+        background: var(--surface);
+        color: var(--ink);
+    }
+    .auth-google-btn { background: var(--surface); color: var(--ink); }
+    .auth-google-btn:hover { background: var(--surface-soft); }
+    .mypage-delete-btn { background: var(--surface); }
+    .mypage-delete-btn:hover { background: var(--danger-soft); }
+}
+
+/* 버그수정 프롬포트 요청 - 반응형 규칙이 아예 없었다(post.css 등의 560px 기준과 동일하게 맞춤). */
+@media (max-width: 560px) {
+    .auth-shell { padding: 1.5rem 0.75rem; }
+    .auth-card { padding: 1.75rem 1.25rem; }
+    .auth-field-row { flex-direction: column; gap: 0; }
+}

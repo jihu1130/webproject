@@ -11,8 +11,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.util.List;
 
 // 관리자 1단계 "신고 관리" - 게시글/댓글/오늘의 한마디 신고 현황을 한 곳에서 모아본다.
@@ -33,24 +35,30 @@ public class AdminReportController {
     public String list(@RequestParam(required = false) String type,
                         @RequestParam(required = false) String keyword,
                         @RequestParam(defaultValue = "0") int page,
-                        @RequestParam(required = false) Integer size, Model model) {
+                        @RequestParam(required = false) Integer size,
+                        // 버그 수정: 키워드 검색만 있고 "이번 주 신고만 보기" 같은 날짜 필터가 없었다.
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                        Model model) {
         boolean commentView = "comment".equals(type);
         boolean scheduleView = "schedule".equals(type);
         int pageSize = PageUtils.normalizeSize(size);
 
         if (scheduleView) {
-            List<AdminScheduleCommentSummaryDto> filtered = adminScheduleCommentService.getReportedComments(keyword);
+            List<AdminScheduleCommentSummaryDto> filtered = adminScheduleCommentService.getReportedComments(keyword, from, to);
             model.addAttribute("scheduleComments", PageUtils.paginate(filtered, page, pageSize));
         } else if (commentView) {
-            List<AdminCommentReportSummaryDto> filtered = adminPostService.getReportedComments(keyword);
+            List<AdminCommentReportSummaryDto> filtered = adminPostService.getReportedComments(keyword, from, to);
             model.addAttribute("comments", PageUtils.paginate(filtered, page, pageSize));
         } else {
-            List<AdminPostSummaryDto> filtered = adminPostService.getReportedPosts(keyword);
+            List<AdminPostSummaryDto> filtered = adminPostService.getReportedPosts(keyword, from, to);
             model.addAttribute("posts", PageUtils.paginate(filtered, page, pageSize));
         }
         model.addAttribute("commentView", commentView);
         model.addAttribute("scheduleView", scheduleView);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("from", from);
+        model.addAttribute("to", to);
         return "admin/report-list";
     }
 }
