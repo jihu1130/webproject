@@ -13,6 +13,7 @@
 <body>
 
 <div th:replace="~{fragments/navbar :: navbar('community')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
 
 <div class="post-page" id="postDetailPage" th:data-post-id="${post.uuid}" th:data-post-category="${post.category}"
      th:data-post-mine="${post.mine}">

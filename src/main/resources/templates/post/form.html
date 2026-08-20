@@ -22,7 +22,7 @@
 
             <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
 
-            <form th:action="${mode == 'edit'} ? @{'/posts/' + ${postUuid} + '/edit'} : @{/posts}"
+            <form id="postForm" th:action="${mode == 'edit'} ? @{'/posts/' + ${postUuid} + '/edit'} : @{/posts}"
                   th:object="${postForm}" method="post" enctype="multipart/form-data">
                 <div class="post-field">
                     <label>카테고리</label>

@@ -52,6 +52,14 @@
                         <span class="notif-item-dot" th:if="${!n.read}"></span>
                     </button>
                 </form>
+                <!-- 버그수정 프롬포트 요청 - "모두 읽음 처리"만 있고 개별 삭제가 없어서 알림함이
+                     계속 쌓이기만 했다. -->
+                <form th:action="@{'/notifications/' + ${n.id} + '/delete'}" method="post" class="notif-item-delete-form"
+                      onsubmit="return confirm('이 알림을 삭제할까요?');">
+                    <button type="submit" class="notif-item-delete-btn" title="삭제" aria-label="알림 삭제">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </form>
             </li>
         </ul>
 

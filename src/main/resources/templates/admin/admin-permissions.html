@@ -14,6 +14,7 @@
 <body>
 
 <div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
 
 <div class="admin-page">
     <div class="admin-container">
@@ -36,8 +37,11 @@
                     <span class="admin-user-self-label">모든 권한 보유 (변경 불가)</span>
                 </div>
 
+                <!-- 버그 수정: 체크박스 하나 잘못 눌러도 확인 없이 바로 반영됐다(부관리자 권한처럼
+                     민감한 설정인데도). 확인 후에만 제출한다 - 취소하면 체크 상태를 원래대로 되돌려야
+                     하므로 change 이벤트에서 바로 판단한다. -->
                 <form th:if="${admin.role == 'ROLE_ADMIN'}" th:action="@{'/admin/users/' + ${admin.id} + '/permissions'}"
-                      method="post" class="admin-permission-row-toggles" onchange="this.submit()">
+                      method="post" class="admin-permission-row-toggles" onchange="return handlePermissionToggle(event, this);">
                     <label class="admin-permission-toggle">
                         <input type="checkbox" name="canManageReports" value="true" th:checked="${admin.canManageReports}">
                         <span>신고 관리</span>
@@ -64,5 +68,16 @@
     </div>
 </div>
 
+<script>
+    function handlePermissionToggle(event, form) {
+        var checkbox = event.target;
+        if (!confirm('권한 설정을 변경할까요?')) {
+            checkbox.checked = !checkbox.checked; // 취소하면 체크 상태를 되돌린다
+            return false;
+        }
+        form.submit();
+        return false;
+    }
+</script>
 </body>
 </html>

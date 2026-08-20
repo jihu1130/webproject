@@ -18,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashSet;
 import java.util.List;
@@ -88,7 +89,8 @@ public class PostController {
     }
 
     @GetMapping("/{uuid}")
-    public String detail(@PathVariable String uuid, Authentication authentication, HttpSession session, Model model) {
+    public String detail(@PathVariable String uuid, Authentication authentication, HttpSession session, Model model,
+                          RedirectAttributes redirectAttributes) {
         try {
             Long id = postService.resolveIdByUuid(uuid);
             boolean countView = shouldCountView(session, id);
@@ -97,12 +99,16 @@ public class PostController {
             model.addAttribute("images", postImageService.getImages(id));
             return "post/detail";
         } catch (IllegalArgumentException e) {
+            // 버그 수정: 예전엔 여기서 이유 없이 그냥 목록으로 튕겨나갔다(오래된 링크, 삭제된 글,
+            // 블라인드된 글 등) - 왜 안 되는지 flash 메시지로 알려준다.
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
             return "redirect:/posts";
         }
     }
 
     @GetMapping("/{uuid}/edit")
-    public String editForm(@PathVariable String uuid, Authentication authentication, Model model) {
+    public String editForm(@PathVariable String uuid, Authentication authentication, Model model,
+                            RedirectAttributes redirectAttributes) {
         try {
             Long id = postService.resolveIdByUuid(uuid);
             PostFormDto form = postService.getForEdit(id, authentication.getName());
@@ -112,6 +118,7 @@ public class PostController {
             model.addAttribute("existingImages", postImageService.getImages(id));
             return "post/form";
         } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
             return "redirect:/posts/" + uuid;
         }
     }
@@ -120,11 +127,12 @@ public class PostController {
     public String update(@PathVariable String uuid, @ModelAttribute("postForm") PostFormDto postForm,
                           @RequestParam(value = "images", required = false) List<MultipartFile> images,
                           @RequestParam(value = "removeImageIds", required = false) List<Long> removeImageIds,
-                          Authentication authentication, Model model) {
+                          Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
         Long id;
         try {
             id = postService.resolveIdByUuid(uuid);
         } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
             return "redirect:/posts";
         }
 
@@ -144,12 +152,13 @@ public class PostController {
     }
 
     @PostMapping("/{uuid}/delete")
-    public String delete(@PathVariable String uuid, Authentication authentication) {
+    public String delete(@PathVariable String uuid, Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
             Long id = postService.resolveIdByUuid(uuid);
             // 소프트 딜리트라서 첨부 이미지는 지우지 않고 그대로 보존한다(6-6 항목 참고).
             postService.deletePost(id, authentication.getName());
         } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
             return "redirect:/posts/" + uuid;
         }
         return "redirect:/posts";

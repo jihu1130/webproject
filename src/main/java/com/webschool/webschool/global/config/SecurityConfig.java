@@ -61,9 +61,17 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                 )
                 .exceptionHandling(exceptions -> exceptions
-                        // 부관리자가 권한 없는 관리자 메뉴에 접근하면 whitelabel 403 대신 안내 화면으로 보낸다
+                        // 부관리자가 권한 없는 관리자 메뉴에 접근하면 whitelabel 403 대신 안내 화면으로 보낸다.
+                        // 버그 수정: AdminAccessInterceptor가 던지는 예외에는 "신고 관리 권한이
+                        // 없습니다." 처럼 구체적인 이유가 담겨 있는데, 예전엔 여기서 버려지고 항상
+                        // 똑같은 뭉뚱그린 안내문만 보였다 - 세션에 한 번만 담아 access-denied 화면에서
+                        // 보여준다(RedirectAttributes.addFlashAttribute와 같은 원리를 여기서는 이
+                        // 핸들러가 Spring MVC 컨트롤러가 아니라서 직접 세션에 심어 흉내낸다).
                         .accessDeniedHandler((request, response, ex) -> {
                             String target = request.getRequestURI().startsWith("/admin/") ? "/admin/access-denied" : "/";
+                            if (target.equals("/admin/access-denied") && ex.getMessage() != null) {
+                                request.getSession().setAttribute("flashError", ex.getMessage());
+                            }
                             response.sendRedirect(target);
                         })
                 );

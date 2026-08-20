@@ -22,6 +22,14 @@
             <h1 class="post-detail-title"><i class="fa-solid fa-user"></i> <span th:text="${profile.nickname}">닉네임</span></h1>
             <p class="profile-bio" th:if="${profile.bio != null and !#strings.isEmpty(profile.bio)}" th:text="${profile.bio}">소개글</p>
             <p class="page-sub" style="margin: 4px 0 0;">이 사람이 작성한 게시글이에요 (익명으로 쓴 글은 포함되지 않아요)</p>
+            <!-- 버그수정 프롬포트 요청 - 예전엔 차단 버튼이 게시글/댓글 안에 인라인으로만 있어서
+                 그 사람 글을 찾아 들어가야만 차단할 수 있었다. post-detail.js의 blockUser()와
+                 동일한 요청/확인 패턴을 그대로 재사용한다(새 서비스 로직 불필요). -->
+            <button type="button" id="profileBlockBtn" class="post-author-block-btn" style="margin-top: 0.75rem;"
+                    th:if="${loginUser != null and loginUser.id != profile.id}"
+                    th:attr="data-target-id=${profile.id},data-nickname=${profile.nickname}">
+                <i class="fa-solid fa-ban"></i> 차단
+            </button>
         </div>
 
         <div th:if="${profile.posts.empty}" class="post-empty">아직 작성한 게시글이 없어요.</div>
@@ -58,6 +66,38 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         WebSchoolTimeago.applyAll('.post-list-date');
+
+        var blockBtn = document.getElementById('profileBlockBtn');
+        if (!blockBtn) return;
+        blockBtn.addEventListener('click', function () {
+            var targetId = blockBtn.getAttribute('data-target-id');
+            var nickname = blockBtn.getAttribute('data-nickname');
+            if (!confirm(nickname + '님을 차단하시겠어요? 이 사람은 회원님의 모든 게시글/댓글에 댓글을 달 수 없게 돼요.')) return;
+            var daysInput = prompt('차단 기간(일)을 입력하세요. 영구 차단은 비워두고 확인을 누르세요.', '');
+            if (daysInput === null) return;
+            var days = daysInput.trim() === '' ? '' : parseInt(daysInput, 10);
+
+            var body = 'targetId=' + encodeURIComponent(targetId);
+            if (days) body += '&durationDays=' + encodeURIComponent(days);
+
+            fetch('/users/blocks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body
+            })
+                .then(function (res) {
+                    return res.json().then(function (b) {
+                        if (!res.ok) throw new Error(b.error || '차단 처리에 실패했습니다.');
+                        return b;
+                    });
+                })
+                .then(function () {
+                    alert(nickname + '님을 차단했습니다.');
+                })
+                .catch(function (err) {
+                    alert(err.message || '차단 처리에 실패했습니다.');
+                });
+        });
     });
 </script>
 </body>

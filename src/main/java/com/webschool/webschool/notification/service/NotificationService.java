@@ -103,6 +103,20 @@ public class NotificationService {
         return notification.getLink();
     }
 
+    // 버그수정 프롬포트 요청 - "모두 읽음 처리"만 있고 개별 삭제가 없어서 알림함이 계속 쌓이기만
+    // 했다. markRead()와 동일한 본인 확인 패턴.
+    @Transactional
+    public void delete(Long id, String username) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
+
+        if (!notification.getRecipient().getUsername().equals(username)) {
+            throw new IllegalArgumentException("본인의 알림만 삭제할 수 있습니다.");
+        }
+
+        notificationRepository.delete(notification);
+    }
+
     @Transactional
     public void markAllRead(String username) {
         User user = userRepository.findByUsername(username)

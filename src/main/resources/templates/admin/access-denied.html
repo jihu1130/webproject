@@ -18,8 +18,9 @@
     <div class="admin-container admin-container-narrow">
         <div class="admin-empty">
             <i class="fa-solid fa-lock" style="font-size: 1.6rem; margin-bottom: 10px; display: block;"></i>
-            아직 이 메뉴에 대한 권한이 없어요.<br>
-            총관리자에게 신고 관리 / 게시글 관리 / 한마디 관리 권한을 요청해주세요.
+            <span th:if="${flashError}" th:text="${flashError}">권한이 없어요.</span>
+            <span th:unless="${flashError}">아직 이 메뉴에 대한 권한이 없어요.</span><br>
+            총관리자에게 신고 관리 / 게시글 관리 / 한마디 관리 / 공지사항 관리 권한을 요청해주세요.
         </div>
     </div>
 </div>
