@@ -52,7 +52,9 @@ function initSchoolSearchWidget(options) {
 
     function renderResults(schools) {
         if (!schools || schools.length === 0) {
-            resultsBox.innerHTML = '<li class="school-search-empty">일치하는 학교가 없습니다.</li>';
+            resultsBox.innerHTML = '<li class="school-search-empty">'
+                + '일치하는 학교가 없습니다.<br>학교 이름을 정확히 입력했는지 확인하거나, 줄임말 대신 정식 명칭으로 다시 검색해보세요.'
+                + '</li>';
             return;
         }
 

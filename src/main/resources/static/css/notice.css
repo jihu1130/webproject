@@ -40,3 +40,9 @@
     white-space: nowrap;
 }
 .notice-banner i.fa-chevron-right { margin-left: auto; color: #b45309; flex-shrink: 0; }
+
+/* 버그수정 프롬포트 요청 - 반응형 규칙이 아예 없었다(post.css 등의 560px 기준과 동일하게 맞춤). */
+@media (max-width: 560px) {
+    .notice-banner { padding: 10px 14px; gap: 8px; }
+    .notice-banner-title { font-size: 0.85rem; }
+}

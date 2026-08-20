@@ -29,6 +29,58 @@
     --danger-dark: #be123c;
     --danger-border: #fda4af;
     --danger-soft: rgba(225, 29, 72, 0.08);
+
+    /* 카드/입력창의 옅은 회색 배경 - 흰 배경 위에서만 자연스러운 톤이라 다크모드에서는 아래
+       @media 블록에서 별도로 재정의한다(연회색을 그대로 두면 다크 배경과 거의 안 어울림). */
+    --surface-soft: #f8f9fc;
+}
+
+/* 버그수정 프롬포트 요청 - 다크모드가 전혀 없었다. 사이트 대부분이 이미 이 파일의 변수(--surface,
+   --bg, --ink, --muted, --border, --nav-bg 등)를 쓰고 있어서, 여기서 값만 다시 정의하면 대부분의
+   화면이 자동으로 다크 테마를 따라간다(post.css/calendar.css 등 개별 파일에 하드코딩된 값들은
+   각 파일에서 별도로 손봐야 함 - 아래 각 CSS 파일의 다크모드 보강 참고). prefers-color-scheme
+   시스템 설정만 따르고 수동 토글 스위치는 이번 범위에 없음. */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ink: #e5e7eb;
+        --muted: #9ca3af;
+        --surface: #1c1b2e;
+        --surface-soft: #24233a;
+        --bg: #121125;
+        --border: #322f4d;
+
+        --nav-bg: #0d0c1f;
+
+        /* 다크 배경에서 채도를 그대로 두면 너무 튀어서 살짝 밝혀 대비를 맞춘다 */
+        --brand-1: #6366f1;
+        --brand-2: #38bdf8;
+        --brand-1-dark: #818cf8;
+        --brand-2-dark: #7dd3fc;
+
+        --danger: #fb7185;
+        --danger-dark: #fda4af;
+        --danger-border: #9f1239;
+        --danger-soft: rgba(251, 113, 133, 0.14);
+    }
+
+    body { background-color: var(--bg); color: var(--ink); }
+
+    .btn-outline-brand { background: var(--surface); }
+    .btn-outline-danger { background: var(--surface); }
+
+    /* 폼 입력 요소는 대부분 배경색을 따로 안 정하고 브라우저 기본값(흰색)에 기대고 있어서, 다크
+       모드에서 검은 카드 위에 하얀 입력창만 튀는 문제가 생긴다. theme.css가 항상 제일 먼저
+       로드되므로(파일 상단 주석 참고), 각 화면 CSS가 배경을 따로 지정하지 않은 input/textarea/
+       select는 전부 이 규칙을 그대로 물려받는다. */
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    textarea,
+    select {
+        background-color: var(--surface);
+        color: var(--ink);
+        border-color: var(--border);
+    }
+
+    input::placeholder, textarea::placeholder { color: var(--muted); }
 }
 
 * {
@@ -110,4 +162,14 @@ body {
         transform: none;
         transition: none;
     }
+}
+
+/* 버그수정 프롬포트 요청 - 사이트 전체에 :focus-visible이 없어서(입력창만 border 색이 살짝
+   바뀜) 키보드로 Tab 이동할 때 지금 포커스가 어디 있는지 눈으로 구분하기 어려웠다. 마우스
+   클릭에는 안 뜨고(:focus-visible이 마우스 클릭 포커스는 걸러줌) 키보드/스크린리더 탐색에만
+   뚜렷하게 뜨도록 전역으로 하나만 정의한다. */
+:focus-visible {
+    outline: 2.5px solid var(--brand-1);
+    outline-offset: 2px;
+    border-radius: 4px;
 }

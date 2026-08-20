@@ -36,7 +36,7 @@
                 </select>
                 <input type="date" name="from" th:value="${from}" title="시작일">
                 <input type="date" name="to" th:value="${to}" title="종료일">
-                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
         </div>
 
@@ -70,14 +70,14 @@
         </div>
 
         <div class="post-pagination" th:if="${logs.totalPages > 1}">
-            <a th:if="${logs.hasPrevious()}" th:href="@{/admin/audit-log(page=${logs.number - 1}, adminUsername=${adminUsername}, targetType=${targetType}, from=${from}, to=${to})}" class="post-page-link">
+            <a th:if="${logs.hasPrevious()}" th:href="@{/admin/audit-log(page=${logs.number - 1}, adminUsername=${adminUsername}, targetType=${targetType}, from=${from}, to=${to})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}"
                th:href="@{/admin/audit-log(page=${i}, adminUsername=${adminUsername}, targetType=${targetType}, from=${from}, to=${to})}" th:text="${i + 1}"
                th:classappend="${i == logs.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${logs.hasNext()}" th:href="@{/admin/audit-log(page=${logs.number + 1}, adminUsername=${adminUsername}, targetType=${targetType}, from=${from}, to=${to})}" class="post-page-link">
+            <a th:if="${logs.hasNext()}" th:href="@{/admin/audit-log(page=${logs.number + 1}, adminUsername=${adminUsername}, targetType=${targetType}, from=${from}, to=${to})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>

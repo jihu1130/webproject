@@ -56,23 +56,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 : '<span class="post-comment-nickname">' + escapeHtml(c.nickname) + '</span>';
             var canBlock = !c.mine && isLoggedIn && !isAnonymousPost && c.authorLinkable;
             // QNA 답변 채택 버튼 - 질문 작성자에게만, 블라인드/삭제 예정 댓글이 아닌 경우에 노출
+            // 버그수정 프롬포트 요청 - 아이콘 전용 버튼에 title만 있고 aria-label이 없어서 스크린리더
+            // 사용자에게 "버튼"으로만 들렸다. title과 동일한 문구를 aria-label로도 명시한다.
+            var acceptLabel = c.accepted ? '채택 취소' : '답변으로 채택';
             var acceptBtnHtml = (isQnaPost && isPostAuthor && !c.blind)
                 ? '<button type="button" class="post-comment-accept-btn' + (c.accepted ? ' active' : '') + '" title="' +
-                  (c.accepted ? '채택 취소' : '답변으로 채택') + '"><i class="fa-solid fa-check"></i></button>'
+                  acceptLabel + '" aria-label="' + acceptLabel + '"><i class="fa-solid fa-check"></i></button>'
                 : '';
             var actionsHtml = acceptBtnHtml + (c.mine
-                ? '<button type="button" class="post-comment-edit-btn" title="수정"><i class="fa-solid fa-pen"></i></button>' +
-                  '<button type="button" class="post-comment-delete-btn" title="삭제"><i class="fa-solid fa-xmark"></i></button>'
+                ? '<button type="button" class="post-comment-edit-btn" title="수정" aria-label="수정"><i class="fa-solid fa-pen"></i></button>' +
+                  '<button type="button" class="post-comment-delete-btn" title="삭제" aria-label="삭제"><i class="fa-solid fa-xmark"></i></button>'
                 : (isLoggedIn
-                    ? ((canBlock ? '<button type="button" class="post-comment-block-btn" title="차단"><i class="fa-solid fa-user-slash"></i></button>' : '') +
+                    ? ((canBlock ? '<button type="button" class="post-comment-block-btn" title="차단" aria-label="차단"><i class="fa-solid fa-user-slash"></i></button>' : '') +
                        (c.reportedByMe
-                        ? '<button type="button" class="post-comment-report-btn" title="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
-                        : '<button type="button" class="post-comment-report-btn" title="신고"><i class="fa-solid fa-flag"></i></button>'))
+                        ? '<button type="button" class="post-comment-report-btn" title="이미 신고했어요" aria-label="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
+                        : '<button type="button" class="post-comment-report-btn" title="신고" aria-label="신고"><i class="fa-solid fa-flag"></i></button>'))
                     : ''));
             var likeBookmarkHtml = isLoggedIn
-                ? '<button type="button" class="post-comment-like-btn' + (c.likedByMe ? ' active' : '') + '" title="좋아요">' +
+                ? '<button type="button" class="post-comment-like-btn' + (c.likedByMe ? ' active' : '') + '" title="좋아요" aria-label="좋아요">' +
                       '<i class="fa-solid fa-heart"></i> <span class="post-comment-like-count">' + c.likeCount + '</span></button>' +
-                  '<button type="button" class="post-comment-bookmark-btn' + (c.bookmarkedByMe ? ' active' : '') + '" title="북마크">' +
+                  '<button type="button" class="post-comment-bookmark-btn' + (c.bookmarkedByMe ? ' active' : '') + '" title="북마크" aria-label="북마크">' +
                       '<i class="fa-solid fa-bookmark"></i></button>'
                 : '';
 
@@ -158,13 +161,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     loadComments();
                 })
                 .catch(function (err) {
-                    alert(err.message || (LABEL + ' 수정에 실패했습니다.'));
+                    WebSchoolModal.alert(err.message || (LABEL + ' 수정에 실패했습니다.'));
                 });
         });
     }
 
-    function deleteComment(id) {
-        if (!confirm(LABEL + '을 삭제할까요?')) return;
+    async function deleteComment(id) {
+        if (!(await WebSchoolModal.confirm(LABEL + '을 삭제할까요?', { danger: true }))) return;
 
         fetch('/posts/' + postId + '/comments/' + id, { method: 'DELETE' })
             .then(function (res) {
@@ -172,13 +175,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 loadComments();
             })
             .catch(function () {
-                alert(LABEL + ' 삭제에 실패했습니다.');
+                WebSchoolModal.alert(LABEL + ' 삭제에 실패했습니다.');
             });
     }
 
-    function reportComment(id, btn) {
-        if (!confirm('이 ' + LABEL + '을 신고하시겠어요?')) return;
-        var reason = prompt('신고 사유를 입력해주세요 (선택 사항입니다. 비워두고 확인해도 신고가 접수됩니다).', '') || '';
+    async function reportComment(id, btn) {
+        if (!(await WebSchoolModal.confirm('이 ' + LABEL + '을 신고하시겠어요?'))) return;
+        var reason = (await WebSchoolModal.prompt(
+            '신고 사유를 입력해주세요 (선택 사항입니다. 비워두고 확인해도 신고가 접수됩니다).',
+            { inputPlaceholder: '신고 사유 (선택)' }
+        )) || '';
 
         fetch('/posts/' + postId + '/comments/' + id + '/report', {
             method: 'POST',
@@ -192,11 +198,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             })
             .then(function (body) {
-                alert(body.blind ? ('신고가 접수되었습니다. 신고 누적으로 ' + LABEL + '이 블라인드 처리되었습니다.') : '신고가 접수되었습니다.');
+                WebSchoolModal.alert(body.blind ? ('신고가 접수되었습니다. 신고 누적으로 ' + LABEL + '이 블라인드 처리되었습니다.') : '신고가 접수되었습니다.');
                 loadComments();
             })
             .catch(function (err) {
-                alert(err.message || '신고 처리에 실패했습니다.');
+                WebSchoolModal.alert(err.message || '신고 처리에 실패했습니다.');
                 if (btn) {
                     btn.disabled = true;
                 }
@@ -206,9 +212,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // ---- 사용자 차단 ----
     // 익명 게시물에는 차단 버튼 자체가 렌더링되지 않으므로(canBlock 계산 참고) 여기선 별도로
     // isAnonymousPost를 다시 확인하지 않는다.
-    function blockUser(targetId, nickname) {
-        if (!confirm(nickname + '님을 차단하시겠어요? 이 사람은 회원님의 모든 게시글/댓글에 댓글을 달 수 없게 돼요.')) return;
-        var daysInput = prompt('차단 기간(일)을 입력하세요. 영구 차단은 비워두고 확인을 누르세요.', '');
+    async function blockUser(targetId, nickname) {
+        if (!(await WebSchoolModal.confirm(
+            nickname + '님을 차단하시겠어요? 이 사람은 회원님의 모든 게시글/댓글에 댓글을 달 수 없게 돼요.',
+            { danger: true }
+        ))) return;
+        var daysInput = await WebSchoolModal.prompt(
+            '차단 기간(일)을 입력하세요. 영구 차단은 비워두고 확인을 누르세요.',
+            { inputPlaceholder: '예: 7 (비워두면 영구 차단)' }
+        );
         if (daysInput === null) return;
         var days = daysInput.trim() === '' ? '' : parseInt(daysInput, 10);
 
@@ -227,11 +239,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             })
             .then(function () {
-                alert(nickname + '님을 차단했습니다.');
+                WebSchoolModal.alert(nickname + '님을 차단했습니다.');
                 loadComments();
             })
             .catch(function (err) {
-                alert(err.message || '차단 처리에 실패했습니다.');
+                WebSchoolModal.alert(err.message || '차단 처리에 실패했습니다.');
             });
     }
 
@@ -257,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 loadComments(); // 채택 상태는 댓글 목록 전체의 정렬/배지에 영향을 주므로 통째로 다시 불러온다
             })
             .catch(function (err) {
-                alert(err.message || '채택 처리에 실패했습니다.');
+                WebSchoolModal.alert(err.message || '채택 처리에 실패했습니다.');
             });
     }
 
@@ -273,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 btn.querySelector('.post-comment-like-count').textContent = body.likeCount;
             })
             .catch(function () {
-                alert('좋아요 처리에 실패했습니다.');
+                WebSchoolModal.alert('좋아요 처리에 실패했습니다.');
             });
     }
 
@@ -287,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 btn.classList.toggle('active', body.bookmarked);
             })
             .catch(function () {
-                alert('북마크 처리에 실패했습니다.');
+                WebSchoolModal.alert('북마크 처리에 실패했습니다.');
             });
     }
 
@@ -313,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     loadComments();
                 })
                 .catch(function (err) {
-                    alert(err.message || (LABEL + ' 등록에 실패했습니다.'));
+                    WebSchoolModal.alert(err.message || (LABEL + ' 등록에 실패했습니다.'));
                 });
         });
     }
@@ -323,9 +335,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // ---- 신고 ----
     var reportBtn = document.getElementById('reportBtn');
     if (reportBtn) {
-        reportBtn.addEventListener('click', function () {
-            if (!confirm('이 게시물을 신고하시겠어요?')) return;
-            var reason = prompt('신고 사유를 입력해주세요 (선택 사항입니다. 비워두고 확인해도 신고가 접수됩니다).', '') || '';
+        reportBtn.addEventListener('click', async function () {
+            if (!(await WebSchoolModal.confirm('이 게시물을 신고하시겠어요?'))) return;
+            var reason = (await WebSchoolModal.prompt(
+                '신고 사유를 입력해주세요 (선택 사항입니다. 비워두고 확인해도 신고가 접수됩니다).',
+                { inputPlaceholder: '신고 사유 (선택)' }
+            )) || '';
 
             fetch('/posts/' + postId + '/report', {
                 method: 'POST',
@@ -340,16 +355,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(function (body) {
                     if (body.blind) {
-                        alert('신고가 접수되었습니다. 신고 누적으로 게시물이 블라인드 처리되었습니다.');
-                        location.href = '/posts';
+                        WebSchoolModal.alert('신고가 접수되었습니다. 신고 누적으로 게시물이 블라인드 처리되었습니다.')
+                            .then(function () { location.href = '/posts'; });
                         return;
                     }
-                    alert('신고가 접수되었습니다.');
+                    WebSchoolModal.alert('신고가 접수되었습니다.');
                     reportBtn.disabled = true;
                     reportBtn.innerHTML = '<i class="fa-solid fa-flag"></i> 신고 완료';
                 })
                 .catch(function (err) {
-                    alert(err.message || '신고 처리에 실패했습니다.');
+                    WebSchoolModal.alert(err.message || '신고 처리에 실패했습니다.');
                 });
         });
     }
@@ -368,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('postLikeCount').textContent = body.likeCount;
                 })
                 .catch(function () {
-                    alert('좋아요 처리에 실패했습니다.');
+                    WebSchoolModal.alert('좋아요 처리에 실패했습니다.');
                 });
         });
     }
@@ -386,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     postBookmarkBtn.querySelector('span').textContent = body.bookmarked ? '북마크됨' : '북마크';
                 })
                 .catch(function () {
-                    alert('북마크 처리에 실패했습니다.');
+                    WebSchoolModal.alert('북마크 처리에 실패했습니다.');
                 });
         });
     }

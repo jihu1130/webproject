@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -48,20 +48,21 @@
         </ul>
 
         <div class="post-pagination" th:if="${profile.posts.totalPages > 1}">
-            <a th:if="${profile.posts.hasPrevious()}" th:href="@{'/users/' + ${profile.id}(page=${profile.posts.number - 1})}" class="post-page-link">
+            <a th:if="${profile.posts.hasPrevious()}" th:href="@{'/users/' + ${profile.id}(page=${profile.posts.number - 1})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, profile.posts.totalPages - 1)}"
                th:href="@{'/users/' + ${profile.id}(page=${i})}" th:text="${i + 1}"
                th:classappend="${i == profile.posts.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${profile.posts.hasNext()}" th:href="@{'/users/' + ${profile.id}(page=${profile.posts.number + 1})}" class="post-page-link">
+            <a th:if="${profile.posts.hasNext()}" th:href="@{'/users/' + ${profile.id}(page=${profile.posts.number + 1})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>
     </div>
 </div>
 
+<script th:src="@{/js/modal.js}"></script>
 <script th:src="@{/js/timeago.js}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -69,11 +70,18 @@
 
         var blockBtn = document.getElementById('profileBlockBtn');
         if (!blockBtn) return;
-        blockBtn.addEventListener('click', function () {
+        blockBtn.addEventListener('click', async function () {
             var targetId = blockBtn.getAttribute('data-target-id');
             var nickname = blockBtn.getAttribute('data-nickname');
-            if (!confirm(nickname + '님을 차단하시겠어요? 이 사람은 회원님의 모든 게시글/댓글에 댓글을 달 수 없게 돼요.')) return;
-            var daysInput = prompt('차단 기간(일)을 입력하세요. 영구 차단은 비워두고 확인을 누르세요.', '');
+            var ok = await WebSchoolModal.confirm(
+                nickname + '님을 차단하시겠어요? 이 사람은 회원님의 모든 게시글/댓글에 댓글을 달 수 없게 돼요.',
+                { danger: true }
+            );
+            if (!ok) return;
+            var daysInput = await WebSchoolModal.prompt(
+                '차단 기간(일)을 입력하세요. 영구 차단은 비워두고 확인을 누르세요.',
+                { inputPlaceholder: '예: 7 (비워두면 영구 차단)' }
+            );
             if (daysInput === null) return;
             var days = daysInput.trim() === '' ? '' : parseInt(daysInput, 10);
 
@@ -92,10 +100,10 @@
                     });
                 })
                 .then(function () {
-                    alert(nickname + '님을 차단했습니다.');
+                    WebSchoolModal.alert(nickname + '님을 차단했습니다.');
                 })
                 .catch(function (err) {
-                    alert(err.message || '차단 처리에 실패했습니다.');
+                    WebSchoolModal.alert(err.message || '차단 처리에 실패했습니다.');
                 });
         });
     });

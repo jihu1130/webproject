@@ -20,12 +20,15 @@ function loadClassOptions(params) {
     fetch(url)
         .then(function (res) { return res.json(); })
         .then(function (classes) {
-            fillClassSelect(selectEl, placeholder, (classes && classes.length > 0) ? classes : fallbackClassList());
+            var isFallback = !classes || classes.length === 0;
+            fillClassSelect(selectEl, placeholder, isFallback ? fallbackClassList() : classes);
+            toggleFallbackBadge(selectEl, isFallback);
             restoreValue();
             onLoaded();
         })
         .catch(function () {
             fillClassSelect(selectEl, placeholder, fallbackClassList());
+            toggleFallbackBadge(selectEl, true);
             restoreValue();
             onLoaded();
         });
@@ -65,4 +68,21 @@ function fallbackClassList() {
     var list = [];
     for (var i = 1; i <= 20; i++) list.push(String(i));
     return list;
+}
+
+// NEIS에 실제 반 목록이 없어 fallbackClassList()를 대신 쓴 경우, select 바로 옆에
+// "실제와 다를 수 있음" 안내 뱃지를 붙인다. 다음에 조회했을 때(학교/학년 변경 등)
+// 실제 데이터를 받으면 뱃지를 지운다.
+function toggleFallbackBadge(selectEl, show) {
+    var badge = selectEl.parentNode.querySelector('.class-select-fallback-badge');
+    if (show) {
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'class-select-fallback-badge';
+            badge.textContent = 'NEIS에 반 정보가 없어 1~20반을 표시합니다(실제와 다를 수 있음)';
+            selectEl.insertAdjacentElement('afterend', badge);
+        }
+    } else if (badge) {
+        badge.remove();
+    }
 }

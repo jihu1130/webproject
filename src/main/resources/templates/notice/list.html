@@ -40,14 +40,14 @@
         </ul>
 
         <div class="post-pagination" th:if="${notices.totalPages > 1}">
-            <a th:if="${notices.hasPrevious()}" th:href="@{/notices(page=${notices.number - 1})}" class="post-page-link">
+            <a th:if="${notices.hasPrevious()}" th:href="@{/notices(page=${notices.number - 1})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, notices.totalPages - 1)}"
                th:href="@{/notices(page=${i})}" th:text="${i + 1}"
                th:classappend="${i == notices.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${notices.hasNext()}" th:href="@{/notices(page=${notices.number + 1})}" class="post-page-link">
+            <a th:if="${notices.hasNext()}" th:href="@{/notices(page=${notices.number + 1})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>

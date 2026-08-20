@@ -68,14 +68,17 @@
     </div>
 </div>
 
+<script th:src="@{/js/modal.js}"></script>
 <script>
     function handlePermissionToggle(event, form) {
         var checkbox = event.target;
-        if (!confirm('권한 설정을 변경할까요?')) {
-            checkbox.checked = !checkbox.checked; // 취소하면 체크 상태를 되돌린다
-            return false;
-        }
-        form.submit();
+        WebSchoolModal.confirm('권한 설정을 변경할까요?').then(function (ok) {
+            if (!ok) {
+                checkbox.checked = !checkbox.checked; // 취소하면 체크 상태를 되돌린다
+                return;
+            }
+            form.submit();
+        });
         return false;
     }
 </script>

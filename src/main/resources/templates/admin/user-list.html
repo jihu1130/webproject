@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -28,7 +28,7 @@
         <div class="list-toolbar" style="margin-top: 12px;">
             <form th:action="@{/admin/users}" method="get" class="admin-search-form">
                 <input type="text" name="keyword" placeholder="아이디/닉네임/학교 검색" th:value="${keyword}">
-                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
             <form th:action="@{/admin/users}" method="get" class="page-size-select">
@@ -79,32 +79,32 @@
                         <div class="admin-user-actions"
                              th:if="${user.role != 'ROLE_SUPER_ADMIN' and (loginUser == null or loginUser.username != user.username)}">
                             <form th:if="${!user.deleted and user.role == 'ROLE_USER'}" th:action="@{'/admin/users/' + ${user.id} + '/promote'}" method="post"
-                                  onsubmit="return confirm('이 계정을 부관리자로 승격할까요? 승격 직후에는 아무 권한도 없으니 \'관리자 권한 관리\'에서 권한을 켜주세요.');">
+                                  data-confirm="이 계정을 부관리자로 승격할까요? 승격 직후에는 아무 권한도 없으니 '관리자 권한 관리'에서 권한을 켜주세요.">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
                                 <button type="submit" class="btn btn-outline-brand">관리자로 승격</button>
                             </form>
                             <form th:if="${!user.deleted and user.role == 'ROLE_ADMIN'}" th:action="@{'/admin/users/' + ${user.id} + '/demote'}" method="post"
-                                  onsubmit="return confirm('이 계정의 관리자 권한을 해제할까요?');">
+                                  data-confirm="이 계정의 관리자 권한을 해제할까요?">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
                                 <button type="submit" class="btn btn-outline-brand">권한 해제</button>
                             </form>
                             <form th:if="${!user.deleted and user.active}" th:action="@{'/admin/users/' + ${user.id} + '/deactivate'}" method="post"
-                                  onsubmit="return confirm('이 계정을 비활성화할까요? 계정과 작성 글은 그대로 남고 로그인만 즉시 차단됩니다.');">
+                                  data-confirm="이 계정을 비활성화할까요? 계정과 작성 글은 그대로 남고 로그인만 즉시 차단됩니다." data-confirm-danger="true">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
                                 <button type="submit" class="btn btn-outline-brand">비활성화</button>
                             </form>
                             <form th:if="${!user.deleted and !user.active}" th:action="@{'/admin/users/' + ${user.id} + '/activate'}" method="post"
-                                  onsubmit="return confirm('이 계정을 다시 활성화할까요? 즉시 로그인할 수 있게 됩니다.');">
+                                  data-confirm="이 계정을 다시 활성화할까요? 즉시 로그인할 수 있게 됩니다.">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
                                 <button type="submit" class="btn btn-outline-brand">활성화</button>
                             </form>
                             <form th:unless="${user.deleted}" th:action="@{'/admin/users/' + ${user.id} + '/delete'}" method="post"
-                                  onsubmit="return confirm('이 계정을 탈퇴 처리할까요? 로그인이 즉시 차단됩니다.');">
+                                  data-confirm="이 계정을 탈퇴 처리할까요? 로그인이 즉시 차단됩니다." data-confirm-danger="true">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
                                 <button type="submit" class="post-delete-btn">탈퇴 처리</button>
                             </form>
                             <form th:if="${user.deleted}" th:action="@{'/admin/users/' + ${user.id} + '/restore'}" method="post"
-                                  onsubmit="return confirm('이 계정을 복구할까요? 다시 로그인할 수 있게 됩니다.');">
+                                  data-confirm="이 계정을 복구할까요? 다시 로그인할 수 있게 됩니다.">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
                                 <button type="submit" class="btn btn-outline-brand">복구</button>
                             </form>
@@ -116,19 +116,20 @@
         </div>
 
         <div class="post-pagination" th:if="${users.totalPages > 1}">
-            <a th:if="${users.hasPrevious()}" th:href="@{/admin/users(page=${users.number - 1}, keyword=${keyword}, size=${users.size})}" class="post-page-link">
+            <a th:if="${users.hasPrevious()}" th:href="@{/admin/users(page=${users.number - 1}, keyword=${keyword}, size=${users.size})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, users.totalPages - 1)}"
                th:href="@{/admin/users(page=${i}, keyword=${keyword}, size=${users.size})}" th:text="${i + 1}"
                th:classappend="${i == users.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${users.hasNext()}" th:href="@{/admin/users(page=${users.number + 1}, keyword=${keyword}, size=${users.size})}" class="post-page-link">
+            <a th:if="${users.hasNext()}" th:href="@{/admin/users(page=${users.number + 1}, keyword=${keyword}, size=${users.size})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>
     </div>
 </div>
 
+<script th:src="@{/js/modal.js}"></script>
 </body>
 </html>

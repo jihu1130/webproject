@@ -270,3 +270,22 @@
     background: #f8f9fc;
     color: var(--ink);
 }
+
+@media (prefers-color-scheme: dark) {
+    .my-activity-edit-btn,
+    .mypage-edit-btn,
+    .mypage-logout-btn {
+        background: var(--surface);
+    }
+    .mypage-logout-btn:hover { background: var(--surface-soft); }
+}
+
+/* 버그수정 프롬포트 요청 - 이 파일에 반응형 규칙이 아예 없었다(플렉스박스 덕에 375px에서도
+   우연히 안 깨졌을 뿐, 의도적으로 설계된 건 아니었음). post.css/navbar.css/admin.css가 이미 쓰는
+   560px 기준을 그대로 맞춘다. */
+@media (max-width: 560px) {
+    .mypage-page { padding: 24px 14px 40px; }
+    .mypage-card { padding: 28px 20px 24px; }
+    .mypage-info-row { font-size: 0.85rem; }
+    .my-activity-comment-item .post-list-meta { flex-direction: column; align-items: flex-start; gap: 6px; }
+}

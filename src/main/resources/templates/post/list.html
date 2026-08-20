@@ -46,7 +46,7 @@
                 <input type="hidden" name="category" th:value="${selectedCategory}">
                 <div class="post-search-row">
                     <input type="text" name="keyword" placeholder="검색어를 입력하세요" th:value="${keyword}">
-                    <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
                 </div>
                 <div class="post-search-options">
                     <label class="post-search-scope">
@@ -106,14 +106,14 @@
         </ul>
 
         <div class="post-pagination" th:if="${posts.totalPages > 1}">
-            <a th:if="${posts.hasPrevious()}" th:href="@{/posts(page=${posts.number - 1}, category=${selectedCategory}, keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-page-link">
+            <a th:if="${posts.hasPrevious()}" th:href="@{/posts(page=${posts.number - 1}, category=${selectedCategory}, keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, posts.totalPages - 1)}"
                th:href="@{/posts(page=${i}, category=${selectedCategory}, keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" th:text="${i + 1}"
                th:classappend="${i == posts.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${posts.hasNext()}" th:href="@{/posts(page=${posts.number + 1}, category=${selectedCategory}, keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-page-link">
+            <a th:if="${posts.hasNext()}" th:href="@{/posts(page=${posts.number + 1}, category=${selectedCategory}, keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>

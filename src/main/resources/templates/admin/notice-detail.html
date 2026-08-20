@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -42,7 +42,7 @@
             <div class="post-form-actions" style="margin-top: 1.5rem;">
                 <a th:href="@{'/admin/notices/' + ${notice.id} + '/edit'}" class="btn btn-outline-brand">수정</a>
                 <form th:action="@{'/admin/notices/' + ${notice.id} + '/delete'}" method="post"
-                      onsubmit="return confirm('이 공지를 삭제할까요? 삭제하면 목록/사용자 화면에서 완전히 사라집니다.');">
+                      data-confirm="이 공지를 삭제할까요? 삭제하면 목록/사용자 화면에서 완전히 사라집니다." data-confirm-danger="true">
                     <button type="submit" class="btn btn-outline-brand" style="color:#dc2626; border-color:#fca5a5;">삭제</button>
                 </form>
             </div>
@@ -50,5 +50,6 @@
     </div>
 </div>
 
+<script th:src="@{/js/modal.js}"></script>
 </body>
 </html>
