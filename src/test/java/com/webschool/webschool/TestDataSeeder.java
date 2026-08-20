@@ -148,7 +148,7 @@ class TestDataSeeder {
     private void createNoticeIfAbsent() {
         String title = "공지사항 테스트 1";
 
-        boolean exists = noticeRepository.findAllByOrderByCreatedAtDesc().stream()
+        boolean exists = noticeRepository.findAllByDeletedFalseOrderByCreatedAtDesc().stream()
                 .anyMatch(n -> n.getTitle().equals(title));
         if (exists) {
             return;
