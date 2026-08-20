@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 한마디 관리 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-shield-halved"></i> 관리자 대시보드</h1>
+            <p class="page-sub"
+               th:text="${viewMode == 'deleted'} ? '작성자·관리자가 삭제한 오늘의 한마디를 확인하고 복구할 수 있어요' : '전체 오늘의 한마디를 둘러보고 신고/블라인드를 관리할 수 있어요'">설명</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('schedule-comments')}"></div>
+
+        <div class="post-category-tabs admin-status-tabs">
+            <a th:href="@{/admin/schedule-comments}" class="post-category-tab" th:classappend="${viewMode == 'all'} ? ' active' : ''">전체</a>
+            <a th:href="@{/admin/schedule-comments(status='deleted')}" class="post-category-tab" th:classappend="${viewMode == 'deleted'} ? ' active' : ''">삭제됨</a>
+        </div>
+
+        <div class="list-toolbar">
+            <form th:action="@{/admin/schedule-comments}" method="get" class="admin-search-form">
+                <input type="hidden" name="status" th:value="${viewMode == 'deleted'} ? 'deleted' : ''">
+                <input type="text" name="keyword" placeholder="내용/작성자 검색" th:value="${keyword}">
+                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+
+            <form th:action="@{/admin/schedule-comments}" method="get" class="page-size-select">
+                <input type="hidden" name="status" th:value="${viewMode == 'deleted'} ? 'deleted' : ''">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <label for="admin-schedule-page-size">페이지당</label>
+                <select id="admin-schedule-page-size" name="size" onchange="this.form.submit()">
+                    <option value="10" th:selected="${comments.size == 10}">10개</option>
+                    <option value="20" th:selected="${comments.size == 20}">20개</option>
+                    <option value="30" th:selected="${comments.size == 30}">30개</option>
+                    <option value="50" th:selected="${comments.size == 50}">50개</option>
+                </select>
+            </form>
+        </div>
+
+        <div th:if="${comments.empty}" class="admin-empty">
+            <span th:if="${viewMode == 'deleted'}">삭제된 한마디가 없어요.</span>
+            <span th:if="${viewMode == 'all'}">한마디가 없어요.</span>
+        </div>
+
+        <div class="admin-table-wrap" th:unless="${comments.empty}">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th th:unless="${viewMode == 'deleted'}">상태</th>
+                    <th>내용</th>
+                    <th>작성자</th>
+                    <th>학교/학년/반</th>
+                    <th th:unless="${viewMode == 'deleted'}">신고자 수</th>
+                    <th>작성일</th>
+                    <th th:if="${viewMode == 'deleted'}">삭제일</th>
+                    <th>관리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="comment : ${comments}">
+                    <td th:unless="${viewMode == 'deleted'}">
+                        <span class="admin-status-badge admin-status-cleared" th:if="${comment.reportCleared}">문제없음</span>
+                        <span class="admin-status-badge" th:unless="${comment.reportCleared}"
+                              th:classappend="${comment.blind} ? ' admin-status-blind' : (${comment.reportCount >= 3} ? ' admin-status-pending' : ' admin-status-cleared')"
+                              th:text="${comment.blind} ? '블라인드' : (${comment.reportCount >= 3} ? '신고누적' : '정상')">상태</span>
+                    </td>
+                    <td class="admin-comment-content-cell" th:text="${comment.content}">내용</td>
+                    <td><a th:href="@{'/admin/profiles/' + ${comment.authorId}}" class="admin-table-title" th:text="${comment.authorNickname}">작성자</a></td>
+                    <td th:text="${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">학교/학년/반</td>
+                    <td th:unless="${viewMode == 'deleted'}" th:text="${comment.reportCount}">0</td>
+                    <td th:text="${comment.createdAt}">날짜</td>
+                    <td th:if="${viewMode == 'deleted'}" th:text="${comment.deletedAt}">삭제일</td>
+                    <td>
+                        <div class="admin-user-actions"
+                             th:with="stateStatus=${viewMode == 'deleted'} ? 'deleted' : null">
+                            <form th:if="${comment.deleted}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/restore'}" method="post"
+                                  onsubmit="return confirm('이 한마디를 복구할까요?');">
+                                <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
+                                <button type="submit" class="btn btn-outline-brand">복구</button>
+                            </form>
+                            <th:block th:unless="${comment.deleted}">
+                                <form th:unless="${comment.reportCleared}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/clear-report'}" method="post"
+                                      onsubmit="return confirm('이 한마디를 검토 결과 \'문제없음\'으로 판결할까요?');">
+                                    <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
+                                    <button type="submit" class="btn btn-outline-brand">문제없음 처리</button>
+                                </form>
+                                <form th:if="${comment.reportCleared}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/unclear-report'}" method="post"
+                                      onsubmit="return confirm('\'문제없음\' 판결을 철회할까요?');">
+                                    <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
+                                    <button type="submit" class="btn btn-outline-brand">문제없음 철회</button>
+                                </form>
+                                <form th:if="${!comment.blind}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/blind'}" method="post"
+                                      onsubmit="return confirm('이 한마디를 블라인드 처리할까요?');">
+                                    <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
+                                    <button type="submit" class="btn btn-outline-brand">블라인드</button>
+                                </form>
+                                <form th:if="${comment.blind}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/unblind'}" method="post"
+                                      onsubmit="return confirm('블라인드를 해제할까요?');">
+                                    <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
+                                    <button type="submit" class="btn btn-outline-brand">블라인드 해제</button>
+                                </form>
+                                <form th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/delete'}" method="post"
+                                      onsubmit="return confirm('이 한마디를 삭제할까요? (소프트 삭제 - 삭제됨 탭에서 다시 복구할 수 있습니다)');">
+                                    <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
+                                    <button type="submit" class="post-delete-btn">삭제</button>
+                                </form>
+                            </th:block>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="post-pagination" th:if="${comments.totalPages > 1}">
+            <a th:if="${comments.hasPrevious()}" th:href="@{/admin/schedule-comments(page=${comments.number - 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, comments.totalPages - 1)}"
+               th:href="@{/admin/schedule-comments(page=${i}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" th:text="${i + 1}"
+               th:classappend="${i == comments.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${comments.hasNext()}" th:href="@{/admin/schedule-comments(page=${comments.number + 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

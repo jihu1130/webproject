@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${profile.nickname + ' 님의 프로필 - WebSchool'}">프로필 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('community')}"></div>
+
+<div class="post-page">
+    <div class="post-container post-container-narrow">
+        <a href="/posts" class="post-list-back"><i class="fa-solid fa-arrow-left"></i> 커뮤니티로</a>
+
+        <div class="post-detail-card">
+            <h1 class="post-detail-title"><i class="fa-solid fa-user"></i> <span th:text="${profile.nickname}">닉네임</span></h1>
+            <p class="profile-bio" th:if="${profile.bio != null and !#strings.isEmpty(profile.bio)}" th:text="${profile.bio}">소개글</p>
+            <p class="page-sub" style="margin: 4px 0 0;">이 사람이 작성한 게시글이에요 (익명으로 쓴 글은 포함되지 않아요)</p>
+        </div>
+
+        <div th:if="${profile.posts.empty}" class="post-empty">아직 작성한 게시글이 없어요.</div>
+
+        <ul class="post-list" th:unless="${profile.posts.empty}">
+            <li class="post-list-item" th:each="post : ${profile.posts}">
+                <a th:href="@{'/posts/' + ${post.uuid}}" class="post-list-link">
+                    <span class="post-category-badge" th:text="${post.categoryLabel}">자유</span>
+                    <span class="post-list-title" th:text="${post.title}">제목</span>
+                    <span class="post-list-meta">
+                        <span class="post-list-date" th:text="${post.createdAt}">날짜</span>
+                        <span class="post-list-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>
+                    </span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="post-pagination" th:if="${profile.posts.totalPages > 1}">
+            <a th:if="${profile.posts.hasPrevious()}" th:href="@{'/users/' + ${profile.id}(page=${profile.posts.number - 1})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, profile.posts.totalPages - 1)}"
+               th:href="@{'/users/' + ${profile.id}(page=${i})}" th:text="${i + 1}"
+               th:classappend="${i == profile.posts.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${profile.posts.hasNext()}" th:href="@{'/users/' + ${profile.id}(page=${profile.posts.number + 1})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/timeago.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        WebSchoolTimeago.applyAll('.post-list-date');
+    });
+</script>
+</body>
+</html>

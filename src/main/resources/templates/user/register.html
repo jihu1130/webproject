@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - WebSchool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <link rel="stylesheet" th:href="@{/css/school-search.css}">
+</head>
+<body class="auth-body">
+
+<div th:replace="~{fragments/navbar :: navbar('register')}"></div>
+
+<div class="auth-shell">
+    <div class="auth-wrapper auth-wrapper-wide">
+        <div class="auth-card">
+            <h3 class="auth-title">회원가입</h3>
+            <p class="auth-subtitle">몇 가지 정보만 입력하면 바로 시작할 수 있어요</p>
+
+            <div th:if="${errorMessage}" class="auth-alert auth-alert-danger" th:text="${errorMessage}"></div>
+
+            <a href="/oauth2/authorization/google" class="auth-google-btn" th:if="${googleLoginEnabled}">
+                <i class="fa-brands fa-google"></i> 구글 계정으로 바로 시작하기
+            </a>
+            <div class="auth-oauth-divider" th:if="${googleLoginEnabled}"><span>또는 아이디로 가입</span></div>
+
+            <form th:action="@{/register}" th:object="${registerDto}" method="post" id="registerForm">
+                <div class="auth-field">
+                    <label>아이디</label>
+                    <div class="auth-field-inline">
+                        <input type="text" th:field="*{username}" placeholder="영문, 숫자만 입력" pattern="[A-Za-z0-9]+" required>
+                        <button type="button" id="checkUsernameBtn" class="btn btn-outline-brand btn-usercheck">중복확인</button>
+                    </div>
+                    <div id="usernameCheckMsg" class="auth-check-msg"></div>
+                </div>
+                <div class="auth-field">
+                    <label>비밀번호</label>
+                    <input type="password" th:field="*{password}" placeholder="비밀번호 입력" required>
+                    <div id="passwordStrengthBar" class="auth-strength-bar"><span></span></div>
+                    <div id="passwordStrengthMsg" class="auth-check-msg"></div>
+                </div>
+                <div class="auth-field">
+                    <label>비밀번호 확인</label>
+                    <input type="password" th:field="*{confirmPassword}" placeholder="비밀번호 다시 입력" required>
+                    <div id="passwordCheckMsg" class="auth-check-msg"></div>
+                </div>
+                <div class="auth-field">
+                    <label>별명 (선택)</label>
+                    <input type="text" th:field="*{nickname}" placeholder="비워두면 아이디가 별명이 돼요">
+                </div>
+
+                <hr class="auth-section-divider">
+                <p class="auth-section-label"><i class="fa-solid fa-school"></i> 우리 학교 설정 (필수)</p>
+
+                <div class="auth-field">
+                    <label>학교 이름</label>
+                    <div class="school-search-box" id="regSchoolSearchWrap">
+                        <input type="text" id="regSchoolSearchInput" placeholder="학교 이름을 검색하세요 (예: 모산중학교)" autocomplete="off" required>
+                        <ul id="regSchoolSearchResults" class="school-search-results"></ul>
+                    </div>
+                    <input type="hidden" th:field="*{schoolName}">
+                    <input type="hidden" th:field="*{schoolCode}">
+                    <input type="hidden" th:field="*{atptCode}">
+                    <input type="hidden" th:field="*{schoolKind}">
+                    <div id="regSchoolCheckMsg" class="auth-check-msg"></div>
+                </div>
+                <div class="auth-field-row">
+                    <div class="auth-field">
+                        <label>학년</label>
+                        <select th:field="*{grade}" required>
+                            <option value="1">1학년</option>
+                            <option value="2">2학년</option>
+                            <option value="3">3학년</option>
+                        </select>
+                    </div>
+                    <div class="auth-field">
+                        <label>반</label>
+                        <select th:field="*{classNum}" required disabled>
+                            <option value="" selected>학교와 학년을 먼저 선택하세요</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-brand auth-submit">가입하기</button>
+            </form>
+
+            <div class="auth-footer">이미 계정이 있으신가요? <a href="/login">로그인</a></div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/school-search.js}"></script>
+<script th:src="@{/js/class-select.js}"></script>
+<script th:src="@{/js/grade-select.js}"></script>
+<script th:src="@{/js/register.js}"></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알림 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/notification.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('notifications')}"></div>
+
+<div class="post-page">
+    <div class="post-container">
+        <div class="post-list-header">
+            <div class="page-heading post-page-heading">
+                <h1><i class="fa-solid fa-bell"></i> 알림</h1>
+                <p class="page-sub">댓글/좋아요/관리자 조치/공지사항 소식을 모아봐요</p>
+            </div>
+            <form th:action="@{/notifications/read-all}" method="post" th:if="${!notifications.empty}">
+                <button type="submit" class="btn btn-outline-brand">모두 읽음 처리</button>
+            </form>
+        </div>
+
+        <div th:if="${notifications.empty}" class="post-empty">
+            <span>아직 도착한 알림이 없어요.</span>
+        </div>
+
+        <ul class="notif-list" th:unless="${notifications.empty}">
+            <li th:each="n : ${notifications}" class="notif-item" th:classappend="${!n.read} ? ' notif-item-unread'">
+                <form th:action="@{'/notifications/' + ${n.id} + '/read'}" method="post" class="notif-item-form">
+                    <button type="submit" class="notif-item-btn">
+                        <span class="notif-item-icon" th:classappend="'notif-item-icon-' + ${n.type}">
+                            <i class="fa-solid fa-comment" th:if="${n.type == 'COMMENT'}"></i>
+                            <i class="fa-solid fa-heart" th:if="${n.type == 'LIKE'}"></i>
+                            <i class="fa-solid fa-shield-halved" th:if="${n.type == 'REPORT_ACTION'}"></i>
+                            <i class="fa-solid fa-user-gear" th:if="${n.type == 'ACCOUNT'}"></i>
+                            <i class="fa-solid fa-thumbtack" th:if="${n.type == 'ANNOUNCEMENT'}"></i>
+                        </span>
+                        <span class="notif-item-body">
+                            <span class="notif-item-message" th:text="${n.message}">알림 내용</span>
+                            <span class="notif-item-meta">
+                                <span class="notif-item-type" th:text="${n.typeLabel}">유형</span>
+                                <span class="notif-item-date" th:text="${n.createdAt}">날짜</span>
+                            </span>
+                        </span>
+                        <span class="notif-item-dot" th:if="${!n.read}"></span>
+                    </button>
+                </form>
+            </li>
+        </ul>
+
+        <div class="post-pagination" th:if="${notifications.totalPages > 1}">
+            <a th:if="${notifications.hasPrevious()}" th:href="@{/notifications(page=${notifications.number - 1})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, notifications.totalPages - 1)}"
+               th:href="@{/notifications(page=${i})}" th:text="${i + 1}"
+               th:classappend="${i == notifications.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${notifications.hasNext()}" th:href="@{/notifications(page=${notifications.number + 1})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/timeago.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        WebSchoolTimeago.applyAll('.notif-item-date');
+    });
+</script>
+</body>
+</html>

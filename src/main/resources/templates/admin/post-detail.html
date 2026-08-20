@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${post.title + ' - 관리자 - WebSchool'}">게시물 관리 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container admin-container-narrow">
+
+        <div class="post-detail-footer-links">
+            <a th:href="@{/admin/posts(status=${listStatus}, keyword=${listKeyword}, page=${listPage}, size=${listSize})}" class="post-list-back">
+                <i class="fa-solid fa-arrow-left"></i> 관리자 목록으로
+            </a>
+            <a th:unless="${post.deleted}" th:href="@{'/posts/' + ${post.uuid}}" class="post-list-back">
+                게시글 페이지에서 보기 <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="post-blind-banner" th:if="${post.deleted}">
+            <i class="fa-solid fa-trash-can"></i>
+            <span th:text="${post.deletedAt}">-</span>에 삭제된 게시물입니다. 일반 사용자 화면에는 노출되지 않아요.
+        </div>
+
+        <div class="admin-detail-card">
+            <span class="admin-status-badge admin-status-blind" th:if="${post.deleted}">삭제됨</span>
+            <span class="admin-status-badge admin-status-cleared" th:if="${!post.deleted and post.reportCleared}">문제없음</span>
+            <span class="admin-status-badge" th:if="${!post.deleted and !post.reportCleared}"
+                  th:classappend="${post.blind} ? ' admin-status-blind' : (${post.reportCount >= 3} ? ' admin-status-pending' : ' admin-status-cleared')"
+                  th:text="${post.blind} ? '블라인드' : (${post.reportCount >= 3} ? '신고누적' : '정상')">상태</span>
+            <span class="post-category-badge" th:classappend="'post-category-badge-' + ${post.category}" th:text="${post.categoryLabel}">자유</span>
+            <h1 class="post-detail-title" th:text="${post.title}">제목</h1>
+
+            <div class="post-detail-meta">
+                <span><i class="fa-solid fa-user"></i> <a th:href="@{'/admin/profiles/' + ${post.authorId}}" class="admin-table-title" th:text="${post.authorNickname}">작성자</a> (<span th:text="${post.authorUsername}">아이디</span>)</span>
+                <span><i class="fa-solid fa-clock"></i> <span th:text="${post.createdAt}">날짜</span></span>
+                <span th:if="${post.edited}" class="post-edited-badge">수정됨</span>
+                <span class="post-detail-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>
+                <span><i class="fa-solid fa-flag"></i> 신고 <span th:text="${post.reportCount}">0</span>회</span>
+            </div>
+
+            <div class="post-detail-content post-rich-content" th:utext="${post.content}">내용</div>
+
+            <div class="post-image-gallery" th:if="${!post.images.empty}">
+                <a class="post-image-gallery-item" th:each="image : ${post.images}" th:href="${image.url}" target="_blank">
+                    <img th:src="${image.url}" th:alt="${image.originalFilename}">
+                </a>
+            </div>
+
+            <div class="admin-actions">
+                <form th:if="${post.deleted}" th:action="@{'/admin/posts/' + ${post.id} + '/restore'}" method="post"
+                      onsubmit="return confirm('이 게시물을 복구할까요? 일반 사용자 화면에 다시 노출됩니다.');">
+                    <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                    <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-rotate-left"></i> 복구</button>
+                </form>
+                <th:block th:unless="${post.deleted}">
+                    <form th:unless="${post.reportCleared}" th:action="@{'/admin/posts/' + ${post.id} + '/clear-report'}" method="post"
+                          onsubmit="return confirm('이 게시물을 검토 결과 \'문제없음\'으로 판결할까요? 게시물이 수정되기 전까지는 다시 신고해도 처리되지 않고 안내만 나갑니다.');">
+                        <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                        <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-circle-check"></i> 문제없음 처리</button>
+                    </form>
+                    <form th:if="${post.reportCleared}" th:action="@{'/admin/posts/' + ${post.id} + '/unclear-report'}" method="post"
+                          onsubmit="return confirm('\'문제없음\' 판결을 철회할까요? 신고 상태가 다시 표시됩니다.');">
+                        <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                        <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-rotate-left"></i> 문제없음 철회</button>
+                    </form>
+                    <form th:if="${!post.blind}" th:action="@{'/admin/posts/' + ${post.id} + '/blind'}" method="post"
+                          onsubmit="return confirm('이 게시물을 블라인드 처리할까요?');">
+                        <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                        <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-eye-slash"></i> 블라인드 처리</button>
+                    </form>
+                    <form th:if="${post.blind}" th:action="@{'/admin/posts/' + ${post.id} + '/unblind'}" method="post"
+                          onsubmit="return confirm('블라인드를 해제할까요?');">
+                        <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                        <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-eye"></i> 블라인드 해제</button>
+                    </form>
+                    <form th:action="@{'/admin/posts/' + ${post.id} + '/delete'}" method="post"
+                          onsubmit="return confirm('이 게시물을 삭제할까요? (소프트 삭제 - 관리자 페이지 삭제됨 탭에서 다시 복구할 수 있습니다)');">
+                        <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                        <button type="submit" class="post-delete-btn"><i class="fa-solid fa-trash"></i> 강제 삭제</button>
+                    </form>
+                </th:block>
+            </div>
+        </div>
+
+        <div class="admin-report-section">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-flag"></i> 신고 내역 (<span th:text="${#lists.size(post.reports)}">0</span>건)</h3>
+
+            <div th:if="${post.reports.empty}" class="post-comment-empty">신고 이력이 없어요.</div>
+
+            <div class="admin-report-list" th:unless="${post.reports.empty}">
+                <div class="admin-report-item" th:each="report : ${post.reports}">
+                    <div class="admin-report-item-header">
+                        <span class="post-comment-nickname" th:text="${report.reporterNickname}">신고자</span>
+                        <span class="post-comment-time" th:text="${report.createdAt}">날짜</span>
+                    </div>
+                    <div class="admin-report-reason" th:text="${report.reason != null ? report.reason : '사유 미입력'}">사유</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-report-section">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-comments"></i> 댓글 (<span th:text="${#lists.size(post.comments)}">0</span>건, 삭제된 댓글 포함)</h3>
+
+            <div th:if="${post.comments.empty}" class="post-comment-empty">댓글이 없어요.</div>
+
+            <div class="admin-report-list" th:unless="${post.comments.empty}">
+                <div class="admin-report-item" th:each="comment : ${post.comments}" th:id="'comment-' + ${comment.id}">
+                    <div class="admin-report-item-header">
+                        <a th:href="@{'/admin/profiles/' + ${comment.authorId}}" class="post-comment-nickname" th:text="${comment.authorNickname}">작성자</a>
+                        <span class="post-comment-time" th:text="${comment.createdAt}">날짜</span>
+                        <span class="admin-status-badge admin-status-blind" th:if="${comment.deleted}">삭제됨</span>
+                        <span class="admin-status-badge admin-status-cleared" th:if="${!comment.deleted and comment.reportCleared}">문제없음</span>
+                        <span class="admin-status-badge admin-status-blind" th:if="${!comment.deleted and !comment.reportCleared and comment.blind}"
+                              th:text="'블라인드(신고 ' + ${comment.reportCount} + '회)'">블라인드</span>
+                        <span class="admin-status-badge admin-status-pending" th:if="${!comment.deleted and !comment.reportCleared and !comment.blind and comment.reportCount >= 3}"
+                              th:text="'신고누적(' + ${comment.reportCount} + '회)'">신고누적</span>
+                        <form th:if="${!comment.deleted and !comment.reportCleared and comment.reportCount > 0}"
+                              th:action="@{'/admin/posts/' + ${post.id} + '/comments/' + ${comment.id} + '/clear-report'}" method="post"
+                              onsubmit="return confirm('이 댓글을 검토 결과 \'문제없음\'으로 판결할까요?');" class="admin-comment-clear-form">
+                            <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                            <button type="submit" title="문제없음 처리"><i class="fa-solid fa-circle-check"></i></button>
+                        </form>
+                        <form th:if="${!comment.deleted and comment.reportCleared}"
+                              th:action="@{'/admin/posts/' + ${post.id} + '/comments/' + ${comment.id} + '/unclear-report'}" method="post"
+                              onsubmit="return confirm('\'문제없음\' 판결을 철회할까요?');" class="admin-comment-clear-form">
+                            <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                            <button type="submit" title="문제없음 철회"><i class="fa-solid fa-rotate-left"></i></button>
+                        </form>
+                    </div>
+                    <div class="admin-report-reason" th:text="${comment.content}">내용</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 신고 관리(/admin/reports?type=comment)나 댓글 관리(/admin/comments)에서 "#comment-{id}"
+    // 앵커로 이 페이지에 들어온 경우, 브라우저가 자동으로 그 위치까지 스크롤은 해주지만 어떤 댓글인지
+    // 눈에 띄지 않아서(사용자 지적 - 여러 댓글 사이에서 직접 찾아야 했음) 잠깐 배경을 강조 표시한다.
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!location.hash || location.hash.indexOf('#comment-') !== 0) return;
+        var target = document.querySelector(location.hash);
+        if (!target) return;
+        target.classList.add('admin-report-item-highlight');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(function () { target.classList.remove('admin-report-item-highlight'); }, 2600);
+    });
+</script>
+</body>
+</html>

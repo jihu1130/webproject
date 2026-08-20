@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${profile.nickname + ' 프로필 - 관리자 - WebSchool'}">계정 프로필 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container admin-container-narrow">
+        <!-- 이 화면은 /admin/users/{id}/profile(계정 관리, 총관리자 전용)과 /admin/profiles/{id}
+             (게시글/댓글/한마디 관리 화면에서 작성자 이름 클릭, 권한 있는 부관리자도 가능) 둘 다에서
+             재사용된다 - 총관리자가 아니면 "계정 관리로" 링크 자체를 못 쓰므로(총관리자 전용 화면)
+             관리자 홈으로 돌아가는 링크를 대신 보여준다. -->
+        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+           href="/admin/users" class="post-list-back"><i class="fa-solid fa-arrow-left"></i> 계정 관리로</a>
+        <a th:unless="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+           href="/admin" class="post-list-back"><i class="fa-solid fa-arrow-left"></i> 관리자 홈으로</a>
+
+        <div class="admin-detail-card">
+            <span class="admin-status-badge admin-status-blind" th:if="${profile.deleted}" th:text="'탈퇴함(' + ${profile.deletedAt} + ')'">탈퇴함</span>
+            <span class="admin-status-badge admin-status-pending" th:if="${!profile.deleted and !profile.active}">비활성화됨</span>
+            <span class="admin-status-badge admin-status-cleared" th:if="${!profile.deleted and profile.active}">활동중</span>
+            <span class="admin-status-badge admin-status-cleared" th:if="${profile.role == 'ROLE_SUPER_ADMIN'}">총관리자</span>
+            <span class="admin-status-badge admin-status-pending" th:if="${profile.role == 'ROLE_ADMIN'}">부관리자</span>
+
+            <h1 class="post-detail-title" th:text="${profile.nickname}">닉네임</h1>
+            <p class="page-sub" style="margin: 0 0 12px;" th:text="'아이디: ' + ${profile.username}">아이디</p>
+
+            <dl class="admin-profile-grid">
+                <div class="admin-profile-field">
+                    <dt>관심 학교</dt>
+                    <dd th:text="${profile.schoolName != null ? profile.schoolName : '-'}">-</dd>
+                </div>
+                <div class="admin-profile-field">
+                    <dt>학교 종류</dt>
+                    <dd th:text="${profile.schoolKind != null ? profile.schoolKind : '-'}">-</dd>
+                </div>
+                <div class="admin-profile-field">
+                    <dt>학년 / 반</dt>
+                    <dd th:text="(${profile.grade != null ? profile.grade : '-'}) + '학년 ' + (${profile.classNum != null ? profile.classNum : '-'}) + '반'">-</dd>
+                </div>
+                <div class="admin-profile-field" th:if="${profile.role != 'ROLE_USER'}">
+                    <dt>관리자 권한</dt>
+                    <dd th:if="${profile.role == 'ROLE_SUPER_ADMIN'}">모든 권한</dd>
+                    <dd th:if="${profile.role == 'ROLE_ADMIN'}">
+                        <span th:text="${profile.canManageReports} ? '신고관리 O' : '신고관리 X'">-</span> ·
+                        <span th:text="${profile.canManagePosts} ? '게시글관리 O' : '게시글관리 X'">-</span> ·
+                        <span th:text="${profile.canManageScheduleComments} ? '한마디관리 O' : '한마디관리 X'">-</span> ·
+                        <span th:text="${profile.canManageNotices} ? '공지사항관리 O' : '공지사항관리 X'">-</span>
+                    </dd>
+                </div>
+            </dl>
+
+            <div class="admin-profile-stats">
+                <div class="admin-profile-stat">
+                    <strong th:text="${profile.postCount}">0</strong>
+                    <span>작성 게시글</span>
+                </div>
+                <div class="admin-profile-stat">
+                    <strong th:text="${profile.commentCount}">0</strong>
+                    <span>작성 댓글</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-report-section" th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN' and profile.role != 'ROLE_SUPER_ADMIN'}"
+             style="margin-bottom: 20px;">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-gavel"></i> 제재 부여</h3>
+            <form th:action="@{'/admin/users/' + ${profile.id} + '/penalties'}" method="post" class="admin-penalty-form"
+                  onsubmit="return confirm('이 계정에 제재를 부여할까요?');">
+                <select name="type" required>
+                    <option value="WARNING">경고</option>
+                    <option value="POST_SUSPENSION">게시글 작성정지</option>
+                    <option value="COMMUNITY_SUSPENSION">커뮤니티 임시차단</option>
+                    <option value="DEACTIVATION">계정 비활성화</option>
+                </select>
+                <input type="number" name="durationDays" min="1" placeholder="기간(일) - 비우면 영구, 경고는 무시됨">
+                <textarea name="reason" maxlength="300" placeholder="제재 사유를 입력하세요" required></textarea>
+                <button type="submit" class="btn btn-outline-brand">제재 부여</button>
+            </form>
+        </div>
+
+        <div class="admin-report-section" th:if="${!#lists.isEmpty(profile.penalties)}" style="margin-bottom: 20px;">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-clock-rotate-left"></i> 제재 내역</h3>
+            <div class="admin-report-list">
+                <div class="admin-report-item" th:each="p : ${profile.penalties}">
+                    <div class="admin-report-item-header">
+                        <span class="admin-status-badge"
+                              th:classappend="${p.revoked} ? ' admin-status-cleared' : (${p.active} ? ' admin-status-blind' : ' admin-status-pending')"
+                              th:text="${p.typeLabel} + (${p.revoked} ? ' · 해제됨' : (${p.active} ? ' · 적용중' : ' · 만료'))">유형</span>
+                        <span class="post-comment-time" th:text="${p.issuedAt}">일시</span>
+                    </div>
+                    <div class="admin-report-reason" th:text="${p.reason}">사유</div>
+                    <div class="post-list-meta">
+                        <span th:text="${p.expiresAt != null ? (p.expiresAt + '까지') : '영구'}">기간</span>
+                        <span th:text="'부여: ' + ${p.issuedByNickname}">관리자</span>
+                        <form th:if="${p.active}" th:action="@{'/admin/users/' + ${profile.id} + '/penalties/' + ${p.id} + '/revoke'}"
+                              method="post" style="display:inline" onsubmit="return confirm('제재를 조기 해제할까요?');">
+                            <button type="submit" class="post-delete-btn">조기 해제</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-report-section">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-file-lines"></i> 최근 작성 게시글</h3>
+
+            <div th:if="${#lists.isEmpty(profile.recentPosts)}" class="post-comment-empty">작성한 게시글이 없어요.</div>
+
+            <div class="admin-report-list" th:unless="${#lists.isEmpty(profile.recentPosts)}">
+                <a class="admin-report-item admin-table-title" style="display: block;" th:each="post : ${profile.recentPosts}"
+                   th:href="@{'/admin/posts/' + ${post.id}}">
+                    <div class="admin-report-item-header">
+                        <span class="post-category-badge" th:text="${post.categoryLabel}">카테고리</span>
+                        <span class="post-comment-time" th:text="${post.createdAt}">날짜</span>
+                    </div>
+                    <div th:text="${post.title}">제목</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

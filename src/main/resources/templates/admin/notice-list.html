@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 공지사항 관리 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="post-list-header">
+            <div class="page-heading admin-page-heading">
+                <h1><i class="fa-solid fa-bullhorn"></i> 공지사항 관리</h1>
+                <p class="page-sub">활성 공지는 항상 1개예요 - 새로 작성하면 이전 공지는 자동으로 보관돼요</p>
+            </div>
+            <a href="/admin/notices/new" class="btn-brand post-write-btn">
+                <i class="fa-solid fa-pen"></i> 새 공지 작성
+            </a>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('notices')}"></div>
+
+        <div th:if="${notices.empty}" class="admin-empty">작성된 공지사항이 없어요.</div>
+
+        <div class="admin-table-wrap" th:unless="${notices.empty}">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>상태</th>
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>작성일</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="notice : ${notices}">
+                    <td>
+                        <span class="admin-status-badge admin-status-cleared" th:if="${notice.active}">활성</span>
+                        <span class="admin-status-badge" th:unless="${notice.active}">보관</span>
+                    </td>
+                    <td>
+                        <a th:href="@{'/admin/notices/' + ${notice.id}(page=${notices.number}, size=${notices.size})}"
+                           class="admin-table-title" th:text="${notice.title}">제목</a>
+                    </td>
+                    <td th:text="${notice.authorNickname}">작성자</td>
+                    <td th:text="${notice.createdAt}">날짜</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="post-pagination" th:if="${notices.totalPages > 1}">
+            <a th:if="${notices.hasPrevious()}" th:href="@{/admin/notices(page=${notices.number - 1}, size=${notices.size})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, notices.totalPages - 1)}"
+               th:href="@{/admin/notices(page=${i}, size=${notices.size})}" th:text="${i + 1}"
+               th:classappend="${i == notices.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${notices.hasNext()}" th:href="@{/admin/notices(page=${notices.number + 1}, size=${notices.size})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

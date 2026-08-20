@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지사항 작성 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="post-page">
+    <div class="post-container post-container-narrow">
+        <div class="post-form-card">
+            <h2>공지사항 작성</h2>
+            <p class="page-sub" style="margin: -0.6rem 0 1.2rem;">작성하면 이전 활성 공지는 자동으로 보관되고, 전체 회원에게 알림이 발송돼요.</p>
+
+            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+
+            <form th:action="@{/admin/notices}" method="post">
+                <div class="post-field">
+                    <label>제목</label>
+                    <input type="text" name="title" placeholder="공지 제목을 입력하세요" maxlength="100" th:value="${title}" required>
+                </div>
+                <div class="post-field">
+                    <label>내용</label>
+                    <textarea name="content" rows="12" placeholder="공지 내용을 입력하세요" maxlength="4000" required th:text="${content}"></textarea>
+                </div>
+
+                <div class="post-form-actions">
+                    <a href="/admin/notices" class="btn btn-outline-brand">취소</a>
+                    <button type="submit" class="btn btn-brand">작성 완료</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

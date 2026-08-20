@@ -1,0 +1,42 @@
+/* 공지사항(/notices) 전용 스타일 - post.css의 카드/목록 톤을 그대로 쓰고, "현재 공지"임을
+   표시하는 압정 배지 색상만 별도로 정의한다(예전 Post.Category.NOTICE 방식의 고정 배지와 동일한
+   호박색 팔레트를 재사용 - 사용자에게 이미 익숙한 "공지 = 호박색" 인상을 유지). */
+.notice-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    background: rgba(217, 119, 6, 0.16);
+    color: #b45309;
+}
+
+.notice-list-item-active { background: rgba(217, 119, 6, 0.06); }
+.notice-list-item-active:hover { background: rgba(217, 119, 6, 0.1); }
+
+/* 커뮤니티(/posts) 목록 상단에 노출되는 활성 공지 배너 */
+.notice-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    background: rgba(217, 119, 6, 0.08);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    text-decoration: none;
+    color: var(--ink);
+    transition: background 0.15s ease;
+}
+.notice-banner:hover { background: rgba(217, 119, 6, 0.14); }
+.notice-banner-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.notice-banner i.fa-chevron-right { margin-left: auto; color: #b45309; flex-shrink: 0; }

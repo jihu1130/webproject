@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 관리자 권한 관리 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-user-shield"></i> 관리자 권한 관리</h1>
+            <p class="page-sub">부관리자마다 신고 관리 / 게시글 관리 / 한마디 관리 / 공지사항 작성 권한을 개별로 켜고 끌 수 있어요. 계정 관리는 총관리자(admin) 전용이라 부관리자에게는 부여할 수 없어요.</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('admins')}"></div>
+
+        <div class="admin-permission-list" th:if="${!#lists.isEmpty(admins)}">
+            <div class="admin-permission-row" th:each="admin : ${admins}">
+                <div class="admin-permission-row-who">
+                    <span class="admin-status-badge admin-status-cleared" th:if="${admin.role == 'ROLE_SUPER_ADMIN'}">총관리자</span>
+                    <span class="admin-status-badge admin-status-pending" th:if="${admin.role == 'ROLE_ADMIN'}">부관리자</span>
+                    <span class="admin-permission-row-name" th:text="${admin.nickname} + ' (' + ${admin.username} + ')'">닉네임 (아이디)</span>
+                </div>
+
+                <div class="admin-permission-row-toggles" th:if="${admin.role == 'ROLE_SUPER_ADMIN'}">
+                    <span class="admin-user-self-label">모든 권한 보유 (변경 불가)</span>
+                </div>
+
+                <form th:if="${admin.role == 'ROLE_ADMIN'}" th:action="@{'/admin/users/' + ${admin.id} + '/permissions'}"
+                      method="post" class="admin-permission-row-toggles" onchange="this.submit()">
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canManageReports" value="true" th:checked="${admin.canManageReports}">
+                        <span>신고 관리</span>
+                    </label>
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canManagePosts" value="true" th:checked="${admin.canManagePosts}">
+                        <span>게시글 관리</span>
+                    </label>
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canManageScheduleComments" value="true" th:checked="${admin.canManageScheduleComments}">
+                        <span>한마디 관리</span>
+                    </label>
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canManageNotices" value="true" th:checked="${admin.canManageNotices}">
+                        <span>공지사항 작성</span>
+                    </label>
+                </form>
+            </div>
+        </div>
+
+        <div class="admin-empty" th:if="${#lists.isEmpty(admins) or #lists.size(admins) <= 1}">
+            아직 부관리자가 없어요. "계정 관리"에서 학생 계정을 관리자로 승격해보세요.
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

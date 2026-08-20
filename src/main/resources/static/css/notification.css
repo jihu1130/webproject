@@ -1,0 +1,88 @@
+/* 알림 목록 (/notifications) - post.css의 .post-list와 같은 카드 톤을 쓰되, 각 행이 읽음 처리
+   POST 폼(버튼)이라는 점만 다르다(navbar.html의 종 배지와 동일한 흐름으로 서버 렌더링만으로 동작). */
+.notif-list {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid #f0f1fa;
+    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.08);
+    overflow: hidden;
+}
+
+.notif-item + .notif-item { border-top: 1px solid var(--border); }
+
+.notif-item-unread { background: rgba(79, 70, 229, 0.04); }
+
+.notif-item-form { margin: 0; }
+
+.notif-item-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: background 0.15s ease;
+}
+
+.notif-item-btn:hover { background: #f8f9fc; }
+
+.notif-item-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--brand-1-dark);
+    font-size: 0.9rem;
+}
+
+.notif-item-icon-LIKE { background: rgba(225, 29, 72, 0.1); color: #be123c; }
+.notif-item-icon-REPORT_ACTION { background: rgba(217, 119, 6, 0.14); color: #b45309; }
+.notif-item-icon-ACCOUNT { background: rgba(107, 114, 128, 0.14); color: #4b5563; }
+.notif-item-icon-ANNOUNCEMENT { background: rgba(14, 165, 233, 0.14); color: #0369a1; }
+
+.notif-item-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.notif-item-message {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--ink);
+    overflow-wrap: break-word;
+}
+
+.notif-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.notif-item-dot {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--brand-1);
+}
+
+@media (max-width: 560px) {
+    .notif-item-btn { padding: 14px 16px; gap: 10px; }
+    .notif-item-icon { width: 30px; height: 30px; font-size: 0.8rem; }
+}

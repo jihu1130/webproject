@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${mode == 'edit'} ? '오늘의 한마디 수정 - WebSchool' : '오늘의 한마디 작성 - WebSchool'">오늘의 한마디 작성 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/calendar.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('calendar')}"></div>
+
+<div class="post-page">
+    <div class="post-container post-container-narrow">
+        <div class="post-form-card">
+            <h2 th:text="${mode == 'edit'} ? '오늘의 한마디 수정' : '오늘의 한마디 작성'">오늘의 한마디 작성</h2>
+            <p class="post-content-guide comment-form-context">
+                <i class="fa-solid fa-school"></i> <span th:text="${schoolName}">학교</span>
+                &nbsp;·&nbsp; <i class="fa-regular fa-calendar"></i> <span th:text="${dateLabel}">날짜</span>
+                &nbsp;·&nbsp; <span th:text="${grade} + '학년 ' + ${classNm} + '반'">학년/반</span>
+            </p>
+
+            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+
+            <form th:action="${mode == 'edit'} ? @{'/school/comments/' + ${commentId} + '/edit'} : @{/school/comments}" method="post">
+                <input th:if="${mode != 'edit'}" type="hidden" name="atptCode" th:value="${atptCode}">
+                <input th:if="${mode != 'edit'}" type="hidden" name="schoolCode" th:value="${schoolCode}">
+                <input th:if="${mode != 'edit'}" type="hidden" name="schoolName" th:value="${schoolName}">
+                <input th:if="${mode != 'edit'}" type="hidden" name="date" th:value="${date}">
+                <input th:if="${mode != 'edit'}" type="hidden" name="grade" th:value="${grade}">
+                <input th:if="${mode != 'edit'}" type="hidden" name="classNm" th:value="${classNm}">
+
+                <div class="post-field">
+                    <label>내용</label>
+                    <p class="post-content-guide">🖼/🎬/📎/🔗 버튼으로 본문 중간에 사진·동영상·파일·바로가기 카드를 삽입할 수 있어요 (사진 15MB, 동영상 300MB, 그 외 파일 50MB 이하)</p>
+                    <div id="commentFormEditor" class="rich-editor-container"></div>
+                    <input type="hidden" id="commentFormHidden" name="content" th:value="${contentValue}">
+                </div>
+
+                <div class="post-form-actions">
+                    <a th:href="${cancelUrl}" class="btn btn-outline-brand">취소</a>
+                    <button type="submit" class="btn btn-brand" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script th:src="@{/js/rich-editor.js}"></script>
+<script>
+    initRichEditor({
+        editorId: 'commentFormEditor',
+        hiddenId: 'commentFormHidden',
+        placeholder: '이 날에 대한 의견을 남겨보세요',
+        required: true
+    });
+</script>
+</body>
+</html>

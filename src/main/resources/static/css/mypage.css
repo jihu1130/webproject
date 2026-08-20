@@ -1,0 +1,272 @@
+/* 마이페이지 */
+.mypage-page {
+    min-height: calc(100vh - 64px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px 60px;
+    background:
+        radial-gradient(circle at 12% 15%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 88% 88%, rgba(79, 70, 229, 0.12) 0%, transparent 45%);
+}
+
+.mypage-container {
+    width: 100%;
+    max-width: 420px;
+}
+
+/* "내가 쓴 글 관리" 화면은 목록형이라 기본 마이페이지 카드보다 더 넓은 폭이 필요하다. */
+.mypage-container-wide {
+    width: 100%;
+    max-width: 760px;
+    align-self: flex-start;
+    margin-top: 20px;
+}
+
+.my-activity-delete-form { display: flex; }
+
+.my-activity-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1.5px solid var(--brand-1);
+    background: #fff;
+    color: var(--brand-1);
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+.my-activity-edit-btn:hover { background: rgba(79, 70, 229, 0.08); transform: translateY(-1px); }
+
+/* 북마크 탭 안의 게시글/한마디 서브탭 - 바깥 대분류 탭보다 작고 연하게 표시해서 위계를 구분한다. */
+.my-activity-subtabs {
+    margin: -6px 0 14px;
+    font-size: 0.85rem;
+}
+
+.my-activity-comment-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.my-activity-comment-body {
+    font-size: 0.92rem;
+    color: var(--ink);
+    word-break: break-word;
+}
+
+.my-activity-comment-item .post-list-meta {
+    justify-content: space-between;
+    width: 100%;
+    font-size: 0.82rem;
+}
+
+/* 마이페이지 "내 프로필 설정" 미리보기 박스 - 남이 보는 프로필(/users/{id})에 노출되는
+   소개글을 여기서 바로 확인/수정하고, 실제 공개 프로필로도 바로 이동할 수 있게 한다. */
+.mypage-profile-box {
+    text-align: left;
+    background: var(--surface-2, #f4f4f6);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-top: 18px;
+}
+
+.mypage-profile-box-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--ink);
+}
+
+.mypage-profile-edit-link {
+    color: var(--muted);
+    padding: 4px;
+}
+.mypage-profile-edit-link:hover { color: var(--brand-1); }
+
+.mypage-profile-bio {
+    margin: 8px 0 10px;
+    font-size: 0.88rem;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.mypage-profile-bio-empty { color: var(--muted); font-style: italic; }
+
+.mypage-profile-posts-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--brand-1-dark);
+    text-decoration: none;
+}
+.mypage-profile-posts-link:hover { text-decoration: underline; }
+
+.mypage-card {
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(20, 18, 45, 0.12);
+    padding: 40px 32px 32px;
+    text-align: center;
+}
+
+.mypage-avatar {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: var(--brand-gradient);
+    color: #fff;
+    font-size: 30px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mypage-name {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 2px;
+}
+
+.mypage-username {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0 0 10px;
+}
+
+.mypage-role-badge {
+    display: inline-block;
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--brand-1-dark);
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+}
+
+.mypage-info-list {
+    text-align: left;
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+    margin-bottom: 24px;
+}
+
+.mypage-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    font-size: 0.92rem;
+}
+
+.mypage-info-row + .mypage-info-row {
+    border-top: 1px dashed var(--border);
+}
+
+.mypage-info-label {
+    color: var(--muted);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mypage-info-label i {
+    color: var(--brand-1);
+    width: 14px;
+}
+
+.mypage-info-value {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.mypage-alert {
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.mypage-alert-success { background: #dcfce7; color: #15803d; }
+
+.mypage-edit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: #fff;
+    border: 1.5px solid var(--brand-1);
+    color: var(--brand-1);
+    transition: background 0.15s ease;
+}
+
+.mypage-edit-btn:hover {
+    background: rgba(79, 70, 229, 0.08);
+    color: var(--brand-1);
+}
+
+.mypage-cal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: var(--brand-gradient);
+    color: #fff;
+    transition: filter 0.15s ease;
+}
+
+.mypage-cal-btn:hover {
+    filter: brightness(1.06);
+    color: #fff;
+}
+
+.mypage-logout-form {
+    margin: 0;
+}
+
+.mypage-logout-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mypage-logout-btn:hover {
+    background: #f8f9fc;
+    color: var(--ink);
+}

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 신고 관리 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container"
+         th:with="typeParam=${commentView} ? 'comment' : (${scheduleView} ? 'schedule' : ''),
+                   currentSize=${!commentView and !scheduleView} ? ${posts.size} : (${commentView} ? ${comments.size} : ${scheduleComments.size})">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-shield-halved"></i> 관리자 대시보드</h1>
+            <p class="page-sub">신고가 누적됐거나 블라인드 처리된 게시물·댓글을 관리해요 (신고누적 배지는 3회 이상부터 떠요)</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('reports')}"></div>
+
+        <div class="post-category-tabs admin-status-tabs">
+            <a th:href="@{/admin/reports(keyword=${keyword})}" class="post-category-tab" th:classappend="${!commentView and !scheduleView} ? ' active' : ''">게시물</a>
+            <a th:href="@{/admin/reports(type='comment', keyword=${keyword})}" class="post-category-tab" th:classappend="${commentView} ? ' active' : ''">댓글</a>
+            <a th:href="@{/admin/reports(type='schedule', keyword=${keyword})}" class="post-category-tab" th:classappend="${scheduleView} ? ' active' : ''">오늘의 한마디</a>
+        </div>
+
+        <div class="list-toolbar">
+            <form th:action="@{/admin/reports}" method="get" class="admin-search-form">
+                <input type="hidden" name="type" th:value="${typeParam}">
+                <input type="text" name="keyword"
+                       th:placeholder="${scheduleView or commentView} ? '내용/작성자 검색' : '제목/작성자 검색'"
+                       th:value="${keyword}">
+                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+
+            <form th:action="@{/admin/reports}" method="get" class="page-size-select">
+                <input type="hidden" name="type" th:value="${typeParam}">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <label for="admin-report-page-size">페이지당</label>
+                <select id="admin-report-page-size" name="size" onchange="this.form.submit()">
+                    <option value="10" th:selected="${currentSize == 10}">10개</option>
+                    <option value="20" th:selected="${currentSize == 20}">20개</option>
+                    <option value="30" th:selected="${currentSize == 30}">30개</option>
+                    <option value="50" th:selected="${currentSize == 50}">50개</option>
+                </select>
+            </form>
+        </div>
+
+        <!-- 게시물 신고 목록 -->
+        <div th:if="${!commentView and !scheduleView}">
+            <div th:if="${posts.empty}" class="admin-empty">신고 누적 게시물이 없어요.</div>
+
+            <div class="admin-table-wrap" th:unless="${posts.empty}">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>상태</th>
+                        <th>카테고리</th>
+                        <th>제목</th>
+                        <th>작성자</th>
+                        <th>신고자 수</th>
+                        <th>최근 신고일</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="post : ${posts}">
+                        <td>
+                            <span class="admin-status-badge admin-status-cleared" th:if="${post.reportCleared}">문제없음</span>
+                            <span class="admin-status-badge" th:unless="${post.reportCleared}"
+                                  th:classappend="${post.blind} ? ' admin-status-blind' : (${post.reportCount >= 3} ? ' admin-status-pending' : ' admin-status-cleared')"
+                                  th:text="${post.blind} ? '블라인드' : (${post.reportCount >= 3} ? '신고누적' : '정상')">상태</span>
+                        </td>
+                        <td>
+                            <span class="post-category-badge" th:classappend="'post-category-badge-' + ${post.category}" th:text="${post.categoryLabel}">자유</span>
+                        </td>
+                        <td>
+                            <a th:href="@{'/admin/posts/' + ${post.id}}" class="admin-table-title" th:text="${post.title}">제목</a>
+                            <span class="admin-status-badge admin-status-blind" th:if="${post.reportedCommentCount > 0}"
+                                  th:text="'댓글 신고 ' + ${post.reportedCommentCount}" title="이 게시물의 댓글 중 신고 누적/블라인드된 댓글이 있어요">댓글 신고</span>
+                        </td>
+                        <td><a th:href="@{'/admin/profiles/' + ${post.authorId}}" class="admin-table-title" th:text="${post.authorNickname}">작성자</a></td>
+                        <td th:text="${post.reportCount}">0</td>
+                        <td th:text="${post.latestReportAt != null ? post.latestReportAt : '-'}">-</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="post-pagination" th:if="${posts.totalPages > 1}">
+                <a th:if="${posts.hasPrevious()}" th:href="@{/admin/reports(page=${posts.number - 1}, keyword=${keyword}, size=${posts.size})}" class="post-page-link">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+                <a th:each="i : ${#numbers.sequence(0, posts.totalPages - 1)}"
+                   th:href="@{/admin/reports(page=${i}, keyword=${keyword}, size=${posts.size})}" th:text="${i + 1}"
+                   th:classappend="${i == posts.number} ? ' active' : ''"
+                   class="post-page-link"></a>
+                <a th:if="${posts.hasNext()}" th:href="@{/admin/reports(page=${posts.number + 1}, keyword=${keyword}, size=${posts.size})}" class="post-page-link">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- 댓글 신고 목록 -->
+        <div th:if="${commentView}">
+            <div th:if="${comments.empty}" class="admin-empty">신고 누적 댓글이 없어요.</div>
+
+            <div class="admin-table-wrap" th:unless="${comments.empty}">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>상태</th>
+                        <th>내용</th>
+                        <th>작성자</th>
+                        <th>소속 게시글</th>
+                        <th>신고자 수</th>
+                        <th>작성일</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="comment : ${comments}">
+                        <td>
+                            <span class="admin-status-badge admin-status-cleared" th:if="${comment.reportCleared}">문제없음</span>
+                            <span class="admin-status-badge" th:unless="${comment.reportCleared}"
+                                  th:classappend="${comment.blind} ? ' admin-status-blind' : (${comment.reportCount >= 3} ? ' admin-status-pending' : ' admin-status-cleared')"
+                                  th:text="${comment.blind} ? '블라인드' : (${comment.reportCount >= 3} ? '신고누적' : '정상')">상태</span>
+                        </td>
+                        <td class="admin-comment-content-cell" th:text="${comment.content}">내용</td>
+                        <td><a th:href="@{'/admin/profiles/' + ${comment.authorId}}" class="admin-table-title" th:text="${comment.authorNickname}">작성자</a></td>
+                        <td>
+                            <a th:href="${'/admin/posts/' + comment.postId + '#comment-' + comment.id}" class="admin-table-title" th:text="${comment.postTitle}">게시글 제목</a>
+                        </td>
+                        <td th:text="${comment.reportCount}">0</td>
+                        <td th:text="${comment.createdAt}">날짜</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="post-pagination" th:if="${comments.totalPages > 1}">
+                <a th:if="${comments.hasPrevious()}" th:href="@{/admin/reports(type='comment', page=${comments.number - 1}, keyword=${keyword}, size=${comments.size})}" class="post-page-link">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+                <a th:each="i : ${#numbers.sequence(0, comments.totalPages - 1)}"
+                   th:href="@{/admin/reports(type='comment', page=${i}, keyword=${keyword}, size=${comments.size})}" th:text="${i + 1}"
+                   th:classappend="${i == comments.number} ? ' active' : ''"
+                   class="post-page-link"></a>
+                <a th:if="${comments.hasNext()}" th:href="@{/admin/reports(type='comment', page=${comments.number + 1}, keyword=${keyword}, size=${comments.size})}" class="post-page-link">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- 오늘의 한마디 신고 목록 -->
+        <div th:if="${scheduleView}">
+            <div th:if="${scheduleComments.empty}" class="admin-empty">신고 누적된 한마디가 없어요.</div>
+
+            <div class="admin-table-wrap" th:unless="${scheduleComments.empty}">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>상태</th>
+                        <th>내용</th>
+                        <th>작성자</th>
+                        <th>학교/학년/반</th>
+                        <th>신고자 수</th>
+                        <th>작성일</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="comment : ${scheduleComments}">
+                        <td>
+                            <span class="admin-status-badge admin-status-cleared" th:if="${comment.reportCleared}">문제없음</span>
+                            <span class="admin-status-badge" th:unless="${comment.reportCleared}"
+                                  th:classappend="${comment.blind} ? ' admin-status-blind' : (${comment.reportCount >= 3} ? ' admin-status-pending' : ' admin-status-cleared')"
+                                  th:text="${comment.blind} ? '블라인드' : (${comment.reportCount >= 3} ? '신고누적' : '정상')">상태</span>
+                        </td>
+                        <td class="admin-comment-content-cell" th:text="${comment.content}">내용</td>
+                        <td><a th:href="@{'/admin/profiles/' + ${comment.authorId}}" class="admin-table-title" th:text="${comment.authorNickname}">작성자</a></td>
+                        <td>
+                            <a href="/admin/schedule-comments" class="admin-table-title"
+                               th:text="${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">학교/학년/반</a>
+                        </td>
+                        <td th:text="${comment.reportCount}">0</td>
+                        <td th:text="${comment.createdAt}">날짜</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="post-pagination" th:if="${scheduleComments.totalPages > 1}">
+                <a th:if="${scheduleComments.hasPrevious()}" th:href="@{/admin/reports(type='schedule', page=${scheduleComments.number - 1}, keyword=${keyword}, size=${scheduleComments.size})}" class="post-page-link">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+                <a th:each="i : ${#numbers.sequence(0, scheduleComments.totalPages - 1)}"
+                   th:href="@{/admin/reports(type='schedule', page=${i}, keyword=${keyword}, size=${scheduleComments.size})}" th:text="${i + 1}"
+                   th:classappend="${i == scheduleComments.number} ? ' active' : ''"
+                   class="post-page-link"></a>
+                <a th:if="${scheduleComments.hasNext()}" th:href="@{/admin/reports(type='schedule', page=${scheduleComments.number + 1}, keyword=${keyword}, size=${scheduleComments.size})}" class="post-page-link">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

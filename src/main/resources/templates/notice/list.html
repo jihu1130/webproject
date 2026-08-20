@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지사항 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/notice.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('notices')}"></div>
+
+<div class="post-page">
+    <div class="post-container">
+        <div class="page-heading post-page-heading">
+            <h1><i class="fa-solid fa-bullhorn"></i> 공지사항</h1>
+            <p class="page-sub">웹스쿨의 새 소식과 안내를 확인하세요</p>
+        </div>
+
+        <div th:if="${notices.empty}" class="post-empty">
+            <span>아직 등록된 공지사항이 없어요.</span>
+        </div>
+
+        <ul class="post-list" th:unless="${notices.empty}">
+            <li class="post-list-item" th:classappend="${notice.active} ? ' notice-list-item-active'" th:each="notice : ${notices}">
+                <a th:href="@{'/notices/' + ${notice.id}}" class="post-list-link">
+                    <span class="notice-badge" th:if="${notice.active}"><i class="fa-solid fa-thumbtack"></i> 현재 공지</span>
+                    <span class="post-list-title" th:text="${notice.title}">제목</span>
+                </a>
+                <span class="post-list-meta">
+                    <span class="post-list-nickname" th:text="${notice.authorNickname}">작성자</span>
+                    <span class="post-list-date" th:text="${notice.createdAt}">날짜</span>
+                </span>
+            </li>
+        </ul>
+
+        <div class="post-pagination" th:if="${notices.totalPages > 1}">
+            <a th:if="${notices.hasPrevious()}" th:href="@{/notices(page=${notices.number - 1})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, notices.totalPages - 1)}"
+               th:href="@{/notices(page=${i})}" th:text="${i + 1}"
+               th:classappend="${i == notices.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${notices.hasNext()}" th:href="@{/notices(page=${notices.number + 1})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/timeago.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        WebSchoolTimeago.applyAll('.post-list-date');
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>커뮤니티 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/notice.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('community')}"></div>
+
+<div class="post-page">
+    <div class="post-container">
+        <div class="post-list-header">
+            <div class="page-heading post-page-heading">
+                <h1><i class="fa-solid fa-fire"></i> 커뮤니티</h1>
+                <p class="page-sub">친구들과 자유롭게 이야기를 나눠보세요</p>
+            </div>
+            <a href="/posts/new" class="btn-brand post-write-btn" sec:authorize="isAuthenticated()">
+                <i class="fa-solid fa-pen"></i> 글쓰기
+            </a>
+        </div>
+
+        <a th:if="${activeNotice != null}" th:href="@{'/notices/' + ${activeNotice.id}}" class="notice-banner">
+            <span class="notice-badge"><i class="fa-solid fa-thumbtack"></i> 공지</span>
+            <span class="notice-banner-title" th:text="${activeNotice.title}">공지 제목</span>
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+
+        <div class="post-category-tabs">
+            <a th:href="@{/posts(keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-category-tab" th:classappend="${selectedCategory == null} ? ' active' : ''">전체</a>
+            <a th:href="@{/posts(category='FREE', keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-category-tab" th:classappend="${selectedCategory == 'FREE'} ? ' active' : ''">자유</a>
+            <a th:href="@{/posts(category='ANONYMOUS', keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-category-tab" th:classappend="${selectedCategory == 'ANONYMOUS'} ? ' active' : ''">익명</a>
+            <a th:href="@{/posts(category='QNA', keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-category-tab" th:classappend="${selectedCategory == 'QNA'} ? ' active' : ''">질의응답</a>
+        </div>
+
+        <div class="list-toolbar">
+            <form th:action="@{/posts}" method="get" class="post-search-form post-search-form-rich">
+                <input type="hidden" name="category" th:value="${selectedCategory}">
+                <div class="post-search-row">
+                    <input type="text" name="keyword" placeholder="검색어를 입력하세요" th:value="${keyword}">
+                    <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+                <div class="post-search-options">
+                    <label class="post-search-scope">
+                        <input type="radio" name="scope" value="" th:checked="${scope == ''}"> 제목+내용
+                    </label>
+                    <label class="post-search-scope">
+                        <input type="radio" name="scope" value="title" th:checked="${scope == 'title'}"> 제목만
+                    </label>
+                    <label class="post-search-scope">
+                        <input type="radio" name="scope" value="content" th:checked="${scope == 'content'}"> 내용만
+                    </label>
+                    <select name="sort" class="post-search-sort" onchange="this.form.submit()">
+                        <option value="" th:selected="${sort == ''}">최신순</option>
+                        <option value="oldest" th:selected="${sort == 'oldest'}">오래된순</option>
+                        <option value="views" th:selected="${sort == 'views'}">조회수 많은순</option>
+                    </select>
+                </div>
+            </form>
+
+            <form th:action="@{/posts}" method="get" class="page-size-select">
+                <input type="hidden" name="category" th:value="${selectedCategory}">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="scope" th:value="${scope}">
+                <input type="hidden" name="sort" th:value="${sort}">
+                <label for="post-page-size">페이지당</label>
+                <select id="post-page-size" name="size" onchange="this.form.submit()">
+                    <option value="10" th:selected="${posts.size == 10}">10개</option>
+                    <option value="20" th:selected="${posts.size == 20}">20개</option>
+                    <option value="30" th:selected="${posts.size == 30}">30개</option>
+                    <option value="50" th:selected="${posts.size == 50}">50개</option>
+                </select>
+            </form>
+        </div>
+
+        <div th:if="${posts.empty}" class="post-empty">
+            <span th:if="${keyword != null and !#strings.isEmpty(keyword)}">검색 결과가 없어요.</span>
+            <span th:unless="${keyword != null and !#strings.isEmpty(keyword)}">아직 작성된 게시물이 없어요. 첫 게시물을 남겨보세요!</span>
+        </div>
+
+        <ul class="post-list" th:unless="${posts.empty}">
+            <li class="post-list-item reveal-on-scroll" th:each="post : ${posts}">
+                <a th:href="@{'/posts/' + ${post.uuid}}" class="post-list-link">
+                    <span class="post-category-badge" th:classappend="'post-category-badge-' + ${post.category}" th:text="${post.categoryLabel}">자유</span>
+                    <span class="post-list-title" th:text="${post.title}">제목</span>
+                </a>
+                <span class="post-list-meta">
+                    <a th:if="${post.authorLinkable}" th:href="@{'/users/' + ${post.authorId}}" class="post-list-nickname" th:text="${post.nickname}">작성자</a>
+                    <span th:unless="${post.authorLinkable}" class="post-list-nickname" th:text="${post.nickname}">작성자</span>
+                    <span class="post-list-date" th:text="${post.createdAt}">날짜</span>
+                    <span class="post-list-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>
+                    <span class="post-list-likes" th:if="${post.likeCount > 0}"><i class="fa-solid fa-heart"></i> <span th:text="${post.likeCount}">0</span></span>
+                </span>
+            </li>
+        </ul>
+
+        <div class="post-pagination" th:if="${posts.totalPages > 1}">
+            <a th:if="${posts.hasPrevious()}" th:href="@{/posts(page=${posts.number - 1}, category=${selectedCategory}, keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, posts.totalPages - 1)}"
+               th:href="@{/posts(page=${i}, category=${selectedCategory}, keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" th:text="${i + 1}"
+               th:classappend="${i == posts.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${posts.hasNext()}" th:href="@{/posts(page=${posts.number + 1}, category=${selectedCategory}, keyword=${keyword}, size=${posts.size}, scope=${scope}, sort=${sort})}" class="post-page-link">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/timeago.js}"></script>
+<script th:src="@{/js/scroll-reveal.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        WebSchoolTimeago.applyAll('.post-list-date');
+    });
+</script>
+</body>
+</html>
