@@ -22,8 +22,16 @@
             <p class="page-sub">웹스쿨의 새 소식과 안내를 확인하세요</p>
         </div>
 
+        <div class="list-toolbar">
+            <form th:action="@{/notices}" method="get" class="post-search-form">
+                <input type="text" name="keyword" placeholder="제목/내용 검색" th:value="${keyword}">
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+
         <div th:if="${notices.empty}" class="post-empty">
-            <span>아직 등록된 공지사항이 없어요.</span>
+            <span th:if="${keyword != null and !#strings.isEmpty(keyword)}">검색 결과가 없어요.</span>
+            <span th:unless="${keyword != null and !#strings.isEmpty(keyword)}">아직 등록된 공지사항이 없어요.</span>
         </div>
 
         <ul class="post-list" th:unless="${notices.empty}">
@@ -40,14 +48,14 @@
         </ul>
 
         <div class="post-pagination" th:if="${notices.totalPages > 1}">
-            <a th:if="${notices.hasPrevious()}" th:href="@{/notices(page=${notices.number - 1})}" class="post-page-link" aria-label="이전 페이지">
+            <a th:if="${notices.hasPrevious()}" th:href="@{/notices(page=${notices.number - 1}, keyword=${keyword})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, notices.totalPages - 1)}"
-               th:href="@{/notices(page=${i})}" th:text="${i + 1}"
+               th:href="@{/notices(page=${i}, keyword=${keyword})}" th:text="${i + 1}"
                th:classappend="${i == notices.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${notices.hasNext()}" th:href="@{/notices(page=${notices.number + 1})}" class="post-page-link" aria-label="다음 페이지">
+            <a th:if="${notices.hasNext()}" th:href="@{/notices(page=${notices.number + 1}, keyword=${keyword})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>

@@ -95,6 +95,14 @@ public class User {
         return role == Role.ROLE_ADMIN || role == Role.ROLE_SUPER_ADMIN;
     }
 
+    // 수정사항.md 지적 - "관리자" 네비 링크가 ROLE_ADMIN이기만 하면 실제 권한(canManage*)이
+    // 하나도 없어도 노출돼서, 눌러봐야 "접근 권한 없음" 화면만 마주치는 부관리자가 있었다.
+    // 총관리자는 모든 권한을 암묵적으로 갖고, 부관리자는 canManage* 중 하나라도 켜져 있어야 한다.
+    public boolean hasAnyAdminAccess() {
+        return isSuperAdmin()
+                || canManageReports || canManagePosts || canManageScheduleComments || canManageNotices;
+    }
+
     public enum Role {
         ROLE_USER, ROLE_ADMIN, ROLE_SUPER_ADMIN
     }

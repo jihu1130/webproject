@@ -5,7 +5,8 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "timetables")
+@Table(name = "timetables", uniqueConstraints = @UniqueConstraint(
+        columnNames = {"school_id", "class_date", "grade", "class_nm", "period"}))
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor

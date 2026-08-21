@@ -360,6 +360,22 @@ a.post-list-nickname:hover { text-decoration: underline; }
     margin-bottom: 16px;
 }
 
+/* 게시글 제한적 공개(링크 전용) 안내 - blind-banner와 달리 문제 상황이 아니라 작성자가 의도한
+   상태라 경고 톤(주황) 대신 차분한 브랜드 톤을 쓴다. */
+.post-unlisted-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(79, 70, 229, 0.08);
+    border: 1.5px solid rgba(79, 70, 229, 0.25);
+    color: var(--brand-1);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
 /* 상세 페이지 */
 .post-detail-card {
     background: var(--surface);
@@ -390,13 +406,17 @@ a.post-list-nickname:hover { text-decoration: underline; }
 .profile-bio {
     font-size: 0.92rem;
     color: var(--ink);
-    background: var(--surface-2, #f4f4f6);
+    /* 존재하지 않는 --surface-2 변수라 다크모드에서도 항상 밝은 회색 그대로였다 - 실제 정의된
+       --surface-soft로 교체(값도 원래 폴백과 거의 동일해서 라이트모드 외관은 그대로). */
+    background: var(--surface-soft);
     border-radius: 10px;
     padding: 10px 14px;
     margin: -4px 0 12px;
     white-space: pre-wrap;
     word-break: break-word;
 }
+
+.profile-bio-empty { color: var(--muted); font-style: italic; }
 
 .post-detail-meta {
     display: flex;
@@ -583,6 +603,31 @@ a.post-list-nickname:hover { text-decoration: underline; }
 
 .post-list-back:hover { color: var(--brand-1); }
 
+/* Phase 7 - 관리자 상세/작성/수정 화면(목록 탭 nav.html이 없는 화면)의 짧은 위치 안내 */
+.admin-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
+.admin-breadcrumb i { font-size: 0.7rem; }
+
+.admin-breadcrumb-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.admin-breadcrumb-link:hover { color: var(--brand-1); }
+
+.admin-breadcrumb-current {
+    color: var(--ink);
+    font-weight: 700;
+}
+
 .post-detail-footer-links {
     display: flex;
     align-items: center;
@@ -644,6 +689,25 @@ a.post-list-nickname:hover { text-decoration: underline; }
 
 .post-field input:focus,
 .post-field textarea:focus { border-color: var(--brand-1); }
+
+/* 게시글 제한적 공개(링크 전용) 체크박스 - .post-field label의 block/굵게 스타일을 벗어나
+   체크박스+문구가 한 줄에 나란히 오도록 별도 지정 */
+.post-visibility-toggle {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500 !important;
+    font-size: 0.88rem !important;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.post-visibility-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--brand-1);
+    cursor: pointer;
+}
 
 .post-category-radio-group {
     display: flex;

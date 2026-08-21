@@ -21,6 +21,12 @@
              (게시글/댓글/한마디 관리 화면에서 작성자 이름 클릭, 권한 있는 부관리자도 가능) 둘 다에서
              재사용된다 - 총관리자가 아니면 "계정 관리로" 링크 자체를 못 쓰므로(총관리자 전용 화면)
              관리자 홈으로 돌아가는 링크를 대신 보여준다. -->
+        <th:block th:with="isSuperAdmin=${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'},
+                           crumbLabel=${isSuperAdmin ? '계정 관리' : '관리자 홈'},
+                           crumbHref=${isSuperAdmin ? '/admin/users' : null}">
+            <div th:replace="~{admin/fragments/breadcrumb :: crumb(${crumbLabel}, ${crumbHref})}"></div>
+        </th:block>
+
         <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
            href="/admin/users" class="post-list-back"><i class="fa-solid fa-arrow-left"></i> 계정 관리로</a>
         <a th:unless="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"

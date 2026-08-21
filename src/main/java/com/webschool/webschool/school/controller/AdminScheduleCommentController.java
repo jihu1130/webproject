@@ -73,6 +73,32 @@ public class AdminScheduleCommentController {
         return state.redirect();
     }
 
+    // 일괄 처리(체크박스 다중 선택) - AdminPostController.bulkBlind/bulkDelete와 동일 패턴.
+    // 신고 목록(/admin/reports)의 한마디 탭에서도 같은 엔드포인트를 재사용한다(admin-bulk.js 참고).
+    @PostMapping("/bulk-blind")
+    public String bulkBlind(@RequestParam(required = false) List<Long> ids,
+                             @RequestParam(required = false) String returnUrl,
+                             @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminScheduleCommentService.setBlind(id, true); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirect());
+    }
+
+    @PostMapping("/bulk-delete")
+    public String bulkDelete(@RequestParam(required = false) List<Long> ids,
+                              @RequestParam(required = false) String returnUrl,
+                              @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminScheduleCommentService.deleteComment(id); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirect());
+    }
+
+    private static String resolveReturn(String returnUrl, String fallback) {
+        return (returnUrl != null && returnUrl.startsWith("/admin/")) ? "redirect:" + returnUrl : fallback;
+    }
+
     // 액션(블라인드/삭제/복구 등) 처리 후 원래 보던 검색/필터/페이지 상태로 돌아가기 위한 폼 파라미터
     // 묶음 - 각 액션 폼(admin/schedule-comment-list.html)에 hidden input으로 함께 제출된다.
     public static class ListState {

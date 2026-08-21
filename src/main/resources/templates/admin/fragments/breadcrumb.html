@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 목록 탭(admin/fragments/nav.html)이 없는 상세/작성/수정 화면(공지 상세, 공지 작성/수정, 게시글
+     상세, 계정 프로필)용 - "관리자 > 어느 섹션" 위치만 짧게 보여준다. sectionHref가 없으면(=계정
+     프로필처럼 총관리자가 아닌 부관리자에게는 링크할 목록이 없는 경우) 텍스트만 표시한다. -->
+<nav th:fragment="crumb(sectionLabel, sectionHref)" class="admin-breadcrumb" aria-label="현재 위치">
+    <a href="/admin" class="admin-breadcrumb-link">관리자</a>
+    <i class="fa-solid fa-angle-right" aria-hidden="true"></i>
+    <a th:if="${sectionHref != null}" th:href="${sectionHref}" class="admin-breadcrumb-link" th:text="${sectionLabel}">섹션</a>
+    <span th:unless="${sectionHref != null}" class="admin-breadcrumb-current" th:text="${sectionLabel}">섹션</span>
+</nav>
+
+</body>
+</html>

@@ -17,7 +17,11 @@
      다른 관리자 화면(AdminUserSummaryDto 등)은 서비스 단에서 role을 미리 .name()으로 문자열
      변환해두지만, 여기서는 엔티티를 그대로 쓰므로 반드시 .name()을 붙여 문자열로 비교해야 한다
      (enum과 문자열을 바로 == 비교하면 항상 false로 평가되어 탭이 전부 숨는 버그가 났었음). -->
-<nav th:fragment="tabs(active)" class="post-category-tabs">
+<!-- th:fragment는 nav 태그 하나에만 붙어있으면 그 태그만 잘려서 포함되므로, 스크롤 보정용
+     스크립트도 같이 실려 나가도록 th:block으로 둘을 함께 묶는다(예전엔 nav 밖에 있어서 스크립트가
+     아예 렌더링되지 않는 채로 조용히 무시되고 있었다). -->
+<th:block th:fragment="tabs(active)">
+<nav class="post-category-tabs admin-main-tabs">
     <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageReports)}"
        href="/admin/reports" class="post-category-tab" th:classappend="${active == 'reports'} ? ' active' : ''">1. 신고 관리</a>
     <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePosts)}"
@@ -35,6 +39,18 @@
     <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
        href="/admin/audit-log" class="post-category-tab" th:classappend="${active == 'audit-log'} ? ' active' : ''">8. 감사 로그</a>
 </nav>
+
+<script>
+    // 모바일 가로 스크롤 탭바(admin.css .admin-main-tabs 참고)에서 현재 탭이 화면 밖에 있으면
+    // (예: "8. 감사 로그"가 활성인데 스크롤이 맨 왼쪽인 경우) 자동으로 보이는 위치까지 스크롤한다.
+    document.addEventListener('DOMContentLoaded', function () {
+        var active = document.querySelector('.admin-main-tabs .post-category-tab.active');
+        if (active) {
+            active.scrollIntoView({ block: 'nearest', inline: 'center' });
+        }
+    });
+</script>
+</th:block>
 
 </body>
 </html>

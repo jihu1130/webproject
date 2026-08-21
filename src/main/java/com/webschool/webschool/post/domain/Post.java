@@ -5,12 +5,19 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+// @DynamicUpdate - likeCount/viewCount/reportCount는 원자적 벌크 UPDATE(PostRepository.increment*())로
+// 갱신하고 그 값을 엔티티 필드에는 다시 반영하지 않는데(PostRepository 참고 - 반영하면 다음 dirty
+// flush 때 stale 값으로 덮어써서 race가 재발함), 같은 트랜잭션에서 blind/reportCleared 등 다른
+// 필드를 건드리면 Hibernate 기본 동작(전체 컬럼 UPDATE)이 그 stale 카운트까지 같이 덮어쓴다.
+// @DynamicUpdate를 켜면 실제로 바뀐 컬럼만 UPDATE에 포함시켜서 이 문제를 근본적으로 막는다.
 @Entity
 @Table(name = "posts")
+@DynamicUpdate
 @Getter @Setter
 @NoArgsConstructor
 public class Post {
@@ -41,6 +48,16 @@ public class Post {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Category category = Category.FREE;
+
+    // 게시글 제한적 공개(링크 전용) - todo.md/캘린더_사이트전반_개선_프롬프트.md 요구사항. 새 토큰
+    // 컬럼은 만들지 않는다 - uuid가 이미 추측 불가능한 값이고 상세 페이지(GET /posts/{uuid})는
+    // 목록 필터와 무관하게 uuid로 직접 조회되므로, UNLISTED는 "목록/검색엔 안 뜨지만 링크로는
+    // 누구나 열람 가능"이 그대로 성립한다(PostRepository.search() 참고).
+    // columnDefinition에 default 지정 - 기존 posts 테이블에 이미 있는 행들 때문에(NOT NULL 컬럼을
+    // 기본값 없이 추가하면 ddl-auto=update가 실패한다, CLAUDE.md 알려진 함정 참고).
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'PUBLIC'")
+    private Visibility visibility = Visibility.PUBLIC;
 
     @Column(nullable = false)
     private int viewCount;
@@ -91,5 +108,9 @@ public class Post {
         public String getLabel() {
             return label;
         }
+    }
+
+    public enum Visibility {
+        PUBLIC, UNLISTED
     }
 }

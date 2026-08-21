@@ -550,9 +550,14 @@
     border-bottom: 1px solid var(--border);
     background: linear-gradient(135deg, rgba(79, 70, 229, 0.04), rgba(14, 165, 233, 0.04));
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 10px;
+}
+
+.day-detail-header-main {
+    flex: 1;
+    min-width: 0;
 }
 
 .day-detail-date {
@@ -571,7 +576,9 @@
     margin-top: 2px;
 }
 
-.day-detail-close {
+.day-detail-close,
+.day-detail-day-nav-btn,
+.day-detail-print-btn {
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -586,7 +593,9 @@
     transition: background 0.15s ease, color 0.15s ease;
 }
 
-.day-detail-close:hover {
+.day-detail-close:hover,
+.day-detail-day-nav-btn:hover,
+.day-detail-print-btn:hover {
     background: #f1f2f6;
     color: var(--ink);
 }
@@ -908,7 +917,9 @@ a.comment-nickname:hover { text-decoration: underline; }
     .cal-nav-select-group select,
     .cal-grid-card,
     .day-detail-panel,
-    .day-detail-close {
+    .day-detail-close,
+    .day-detail-day-nav-btn,
+    .day-detail-print-btn {
         background: var(--surface);
     }
 
@@ -923,5 +934,25 @@ a.comment-nickname:hover { text-decoration: underline; }
     .timetable-empty,
     .comment-item {
         background: var(--surface-soft);
+    }
+}
+
+/* Phase 7 - 시간표 인쇄: 인쇄 버튼을 누르면 #printableTimetableSection(시간표 영역)만 보이게 하고
+   나머지 화면(네비바/캘린더 그리드/급식/한마디 등)은 전부 숨긴다. */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #printableTimetableSection,
+    #printableTimetableSection * {
+        visibility: visible;
+    }
+
+    #printableTimetableSection {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
     }
 }

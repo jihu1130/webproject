@@ -30,6 +30,10 @@
                 <div class="admin-permission-row-who">
                     <span class="admin-status-badge admin-status-cleared" th:if="${admin.role == 'ROLE_SUPER_ADMIN'}">총관리자</span>
                     <span class="admin-status-badge admin-status-pending" th:if="${admin.role == 'ROLE_ADMIN'}">부관리자</span>
+                    <!-- 수정사항.md 지적 - 권한을 전부 꺼둔 부관리자도 목록에서 다른 부관리자와 구분이
+                         안 갔다. 4개 canManage* 전부 false면 "권한 없음" 배지를 따로 표시한다. -->
+                    <span class="admin-status-badge admin-status-blind"
+                          th:if="${admin.role == 'ROLE_ADMIN' and !admin.canManageReports and !admin.canManagePosts and !admin.canManageScheduleComments and !admin.canManageNotices}">권한 없음</span>
                     <span class="admin-permission-row-name" th:text="${admin.nickname} + ' (' + ${admin.username} + ')'">닉네임 (아이디)</span>
                 </div>
 

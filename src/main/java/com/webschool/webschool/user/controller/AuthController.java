@@ -9,9 +9,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +33,7 @@ import java.util.Map;
 public class AuthController {
 
     private final UserService userService;
+    private final UserDetailsService userDetailsService;
     // 구글 OAuth 클라이언트 등록(client-id/secret)이 안 돼 있으면 이 빈 자체가 없다(SecurityConfig
     // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
@@ -179,13 +186,28 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@ModelAttribute RegisterDto registerDto, Model model) {
+    public String register(@ModelAttribute RegisterDto registerDto, HttpServletRequest request, Model model) {
         try {
             userService.register(registerDto);
-            return "redirect:/login?registered=true";
+            autoLogin(registerDto.getUsername(), request);
+            return "redirect:/";
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
             return "user/register";
         }
+    }
+
+    // 가입 직후 바로 로그인 상태로 만들기 - 세션에 SecurityContext를 직접 심어야
+    // 다음 요청(리다이렉트)부터 인증된 사용자로 인식된다(그냥 SecurityContextHolder만
+    // 채우면 이번 요청 스레드에서만 유효하고 세션엔 저장되지 않는다).
+    private void autoLogin(String username, HttpServletRequest request) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authToken);
+        SecurityContextHolder.setContext(context);
+        request.getSession(true).setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
     }
 }

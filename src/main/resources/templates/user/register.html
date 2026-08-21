@@ -41,6 +41,10 @@
                 <div class="auth-field">
                     <label>비밀번호</label>
                     <input type="password" th:field="*{password}" placeholder="비밀번호 입력" required>
+                    <div id="passwordStrengthBar" class="auth-password-strength">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                    <div id="passwordStrengthMsg" class="auth-check-msg"></div>
                 </div>
                 <div class="auth-field">
                     <label>비밀번호 확인</label>

@@ -25,9 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,12 +51,30 @@ public class PostCommentService {
     private final UserPenaltyService userPenaltyService;
     private final UserBlockService userBlockService;
 
+    // 버그 수정(N+1) - 댓글마다 신고/좋아요/북마크 여부를 개별 existsBy 쿼리로 확인하던 것을, 이 글의
+    // 댓글 id 목록 전체에 대해 한 번씩만(총 3번) 배치 조회해서 메모리에서 lookup하도록 교체했다
+    // (댓글 C개짜리 글이면 예전엔 최대 1 + 3C번 쿼리, 이제는 항상 4번 - 작성자 조회는 findBy...의
+    // @EntityGraph로 이미 JOIN FETCH돼 있어서 별도).
     public List<PostCommentDto> getComments(Long postId, String currentUsername) {
+        List<PostComment> comments = postCommentRepository.findByPost_IdAndDeletedFalseOrderByCreatedAtAsc(postId);
+
+        Set<Long> reportedIds = Collections.emptySet();
+        Set<Long> likedIds = Collections.emptySet();
+        Set<Long> bookmarkedIds = Collections.emptySet();
+        if (currentUsername != null && !comments.isEmpty()) {
+            List<Long> commentIds = comments.stream().map(PostComment::getId).collect(Collectors.toList());
+            reportedIds = Set.copyOf(commentReportRepository.findReportedCommentIds(commentIds, currentUsername));
+            likedIds = Set.copyOf(commentLikeRepository.findLikedCommentIds(commentIds, currentUsername));
+            bookmarkedIds = Set.copyOf(commentBookmarkRepository.findBookmarkedCommentIds(commentIds, currentUsername));
+        }
+
         // QNA 채택 답변(네이버 지식인 스타일)이 있으면 항상 맨 위로 - Stream.sorted()는 안정 정렬이라
         // 채택 여부가 같은 댓글끼리는 원래의 작성일순(오름차순)이 그대로 유지된다.
-        return postCommentRepository.findByPost_IdAndDeletedFalseOrderByCreatedAtAsc(postId)
-                .stream()
-                .map(c -> toDto(c, currentUsername))
+        Set<Long> finalReportedIds = reportedIds;
+        Set<Long> finalLikedIds = likedIds;
+        Set<Long> finalBookmarkedIds = bookmarkedIds;
+        return comments.stream()
+                .map(c -> toDto(c, currentUsername, finalReportedIds, finalLikedIds, finalBookmarkedIds))
                 .sorted(Comparator.comparing(PostCommentDto::isAccepted).reversed())
                 .collect(Collectors.toList());
     }
@@ -173,15 +193,18 @@ public class PostCommentService {
         commentReportRepository.save(report);
 
         boolean wasBlind = comment.isBlind();
-        comment.setReportCount(comment.getReportCount() + 1);
-        if (!wasBlind && comment.getReportCount() >= BLIND_THRESHOLD) {
+        postCommentRepository.incrementReportCount(commentId);
+        int displayReportCount = comment.getReportCount() + 1;
+        boolean nowBlind = wasBlind;
+        if (!wasBlind && displayReportCount >= BLIND_THRESHOLD) {
             comment.setBlind(true);
+            nowBlind = true;
             notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
                     "작성하신 댓글이 신고 누적으로 블라인드 처리되었습니다.",
                     "/posts/" + comment.getPost().getUuid());
         }
 
-        return new CommentReportResultDto(comment.getReportCount(), comment.isBlind());
+        return new CommentReportResultDto(displayReportCount, nowBlind);
     }
 
     // 신고 취소 - PostService.cancelReport()와 동일한 이유/패턴(자동 언블라인드는 하지 않음).
@@ -203,22 +226,25 @@ public class PostCommentService {
 
         var existing = commentLikeRepository.findByComment_IdAndUser_Id(commentId, user.getId());
         boolean liked;
+        int displayLikeCount;
         if (existing.isPresent()) {
             commentLikeRepository.delete(existing.get());
-            comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+            postCommentRepository.decrementLikeCount(commentId);
+            displayLikeCount = Math.max(0, comment.getLikeCount() - 1);
             liked = false;
         } else {
             CommentLike like = new CommentLike();
             like.setComment(comment);
             like.setUser(user);
             commentLikeRepository.save(like);
-            comment.setLikeCount(comment.getLikeCount() + 1);
+            postCommentRepository.incrementLikeCount(commentId);
+            displayLikeCount = comment.getLikeCount() + 1;
             liked = true;
             notificationService.notifyIfNotSelf(comment.getAuthor(), username, Notification.Type.LIKE,
                     user.getNickname() + "님이 회원님의 댓글을 좋아합니다.",
                     "/posts/" + comment.getPost().getUuid());
         }
-        return Map.of("liked", liked, "likeCount", comment.getLikeCount());
+        return Map.of("liked", liked, "likeCount", displayLikeCount);
     }
 
     @Transactional
@@ -292,7 +318,7 @@ public class PostCommentService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
         commentLikeRepository.findByComment_IdAndUser_Id(commentId, user.getId()).ifPresent(like -> {
             commentLikeRepository.delete(like);
-            comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+            postCommentRepository.decrementLikeCount(commentId);
         });
     }
 
@@ -323,16 +349,34 @@ public class PostCommentService {
         return trimmed;
     }
 
+    // 댓글 하나만 변환할 때(작성/수정 직후 응답용) - 이 경로는 애초에 댓글 하나뿐이라 개별 existsBy
+    // 쿼리 3번이 N+1 문제가 되지 않는다. 목록 전체를 변환할 때는 아래 배치 버전(getComments() 참고)을 쓴다.
     private PostCommentDto toDto(PostComment c, String currentUsername) {
         boolean mine = currentUsername != null && c.getAuthor().getUsername().equals(currentUsername);
-        // 블라인드된 댓글은 작성자 본인/관리자에게만 원본 내용을 보여준다 (PostService의 블라인드 가시성 판단과 동일 패턴)
-        String content = c.isBlind() && !mine && !isAdmin(currentUsername) ? BLIND_PLACEHOLDER : c.getContent();
         boolean reportedByMe = !mine && currentUsername != null
                 && commentReportRepository.existsByComment_IdAndReporter_Username(c.getId(), currentUsername);
         boolean likedByMe = currentUsername != null
                 && commentLikeRepository.existsByComment_IdAndUser_Username(c.getId(), currentUsername);
         boolean bookmarkedByMe = currentUsername != null
                 && commentBookmarkRepository.existsByComment_IdAndUser_Username(c.getId(), currentUsername);
+        return buildDto(c, currentUsername, mine, reportedByMe, likedByMe, bookmarkedByMe);
+    }
+
+    // getComments()가 미리 배치 조회해 둔 신고/좋아요/북마크 id 집합으로 멤버십만 확인 - 댓글마다
+    // 개별 쿼리를 날리지 않는다(버그 수정: N+1).
+    private PostCommentDto toDto(PostComment c, String currentUsername,
+                                  Set<Long> reportedIds, Set<Long> likedIds, Set<Long> bookmarkedIds) {
+        boolean mine = currentUsername != null && c.getAuthor().getUsername().equals(currentUsername);
+        boolean reportedByMe = !mine && reportedIds.contains(c.getId());
+        boolean likedByMe = likedIds.contains(c.getId());
+        boolean bookmarkedByMe = bookmarkedIds.contains(c.getId());
+        return buildDto(c, currentUsername, mine, reportedByMe, likedByMe, bookmarkedByMe);
+    }
+
+    private PostCommentDto buildDto(PostComment c, String currentUsername, boolean mine,
+                                     boolean reportedByMe, boolean likedByMe, boolean bookmarkedByMe) {
+        // 블라인드된 댓글은 작성자 본인/관리자에게만 원본 내용을 보여준다 (PostService의 블라인드 가시성 판단과 동일 패턴)
+        String content = c.isBlind() && !mine && !isAdmin(currentUsername) ? BLIND_PLACEHOLDER : c.getContent();
 
         return PostCommentDto.builder()
                 .id(c.getId())

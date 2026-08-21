@@ -32,6 +32,9 @@ public class AdminHomeController {
         if (user.isCanManageScheduleComments()) {
             return "redirect:/admin/schedule-comments";
         }
+        if (user.isCanManageNotices()) {
+            return "redirect:/admin/notices";
+        }
         return "redirect:/admin/access-denied";
     }
 

@@ -17,6 +17,7 @@
 
 <div class="admin-page">
     <div class="admin-container admin-container-narrow">
+        <div th:replace="~{admin/fragments/breadcrumb :: crumb('공지사항 관리', '/admin/notices')}"></div>
 
         <div class="post-detail-footer-links">
             <a th:href="@{/admin/notices(page=${listPage}, size=${listSize})}" class="post-list-back">

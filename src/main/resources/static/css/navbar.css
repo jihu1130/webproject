@@ -30,6 +30,31 @@
 
 .site-nav-brand i { color: var(--brand-2); }
 
+.site-nav-toggle {
+    display: none;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.site-nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex: 1;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    min-width: 0;
+}
+
 .site-nav-links {
     display: flex;
     gap: 22px;
@@ -54,6 +79,42 @@
 
 .site-nav-link.active {
     border-bottom-color: var(--brand-2);
+}
+
+.site-nav-search {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.site-nav-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+    width: 140px;
+}
+
+.site-nav-search input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.site-nav-search button {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.85);
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+}
+
+.site-nav-search button:hover {
+    color: #fff;
 }
 
 .site-nav-auth {
@@ -157,15 +218,65 @@
     margin: 0;
 }
 
-@media (max-width: 560px) {
-    .site-nav-inner {
-        justify-content: center;
-        text-align: center;
+/* Phase 7 - 모바일 햄버거 메뉴: 768px 이하에서는 링크/로그인 영역을 감춰두고 버튼으로 펼친다.
+   그 위 화면에서는 .site-nav-toggle이 숨겨져 있어 .site-nav-menu가 항상 펼쳐진 것과 동일하게 보인다. */
+@media (max-width: 768px) {
+    .site-nav-toggle {
+        display: flex;
     }
-    .site-nav-links {
-        margin-right: 0;
-        justify-content: center;
+
+    .site-nav-menu {
+        display: none;
         width: 100%;
-        order: 3;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        margin-top: 14px;
+    }
+
+    .site-nav-menu.open {
+        display: flex;
+    }
+
+    .site-nav-links {
+        flex-direction: column;
+        gap: 4px;
+        margin-right: 0;
+        width: 100%;
+    }
+
+    .site-nav-link {
+        padding: 10px 4px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .site-nav-search {
+        width: 100%;
+    }
+
+    .site-nav-search input {
+        flex: 1;
+        width: auto;
+    }
+
+    .site-nav-auth {
+        width: 100%;
+    }
+
+    .site-nav-guest,
+    .site-nav-user {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .site-nav-user {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .btn-nav {
+        text-align: center;
     }
 }

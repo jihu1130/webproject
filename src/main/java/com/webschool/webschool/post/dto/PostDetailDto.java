@@ -25,4 +25,5 @@ public class PostDetailDto {
     private boolean edited; // 수정된 게시물인지 여부
     private boolean mine; // 현재 로그인한 사용자가 작성한 게시물인지 여부
     private boolean reportedByMe; // 현재 로그인한 사용자가 이미 이 게시물을 신고했는지 여부
+    private boolean unlisted; // 목록/검색엔 안 뜨고 링크로만 공개된 게시물인지 여부
 }

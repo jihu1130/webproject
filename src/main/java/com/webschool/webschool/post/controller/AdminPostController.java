@@ -94,6 +94,34 @@ public class AdminPostController {
         return state.redirectToDetail(id);
     }
 
+    // 일괄 처리(체크박스 다중 선택) - 이 목록 화면(/admin/posts)뿐 아니라 신고 목록(/admin/reports)의
+    // 게시물 탭에서도 같은 엔드포인트를 재사용한다(admin-bulk.js 참고). returnUrl로 호출한 화면의
+    // 현재 검색/필터/페이지 URL을 그대로 넘겨받아 처리 후 그 자리로 돌아간다 - 관리자 영역
+    // 밖으로는 리다이렉트하지 않도록 접두사를 검증한다(오픈 리다이렉트 방지).
+    @PostMapping("/bulk-blind")
+    public String bulkBlind(@RequestParam(required = false) List<Long> ids,
+                             @RequestParam(required = false) String returnUrl,
+                             @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminPostService.setBlind(id, true); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirectToList());
+    }
+
+    @PostMapping("/bulk-delete")
+    public String bulkDelete(@RequestParam(required = false) List<Long> ids,
+                              @RequestParam(required = false) String returnUrl,
+                              @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminPostService.deletePost(id); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirectToList());
+    }
+
+    private static String resolveReturn(String returnUrl, String fallback) {
+        return (returnUrl != null && returnUrl.startsWith("/admin/")) ? "redirect:" + returnUrl : fallback;
+    }
+
     @PostMapping("/{postId}/comments/{commentId}/clear-report")
     public String clearCommentReport(@PathVariable Long postId, @PathVariable Long commentId, @ModelAttribute ListState state) {
         adminPostService.clearCommentReport(commentId);

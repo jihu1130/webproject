@@ -7,37 +7,49 @@
     <div class="site-nav-inner">
         <a href="/" class="site-nav-brand"><i class="fa-solid fa-graduation-cap"></i> WebSchool</a>
 
-        <div class="site-nav-links">
-            <a href="/" class="site-nav-link" th:classappend="${active == 'home'} ? ' active' : ''">홈</a>
-            <a href="/school/calendar" class="site-nav-link" title="학사 & 급식 캘린더" th:classappend="${active == 'calendar'} ? ' active' : ''">캘린더</a>
-            <a href="/posts" class="site-nav-link" th:classappend="${active == 'community'} ? ' active' : ''">커뮤니티</a>
-            <a href="/notices" class="site-nav-link" th:classappend="${active == 'notices'} ? ' active' : ''">공지</a>
-            <a href="/admin" class="site-nav-link" sec:authorize="hasAnyRole('ADMIN', 'SUPER_ADMIN')"
-               th:classappend="${active == 'admin'} ? ' active' : ''">관리자</a>
-        </div>
+        <button type="button" id="siteNavToggle" class="site-nav-toggle" aria-label="메뉴 열기" aria-expanded="false" aria-controls="siteNavMenu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-        <div class="site-nav-auth">
-            <div class="site-nav-guest" sec:authorize="!isAuthenticated()">
-                <a href="/login" class="btn-nav btn-nav-ghost">로그인</a>
-                <a href="/register" class="btn-nav btn-nav-accent">회원가입</a>
+        <div id="siteNavMenu" class="site-nav-menu">
+            <div class="site-nav-links">
+                <a href="/" class="site-nav-link" th:classappend="${active == 'home'} ? ' active' : ''">홈</a>
+                <a href="/school/calendar" class="site-nav-link" title="학사 & 급식 캘린더" th:classappend="${active == 'calendar'} ? ' active' : ''">캘린더</a>
+                <a href="/posts" class="site-nav-link" th:classappend="${active == 'community'} ? ' active' : ''">커뮤니티</a>
+                <a href="/notices" class="site-nav-link" th:classappend="${active == 'notices'} ? ' active' : ''">공지</a>
+                <a href="/admin" class="site-nav-link" th:if="${loginUser != null and loginUser.hasAnyAdminAccess()}"
+                   th:classappend="${active == 'admin'} ? ' active' : ''">관리자</a>
             </div>
-            <div class="site-nav-user" sec:authorize="isAuthenticated()">
-                <a href="/notifications" class="site-nav-bell" title="알림">
-                    <i class="fa-solid fa-bell"></i>
-                    <span id="notificationBadge" class="site-nav-bell-badge"
-                          th:classappend="${unreadNotificationCount == 0} ? ' is-hidden'"
-                          th:text="${unreadNotificationCount > 99} ? '99+' : ${unreadNotificationCount}">0</span>
-                </a>
-                <a href="/mypage" class="site-nav-greeting">
-                    <span th:text="${loginUser != null ? loginUser.nickname : '회원'}">회원</span>님 안녕하세요
-                </a>
-                <form th:action="@{/logout}" method="post" class="site-nav-logout-form">
-                    <button type="submit" class="btn-nav btn-nav-ghost">로그아웃</button>
-                </form>
+
+            <form th:action="@{/search}" method="get" class="site-nav-search">
+                <input type="text" name="keyword" placeholder="통합검색" aria-label="통합검색">
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+
+            <div class="site-nav-auth">
+                <div class="site-nav-guest" sec:authorize="!isAuthenticated()">
+                    <a href="/login" class="btn-nav btn-nav-ghost">로그인</a>
+                    <a href="/register" class="btn-nav btn-nav-accent">회원가입</a>
+                </div>
+                <div class="site-nav-user" sec:authorize="isAuthenticated()">
+                    <a href="/notifications" class="site-nav-bell" title="알림">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="notificationBadge" class="site-nav-bell-badge"
+                              th:classappend="${unreadNotificationCount == 0} ? ' is-hidden'"
+                              th:text="${unreadNotificationCount > 99} ? '99+' : ${unreadNotificationCount}">0</span>
+                    </a>
+                    <a href="/mypage" class="site-nav-greeting">
+                        <span th:text="${loginUser != null ? loginUser.nickname : '회원'}">회원</span>님 안녕하세요
+                    </a>
+                    <form th:action="@{/logout}" method="post" class="site-nav-logout-form">
+                        <button type="submit" class="btn-nav btn-nav-ghost">로그아웃</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </nav>
+<script th:src="@{/js/navbar.js}"></script>
 <script th:if="${loginUser != null}" th:src="@{/js/notification.js}"></script>
 </th:block>
 

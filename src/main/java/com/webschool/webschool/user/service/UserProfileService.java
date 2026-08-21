@@ -39,8 +39,8 @@ public class UserProfileService {
 
         Pageable pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE);
         Page<PublicUserProfilePostDto> posts = postRepository
-                .findByAuthor_IdAndCategoryNotAndDeletedFalseAndBlindFalseOrderByCreatedAtDesc(
-                        userId, Post.Category.ANONYMOUS, pageable)
+                .findByAuthor_IdAndCategoryNotAndDeletedFalseAndBlindFalseAndVisibilityOrderByCreatedAtDesc(
+                        userId, Post.Category.ANONYMOUS, Post.Visibility.PUBLIC, pageable)
                 .map(this::toPostDto);
 
         return PublicUserProfileDto.builder()

@@ -25,6 +25,11 @@
             작성자 본인과 관리자에게만 보여요.
         </div>
 
+        <div class="post-unlisted-banner" th:if="${post.unlisted}">
+            <i class="fa-solid fa-link"></i>
+            링크로만 공개된 글이에요. 커뮤니티 목록·검색에는 나타나지 않아요.
+        </div>
+
         <div class="post-detail-card">
             <span class="post-category-badge" th:classappend="'post-category-badge-' + ${post.category}" th:text="${post.categoryLabel}">자유</span>
             <h1 class="post-detail-title" th:text="${post.title}">제목</h1>
@@ -54,7 +59,7 @@
                 <button type="button" id="postLikeBtn" class="post-like-btn" aria-label="좋아요" th:classappend="${post.likedByMe} ? ' active' : ''">
                     <i class="fa-solid fa-heart"></i> <span id="postLikeCount" th:text="${post.likeCount}">0</span>
                 </button>
-                <button type="button" id="postBookmarkBtn" class="post-bookmark-btn" th:classappend="${post.bookmarkedByMe} ? ' active' : ''">
+                <button type="button" id="postBookmarkBtn" class="post-bookmark-btn" aria-label="북마크" th:classappend="${post.bookmarkedByMe} ? ' active' : ''">
                     <i class="fa-solid fa-bookmark"></i> <span th:text="${post.bookmarkedByMe} ? '북마크됨' : '북마크'">북마크</span>
                 </button>
             </div>
@@ -71,7 +76,8 @@
                 </div>
                 <button type="button" id="reportBtn" class="post-report-btn"
                         th:unless="${post.mine}" sec:authorize="isAuthenticated()"
-                        th:disabled="${post.reportedByMe}">
+                        th:disabled="${post.reportedByMe}"
+                        th:aria-label="${post.reportedByMe} ? '이미 신고했어요' : '신고'">
                     <i class="fa-solid fa-flag"></i> <span th:text="${post.reportedByMe} ? '신고완료' : '신고'">신고</span>
                 </button>
             </div>

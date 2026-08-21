@@ -77,6 +77,32 @@ public class AdminCommentController {
         return state.redirect();
     }
 
+    // 일괄 처리(체크박스 다중 선택) - AdminPostController.bulkBlind/bulkDelete와 동일 패턴.
+    // 신고 목록(/admin/reports)의 댓글 탭에서도 같은 엔드포인트를 재사용한다(admin-bulk.js 참고).
+    @PostMapping("/bulk-blind")
+    public String bulkBlind(@RequestParam(required = false) List<Long> ids,
+                             @RequestParam(required = false) String returnUrl,
+                             @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminPostService.setCommentBlind(id, true); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirect());
+    }
+
+    @PostMapping("/bulk-delete")
+    public String bulkDelete(@RequestParam(required = false) List<Long> ids,
+                              @RequestParam(required = false) String returnUrl,
+                              @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminPostService.deleteComment(id); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirect());
+    }
+
+    private static String resolveReturn(String returnUrl, String fallback) {
+        return (returnUrl != null && returnUrl.startsWith("/admin/")) ? "redirect:" + returnUrl : fallback;
+    }
+
     public static class ListState {
         private String status;
         private String keyword;

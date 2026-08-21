@@ -216,8 +216,16 @@ public class NeisApiService {
         }
     }
 
-    // 급식 정보 조회 메서드 추가
+    // 급식 정보 조회 - 하루 응답에 조식/중식/석식이 여러 행으로 함께 오므로 MMEAL_SC_NM으로
+    // 요청한 끼니만 골라야 한다(예전엔 첫 DDISH_NM만 가져와서 조식이 걸리면 중식 대신 조식이
+    // 뜨는 오매칭이 있었음). 실패/데이터 없음은 null 반환 - 호출부(SchoolService)가 null일 때만
+    // DB에 캐싱하지 않으므로, 여기서 안내 문구 같은 non-null placeholder를 반환하면 그 실패 결과가
+    // "실제 급식 정보 없음"으로 영구 캐싱돼버린다(화면 표시용 안내 문구는 calendar.js가 처리).
     public String fetchMealFromNeis(String atptCode, String schoolCode, String date) {
+        return fetchMealFromNeis(atptCode, schoolCode, date, "중식");
+    }
+
+    public String fetchMealFromNeis(String atptCode, String schoolCode, String date, String mealTypeName) {
         String url = String.format(
                 "https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=%s&Type=json&ATPT_OFCDC_SC_CODE=%s&SD_SCHUL_CODE=%s&MLSV_YMD=%s",
                 apiKey, atptCode, schoolCode, date
@@ -227,26 +235,29 @@ public class NeisApiService {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            String json = response.body();
 
-            // 급식 데이터가 존재하는지 확인
-            if (json.contains("\"mealServiceDietInfo\"") && json.contains("\"DDISH_NM\"")) {
-                // DDISH_NM 추출
-                int startIndex = json.indexOf("\"DDISH_NM\":\"") + 12;
-                int endIndex = json.indexOf("\"", startIndex);
-                String rawMenu = json.substring(startIndex, endIndex);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.body());
+            JsonNode rows = root.path("mealServiceDietInfo").path(1).path("row");
 
-                // <br/> 태그 및 알레르기 유발물질 숫자 (1.2.3. 등) 및 특수문자 제거
-                String cleanMenu = rawMenu.replace("\\n", "\n")
-                        .replaceAll("<br/>", "\n")
-                        .replaceAll("\\([0-9.]+\\)", "")
-                        .trim();
-                return cleanMenu;
+            if (rows.isArray()) {
+                for (JsonNode row : rows) {
+                    if (!mealTypeName.equals(row.path("MMEAL_SC_NM").asText(""))) {
+                        continue;
+                    }
+                    String rawMenu = row.path("DDISH_NM").asText("");
+                    if (rawMenu.isBlank()) {
+                        continue;
+                    }
+                    // <br/> 만 개행으로 정리 - 알레르기 유발물질 표시(괄호 안 번호)는 실제로
+                    // 유용한 정보라 더 이상 지우지 않는다(todo.md 감사 항목).
+                    return rawMenu.replace("<br/>", "\n").trim();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "등록된 급식 정보가 없습니다.";
+        return null;
     }
 
     // 기간 조회 학사일정 - 캘린더 월 그리드에 배지로 보여주기 위한 용도. keyword가

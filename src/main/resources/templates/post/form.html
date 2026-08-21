@@ -69,6 +69,15 @@
                     <div id="postImagePreview" class="post-image-preview-grid"></div>
                 </div>
 
+                <!-- 게시글 제한적 공개(링크 전용) - 커뮤니티 목록/검색엔 안 뜨지만 링크(uuid URL)로는
+                     누구나 열람할 수 있다. -->
+                <div class="post-field">
+                    <label class="post-visibility-toggle">
+                        <input type="checkbox" th:field="*{unlisted}">
+                        <span>링크로만 공개하기 (커뮤니티 목록·검색에 노출되지 않아요)</span>
+                    </label>
+                </div>
+
                 <div class="post-form-actions">
                     <a th:href="${mode == 'edit'} ? @{'/posts/' + ${postUuid}} : @{/posts}" class="btn btn-outline-brand">취소</a>
                     <button type="submit" class="btn btn-brand" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
@@ -78,12 +87,17 @@
     </div>
 </div>
 
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    window.__POST_FORM_MODE__ = /*[[${mode}]]*/ 'create';
+    /*]]>*/
+</script>
 <script th:src="@{/js/modal.js}"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script th:src="@{/js/rich-editor.js}"></script>
 <script th:src="@{/js/post-form.js}"></script>
 <script>
-    initRichEditor({
+    window.__postQuill = initRichEditor({
         editorId: 'postContentEditor',
         hiddenId: 'postContentHidden',
         placeholder: '내용을 입력하세요',

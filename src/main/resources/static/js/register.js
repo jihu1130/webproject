@@ -8,8 +8,44 @@ document.addEventListener('DOMContentLoaded', function () {
     var passwordInput = document.getElementById('password');
     var confirmInput = document.getElementById('confirmPassword');
     var passwordCheckMsg = document.getElementById('passwordCheckMsg');
+    var strengthBar = document.getElementById('passwordStrengthBar');
+    var strengthMsg = document.getElementById('passwordStrengthMsg');
 
     if (!usernameInput || !checkBtn || !msgEl || !form) return;
+
+    // 순수 클라이언트 참고용 표시일 뿐, 실제 비밀번호 규칙(최소 길이 등)은 서버(UserService)가 검증한다.
+    function checkPasswordStrength() {
+        if (!passwordInput || !strengthBar || !strengthMsg) return;
+        var value = passwordInput.value;
+
+        if (!value) {
+            strengthBar.className = 'auth-password-strength';
+            strengthMsg.textContent = '';
+            strengthMsg.className = 'auth-check-msg';
+            return;
+        }
+
+        var score = 0;
+        if (value.length >= 8) score++;
+        if (value.length >= 12) score++;
+        if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score++;
+        if (/[0-9]/.test(value)) score++;
+        if (/[^A-Za-z0-9]/.test(value)) score++;
+
+        var level, label;
+        if (score <= 1) { level = 'weak'; label = '약함'; }
+        else if (score === 2) { level = 'fair'; label = '보통'; }
+        else if (score <= 4) { level = 'good'; label = '좋음'; }
+        else { level = 'strong'; label = '매우 강함'; }
+
+        strengthBar.className = 'auth-password-strength ' + level;
+        strengthMsg.textContent = '비밀번호 강도: ' + label;
+        strengthMsg.className = 'auth-check-msg';
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener('input', checkPasswordStrength);
+    }
 
     function checkPasswordMatch() {
         if (!passwordInput || !confirmInput || !passwordCheckMsg) return true;

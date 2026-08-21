@@ -5,11 +5,15 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 
+// @DynamicUpdate - Post.java와 동일한 이유(likeCount/reportCount 원자적 벌크 UPDATE를 다른 필드
+// 변경이 덮어쓰지 않도록).
 @Entity
 @Table(name = "post_comments")
+@DynamicUpdate
 @Getter @Setter
 @NoArgsConstructor
 public class PostComment {

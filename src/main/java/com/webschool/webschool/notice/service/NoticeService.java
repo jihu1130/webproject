@@ -37,8 +37,12 @@ public class NoticeService {
     // 작성 권한은 총관리자이거나 canManageNotices 권한을 받은 부관리자만 - 컨트롤러/인터셉터가 이미
     // 막아주지만(AdminAccessInterceptor의 "/admin/notices" 분기), 다른 관리자 기능과 동일하게 서비스
     // 단에서도 한 번 더 방어적으로 검증한다.
+    // synchronized - 관리자 두 명이 거의 동시에 새 공지를 작성하면 둘 다 "활성 공지 없음/이전 공지"를
+    // 동시에 읽어버려 활성 공지가 2개가 될 수 있다(그러면 findByActiveTrueAndDeletedFalse()가 1개만
+    // 기대하는 다른 조회에서 예외를 던져 공지 배너가 깨짐). 이 앱은 단일 JVM 인스턴스로만 운영되고
+    // 공지 작성 빈도도 낮은 규모라, DB 유니크 인덱스/비관적 락보다 이 방식이 훨씬 단순하고 확실하다.
     @Transactional
-    public void createNotice(String username, String title, String content) {
+    public synchronized void createNotice(String username, String title, String content) {
         User author = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
 
@@ -66,9 +70,15 @@ public class NoticeService {
         return noticeRepository.findByActiveTrueAndDeletedFalse().map(this::toDto);
     }
 
-    // 관리자 이력 조회 + 공개 "공지" 탭 목록에서 공용으로 사용(최신순)
-    public Page<NoticeDto> getHistory(int page, int size) {
+    // 관리자 이력 조회 + 공개 "공지" 탭 목록에서 공용으로 사용(최신순). keyword가 있으면 제목/내용에서
+    // 찾는다 - 수정사항.md 지적("공지사항 목록에 검색 기능이 없음", 공지 개수 규모가 작다는 전제로
+    // 다른 관리자 목록 화면들과 동일하게 메모리에서 필터링).
+    public Page<NoticeDto> getHistory(int page, int size, String keyword) {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
         List<NoticeDto> all = noticeRepository.findAllByDeletedFalseOrderByCreatedAtDesc().stream()
+                .filter(n -> normalizedKeyword.isEmpty()
+                        || n.getTitle().toLowerCase().contains(normalizedKeyword)
+                        || n.getContent().toLowerCase().contains(normalizedKeyword))
                 .map(this::toDto)
                 .collect(Collectors.toList());
         return PageUtils.paginate(all, page, size);

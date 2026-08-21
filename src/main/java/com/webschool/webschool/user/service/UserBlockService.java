@@ -11,14 +11,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 // 사용자 간 차단 - 차단하면 상대방은 사이트 전체에서 내가 쓴 게시글/댓글에 댓글을 달 수 없다
 // (양방향 확인: 둘 중 누가 차단했든 서로 못 단다). 익명 게시판(Post.Category.ANONYMOUS)은 완전히
 // 제외한다 - 작성자 식별 자체가 서버 단에서 가려져 있어서(PostService.displayNickname 참고)
-// "이 사람을 차단" UI를 노출할 방법이 없다. "오늘의 한마디"(ScheduleComment)도 특정 개인 소유가
-// 아니라 학교/날짜/반별로 공유되는 게시판이라 차단 적용 대상에서 제외한다.
+// "이 사람을 차단" UI를 노출할 방법이 없다. "오늘의 한마디"(ScheduleComment)는 특정 개인 소유
+// 글이 아니라 학교/날짜/반별로 여러 명이 공유하는 스레드라 "작성 자체를 막는" assertNotBlocked
+// 방식이 안 맞는다 - 대신 getBlockedUserIds()로 목록 조회 단계에서 내가 차단한 사용자의 한마디를
+// 걸러내는 방식으로 적용한다(ScheduleCommentService.getComments() 참고).
 @Service
 @RequiredArgsConstructor
 public class UserBlockService {
@@ -31,7 +35,7 @@ public class UserBlockService {
     public List<UserBlockDto> getMyBlocks(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
-        return userBlockRepository.findByBlocker_IdOrderByCreatedAtDesc(user.getId()).stream()
+        return userBlockRepository.findActiveByBlocker_IdOrderByCreatedAtDesc(user.getId(), LocalDateTime.now()).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -78,6 +82,17 @@ public class UserBlockService {
         if (userBlockRepository.existsActiveBetween(commenter.getId(), postAuthor.getId(), LocalDateTime.now())) {
             throw new IllegalArgumentException("차단 관계로 인해 댓글을 작성할 수 없습니다.");
         }
+    }
+
+    // 오늘의 한마디(ScheduleCommentService.getComments()) 목록 필터링용 - username이 null이면
+    // (비로그인 사용자) 빈 집합을 반환한다.
+    public Set<Long> getBlockedUserIds(String username) {
+        if (username == null) {
+            return Collections.emptySet();
+        }
+        return userRepository.findByUsername(username)
+                .map(u -> Set.copyOf(userBlockRepository.findActiveBlockedUserIds(u.getId(), LocalDateTime.now())))
+                .orElse(Collections.emptySet());
     }
 
     private UserBlockDto toDto(UserBlock b) {

@@ -113,6 +113,23 @@ body.auth-body {
 .auth-check-msg.error { color: #dc2626; }
 .auth-check-msg.pending { color: var(--muted); }
 
+.auth-password-strength {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+}
+.auth-password-strength span {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: background 0.15s ease;
+}
+.auth-password-strength.weak span:nth-child(1) { background: #dc2626; }
+.auth-password-strength.fair span:nth-child(-n+2) { background: #d97706; }
+.auth-password-strength.good span:nth-child(-n+3) { background: #ca8a04; }
+.auth-password-strength.strong span { background: #16a34a; }
+
 .auth-submit {
     width: 100%;
     border-radius: 0.65rem;

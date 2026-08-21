@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${keyword != null and !#strings.isEmpty(keyword)} ? (${keyword} + ' 검색 결과 - WebSchool') : '통합검색 - WebSchool'">통합검색 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/notice.css}">
+    <link rel="stylesheet" th:href="@{/css/search.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('')}"></div>
+
+<div class="post-page">
+    <div class="post-container">
+        <div class="page-heading post-page-heading">
+            <h1><i class="fa-solid fa-magnifying-glass"></i> 통합검색</h1>
+            <p class="page-sub">커뮤니티·공지·학사일정을 한 번에 찾아보세요</p>
+        </div>
+
+        <div class="list-toolbar">
+            <form th:action="@{/search}" method="get" class="post-search-form">
+                <input type="text" name="keyword" placeholder="검색어를 입력하세요" th:value="${keyword}" autofocus>
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+
+        <div th:if="${keyword == null or #strings.isEmpty(keyword)}" class="post-empty">
+            검색어를 입력해주세요.
+        </div>
+
+        <th:block th:if="${keyword != null and !#strings.isEmpty(keyword)}">
+
+            <section class="search-section">
+                <div class="search-section-heading">
+                    <h2><i class="fa-solid fa-comments"></i> 커뮤니티</h2>
+                    <a th:if="${postsTotal > posts.size()}" th:href="@{/posts(keyword=${keyword})}" class="search-more-link">
+                        전체 <span th:text="${postsTotal}">0</span>건 보기 <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
+
+                <div th:if="${posts.empty}" class="search-section-empty">커뮤니티에서 찾은 게시글이 없어요.</div>
+
+                <ul class="post-list" th:unless="${posts.empty}">
+                    <li class="post-list-item" th:each="post : ${posts}">
+                        <a th:href="@{'/posts/' + ${post.uuid}}" class="post-list-link">
+                            <span class="post-category-badge" th:classappend="'post-category-badge-' + ${post.category}" th:text="${post.categoryLabel}">자유</span>
+                            <span class="post-list-title" th:text="${post.title}">제목</span>
+                        </a>
+                        <span class="post-list-meta">
+                            <span class="post-list-nickname" th:text="${post.nickname}">작성자</span>
+                            <span class="post-list-date" th:text="${post.createdAt}">날짜</span>
+                        </span>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="search-section">
+                <div class="search-section-heading">
+                    <h2><i class="fa-solid fa-bullhorn"></i> 공지사항</h2>
+                    <a th:if="${noticesTotal > notices.size()}" th:href="@{/notices(keyword=${keyword})}" class="search-more-link">
+                        전체 <span th:text="${noticesTotal}">0</span>건 보기 <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
+
+                <div th:if="${notices.empty}" class="search-section-empty">공지사항에서 찾은 결과가 없어요.</div>
+
+                <ul class="post-list" th:unless="${notices.empty}">
+                    <li class="post-list-item" th:each="notice : ${notices}">
+                        <a th:href="@{'/notices/' + ${notice.id}}" class="post-list-link">
+                            <span class="notice-badge" th:if="${notice.active}"><i class="fa-solid fa-thumbtack"></i> 현재 공지</span>
+                            <span class="post-list-title" th:text="${notice.title}">제목</span>
+                        </a>
+                        <span class="post-list-meta">
+                            <span class="post-list-nickname" th:text="${notice.authorNickname}">작성자</span>
+                            <span class="post-list-date" th:text="${notice.createdAt}">날짜</span>
+                        </span>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="search-section">
+                <div class="search-section-heading">
+                    <h2><i class="fa-solid fa-calendar-days"></i> 학사일정</h2>
+                    <a href="/school/calendar" class="search-more-link">캘린더로 가기 <i class="fa-solid fa-chevron-right"></i></a>
+                </div>
+
+                <div th:if="${event == null}" class="search-section-empty" sec:authorize="isAuthenticated()">
+                    학사일정에서 찾은 결과가 없어요.
+                </div>
+                <div th:if="${event == null}" class="search-section-empty" sec:authorize="!isAuthenticated()">
+                    로그인하면 우리 학교 학사일정도 함께 검색돼요.
+                </div>
+
+                <ul class="post-list" th:if="${event != null}">
+                    <li class="post-list-item">
+                        <a href="/school/calendar" class="post-list-link">
+                            <span class="post-list-title" th:text="${event.eventName}">일정명</span>
+                        </a>
+                        <span class="post-list-meta">
+                            <span class="post-list-date" th:text="${event.date}">날짜</span>
+                        </span>
+                    </li>
+                </ul>
+            </section>
+
+        </th:block>
+    </div>
+</div>
+
+<script th:src="@{/js/timeago.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        WebSchoolTimeago.applyAll('.post-list-date');
+    });
+</script>
+</body>
+</html>

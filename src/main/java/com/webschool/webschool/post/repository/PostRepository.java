@@ -49,7 +49,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 익명 글을 썼다"는 게 검색으로 드러나서 익명 기능의 취지가 깨진다(findByAuthor_IdAndCategoryNot...
     // 공개 프로필 조회 메서드와 동일한 익명성 보호 원칙, CLAUDE.md 참고). 그래서 제목/내용 검색과
     // 다르게 OR 체인에 단순히 조건 하나를 추가하는 방식이 아니라 scope='author'일 때 통째로 분기한다.
+    // p.visibility = PUBLIC - UNLISTED(링크 전용) 글은 목록/검색에서 항상 제외한다(Post.java 주석
+    // 참고). 상세 페이지(GET /posts/{uuid})는 이 메서드를 거치지 않고 findByUuid()로 직접 조회하므로
+    // uuid 링크만 있으면 그대로 열람 가능하다.
     @Query("SELECT p FROM Post p WHERE p.deleted = false AND p.blind = false "
+            + "AND p.visibility = com.webschool.webschool.post.domain.Post.Visibility.PUBLIC "
             + "AND (:category IS NULL OR p.category = :category) "
             + "AND (" +
             "  (:scope = 'author' AND p.category <> com.webschool.webschool.post.domain.Post.Category.ANONYMOUS "
@@ -81,8 +85,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 제외한다 - 포함시키면 "이 사람이 이 익명 글을 썼다"는 게 드러나서 익명 기능의 취지가 깨진다
     // (커뮤니티 검색에 작성자 닉네임 검색을 일부러 안 넣은 것과 같은 이유 - CLAUDE.md 참고).
     // 신고 누적으로 블라인드된 글도 제외(공개 커뮤니티 목록과 동일한 가시성 규칙, PostRepository.search() 참고).
-    Page<Post> findByAuthor_IdAndCategoryNotAndDeletedFalseAndBlindFalseOrderByCreatedAtDesc(
-            Long authorId, Post.Category excludedCategory, Pageable pageable);
+    // UNLISTED(링크 전용) 글도 제외 - 프로필 목록에 뜨면 "링크로만 공개"라는 취지가 깨진다.
+    Page<Post> findByAuthor_IdAndCategoryNotAndDeletedFalseAndBlindFalseAndVisibilityOrderByCreatedAtDesc(
+            Long authorId, Post.Category excludedCategory, Post.Visibility visibility, Pageable pageable);
 
     // 마이페이지("내 활동내역")용 - 본인이 직접 보는 화면이라 ANONYMOUS 카테고리/블라인드 글도
     // 그대로 포함한다(공개 프로필용 메서드와 달리 익명성 보호가 필요 없음 - 본인이 본인 글 보는 것).

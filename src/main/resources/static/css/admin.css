@@ -99,6 +99,49 @@
     max-width: 360px;
 }
 
+/* 일괄 처리(체크박스 다중 선택) - admin-bulk.js가 이 클래스들을 찾아 붙는다 */
+.admin-bulk-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.admin-bulk-count {
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-right: auto;
+}
+
+.admin-bulk-toolbar button[data-bulk-action] {
+    font-size: 0.85rem;
+    padding: 6px 14px;
+}
+
+.admin-bulk-toolbar button[data-bulk-action]:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.admin-bulk-check,
+.admin-bulk-check-all {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--brand-1);
+    cursor: pointer;
+}
+
+.admin-table th.admin-bulk-check-col,
+.admin-table td.admin-bulk-check-col {
+    width: 1%;
+    white-space: nowrap;
+}
+
 .admin-search-form input[type="text"] {
     flex: 1;
     padding: 9px 14px;
@@ -380,3 +423,46 @@
 .admin-penalty-form select:focus,
 .admin-penalty-form input:focus,
 .admin-penalty-form textarea:focus { border-color: var(--brand-1); outline: none; }
+
+/* 수정사항.md 지적 - 다크모드 대응이 전혀 없었다. 나머지는 var(--surface)/var(--ink) 등을 이미
+   쓰고 있어 자동으로 맞춰지고, 하드코딩된 밝은 회색 테두리/배경과 파스텔 상태 배지만 손보면 된다. */
+@media (prefers-color-scheme: dark) {
+    .admin-table-wrap,
+    .admin-detail-card,
+    .admin-report-section,
+    .admin-permission-list {
+        border-color: var(--border);
+    }
+
+    .admin-table thead th { background: var(--surface-soft); }
+
+    .admin-status-pending { background: rgba(194, 65, 12, 0.24); color: #fdba74; }
+    .admin-status-blind { background: rgba(185, 28, 28, 0.24); color: #fca5a5; }
+    .admin-status-cleared { background: rgba(21, 128, 61, 0.24); color: #86efac; }
+
+    .admin-search-form input[type="text"],
+    .admin-penalty-form select,
+    .admin-penalty-form input[type="number"],
+    .admin-penalty-form textarea {
+        border-color: var(--border);
+    }
+}
+
+/* 수정사항.md 지적 - 관리자 8단계 탭(admin/fragments/nav.html)이 사이트 상단 내비게이션과
+   달리 모바일에서 안 접혀서, 매번 8줄짜리 목록이 화면 위쪽을 다 차지했다. 접이식 메뉴 대신
+   가로 스크롤 탭바로 바꾼다 - 새 토글 컴포넌트 없이 한 줄로 줄어들고, 현재 탭(.active)이 항상
+   시야에 들어오도록 자동 스크롤도 붙인다. */
+@media (max-width: 560px) {
+    .admin-main-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+    }
+
+    .admin-main-tabs .post-category-tab {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+}

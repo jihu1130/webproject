@@ -21,9 +21,11 @@ public class AdminNoticeController {
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page,
-                        @RequestParam(required = false) Integer size, Model model) {
-        Page<NoticeDto> notices = noticeService.getHistory(page, PageUtils.normalizeSize(size));
+                        @RequestParam(required = false) Integer size,
+                        @RequestParam(required = false) String keyword, Model model) {
+        Page<NoticeDto> notices = noticeService.getHistory(page, PageUtils.normalizeSize(size), keyword);
         model.addAttribute("notices", notices);
+        model.addAttribute("keyword", keyword);
         return "admin/notice-list";
     }
 

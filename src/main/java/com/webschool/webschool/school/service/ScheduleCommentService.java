@@ -13,8 +13,11 @@ import com.webschool.webschool.school.repository.ScheduleCommentReportRepository
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.school.repository.SchoolRepository;
 import com.webschool.webschool.global.util.HtmlSanitizer;
+import com.webschool.webschool.notification.domain.Notification;
+import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
+import com.webschool.webschool.user.service.UserBlockService;
 import com.webschool.webschool.user.service.UserPenaltyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,13 +48,19 @@ public class ScheduleCommentService {
     private final SchoolRepository schoolRepository;
     private final UserRepository userRepository;
     private final UserPenaltyService userPenaltyService;
+    private final UserBlockService userBlockService;
+    private final NotificationService notificationService;
 
+    // 차단한 사용자의 한마디는 목록에서 걸러낸다(UserBlockService 클래스 주석 참고 - 한마디는 특정
+    // "글 작성자"가 없는 공유 스레드라 작성 자체를 막는 방식이 아니라 조회 단계에서 숨기는 방식).
     public List<ScheduleCommentDto> getComments(String atptCode, String schoolCode, LocalDate date,
                                                  String grade, String classNm, String currentUsername) {
         School school = findOrCreateSchool(atptCode, schoolCode);
+        Set<Long> blockedUserIds = userBlockService.getBlockedUserIds(currentUsername);
         return scheduleCommentRepository
                 .findBySchool_IdAndTargetDateAndGradeAndClassNmAndDeletedFalseOrderByCreatedAtAsc(school.getId(), date, grade, classNm)
                 .stream()
+                .filter(c -> !blockedUserIds.contains(c.getUser().getId()))
                 .map(c -> toDto(c, currentUsername))
                 .collect(Collectors.toList());
     }
@@ -158,12 +168,15 @@ public class ScheduleCommentService {
         report.setReason(trimmedReason);
         scheduleCommentReportRepository.save(report);
 
-        comment.setReportCount(comment.getReportCount() + 1);
-        if (comment.getReportCount() >= BLIND_THRESHOLD) {
+        scheduleCommentRepository.incrementReportCount(id);
+        int displayReportCount = comment.getReportCount() + 1;
+        boolean nowBlind = comment.isBlind();
+        if (!nowBlind && displayReportCount >= BLIND_THRESHOLD) {
             comment.setBlind(true);
+            nowBlind = true;
         }
 
-        return new ScheduleCommentReportResultDto(comment.getReportCount(), comment.isBlind());
+        return new ScheduleCommentReportResultDto(displayReportCount, nowBlind);
     }
 
     // 신고 취소 - PostService.cancelReport()와 동일한 이유/패턴(자동 언블라인드는 하지 않음).
@@ -185,19 +198,25 @@ public class ScheduleCommentService {
 
         var existing = scheduleCommentLikeRepository.findByComment_IdAndUser_Id(id, user.getId());
         boolean liked;
+        int displayLikeCount;
         if (existing.isPresent()) {
             scheduleCommentLikeRepository.delete(existing.get());
-            comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+            scheduleCommentRepository.decrementLikeCount(id);
+            displayLikeCount = Math.max(0, comment.getLikeCount() - 1);
             liked = false;
         } else {
             ScheduleCommentLike like = new ScheduleCommentLike();
             like.setComment(comment);
             like.setUser(user);
             scheduleCommentLikeRepository.save(like);
-            comment.setLikeCount(comment.getLikeCount() + 1);
+            scheduleCommentRepository.incrementLikeCount(id);
+            displayLikeCount = comment.getLikeCount() + 1;
             liked = true;
+            notificationService.notifyIfNotSelf(comment.getUser(), username, Notification.Type.LIKE,
+                    user.getNickname() + "님이 회원님의 오늘의 한마디를 좋아합니다.",
+                    "/school/comments/" + comment.getId());
         }
-        return Map.of("liked", liked, "likeCount", comment.getLikeCount());
+        return Map.of("liked", liked, "likeCount", displayLikeCount);
     }
 
     @Transactional
@@ -239,7 +258,7 @@ public class ScheduleCommentService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
         scheduleCommentLikeRepository.findByComment_IdAndUser_Id(id, user.getId()).ifPresent(like -> {
             scheduleCommentLikeRepository.delete(like);
-            comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+            scheduleCommentRepository.decrementLikeCount(id);
         });
     }
 
@@ -269,12 +288,14 @@ public class ScheduleCommentService {
         return comment;
     }
 
+    // PostService.isAdmin()과 동일한 버그 수정 - ROLE_ADMIN만 확인하면 총관리자(ROLE_SUPER_ADMIN)가
+    // 블라인드된 한마디 원본을 캘린더 화면에서 못 보고 관리자 페이지를 거쳐야 하는 문제가 있었다.
     private boolean isAdmin(String username) {
         if (username == null) {
             return false;
         }
         return userRepository.findByUsername(username)
-                .map(u -> u.getRole() == User.Role.ROLE_ADMIN)
+                .map(User::isAdmin)
                 .orElse(false);
     }
 
@@ -317,7 +338,7 @@ public class ScheduleCommentService {
 
         return ScheduleCommentDto.builder()
                 .id(c.getId())
-                .nickname(c.getUser().getNickname())
+                .nickname(c.getUser().isDeleted() ? "탈퇴한 사용자" : c.getUser().getNickname())
                 .authorId(c.getUser().getId())
                 .authorLinkable(!c.getUser().isDeleted())
                 .content(content)

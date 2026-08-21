@@ -55,10 +55,19 @@
             <span th:if="${viewMode == 'all'}">한마디가 없어요.</span>
         </div>
 
+        <div class="admin-bulk-toolbar" id="bulkToolbar-schedule" th:unless="${comments.empty or viewMode == 'deleted'}">
+            <span class="admin-bulk-count">0개 선택됨</span>
+            <button type="button" class="btn btn-outline-brand" data-bulk-action="/admin/schedule-comments/bulk-blind" data-bulk-label="블라인드 처리" disabled>선택 블라인드</button>
+            <button type="button" class="post-delete-btn" data-bulk-action="/admin/schedule-comments/bulk-delete" data-bulk-label="삭제" data-bulk-danger="true" disabled>선택 삭제</button>
+        </div>
+
         <div class="admin-table-wrap" th:unless="${comments.empty}">
-            <table class="admin-table">
+            <table class="admin-table" th:attr="data-bulk-table=${viewMode == 'deleted'} ? null : 'bulkToolbar-schedule'">
                 <thead>
                 <tr>
+                    <th class="admin-bulk-check-col" th:unless="${viewMode == 'deleted'}">
+                        <input type="checkbox" class="admin-bulk-check-all" aria-label="전체 선택">
+                    </th>
                     <th th:unless="${viewMode == 'deleted'}">상태</th>
                     <th>내용</th>
                     <th>작성자</th>
@@ -71,6 +80,9 @@
                 </thead>
                 <tbody>
                 <tr th:each="comment : ${comments}">
+                    <td class="admin-bulk-check-col" th:unless="${viewMode == 'deleted'}">
+                        <input type="checkbox" class="admin-bulk-check" th:value="${comment.id}" aria-label="선택">
+                    </td>
                     <td th:unless="${viewMode == 'deleted'}">
                         <span class="admin-status-badge admin-status-cleared" th:if="${comment.reportCleared}">문제없음</span>
                         <span class="admin-status-badge" th:unless="${comment.reportCleared}"
@@ -141,5 +153,6 @@
 </div>
 
 <script th:src="@{/js/modal.js}"></script>
+<script th:src="@{/js/admin-bulk.js}"></script>
 </body>
 </html>

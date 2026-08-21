@@ -97,11 +97,16 @@ public class PostService {
             throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
         }
 
+        // 원자적 벌크 UPDATE로 조회수 증가(PostRepository.incrementViewCount() 참고) - 엔티티
+        // 필드는 건드리지 않고(다른 필드 변경 시 stale 값으로 덮어쓰는 걸 막기 위함, Post.java의
+        // @DynamicUpdate 주석 참고), 화면 표시용 값만 로컬 변수로 따로 계산한다.
+        int displayViewCount = post.getViewCount();
         if (countView) {
-            post.setViewCount(post.getViewCount() + 1);
+            postRepository.incrementViewCount(id);
+            displayViewCount = post.getViewCount() + 1;
         }
 
-        return toDetailDto(post, currentUsername, mine);
+        return toDetailDto(post, currentUsername, mine, displayViewCount);
     }
 
     @Transactional
@@ -120,6 +125,7 @@ public class PostService {
         post.setContent(content);
         post.setCategory(category);
         post.setAuthor(author);
+        post.setVisibility(form.isUnlisted() ? Post.Visibility.UNLISTED : Post.Visibility.PUBLIC);
 
         return postRepository.save(post).getUuid();
     }
@@ -140,6 +146,7 @@ public class PostService {
         dto.setTitle(post.getTitle());
         dto.setContent(post.getContent());
         dto.setCategory(post.getCategory().name());
+        dto.setUnlisted(post.getVisibility() == Post.Visibility.UNLISTED);
         return dto;
     }
 
@@ -160,12 +167,14 @@ public class PostService {
             throw new IllegalArgumentException("본인이 작성한 게시물만 수정할 수 있습니다.");
         }
 
+        Post.Visibility visibility = form.isUnlisted() ? Post.Visibility.UNLISTED : Post.Visibility.PUBLIC;
         boolean changed = !title.equals(post.getTitle()) || !content.equals(post.getContent())
-                || category != post.getCategory();
+                || category != post.getCategory() || visibility != post.getVisibility();
 
         post.setTitle(title);
         post.setContent(content);
         post.setCategory(category);
+        post.setVisibility(visibility);
 
         if (changed) {
             post.setUpdatedAt(LocalDateTime.now());
@@ -225,15 +234,18 @@ public class PostService {
         postReportRepository.save(report);
 
         boolean wasBlind = post.isBlind();
-        post.setReportCount(post.getReportCount() + 1);
-        if (!wasBlind && post.getReportCount() >= BLIND_THRESHOLD) {
+        postRepository.incrementReportCount(id);
+        int displayReportCount = post.getReportCount() + 1;
+        boolean nowBlind = wasBlind;
+        if (!wasBlind && displayReportCount >= BLIND_THRESHOLD) {
             post.setBlind(true);
+            nowBlind = true;
             notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
                     "'" + truncate(post.getTitle()) + "' 글이 신고 누적으로 블라인드 처리되었습니다.",
                     "/posts/" + post.getUuid());
         }
 
-        return new PostReportResultDto(post.getReportCount(), post.isBlind());
+        return new PostReportResultDto(displayReportCount, nowBlind);
     }
 
     // 신고 취소 - UserBlockService.unblock()과 동일한 모양(본인 확인 -> 신고 row 삭제). 신고 수만
@@ -260,22 +272,25 @@ public class PostService {
 
         var existing = postLikeRepository.findByPost_IdAndUser_Id(id, user.getId());
         boolean liked;
+        int displayLikeCount;
         if (existing.isPresent()) {
             postLikeRepository.delete(existing.get());
-            post.setLikeCount(Math.max(0, post.getLikeCount() - 1));
+            postRepository.decrementLikeCount(id);
+            displayLikeCount = Math.max(0, post.getLikeCount() - 1);
             liked = false;
         } else {
             PostLike like = new PostLike();
             like.setPost(post);
             like.setUser(user);
             postLikeRepository.save(like);
-            post.setLikeCount(post.getLikeCount() + 1);
+            postRepository.incrementLikeCount(id);
+            displayLikeCount = post.getLikeCount() + 1;
             liked = true;
             notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.LIKE,
                     user.getNickname() + "님이 회원님의 글 '" + truncate(post.getTitle()) + "'을(를) 좋아합니다.",
                     "/posts/" + post.getUuid());
         }
-        return Map.of("liked", liked, "likeCount", post.getLikeCount());
+        return Map.of("liked", liked, "likeCount", displayLikeCount);
     }
 
     // 북마크 토글 - 좋아요와 동일한 패턴이지만 카운트를 공개하지 않는 개인용 기능이라 PostBookmark
@@ -320,7 +335,7 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
         postLikeRepository.findByPost_IdAndUser_Id(id, user.getId()).ifPresent(like -> {
             postLikeRepository.delete(like);
-            post.setLikeCount(Math.max(0, post.getLikeCount() - 1));
+            postRepository.decrementLikeCount(id);
         });
     }
 
@@ -413,7 +428,7 @@ public class PostService {
         return p.getCategory() != Post.Category.ANONYMOUS && !p.getAuthor().isDeleted();
     }
 
-    private PostDetailDto toDetailDto(Post p, String currentUsername, boolean mine) {
+    private PostDetailDto toDetailDto(Post p, String currentUsername, boolean mine, int displayViewCount) {
         boolean reportedByMe = !mine && currentUsername != null
                 && postReportRepository.existsByPost_IdAndReporter_Username(p.getId(), currentUsername);
         boolean likedByMe = currentUsername != null
@@ -432,7 +447,7 @@ public class PostService {
                 .category(p.getCategory().name())
                 .categoryLabel(p.getCategory().getLabel())
                 .createdAt(p.getCreatedAt().format(DISPLAY_FORMAT))
-                .viewCount(p.getViewCount())
+                .viewCount(displayViewCount)
                 .reportCount(p.getReportCount())
                 .likeCount(p.getLikeCount())
                 .likedByMe(likedByMe)
@@ -441,6 +456,7 @@ public class PostService {
                 .edited(p.getUpdatedAt() != null)
                 .mine(mine)
                 .reportedByMe(reportedByMe)
+                .unlisted(p.getVisibility() == Post.Visibility.UNLISTED)
                 .build();
     }
 }

@@ -56,13 +56,25 @@ document.addEventListener('DOMContentLoaded', function () {
     var imageInput = document.getElementById('postImageInput');
     var imagePreview = document.getElementById('postImagePreview');
 
+    // 서버(PostImageService.MAX_FILE_SIZE)와 동일한 5MB 제한 - 예전엔 제출 버튼을 눌러야만
+    // "파일이 너무 큽니다" 에러를 알 수 있었다. 초과 파일은 미리보기에서 빼고 안내만 하되,
+    // input.files 자체(브라우저 FileList)는 JS로 직접 못 바꾸므로 실제 제출 차단은 폼 submit
+    // 시점에 한 번 더 확인한다(아래 postForm submit 리스너).
+    var MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
     if (imageInput && imagePreview) {
         imageInput.addEventListener('change', function () {
             imagePreview.innerHTML = '';
 
             var files = Array.prototype.slice.call(imageInput.files || []);
+            var oversized = [];
             files.forEach(function (file) {
                 if (!file.type || file.type.indexOf('image/') !== 0) return;
+
+                if (file.size > MAX_IMAGE_SIZE) {
+                    oversized.push(file.name);
+                    return;
+                }
 
                 var url = URL.createObjectURL(file);
                 var item = document.createElement('div');
@@ -76,12 +88,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 item.appendChild(img);
                 imagePreview.appendChild(item);
             });
+
+            if (oversized.length > 0) {
+                WebSchoolModal.alert('다음 이미지는 5MB를 초과해 제출 시 저장되지 않아요: ' + oversized.join(', '));
+            }
         });
     }
 
     // ---- 글쓰기 중 실수로 페이지 이탈 시 경고 ----
-    // 버그수정 프롬포트 요청: 경고도 임시저장도 없이 뒤로가기/이탈하면 쓰던 글이 흔적도 없이
-    // 사라졌다. 임시저장까지는 이번 범위 밖이라 최소한 브라우저 기본 이탈 확인창이라도 띄운다.
     // 제목 입력이나 리치 에디터(contenteditable) 안에서 타이핑이 감지되면 dirty로 표시하고,
     // 폼이 정상 제출되는 경우(submit 이벤트)에는 경고를 띄우지 않는다.
     var postForm = document.getElementById('postForm');
@@ -103,5 +117,78 @@ document.addEventListener('DOMContentLoaded', function () {
                 e.returnValue = '';
             }
         });
+    }
+
+    // ---- 글쓰기 임시저장(draft) ----
+    // 이탈 경고만으로는 로그인 만료 등으로 강제로 튕겨나가는 경우까지 못 막는다. 새 글 작성
+    // (수정 화면은 이미 저장된 내용이 있으니 제외 - window.__POST_FORM_MODE__)에서만 제목/본문을
+    // localStorage에 주기적으로 자동 저장해두고, 작성 화면에 다시 들어오면 이어서 쓸지 물어본다.
+    var DRAFT_KEY = 'webschool_post_draft_v1';
+    var hiddenContent = document.getElementById('postContentHidden');
+
+    if (postForm && titleInput && hiddenContent && window.__POST_FORM_MODE__ !== 'edit') {
+        function currentCategory() {
+            var checked = radioGroup && radioGroup.querySelector('input[type="radio"]:checked');
+            return checked ? checked.value : 'FREE';
+        }
+
+        function saveDraft() {
+            var data = {
+                title: titleInput.value,
+                content: hiddenContent.value,
+                category: currentCategory()
+            };
+            if (!data.title && !data.content) {
+                localStorage.removeItem(DRAFT_KEY);
+                return;
+            }
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+        }
+
+        function clearDraft() {
+            localStorage.removeItem(DRAFT_KEY);
+        }
+
+        function restoreDraft(draft) {
+            titleInput.value = draft.title || '';
+            hiddenContent.value = draft.content || '';
+            if (window.__postQuill) {
+                window.__postQuill.root.innerHTML = draft.content || '<p><br></p>';
+            }
+            if (draft.category && radioGroup) {
+                var radio = radioGroup.querySelector('input[value="' + draft.category + '"]');
+                if (radio) {
+                    radio.checked = true;
+                    applyCategoryText(draft.category);
+                }
+            }
+            formDirty = true;
+        }
+
+        var savedRaw = localStorage.getItem(DRAFT_KEY);
+        if (savedRaw) {
+            try {
+                var draft = JSON.parse(savedRaw);
+                if (draft && (draft.title || draft.content)) {
+                    WebSchoolModal.confirm('이전에 쓰다 만 글이 있어요. 이어서 작성하시겠어요?').then(function (ok) {
+                        if (ok) {
+                            restoreDraft(draft);
+                        } else {
+                            clearDraft();
+                        }
+                    });
+                }
+            } catch (e) {
+                clearDraft();
+            }
+        }
+
+        var draftTimer = null;
+        postForm.addEventListener('input', function () {
+            clearTimeout(draftTimer);
+            draftTimer = setTimeout(saveDraft, 1500);
+        });
+
+        postForm.addEventListener('submit', clearDraft);
     }
 });

@@ -114,3 +114,11 @@
     .notif-item-btn { padding: 14px 16px; gap: 10px; }
     .notif-item-icon { width: 30px; height: 30px; font-size: 0.8rem; }
 }
+
+/* 수정사항.md 지적 - 다크모드 대응이 전혀 없었다. 하드코딩된 밝은 회색(#f0f1fa 테두리,
+   #f8f9fc 호버 배경)만 var()로 교체하면 나머지는 이미 var(--surface)/var(--ink) 등을 쓰고 있어
+   자동으로 맞춰진다. */
+@media (prefers-color-scheme: dark) {
+    .notif-list { border-color: var(--border); }
+    .notif-item-btn:hover { background: var(--surface-soft); }
+}

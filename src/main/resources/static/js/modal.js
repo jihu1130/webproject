@@ -10,7 +10,6 @@
 // prompt()는 이 모달로 옮기지 않았다(입력창까지 필요한 곳은 신고 사유 하나뿐이라 별도로 다룸,
 // WebSchoolModal.prompt() 참고).
 (function () {
-    var overlay = null;
     var styleInjected = false;
 
     function injectStyle() {
@@ -59,7 +58,12 @@
         options = options || {};
 
         return new Promise(function (resolve) {
-            overlay = document.createElement('div');
+            // 신고/차단처럼 confirm() 다음에 곧바로 prompt()를 여는 흐름에서, 이전 모달의 지연
+            // 정리(setTimeout)가 나중에 실행될 때 다음 모달이 그 사이 열려 있으면 서로 다른 모달
+            // 인스턴스인데도 같은 변수를 참조해 방금 연 모달을 잘못 지우던 버그가 있었다(모듈
+            // 스코프에 하나의 overlay 변수를 공유했던 게 원인) - 인스턴스마다 지역 변수로 분리해서
+            // close()가 항상 "자기 자신의" 오버레이만 다루도록 고쳤다.
+            var overlay = document.createElement('div');
             overlay.className = 'ws-modal-overlay';
 
             var card = document.createElement('div');

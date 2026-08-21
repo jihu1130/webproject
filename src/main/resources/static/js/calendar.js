@@ -47,6 +47,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('dayDetailClose').addEventListener('click', closePanel);
 
+    // Phase 7 - 이전/다음 날 버튼: 상세 패널을 닫지 않고 선택된 날짜만 하루씩 옮겨서 다시 연다.
+    // 월 경계를 넘으면 캘린더 그리드/빠른 이동 드롭다운도 같이 옮겨진 달로 맞춘다.
+    document.getElementById('dayDetailPrevDay').addEventListener('click', function () { shiftSelectedDay(-1); });
+    document.getElementById('dayDetailNextDay').addEventListener('click', function () { shiftSelectedDay(1); });
+
+    function shiftSelectedDay(delta) {
+        if (!selectedDateStr) return;
+        var parts = selectedDateStr.split('-').map(Number);
+        var d = new Date(parts[0], parts[1] - 1, parts[2]);
+        d.setDate(d.getDate() + delta);
+
+        var movedMonth = d.getFullYear() !== currentYear || (d.getMonth() + 1) !== currentMonth;
+        currentYear = d.getFullYear();
+        currentMonth = d.getMonth() + 1;
+        if (movedMonth) {
+            syncQuicknav();
+            loadMonthEvents();
+        }
+        handleDayClick(formatLocalDate(d));
+    }
+
+    // Phase 7 - 시간표 인쇄: #printableTimetableSection만 보이도록 @media print(calendar.css)에서
+    // 처리한다. 인쇄본에 어느 날짜/학년/반인지 알 수 있도록 제목에 잠깐 붙였다가 인쇄 후 되돌린다.
+    document.getElementById('dayDetailPrint').addEventListener('click', function () {
+        var titleEl = document.getElementById('printTimetableTitle');
+        var originalHtml = titleEl.innerHTML;
+        var dateText = document.getElementById('dayDetailDate').textContent;
+        var classText = document.getElementById('dayDetailClass').textContent;
+        titleEl.innerHTML = '<i class="fa-solid fa-book-open"></i> ' + escapeHtml(dateText) + ' ' + escapeHtml(classText) + ' 시간표';
+
+        window.print();
+
+        titleEl.innerHTML = originalHtml;
+    });
+
     // ── 달력 그리드 ─────────────────────────────────────────────
 
     function formatLocalDate(date) {
@@ -720,7 +755,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function escapeHtml(str) {
         var div = document.createElement('div');
         div.textContent = str == null ? '' : str;
-        return div.innerHTML;
+        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function loadComments() {
