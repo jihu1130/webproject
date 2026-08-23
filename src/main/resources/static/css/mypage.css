@@ -6,8 +6,8 @@
     justify-content: center;
     padding: 40px 20px 60px;
     background:
-        radial-gradient(circle at 12% 15%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 88% 88%, rgba(79, 70, 229, 0.12) 0%, transparent 45%);
+        radial-gradient(circle at 12% 15%, rgba(30, 79, 163, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 88% 88%, rgba(30, 79, 163, 0.12) 0%, transparent 45%);
 }
 
 .mypage-container {
@@ -38,7 +38,7 @@
     text-decoration: none;
     transition: background 0.15s ease, transform 0.15s ease;
 }
-.my-activity-edit-btn:hover { background: rgba(79, 70, 229, 0.08); transform: translateY(-1px); }
+.my-activity-edit-btn:hover { background: rgba(30, 79, 163, 0.08); transform: translateY(-1px); }
 
 /* 북마크 탭 안의 게시글/한마디 서브탭 - 바깥 대분류 탭보다 작고 연하게 표시해서 위계를 구분한다. */
 .my-activity-subtabs {
@@ -147,7 +147,7 @@
 
 .mypage-role-badge {
     display: inline-block;
-    background: rgba(79, 70, 229, 0.1);
+    background: rgba(30, 79, 163, 0.1);
     color: var(--brand-1-dark);
     font-weight: 700;
     font-size: 12px;
@@ -223,7 +223,7 @@
 }
 
 .mypage-edit-btn:hover {
-    background: rgba(79, 70, 229, 0.08);
+    background: rgba(30, 79, 163, 0.08);
     color: var(--brand-1);
 }
 

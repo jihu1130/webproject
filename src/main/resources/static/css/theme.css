@@ -1,66 +1,95 @@
 /*
- * WebSchool 퍼스널 컬러 시스템
- * 인디고(#4F46E5) -> 스카이블루(#0EA5E9) 2색 그라데이션을 사이트 전체의 기준 브랜드 컬러로 사용한다.
+ * WebSchool 컬러 시스템 — "생활기록부/성적표" 리디자인 (디자인 블루프린트
+ * https://claude.ai/code/artifact/7ff275a2-1e10-4ccc-b659-28ec6a39e242 반영)
+ * 인디고-스카이 2색 그라데이션을 걷어내고 단일 네이비 브랜드색 + 성적표 도장
+ * 배색(정상/대기/위험)으로 교체했다. 기존 변수 이름은 그대로 두고 값만
+ * 바꿨으므로(그라데이션류는 두 스탑을 같은 값으로 접어서 단색처럼 렌더링됨)
+ * 이 파일 하나만 고치면 이 변수를 쓰는 모든 화면에 자동 반영된다.
  * 모든 페이지는 이 파일을 가장 먼저 불러온 뒤 각자의 css를 불러와야 한다.
  */
 :root {
-    --brand-1: #4f46e5;   /* indigo-600 */
-    --brand-2: #0ea5e9;   /* sky-500 */
-    --brand-1-dark: #3730a3;
-    --brand-2-dark: #0284c7;
+    --brand-1: #1e4fa3;   /* 교표 블루 - 그라데이션 없이 단일색으로만 씀 */
+    --brand-2: #1e4fa3;
+    --brand-1-dark: #163a7a;
+    --brand-2-dark: #163a7a;
 
-    --brand-gradient: linear-gradient(135deg, var(--brand-1), var(--brand-2));
-    --brand-gradient-dark: linear-gradient(135deg, var(--brand-1-dark), var(--brand-2-dark));
-    --brand-gradient-soft: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(14, 165, 233, 0.12));
-    --brand-gradient-tint-1: linear-gradient(135deg, rgba(14, 165, 233, 0.18), rgba(79, 70, 229, 0.05));
-    --brand-gradient-tint-2: linear-gradient(135deg, rgba(79, 70, 229, 0.16), rgba(14, 165, 233, 0.16));
-    --brand-gradient-tint-3: linear-gradient(135deg, rgba(79, 70, 229, 0.18), rgba(14, 165, 233, 0.04));
+    --brand-gradient: var(--brand-1);
+    --brand-gradient-dark: var(--brand-1-dark);
+    --brand-gradient-soft: rgba(30, 79, 163, 0.10);
+    --brand-gradient-tint-1: rgba(30, 79, 163, 0.06);
+    --brand-gradient-tint-2: rgba(30, 79, 163, 0.12);
+    --brand-gradient-tint-3: rgba(30, 79, 163, 0.05);
 
-    --nav-bg: #17153a;
+    --nav-bg: #1b2430;
 
-    --ink: #1e1b3a;
-    --muted: #6b7280;
+    --ink: #1b2430;
+    --muted: #4b5563;
     --surface: #ffffff;
-    --bg: #f6f7fb;
-    --border: #e5e7eb;
+    --bg: #f3f4ee;
+    --border: #c3c1b2;
 
-    /* 삭제/신고 등 위험 액션 전용 톤. 채도를 브랜드 인디고와 맞춰 순수 경고색보다 톤을 낮췄다. */
-    --danger: #e11d48;
-    --danger-dark: #be123c;
-    --danger-border: #fda4af;
-    --danger-soft: rgba(225, 29, 72, 0.08);
+    /* 삭제/신고 등 위험 액션 전용 톤 - 성적표 도장 팔레트의 "위험" 색 */
+    --danger: #b5342a;
+    --danger-dark: #8f291f;
+    --danger-border: #e0b3ac;
+    --danger-soft: rgba(181, 52, 42, 0.08);
 
-    /* 카드/입력창의 옅은 회색 배경 - 흰 배경 위에서만 자연스러운 톤이라 다크모드에서는 아래
-       @media 블록에서 별도로 재정의한다(연회색을 그대로 두면 다크 배경과 거의 안 어울림). */
-    --surface-soft: #f8f9fc;
+    /* 성적표 도장 배지 팔레트 - 관리자 신고 상태/감사 로그/계정 상태 등
+       "상태는 반드시 하나의 배지 언어로만 말한다"는 규칙을 위한 공용 토큰.
+       accent는 강조 전용(버튼엔 안 씀), success/warn은 danger와 짝을 이루는
+       나머지 두 상태색. */
+    --accent: #c98a1f;
+    --accent-soft: rgba(201, 138, 31, 0.14);
+    --success: #2f7d4f;
+    --success-soft: rgba(47, 125, 79, 0.12);
+    --warn: #a3620f;
+    --warn-soft: rgba(163, 98, 15, 0.12);
+
+    /* 카드/입력창의 옅은 종이색 배경 - 흰 배경 위에서만 자연스러운 톤이라 다크모드에서는 아래
+       @media 블록에서 별도로 재정의한다. */
+    --surface-soft: #eceee5;
 }
 
-/* 버그수정 프롬포트 요청 - 다크모드가 전혀 없었다. 사이트 대부분이 이미 이 파일의 변수(--surface,
-   --bg, --ink, --muted, --border, --nav-bg 등)를 쓰고 있어서, 여기서 값만 다시 정의하면 대부분의
-   화면이 자동으로 다크 테마를 따라간다(post.css/calendar.css 등 개별 파일에 하드코딩된 값들은
-   각 파일에서 별도로 손봐야 함 - 아래 각 CSS 파일의 다크모드 보강 참고). prefers-color-scheme
-   시스템 설정만 따르고 수동 토글 스위치는 이번 범위에 없음. */
+/* 다크모드는 prefers-color-scheme 시스템 설정만 따르고 수동 토글 스위치는 범위에 없다.
+   사이트 대부분이 이미 이 파일의 변수(--surface, --bg, --ink, --muted, --border, --nav-bg
+   등)를 쓰고 있어서, 여기서 값만 다시 정의하면 대부분의 화면이 자동으로 다크 테마를
+   따라간다(post.css/calendar.css 등 개별 파일에 하드코딩된 값들은 각 파일에서 별도로
+   손봐야 함 - 아래 각 CSS 파일의 다크모드 보강 참고). */
 @media (prefers-color-scheme: dark) {
     :root {
-        --ink: #e5e7eb;
-        --muted: #9ca3af;
-        --surface: #1c1b2e;
-        --surface-soft: #24233a;
-        --bg: #121125;
-        --border: #322f4d;
+        --ink: #eeece2;
+        --muted: #a9b0bc;
+        --surface: #1b212b;
+        --surface-soft: #232a35;
+        --bg: #14181f;
+        --border: #3a4250;
 
-        --nav-bg: #0d0c1f;
+        --nav-bg: #0d1520;
 
-        /* 다크 배경에서 채도를 그대로 두면 너무 튀어서 살짝 밝혀 대비를 맞춘다 */
-        --brand-1: #6366f1;
-        --brand-2: #38bdf8;
-        --brand-1-dark: #818cf8;
-        --brand-2-dark: #7dd3fc;
+        /* 다크 배경에서 채도를 그대로 두면 너무 가라앉아서 밝혀 대비를 맞춘다 */
+        --brand-1: #7ea6e6;
+        --brand-2: #7ea6e6;
+        --brand-1-dark: #a9c4ee;
+        --brand-2-dark: #a9c4ee;
 
-        --danger: #fb7185;
-        --danger-dark: #fda4af;
-        --danger-border: #9f1239;
-        --danger-soft: rgba(251, 113, 133, 0.14);
+        --brand-gradient: var(--brand-1);
+        --brand-gradient-dark: var(--brand-1-dark);
+        --brand-gradient-soft: rgba(126, 166, 230, 0.14);
+        --brand-gradient-tint-1: rgba(126, 166, 230, 0.08);
+        --brand-gradient-tint-2: rgba(126, 166, 230, 0.16);
+        --brand-gradient-tint-3: rgba(126, 166, 230, 0.06);
+
+        --danger: #ef8b80;
+        --danger-dark: #f5b3ab;
+        --danger-border: #6b2b24;
+        --danger-soft: rgba(239, 139, 128, 0.16);
+
+        --accent: #f0c15e;
+        --accent-soft: rgba(240, 193, 94, 0.16);
+        --success: #7ecb9a;
+        --success-soft: rgba(126, 203, 154, 0.16);
+        --warn: #eab868;
+        --warn-soft: rgba(234, 184, 104, 0.16);
     }
 
     body { background-color: var(--bg); color: var(--ink); }
@@ -72,12 +101,17 @@
        모드에서 검은 카드 위에 하얀 입력창만 튀는 문제가 생긴다. theme.css가 항상 제일 먼저
        로드되므로(파일 상단 주석 참고), 각 화면 CSS가 배경을 따로 지정하지 않은 input/textarea/
        select는 전부 이 규칙을 그대로 물려받는다. */
+    /* 수정사항.md 지적 - 감사 로그 등의 <input type="date"> 필터가 다크모드에서 배경/글자색은
+       위 규칙으로 이미 따라가지만, 브라우저가 그리는 달력 아이콘·스피너 같은 네이티브 폼 컨트롤
+       크롬은 별도로 color-scheme을 안 알려주면 항상 라이트 테마(검은 아이콘)로 그려져서 어두운
+       입력창 배경 위에서 거의 안 보였다. */
     input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
     textarea,
     select {
         background-color: var(--surface);
         color: var(--ink);
         border-color: var(--border);
+        color-scheme: dark;
     }
 
     input::placeholder, textarea::placeholder { color: var(--muted); }
@@ -92,6 +126,21 @@ body {
     margin: 0;
     background-color: var(--bg);
     color: var(--ink);
+}
+
+/* 버그 수정: login.html 등 인증 화면 5곳이 이 버튼 클래스들의 기본 표시/정렬/커서 속성을
+   지금까지 Bootstrap CDN(bootstrap.min.css)에 암묵적으로 의존하고 있었다 - 사이트의 나머지
+   40여 개 템플릿은 이미 이 클래스만으로(Bootstrap 없이) 동작하고 있었으므로 실질적으로 안
+   쓰이는 죽은 의존성이었는데, 렌더 블로킹 외부 스타일시트로 남아있으면서 로드 완료 시점에
+   페이지가 미세하게 다시 배치되는 레이아웃 시프트를 유발했다(느린 네트워크에서 로그인
+   버튼을 클릭한 순간과 실제 버튼 위치가 어긋날 수 있는 원인). Bootstrap CDN 링크 자체를
+   해당 5개 템플릿에서 제거하고, 지금까지 Bootstrap의 `.btn` 리셋에 의존하던 최소한의
+   속성(정렬/커서/표시)을 여기 직접 명시해 완전히 독립적으로 만들었다. */
+.btn-brand, .btn-outline-brand, .btn-outline-danger {
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 /* 브랜드 그라데이션 버튼 (주요 액션) */
@@ -117,10 +166,10 @@ body {
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 .btn-outline-brand:hover:not(:disabled) {
-    background: rgba(79, 70, 229, 0.08);
+    background: rgba(30, 79, 163, 0.08);
     color: var(--brand-1);
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.14);
+    box-shadow: 0 4px 10px rgba(30, 79, 163, 0.14);
 }
 .btn-outline-brand:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 .btn-outline-brand:disabled { opacity: 0.6; cursor: not-allowed; }

@@ -15,7 +15,7 @@
 
 .notif-item { position: relative; }
 
-.notif-item-unread { background: rgba(79, 70, 229, 0.04); }
+.notif-item-unread { background: rgba(30, 79, 163, 0.04); }
 
 .notif-item-form { margin: 0; }
 
@@ -69,7 +69,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(79, 70, 229, 0.1);
+    background: rgba(30, 79, 163, 0.1);
     color: var(--brand-1-dark);
     font-size: 0.9rem;
 }
@@ -77,7 +77,7 @@
 .notif-item-icon-LIKE { background: rgba(225, 29, 72, 0.1); color: #be123c; }
 .notif-item-icon-REPORT_ACTION { background: rgba(217, 119, 6, 0.14); color: #b45309; }
 .notif-item-icon-ACCOUNT { background: rgba(107, 114, 128, 0.14); color: #4b5563; }
-.notif-item-icon-ANNOUNCEMENT { background: rgba(14, 165, 233, 0.14); color: #0369a1; }
+.notif-item-icon-ANNOUNCEMENT { background: rgba(30, 79, 163, 0.14); color: #0369a1; }
 
 .notif-item-body {
     flex: 1;

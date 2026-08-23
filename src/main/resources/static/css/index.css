@@ -49,7 +49,7 @@ html { scroll-behavior: smooth; }
 }
 .hero-blob-1 { width: 420px; height: 420px; background: var(--brand-1); top: -160px; left: -100px; }
 .hero-blob-2 { width: 380px; height: 380px; background: var(--brand-2); bottom: -180px; right: -80px; animation-duration: 18s; animation-delay: -4s; }
-.hero-blob-3 { width: 260px; height: 260px; background: #818cf8; top: 40%; left: 50%; animation-duration: 20s; animation-delay: -9s; opacity: 0.35; }
+.hero-blob-3 { width: 260px; height: 260px; background: var(--accent); top: 40%; left: 50%; animation-duration: 20s; animation-delay: -9s; opacity: 0.35; }
 
 @keyframes blob-drift {
     0%, 100% { transform: translate(0, 0) scale(1); }
@@ -199,8 +199,8 @@ html { scroll-behavior: smooth; }
     background: var(--brand-gradient);
     color: #fff;
 }
-.bento-icon-sky { background: linear-gradient(135deg, var(--brand-2), #38bdf8); }
-.bento-icon-soon { background: rgba(79, 70, 229, 0.1); color: var(--brand-1); }
+.bento-icon-sky { background: var(--accent); }
+.bento-icon-soon { background: var(--brand-gradient-soft); color: var(--brand-1); }
 
 .bento-card h3 { margin: 0; font-size: 1.08rem; font-weight: 800; color: var(--ink); }
 .bento-card p { margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
@@ -217,14 +217,14 @@ html { scroll-behavior: smooth; }
 .bento-card:hover .bento-link i { transform: translateX(3px); }
 .bento-link i { transition: transform 0.15s ease; }
 
-.bento-card-soon { border: 1.5px dashed #d8dae8; background: #f9f9fd; cursor: default; }
+.bento-card-soon { border: 1.5px dashed var(--border); background: var(--surface-soft); cursor: default; }
 .bento-card-soon:hover { transform: none; box-shadow: none; }
 .bento-badge-soon {
     align-self: flex-start;
     font-size: 0.72rem;
     font-weight: 700;
     color: var(--muted);
-    background: #f1f2f6;
+    background: var(--surface-soft);
     padding: 0.2rem 0.65rem;
     border-radius: 50px;
 }
@@ -240,7 +240,7 @@ html { scroll-behavior: smooth; }
 
 /* ══════════ 3단계 시작하기 ══════════ */
 .steps-section {
-    background: #f3f4fc;
+    background: var(--surface-soft);
     padding: 88px 24px;
 }
 
@@ -288,7 +288,7 @@ html { scroll-behavior: smooth; }
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0.3rem 0.8rem rgba(79, 70, 229, 0.35);
+    box-shadow: 0 0.3rem 0.8rem rgba(30, 79, 163, 0.35);
 }
 
 .step-icon {
@@ -296,7 +296,7 @@ html { scroll-behavior: smooth; }
     height: 56px;
     margin: 0.6rem auto 1rem;
     border-radius: 1rem;
-    background: rgba(79, 70, 229, 0.08);
+    background: rgba(30, 79, 163, 0.08);
     color: var(--brand-1);
     display: flex;
     align-items: center;
@@ -389,7 +389,7 @@ html { scroll-behavior: smooth; }
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 0.6rem 1.4rem rgba(79, 70, 229, 0.35);
+    box-shadow: 0 0.6rem 1.4rem rgba(30, 79, 163, 0.35);
     opacity: 0;
     transform: translateY(12px);
     pointer-events: none;

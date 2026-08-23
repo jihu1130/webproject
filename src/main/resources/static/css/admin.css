@@ -1,12 +1,9 @@
 * { box-sizing: border-box; }
 
-/* 페이지 레이아웃 (post.css의 .post-page 톤을 그대로 유지) */
+/* 페이지 레이아웃 - 장식용 그라데이션 배경 없이 종이색(--bg) 그대로 사용 */
 .admin-page {
     min-height: calc(100vh - 64px);
     padding: 32px 16px 60px;
-    background:
-        radial-gradient(circle at 10% 0%, rgba(14, 165, 233, 0.10) 0%, transparent 40%),
-        radial-gradient(circle at 90% 10%, rgba(79, 70, 229, 0.10) 0%, transparent 40%);
 }
 
 .admin-container {
@@ -185,19 +182,26 @@
     font-size: 0.8rem;
 }
 
-/* 상태 배지 */
+/* 상태 배지 - "성적표 도장" 콘셉트: 테두리를 글자색과 같은 currentColor로 둘러서
+   실제 도장처럼 보이게 하고, 신고 상태·계정 상태·감사 로그 조치 전부 이 4가지
+   색(정상/대기/위험/중립)만 쓴다. */
 .admin-status-badge {
     display: inline-block;
     padding: 3px 10px;
     border-radius: 20px;
+    border: 1.3px solid currentColor;
     font-size: 11px;
     font-weight: 800;
+    letter-spacing: 0.02em;
     margin-right: 6px;
 }
 
-.admin-status-pending { background: #fff7ed; color: #c2410c; }
-.admin-status-blind { background: #fee2e2; color: #b91c1c; }
-.admin-status-cleared { background: #dcfce7; color: #15803d; }
+.admin-status-pending { background: var(--warn-soft); color: var(--warn); }
+.admin-status-blind { background: var(--danger-soft); color: var(--danger); }
+.admin-status-cleared { background: var(--success-soft); color: var(--success); }
+/* 감사 로그 배지 불일치 수정 - "권한 변경"처럼 긍정/부정 어느 쪽도 아닌 조치까지 무조건
+   빨강/초록 둘 중 하나로 우겨넣던 문제(#L 감사 로그 색상 배지 불일치)를 고치기 위한 중립 톤 */
+.admin-status-neutral { background: var(--surface-soft); color: var(--muted); }
 
 /* 상세 화면 */
 .admin-detail-card {
@@ -376,15 +380,19 @@
     text-align: center;
 }
 
+/* 수정사항.md 지적 - 이 박스는 라이트/다크 모드 상관없이 배경이 항상 --nav-bg(짙은 남색)라서,
+   테마에 따라 밝기가 바뀌는 --brand-1/--muted를 그대로 쓰면 라이트 모드에서 특히 대비가
+   부족했다(예: --muted #6b7280은 이 어두운 배경 위에서 소문자 기준 WCAG AA 4.5:1을 못 채움).
+   이 배경 위에서만 쓰는 고정 밝은 톤으로 분리해 라이트/다크 모드 모두 충분한 대비를 보장한다. */
 .admin-profile-stat strong {
     display: block;
     font-size: 1.3rem;
-    color: var(--brand-1);
+    color: #a5b4fc;
 }
 
 .admin-profile-stat span {
     font-size: 0.78rem;
-    color: var(--muted);
+    color: #c7cad9;
 }
 
 @media (max-width: 560px) {
@@ -436,9 +444,9 @@
 
     .admin-table thead th { background: var(--surface-soft); }
 
-    .admin-status-pending { background: rgba(194, 65, 12, 0.24); color: #fdba74; }
-    .admin-status-blind { background: rgba(185, 28, 28, 0.24); color: #fca5a5; }
-    .admin-status-cleared { background: rgba(21, 128, 61, 0.24); color: #86efac; }
+    /* .admin-status-* 배지는 이제 --warn/--danger/--success/--muted 변수를 직접 쓰므로
+       (위 "상태 배지" 블록 참고), theme.css의 다크모드 재정의만으로 자동 반영된다 -
+       예전처럼 여기서 rgba를 다시 하드코딩할 필요 없음. */
 
     .admin-search-form input[type="text"],
     .admin-penalty-form select,
