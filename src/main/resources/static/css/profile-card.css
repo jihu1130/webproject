@@ -50,13 +50,18 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: var(--surface);
+    /* var(--surface) 대신 항상 흰색 고정 - 다크모드에서 카드 배경(짙은 회색)에 구글 레드가
+       섞여 대비가 4.12:1까지 떨어졌었다. 구글 배지는 원래도 흰 배경 위에만 쓰도록 돼있는
+       브랜드 색이라(공식 "G" 로고 가이드), 고정 흰 배경으로 바꾸면 라이트/다크 모드 둘 다
+       카드 배경과 무관하게 항상 일정한 대비로 또렷하게 보인다. */
+    background: #fff;
     color: #ea4335;
-    font-size: 11px;
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 1.5px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .profile-card-identity { min-width: 0; }
