@@ -5,7 +5,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/webschool?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: root
-    password: 여기에_본인_MySQL_비밀번호
+    password: 'YOUR_DB_PASSWORD'
   jpa:
     hibernate:
       ddl-auto: update
@@ -20,24 +20,53 @@ spring:
       # 감당하려면 이 두 값이 그보다 커야 한다.
       max-file-size: 300MB
       max-request-size: 320MB
-  # 구글 소셜 로그인을 켜고 싶을 때만 이 블록을 추가할 것 - 이 블록 자체가 없으면 앱이
-  # 구글 로그인 기능만 비활성화한 채로 정상 기동한다(발급 절차는 todo.md "0. 로그인/회원가입
-  # 버그수정 및 리뉴얼" 참고). 값이 비어있으면 오히려 기동이 실패하니 주의.
+  # 구글 소셜 로그인은 선택 사항 - 이 블록을 통째로 비워두면 앱은 정상 기동하고
+  # "구글로 로그인" 버튼만 자동으로 숨겨진다(SecurityConfig 참고). 실사용하려면
+  # todo.md "0. 소셜 로그인(구글)" 섹션의 발급 절차를 따라 client-id/secret을 채울 것.
   # security:
   #   oauth2:
   #     client:
   #       registration:
   #         google:
-  #           client-id: 발급받은_클라이언트_ID
-  #           client-secret: 발급받은_클라이언트_시크릿
+  #           client-id: YOUR_GOOGLE_CLIENT_ID
+  #           client-secret: YOUR_GOOGLE_CLIENT_SECRET
   #           scope: email, profile
+  # 이메일 인증/비밀번호 찾기용 SMTP - 마찬가지로 비워두면 그 기능만 꺼진다.
+  # mail:
+  #   host: smtp.gmail.com
+  #   port: 587
+  #   username: YOUR_GMAIL_ADDRESS
+  #   password: YOUR_GMAIL_APP_PASSWORD
+  #   properties:
+  #     mail:
+  #       smtp:
+  #         auth: true
+  #         starttls:
+  #           enable: true
 
 server:
   port: 8888
 
+logging:
+  file:
+    name: logs/webschool.log
+  logback:
+    rollingpolicy:
+      max-history: 30
+      max-file-size: 20MB
+  level:
+    root: INFO
+    com.webschool: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
 neis:
   api:
-    key: 여기에_본인_NEIS_OpenAPI_인증키
+    key: YOUR_NEIS_API_KEY
 
 app:
   upload:

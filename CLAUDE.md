@@ -34,6 +34,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `mysql` 클라이언트가 PATH에 없어 전체 경로로 직접 실행해야 함
   (PowerShell 기준): `& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p1234 -D webschool --default-character-set=utf8mb4 -e "..."`
   (한글 데이터를 확인할 땐 `--default-character-set=utf8mb4`를 꼭 붙일 것).
+- DB 백업: `.\scripts\backup-db.ps1`(`mysqldump`, 최근 14개만 보관 후 자동 정리),
+  복구는 `.\scripts\restore-db.ps1 -BackupFile backups\파일명.sql`. 둘 다
+  `backups/`에 저장/읽으며 이 폴더는 `.gitignore` 대상(실사용자 데이터 포함).
 
 **테스트**
 - 전체 테스트: `./gradlew test`

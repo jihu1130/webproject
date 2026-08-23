@@ -318,22 +318,41 @@ D-Day가 뜨는 경우가 있음. 필요하면 방학식~개학 사이 기간까
   남아있음 - 맨 위 "0. 소셜 로그인(구글)" 섹션 참고
 - **이메일 인증 및 비밀번호 찾기**: `User`에 이메일 필드 자체가 없음. 필드 추가 +
   인증 메일 발송(SMTP) + 재설정 토큰 흐름 설계 필요
-- **DB 백업/운영**: 정기 백업 스케줄(mysqldump 등), 복구 절차 문서화
-- **로그/모니터링**: 현재 Spring Boot 기본 로그만 있음
+- **DB 백업/운영**(✅ 2026-08-23 완료): `scripts/backup-db.ps1`(mysqldump, 최근 14개
+  보관 후 자동 정리) + `scripts/restore-db.ps1`. 실제 백업 1회 실행 → 덤프 파일에
+  실데이터(16개 테이블 INSERT) 포함 확인, 스크래치 스키마(`webschool_restore_test`)에
+  복구까지 성공 확인 후 정리. `CLAUDE.md` Commands 섹션에 사용법 추가.
+- **로그/모니터링**(✅ 2026-08-23 완료): `application.yml`에 `logging.*`(파일 롤링,
+  `logs/webschool.log`, 30일 보관) + `spring-boot-starter-actuator`
+  (`/actuator/health`만 노출, `SecurityConfig` permitAll 추가) 추가. 서버 기동 →
+  로그 파일 생성/기록, `curl /actuator/health` → `{"status":"UP"}` 확인.
 - **파일 저장소 분리**: 게시글 이미지가 로컬 `uploads/`에 저장 중 — S3 등 외부
-  스토리지로 분리 필요
-- **클라우드 서버 환경**: 현재 로컬(Windows) 개발 환경에서만 구동
-- **HTTPS/보안 강화**: CSRF도 개발 편의상 꺼져 있음(`SecurityConfig`) — 배포 전
-  재활성화 + HTTPS 인증서 + 보안 헤더 점검
-- **CI/CD**: 원격 저장소는 이제 있음(`github.com/jihu1130/webproject`) — 파이프라인
-  자체는 아직 없음
-- 파일 저장소(S3)·클라우드 서버·CI/CD는 순서상 서로 의존적(CI/CD는 원격 저장소
-  필요 - 이건 이제 충족됨, 클라우드 서버가 있어야 HTTPS도 의미 있음)
-- **2026-08-19 착수 순서 확정**: 외부 계정/비용 결정이 필요 없는 것부터
-  로그/모니터링 → CI(빌드+테스트) → HTTPS 코드측(CSRF 재활성화) → DB 백업
-  스크립트 → 이메일 인증/비밀번호 찾기(Gmail SMTP로 시작, 추후 AWS SES 등
-  으로 교체 가능하게 `JavaMailSender` 추상화) 순으로 진행. 클라우드 서버 →
-  S3 → 실제 HTTPS 인증서 → CD(배포)는 프로바이더 결정 전까지 보류.
+  스토리지로 분리 필요 (보류)
+- **클라우드 서버 환경**: 현재 로컬(Windows) 개발 환경에서만 구동 (보류)
+- **HTTPS/보안 강화**(CSRF 재활성화 부분만 ✅ 2026-08-23 완료): [SecurityConfig.java](src/main/java/com/webschool/webschool/global/config/SecurityConfig.java)의
+  `.csrf(csrf -> csrf.disable())`를 제거해 CSRF를 다시 켰다. 템플릿 전수 조사 결과
+  `th:action` 아닌 순수 폼은 0개라 대부분은 `thymeleaf-extras-springsecurity6`가
+  자동으로 처리했고, JS로 직접 요청을 만드는 4개 파일(`admin-bulk.js`,
+  `rich-editor.js`, `calendar.js`, `post-detail.js`)만 새 공용 헬퍼
+  `static/js/csrf.js`로 토큰을 같이 보내도록 수정. 이걸로 수정사항.md #1(관리자
+  일괄 처리 CSRF 누락) 항목도 같이 해소됨. 브라우저로 admin 일괄 블라인드/해제,
+  게시글·댓글 좋아요/북마크/작성/삭제/신고, 캘린더 한마디 작성/좋아요/북마크/삭제,
+  에디터 파일 업로드까지 전부 200으로 통과하는 것을 네트워크 로그로 직접 확인
+  (403 없음). **실제 HTTPS 인증서/보안 헤더 점검은 여전히 보류**(호스팅 미정).
+- **CI/CD**(빌드+테스트 부분만 ✅ 2026-08-23 완료): `.github/workflows/ci.yml` 신규
+  (MySQL 8 서비스 컨테이너 + `./gradlew build`). 이 김에
+  `src/main/resources/application.yml.example`도 새로 만들었다(`CLAUDE.md`가 이미
+  참조하고 있었는데 실제 파일이 없던 문서/repo 불일치였음). 로컬에서 `./gradlew build`
+  통과까지 확인, 실제 GitHub Actions 통과 확인은 push 후 사용자가 직접 확인 필요.
+  **CD(배포)는 여전히 보류**(호스팅 미정).
+- 파일 저장소(S3)·클라우드 서버·CD는 순서상 서로 의존적이라 호스팅 프로바이더
+  결정 전까지 보류 유지.
+- **2026-08-19 착수 순서 확정, 2026-08-23 진행 상황**: 로그/모니터링 → CI(빌드+
+  테스트) → HTTPS 코드측(CSRF 재활성화) → DB 백업 스크립트까지 4개 완료.
+  **남은 것: 이메일 인증/비밀번호 찾기**(Gmail SMTP로 시작, 추후 AWS SES 등으로
+  교체 가능하게 `JavaMailSender` 추상화) — `User.email` 필드 자체가 없어 가장 손이
+  큰 항목, 다음 착수 대상. 클라우드 서버 → S3 → 실제 HTTPS 인증서 → CD(배포)는
+  프로바이더 결정 전까지 계속 보류.
 
 ## 6. 그 외 자잘한 후보
 

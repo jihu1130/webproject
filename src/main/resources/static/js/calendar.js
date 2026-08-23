@@ -861,7 +861,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function deleteComment(id) {
         if (!(await WebSchoolModal.confirm('한마디를 삭제할까요?', { danger: true }))) return;
 
-        fetch('/school/api/comments/' + id, { method: 'DELETE' })
+        fetch('/school/api/comments/' + id, { method: 'DELETE', headers: WebSchoolCsrf.headers() })
             .then(function (res) {
                 if (!res.ok) throw new Error('삭제 실패');
                 loadComments();
@@ -880,7 +880,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         fetch('/school/api/comments/' + id + '/report', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, WebSchoolCsrf.headers()),
             body: 'reason=' + encodeURIComponent(reason)
         })
             .then(function (res) {
@@ -902,7 +902,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function toggleCommentLike(id, btn) {
-        fetch('/school/api/comments/' + id + '/like', { method: 'POST' })
+        fetch('/school/api/comments/' + id + '/like', { method: 'POST', headers: WebSchoolCsrf.headers() })
             .then(function (res) {
                 if (!res.ok) throw new Error('처리 실패');
                 return res.json();
@@ -917,7 +917,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function toggleCommentBookmark(id, btn) {
-        fetch('/school/api/comments/' + id + '/bookmark', { method: 'POST' })
+        fetch('/school/api/comments/' + id + '/bookmark', { method: 'POST', headers: WebSchoolCsrf.headers() })
             .then(function (res) {
                 if (!res.ok) throw new Error('처리 실패');
                 return res.json();

@@ -75,6 +75,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 returnUrl.value = location.pathname + location.search;
                 form.appendChild(returnUrl);
 
+                // CSRF 재활성화 대응 - th:action 폼과 달리 이 폼은 JS로 즉석에서 만들어서
+                // Thymeleaf의 자동 토큰 주입(thymeleaf-extras-springsecurity6)을 못 받는다.
+                // 일반 폼 제출(fetch가 아님)이라 헤더가 아니라 파라미터로 넘겨야 하고,
+                // Spring 기본 파라미터명은 헤더명과 달리 항상 "_csrf" 고정이다.
+                var csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_csrf';
+                csrfInput.value = WebSchoolCsrf.token();
+                form.appendChild(csrfInput);
+
                 document.body.appendChild(form);
                 form.submit();
             });

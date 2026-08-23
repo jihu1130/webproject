@@ -27,11 +27,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // 개발용
+                // 배포 전 CSRF 재활성화(todo.md 항목) - JS로 직접 요청을 만드는 곳(admin-bulk.js,
+                // rich-editor.js, calendar.js, post-detail.js)만 static/js/csrf.js 헬퍼로
+                // 토큰을 같이 보내도록 손봤고, 나머지 th:action 폼은
+                // thymeleaf-extras-springsecurity6가 자동으로 hidden 토큰을 넣어준다.
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/register", "/login", "/oauth2/**", "/login/oauth2/**",
                                 "/css/**", "/js/**", "/images/**", "/uploads/**",
-                                "/api/users/check-username", "/school/api/search", "/school/api/classes").permitAll()
+                                "/api/users/check-username", "/school/api/search", "/school/api/classes",
+                                "/actuator/health").permitAll()
                         // 게시물 작성/수정/삭제/신고는 로그인 필요, 목록/상세/댓글 조회는 누구나 가능
                         .requestMatchers(HttpMethod.GET, "/posts/new", "/posts/*/edit").authenticated()
                         .requestMatchers(HttpMethod.GET, "/posts", "/posts/*", "/posts/*/comments").permitAll()

@@ -180,7 +180,7 @@
         var formData = new FormData();
         formData.append('file', file);
 
-        fetch('/api/uploads/editor', { method: 'POST', body: formData })
+        fetch('/api/uploads/editor', { method: 'POST', headers: WebSchoolCsrf.headers(), body: formData })
             .then(function (res) {
                 return res.json().then(function (data) {
                     if (!res.ok) throw new Error(data.error || '업로드에 실패했습니다.');

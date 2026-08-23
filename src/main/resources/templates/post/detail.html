@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${post.title + ' - WebSchool'}">게시물 - WebSchool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
@@ -113,6 +115,7 @@
     </div>
 </div>
 
+<script th:src="@{/js/csrf.js}"></script>
 <script th:src="@{/js/modal.js}"></script>
 <script th:src="@{/js/timeago.js}"></script>
 <script th:src="@{/js/post-detail.js}"></script>

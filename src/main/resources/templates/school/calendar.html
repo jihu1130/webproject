@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>웹스쿨 - 학사 & 시간표 캘린더</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -209,6 +211,7 @@
     };
     /*]]>*/
 </script>
+<script th:src="@{/js/csrf.js}"></script>
 <script th:src="@{/js/modal.js}"></script>
 <script th:src="@{/js/timeago.js}"></script>
 <script th:src="@{/js/school-search.js}"></script>

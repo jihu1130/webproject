@@ -14,6 +14,10 @@ Thumbs.db
 
 # Logs
 *.log
+logs/
+
+# DB 백업 - 실사용자 데이터 덤프가 커밋되면 안 됨(scripts/backup-db.ps1 산출물)
+backups/
 
 # 민감 정보(DB 비밀번호, NEIS API 키, 구글 OAuth 시크릿 등)가 들어가는 실제 설정 파일 -
 # application.yml.example을 복사해서 로컬에만 만들 것. 커밋 대상에서 절대 빼지 말 것.
