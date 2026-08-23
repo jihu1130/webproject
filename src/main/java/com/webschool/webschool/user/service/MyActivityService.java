@@ -18,6 +18,7 @@ import com.webschool.webschool.school.repository.ScheduleCommentLikeRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentReportRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.dto.MyCommentSummaryDto;
+import com.webschool.webschool.user.dto.MyPageStatsDto;
 import com.webschool.webschool.user.dto.MyPostSummaryDto;
 import com.webschool.webschool.user.dto.MyScheduleCommentSummaryDto;
 import com.webschool.webschool.user.domain.User;
@@ -56,6 +57,16 @@ public class MyActivityService {
     private final PostReportRepository postReportRepository;
     private final CommentReportRepository commentReportRepository;
     private final ScheduleCommentReportRepository scheduleCommentReportRepository;
+
+    // 마이페이지 프로필 카드 상단 통계 바(게시글/댓글/받은 좋아요) - 프로필_디자인.md 설계 반영.
+    public MyPageStatsDto getStats(String username) {
+        Long userId = resolveUserId(username);
+        return MyPageStatsDto.builder()
+                .postCount(postRepository.countByAuthor_IdAndDeletedFalse(userId))
+                .commentCount(postCommentRepository.countByAuthor_IdAndDeletedFalse(userId))
+                .likeCount(postRepository.sumLikeCountByAuthor_Id(userId))
+                .build();
+    }
 
     public Page<MyPostSummaryDto> getMyPosts(String username, int page, String keyword) {
         Long userId = resolveUserId(username);

@@ -9,6 +9,7 @@
     <link rel="stylesheet" th:href="@{/css/theme.css}">
     <link rel="stylesheet" th:href="@{/css/navbar.css}">
     <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <link rel="stylesheet" th:href="@{/css/profile-card.css}">
 </head>
 <body>
 
@@ -17,32 +18,54 @@
 <div class="mypage-page">
     <div class="mypage-container">
         <div class="mypage-card">
-            <div class="mypage-avatar"
-                 th:text="${loginUser != null and !#strings.isEmpty(loginUser.nickname)} ? ${#strings.substring(loginUser.nickname,0,1)} : '?'">?</div>
+            <div class="profile-card-head profile-card-head-center">
+                <div class="profile-card-avatar"
+                     th:classappend="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'} ? 'profile-card-avatar-super'
+                                     : (${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')">
+                    <span th:text="${loginUser != null and !#strings.isEmpty(loginUser.nickname)} ? ${#strings.substring(loginUser.nickname,0,1)} : '?'">?</span>
+                    <i class="fa-brands fa-google profile-card-avatar-google" th:if="${loginUser != null and loginUser.provider.name() == 'GOOGLE'}"></i>
+                </div>
 
-            <h2 class="mypage-name" th:text="${loginUser != null ? loginUser.nickname : '회원'}">회원</h2>
-            <p class="mypage-username">@<span th:text="${loginUser != null ? loginUser.username : ''}"></span></p>
+                <div>
+                    <h2 class="mypage-name" th:text="${loginUser != null ? loginUser.nickname : '회원'}">회원</h2>
+                    <p class="mypage-username">@<span th:text="${loginUser != null ? loginUser.username : ''}"></span></p>
+                </div>
+            </div>
 
-            <span class="mypage-role-badge"
-                  th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
-                  th:text="'총관리자'">총관리자</span>
-            <span class="mypage-role-badge"
-                  th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'}"
-                  th:text="'부관리자'">부관리자</span>
-            <!-- 수정사항.md 지적 - 신고/게시글/한마디/공지 권한을 전부 회수당한 부관리자도 여기선
-                 계속 "부관리자"로만 보여서 실제 권한이 하나도 없다는 걸 본인이 알 방법이 없었다.
-                 admin-permissions.html이 관리자 목록에서 이미 쓰는 것과 동일한 조건. -->
-            <span class="mypage-role-badge"
-                  th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'
-                          and !loginUser.canManageReports and !loginUser.canManagePosts
-                          and !loginUser.canManageScheduleComments and !loginUser.canManageNotices}"
-                  th:text="'권한 없음'">권한 없음</span>
-            <span class="mypage-role-badge"
-                  th:if="${loginUser == null or loginUser.role == null or loginUser.role.name() == 'ROLE_USER'}"
-                  th:text="'학생'">학생</span>
-            <span class="mypage-role-badge" th:if="${loginUser != null and loginUser.provider.name() == 'GOOGLE'}">
-                <i class="fa-brands fa-google"></i> 구글 계정
-            </span>
+            <div class="profile-card-stamp-row">
+                <span class="profile-card-stamp profile-card-stamp-super"
+                      th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+                      th:text="'총관리자'">총관리자</span>
+                <span class="profile-card-stamp profile-card-stamp-admin"
+                      th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'}"
+                      th:text="'부관리자'">부관리자</span>
+                <span class="profile-card-stamp profile-card-stamp-user"
+                      th:if="${loginUser == null or loginUser.role == null or loginUser.role.name() == 'ROLE_USER'}"
+                      th:text="'학생'">학생</span>
+                <!-- 수정사항.md 지적 - 신고/게시글/한마디/공지 권한을 전부 회수당한 부관리자도 예전엔
+                     계속 "부관리자"로만 보여서 실제 권한이 하나도 없다는 걸 본인이 알 방법이 없었다.
+                     역할 스탬프(명사형) 옆에 상태 태그(동사형)로 분리해서 표시한다. -->
+                <span class="profile-card-status profile-card-status-inactive"
+                      th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'
+                              and !loginUser.canManageReports and !loginUser.canManagePosts
+                              and !loginUser.canManageScheduleComments and !loginUser.canManageNotices}"
+                      th:text="'권한 없음'">권한 없음</span>
+            </div>
+
+            <div class="profile-card-stats">
+                <div class="profile-card-stat">
+                    <strong th:text="${stats.postCount}">0</strong>
+                    <span>게시글</span>
+                </div>
+                <div class="profile-card-stat">
+                    <strong th:text="${stats.commentCount}">0</strong>
+                    <span>댓글</span>
+                </div>
+                <div class="profile-card-stat">
+                    <strong th:text="${stats.likeCount}">0</strong>
+                    <span>받은 좋아요</span>
+                </div>
+            </div>
 
             <div class="mypage-info-list">
                 <div class="mypage-info-row">

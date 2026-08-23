@@ -1,5 +1,6 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostBookmark;
 import com.webschool.webschool.post.domain.PostLike;
@@ -49,6 +50,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final UserPenaltyService userPenaltyService;
+    private final AdminActionLogService adminActionLogService;
 
     // pageSize: 사용자가 "페이지당 N개 보기"로 고를 수 있는 페이지 크기 (PageUtils.normalizeSize()로
     // 컨트롤러 단에서 이미 5~100 사이로 정규화된 값이 넘어온다).
@@ -127,7 +129,12 @@ public class PostService {
         post.setAuthor(author);
         post.setVisibility(form.isUnlisted() ? Post.Visibility.UNLISTED : Post.Visibility.PUBLIC);
 
-        return postRepository.save(post).getUuid();
+        Post saved = postRepository.save(post);
+        // 감사 로그 커버리지 확장(사용자 요청) - 관리자 조치뿐 아니라 일반 사용자 본인의 주요 활동도
+        // 기록한다. log()가 SecurityContextHolder에서 현재 로그인 사용자를 그대로 읽으므로 호출부만
+        // 추가하면 된다(시그니처 변경 불필요).
+        adminActionLogService.log("POST", saved.getId(), "CREATE", truncate(title) + " [" + category.getLabel() + "]");
+        return saved.getUuid();
     }
 
     public PostFormDto getForEdit(Long id, String username) {
@@ -180,6 +187,7 @@ public class PostService {
             post.setUpdatedAt(LocalDateTime.now());
             // 내용이 바뀌었으니 예전 "문제없음" 판결은 더 이상 유효하지 않다 - 다시 검토가 필요함
             post.setReportCleared(false);
+            adminActionLogService.log("POST", post.getId(), "UPDATE", truncate(title));
         }
     }
 
@@ -200,6 +208,7 @@ public class PostService {
         // 관리자 페이지에서 계속 조회 가능하다 - 6-6 항목 참고). FK 제약 문제도 이걸로 근본 해결됨.
         post.setDeleted(true);
         post.setDeletedAt(LocalDateTime.now());
+        adminActionLogService.log("POST", post.getId(), "DELETE", truncate(post.getTitle()));
     }
 
     @Transactional
@@ -232,6 +241,7 @@ public class PostService {
         report.setReporter(reporter);
         report.setReason(trimmedReason);
         postReportRepository.save(report);
+        adminActionLogService.log("POST", id, "REPORT", trimmedReason != null ? truncate(trimmedReason) : truncate(post.getTitle()));
 
         boolean wasBlind = post.isBlind();
         postRepository.incrementReportCount(id);
@@ -257,6 +267,7 @@ public class PostService {
         postReportRepository.findByPost_IdAndReporter_Username(id, username).ifPresent(report -> {
             postReportRepository.delete(report);
             postRepository.decrementReportCount(id);
+            adminActionLogService.log("POST", id, "REPORT_CANCEL", truncate(report.getPost().getTitle()));
         });
     }
 

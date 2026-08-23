@@ -1,5 +1,6 @@
 package com.webschool.webschool.school.service;
 
+import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.school.domain.School;
 import com.webschool.webschool.school.domain.ScheduleComment;
 import com.webschool.webschool.school.domain.ScheduleCommentBookmark;
@@ -50,6 +51,7 @@ public class ScheduleCommentService {
     private final UserPenaltyService userPenaltyService;
     private final UserBlockService userBlockService;
     private final NotificationService notificationService;
+    private final AdminActionLogService adminActionLogService;
 
     // 차단한 사용자의 한마디는 목록에서 걸러낸다(UserBlockService 클래스 주석 참고 - 한마디는 특정
     // "글 작성자"가 없는 공유 스레드라 작성 자체를 막는 방식이 아니라 조회 단계에서 숨기는 방식).
@@ -85,6 +87,7 @@ public class ScheduleCommentService {
         comment.setContent(trimmed);
 
         scheduleCommentRepository.save(comment);
+        adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "CREATE", truncate(HtmlSanitizer.toPlainText(comment.getContent())));
         return toDto(comment, username);
     }
 
@@ -110,6 +113,7 @@ public class ScheduleCommentService {
             comment.setUpdatedAt(java.time.LocalDateTime.now());
             // 내용이 바뀌었으니 예전 "문제없음" 판결은 더 이상 유효하지 않다 - 다시 검토가 필요함
             comment.setReportCleared(false);
+            adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "UPDATE", truncate(HtmlSanitizer.toPlainText(trimmed)));
         }
 
         return toDto(comment, username);
@@ -131,6 +135,7 @@ public class ScheduleCommentService {
         // 소프트 딜리트: 물리적으로 지우지 않고 상태만 변경 (관리자 페이지에서 계속 조회/복구 가능, PostComment와 동일 패턴)
         comment.setDeleted(true);
         comment.setDeletedAt(java.time.LocalDateTime.now());
+        adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "DELETE", truncate(HtmlSanitizer.toPlainText(comment.getContent())));
     }
 
     @Transactional
@@ -167,6 +172,8 @@ public class ScheduleCommentService {
         report.setReporter(reporter);
         report.setReason(trimmedReason);
         scheduleCommentReportRepository.save(report);
+        adminActionLogService.log("SCHEDULE_COMMENT", id, "REPORT",
+                trimmedReason != null ? truncate(trimmedReason) : truncate(HtmlSanitizer.toPlainText(comment.getContent())));
 
         scheduleCommentRepository.incrementReportCount(id);
         int displayReportCount = comment.getReportCount() + 1;
@@ -185,6 +192,7 @@ public class ScheduleCommentService {
         scheduleCommentReportRepository.findByComment_IdAndReporter_Username(id, username).ifPresent(report -> {
             scheduleCommentReportRepository.delete(report);
             scheduleCommentRepository.decrementReportCount(id);
+            adminActionLogService.log("SCHEDULE_COMMENT", id, "REPORT_CANCEL", truncate(HtmlSanitizer.toPlainText(report.getComment().getContent())));
         });
     }
 
@@ -297,6 +305,12 @@ public class ScheduleCommentService {
         return userRepository.findByUsername(username)
                 .map(User::isAdmin)
                 .orElse(false);
+    }
+
+    // PostService.truncate()와 동일한 용도 - 감사 로그 detail(VARCHAR 300)에 넣기 전 요약.
+    private String truncate(String text) {
+        int limit = 40;
+        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     // PostService.validateContent()와 동일한 정제 로직 - th:utext로 그대로 렌더링하므로 이 단계가

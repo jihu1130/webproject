@@ -1,5 +1,6 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
 import com.webschool.webschool.user.dto.RegisterDto;
 import com.webschool.webschool.user.dto.SchoolSetupDto;
@@ -21,6 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AdminActionLogService adminActionLogService;
 
     public boolean isUsernameAvailable(String username) {
         return !userRepository.existsByUsername(username);
@@ -72,7 +74,11 @@ public class UserService {
         user.setClassNum(dto.getClassNum());
         user.setRole(User.Role.ROLE_USER);
 
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+        // 아직 로그인 전(autoLogin은 컨트롤러에서 이후에 실행됨)이라 SecurityContext에 사용자가 없다 -
+        // 5-arg 오버로드로 실제 가입자 아이디를 직접 넘긴다.
+        adminActionLogService.log("USER", saved.getId(), "REGISTER",
+                saved.getUsername() + " (" + saved.getSchoolName() + ")", saved.getUsername());
     }
 
     /**
@@ -111,8 +117,10 @@ public class UserService {
             if (userRepository.existsByUsername(newUsername)) {
                 throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
             }
+            String oldUsername = user.getUsername();
             user.setUsername(newUsername);
             usernameChanged = true;
+            adminActionLogService.log("USER", user.getId(), "USERNAME_CHANGE", oldUsername + " -> " + newUsername);
         }
 
         if (dto.getNewPassword() != null && !dto.getNewPassword().isBlank()) {
@@ -120,6 +128,8 @@ public class UserService {
                 throw new IllegalArgumentException("새 비밀번호가 일치하지 않습니다.");
             }
             user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+            // 값 자체(원문/해시 불문)는 절대 detail에 남기지 않는다 - 변경이 일어났다는 사실만 기록.
+            adminActionLogService.log("USER", user.getId(), "PASSWORD_CHANGE", null);
         }
 
         String nickname = dto.getNickname();
@@ -158,6 +168,7 @@ public class UserService {
         user.setSchoolKind(dto.getSchoolKind());
         user.setGrade(dto.getGrade());
         user.setClassNum(dto.getClassNum());
+        adminActionLogService.log("USER", user.getId(), "SCHOOL_SETUP", dto.getSchoolName());
     }
 
     // "내 프로필 설정" - 남이 보는 프로필(/users/{id})에 노출되는 소개글만 다루는 가벼운 수정.
@@ -171,6 +182,8 @@ public class UserService {
             throw new IllegalArgumentException("소개글은 150자를 넘을 수 없습니다.");
         }
         user.setBio(bio == null || bio.isBlank() ? null : bio.trim());
+        adminActionLogService.log("USER", user.getId(), "BIO_UPDATE",
+                bio == null || bio.isBlank() ? "(비움)" : truncate(bio.trim()));
     }
 
     // 계정 탈퇴(소프트 딜리트) - 본인 확인을 위해 현재 비밀번호를 재입력받는다
@@ -197,5 +210,11 @@ public class UserService {
         // 화면에는 실제 닉네임 대신 "탈퇴한 사용자"로 표시된다(PostService.displayNickname() 등 참고).
         user.setDeleted(true);
         user.setDeletedAt(LocalDateTime.now());
+        adminActionLogService.log("USER", user.getId(), "SELF_DELETE", username);
+    }
+
+    private String truncate(String text) {
+        int limit = 40;
+        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 }

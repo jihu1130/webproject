@@ -1,5 +1,6 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.user.domain.User;
@@ -30,6 +31,7 @@ public class UserPenaltyService {
     private final UserPenaltyRepository userPenaltyRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final AdminActionLogService adminActionLogService;
 
     public List<UserPenaltyDto> getHistory(Long targetId) {
         return userPenaltyRepository.findByTarget_IdOrderByIssuedAtDesc(targetId).stream()
@@ -73,6 +75,8 @@ public class UserPenaltyService {
         String periodText = penalty.getExpiresAt() != null ? durationDays + "일간" : "무기한";
         notificationService.notify(target, Notification.Type.ACCOUNT,
                 "[" + type.getLabel() + "] " + periodText + " 제재가 부여되었습니다. 사유: " + trimmedReason, null);
+        adminActionLogService.log("USER", target.getId(), "PENALTY_ISSUE",
+                type.getLabel() + " " + periodText + " (" + truncate(trimmedReason) + ")");
     }
 
     @Transactional
@@ -88,6 +92,7 @@ public class UserPenaltyService {
         penalty.setRevokedAt(LocalDateTime.now());
         notificationService.notify(penalty.getTarget(), Notification.Type.ACCOUNT,
                 "[" + penalty.getType().getLabel() + "] 제재가 조기 해제되었습니다.", null);
+        adminActionLogService.log("USER", penalty.getTarget().getId(), "PENALTY_REVOKE", penalty.getType().getLabel());
     }
 
     // 로그인 가능 여부 판단(CustomUserDetailsService)에 쓰인다.
@@ -113,6 +118,11 @@ public class UserPenaltyService {
         UserPenalty p = active.get(0);
         String until = p.getExpiresAt() != null ? p.getExpiresAt().format(DISPLAY_FORMAT) + "까지" : "무기한";
         throw new IllegalArgumentException(actionLabel + " 제재 중이라 이용할 수 없습니다(" + until + "). 사유: " + p.getReason());
+    }
+
+    private String truncate(String text) {
+        int limit = 40;
+        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     private UserPenaltyDto toDto(UserPenalty p) {

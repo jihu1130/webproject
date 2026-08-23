@@ -10,6 +10,7 @@
     <link rel="stylesheet" th:href="@{/css/navbar.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
     <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/css/profile-card.css}">
 </head>
 <body>
 
@@ -33,14 +34,27 @@
            href="/admin" class="post-list-back"><i class="fa-solid fa-arrow-left"></i> 관리자 홈으로</a>
 
         <div class="admin-detail-card">
-            <span class="admin-status-badge admin-status-blind" th:if="${profile.deleted}" th:text="'탈퇴함(' + ${profile.deletedAt} + ')'">탈퇴함</span>
-            <span class="admin-status-badge admin-status-pending" th:if="${!profile.deleted and !profile.active}">비활성화됨</span>
-            <span class="admin-status-badge admin-status-cleared" th:if="${!profile.deleted and profile.active}">활동중</span>
-            <span class="admin-status-badge admin-status-cleared" th:if="${profile.role == 'ROLE_SUPER_ADMIN'}">총관리자</span>
-            <span class="admin-status-badge admin-status-pending" th:if="${profile.role == 'ROLE_ADMIN'}">부관리자</span>
-
-            <h1 class="post-detail-title" th:text="${profile.nickname}">닉네임</h1>
-            <p class="page-sub" style="margin: 0 0 12px;" th:text="'아이디: ' + ${profile.username}">아이디</p>
+            <!-- 프로필_디자인.md 설계 반영 - 예전엔 역할(총관리자/부관리자)과 상태(활동중/탈퇴함)가
+                 감사 로그와 똑같은 배지(.admin-status-badge)로 뒤섞여 있어서 "이 계정이 누구인지"와
+                 "지금 상태가 어떤지"가 한눈에 구분이 안 됐다. 아바타(역할별 테두리색) + 역할 스탬프
+                 (명사형, 둥근 알약) + 상태 태그(동사형, 사각형)로 분리한다. -->
+            <div class="profile-card-head">
+                <div class="profile-card-avatar"
+                     th:classappend="${profile.role == 'ROLE_SUPER_ADMIN'} ? 'profile-card-avatar-super'
+                                     : (${profile.role == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')"
+                     th:text="${#strings.isEmpty(profile.nickname)} ? '?' : ${#strings.substring(profile.nickname, 0, 1)}">?</div>
+                <div class="profile-card-identity">
+                    <div class="profile-card-name-row">
+                        <h1 class="profile-card-name" th:text="${profile.nickname}">닉네임</h1>
+                        <span class="profile-card-stamp profile-card-stamp-super" th:if="${profile.role == 'ROLE_SUPER_ADMIN'}">총관리자</span>
+                        <span class="profile-card-stamp profile-card-stamp-admin" th:if="${profile.role == 'ROLE_ADMIN'}">부관리자</span>
+                    </div>
+                    <p class="profile-card-username" th:text="'아이디: ' + ${profile.username}">아이디</p>
+                    <span class="profile-card-status profile-card-status-deleted" th:if="${profile.deleted}" th:text="'탈퇴함 (' + ${profile.deletedAt} + ')'">탈퇴함</span>
+                    <span class="profile-card-status profile-card-status-inactive" th:if="${!profile.deleted and !profile.active}">비활성화됨</span>
+                    <span class="profile-card-status profile-card-status-active" th:if="${!profile.deleted and profile.active}">활동중</span>
+                </div>
+            </div>
 
             <dl class="admin-profile-grid">
                 <div class="admin-profile-field">
@@ -68,15 +82,24 @@
             </dl>
 
             <div class="admin-profile-stats">
-                <div class="admin-profile-stat">
+                <a class="admin-profile-stat" href="#recent-posts">
                     <strong th:text="${profile.postCount}">0</strong>
                     <span>작성 게시글</span>
-                </div>
-                <div class="admin-profile-stat">
+                </a>
+                <a class="admin-profile-stat" href="#recent-comments">
                     <strong th:text="${profile.commentCount}">0</strong>
                     <span>작성 댓글</span>
-                </div>
+                </a>
             </div>
+
+            <!-- 수정사항.md #11과 세트 - 감사 로그 쪽에서도 관리자 이름을 이 프로필로 연결하는 작업이
+                 필요하지만, 이 프로필에서 "이 관리자가 감사 로그에 뭘 남겼는지"로 가는 반대 방향
+                 링크도 필요해서 같이 추가한다. 총관리자/부관리자만 의미가 있음(일반 학생은 조치를
+                 남길 수 없음). -->
+            <a class="profile-card-audit-link" th:if="${profile.role != 'ROLE_USER'}"
+               th:href="@{/admin/audit-log(adminUsername=${profile.username})}">
+                <i class="fa-solid fa-clock-rotate-left"></i> 감사 로그에서 이 계정의 조치 내역 보기
+            </a>
         </div>
 
         <div class="admin-report-section" th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN' and profile.role != 'ROLE_SUPER_ADMIN'}"
@@ -119,7 +142,7 @@
             </div>
         </div>
 
-        <div class="admin-report-section">
+        <div class="admin-report-section" id="recent-posts">
             <h3 class="post-comment-heading"><i class="fa-solid fa-file-lines"></i> 최근 작성 게시글</h3>
 
             <div th:if="${#lists.isEmpty(profile.recentPosts)}" class="post-comment-empty">작성한 게시글이 없어요.</div>
@@ -139,7 +162,7 @@
         <!-- 수정사항.md 지적 - "작성 댓글 N"이라는 통계만 있고 그 목록을 볼 방법이 없었다.
              "최근 작성 게시글" 섹션과 완전히 동일한 구조로 복제, 댓글은 부모 게시글 상세의
              앵커(#comment-{id})로 이동한다(comment-list.html이 이미 쓰는 패턴). -->
-        <div class="admin-report-section" style="margin-top: 20px;">
+        <div class="admin-report-section" id="recent-comments" style="margin-top: 20px;">
             <h3 class="post-comment-heading"><i class="fa-solid fa-comment"></i> 최근 작성 댓글</h3>
 
             <div th:if="${#lists.isEmpty(profile.recentComments)}" class="post-comment-empty">작성한 댓글이 없어요.</div>
@@ -150,8 +173,8 @@
                     <div class="admin-report-item-header">
                         <span class="post-comment-time" th:text="${comment.createdAt}">날짜</span>
                     </div>
-                    <div th:text="${comment.content}">댓글 내용</div>
-                    <div class="page-sub" style="margin: 2px 0 0;" th:text="'글: ' + ${comment.postTitle}">글 제목</div>
+                    <div class="profile-card-comment-preview" th:text="${comment.content}">댓글 내용</div>
+                    <div class="profile-card-comment-post" th:text="'글: ' + ${comment.postTitle}">글 제목</div>
                 </a>
             </div>
         </div>

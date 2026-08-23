@@ -47,6 +47,7 @@ public class UserProfileService {
                 .id(user.getId())
                 .nickname(user.getNickname())
                 .bio(user.getBio())
+                .postCount(posts.getTotalElements())
                 .posts(posts)
                 .build();
     }

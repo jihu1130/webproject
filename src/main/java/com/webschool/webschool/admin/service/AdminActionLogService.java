@@ -35,9 +35,13 @@ public class AdminActionLogService {
             "POST", "게시글",
             "COMMENT", "댓글",
             "SCHEDULE_COMMENT", "한마디",
-            "USER", "계정"
+            "USER", "계정",
+            "NOTICE", "공지사항"
     );
 
+    // 원래 관리자 조치(블라인드/삭제/승격/정지 등)만 남기던 로그를, 사용자 요청으로 일반 사용자
+    // 본인의 주요 활동(글쓰기/신고/아이디 변경 등)까지 포함하도록 확장했다 - CREATE/UPDATE/REPORT류
+    // 신규 action이 그 부분.
     private static final Map<String, String> ACTION_LABELS = Map.ofEntries(
             Map.entry("BLIND", "블라인드"),
             Map.entry("UNBLIND", "블라인드 해제"),
@@ -49,7 +53,20 @@ public class AdminActionLogService {
             Map.entry("DEMOTE", "강등"),
             Map.entry("PERMISSIONS", "권한 변경"),
             Map.entry("DEACTIVATE", "정지"),
-            Map.entry("ACTIVATE", "정지 해제")
+            Map.entry("ACTIVATE", "정지 해제"),
+            Map.entry("CREATE", "작성"),
+            Map.entry("UPDATE", "수정"),
+            Map.entry("REPORT", "신고"),
+            Map.entry("REPORT_CANCEL", "신고 취소"),
+            Map.entry("ACCEPT_ANSWER", "답변 채택"),
+            Map.entry("REGISTER", "회원가입"),
+            Map.entry("USERNAME_CHANGE", "아이디 변경"),
+            Map.entry("PASSWORD_CHANGE", "비밀번호 변경"),
+            Map.entry("BIO_UPDATE", "소개글 수정"),
+            Map.entry("SELF_DELETE", "회원 탈퇴"),
+            Map.entry("SCHOOL_SETUP", "학교 설정"),
+            Map.entry("PENALTY_ISSUE", "제재 부여"),
+            Map.entry("PENALTY_REVOKE", "제재 해제")
     );
 
     // 감사 로그 배지 색상 - 수정사항.md 지적: 템플릿에서 "BLIND/DELETE/DEACTIVATE/DEMOTE면 빨강,
@@ -68,7 +85,13 @@ public class AdminActionLogService {
             Map.entry("RESTORE", "admin-status-cleared"),
             Map.entry("PROMOTE", "admin-status-cleared"),
             Map.entry("ACTIVATE", "admin-status-cleared"),
-            Map.entry("PERMISSIONS", "admin-status-neutral")
+            Map.entry("PERMISSIONS", "admin-status-neutral"),
+            Map.entry("REPORT", "admin-status-blind"),
+            Map.entry("SELF_DELETE", "admin-status-blind"),
+            Map.entry("PENALTY_ISSUE", "admin-status-blind"),
+            Map.entry("REPORT_CANCEL", "admin-status-cleared"),
+            Map.entry("ACCEPT_ANSWER", "admin-status-cleared"),
+            Map.entry("PENALTY_REVOKE", "admin-status-cleared")
     );
 
     private final AdminActionLogRepository adminActionLogRepository;
@@ -82,10 +105,18 @@ public class AdminActionLogService {
     @Transactional
     public void log(String targetType, Long targetId, String action, String detail) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String adminUsername = authentication != null ? authentication.getName() : "system";
+        boolean authenticated = authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal());
+        log(targetType, targetId, action, detail, authenticated ? authentication.getName() : "system");
+    }
 
+    // 회원가입(UserService.register())처럼 아직 로그인 전이라 SecurityContext에 실제 사용자가 없는
+    // 시점에 호출하는 경우를 위한 오버로드 - actorUsername을 직접 넘긴다(비워두면 4-arg 버전이
+    // "system"으로 기록해버려 누가 가입했는지 알 수 없게 된다).
+    @Transactional
+    public void log(String targetType, Long targetId, String action, String detail, String actorUsername) {
         AdminActionLog entry = new AdminActionLog();
-        entry.setAdminUsername(adminUsername);
+        entry.setAdminUsername(actorUsername);
         entry.setTargetType(targetType);
         entry.setTargetId(targetId);
         entry.setAction(action);
@@ -146,6 +177,7 @@ public class AdminActionLogService {
             case "POST" -> "/admin/posts/" + targetId;
             case "USER" -> "/admin/users/" + targetId + "/profile";
             case "SCHEDULE_COMMENT" -> "/school/comments/" + targetId;
+            case "NOTICE" -> "/notices/" + targetId;
             case "COMMENT" -> postCommentRepository.findById(targetId)
                     .map(c -> "/admin/posts/" + c.getPost().getId() + "#comment-" + targetId)
                     .orElse(null);

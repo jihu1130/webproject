@@ -1,5 +1,6 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.CommentBookmark;
@@ -50,6 +51,7 @@ public class PostCommentService {
     private final NotificationService notificationService;
     private final UserPenaltyService userPenaltyService;
     private final UserBlockService userBlockService;
+    private final AdminActionLogService adminActionLogService;
 
     // 버그 수정(N+1) - 댓글마다 신고/좋아요/북마크 여부를 개별 existsBy 쿼리로 확인하던 것을, 이 글의
     // 댓글 id 목록 전체에 대해 한 번씩만(총 3번) 배치 조회해서 메모리에서 lookup하도록 교체했다
@@ -105,6 +107,7 @@ public class PostCommentService {
         comment.setContent(trimmed);
 
         postCommentRepository.save(comment);
+        adminActionLogService.log("COMMENT", comment.getId(), "CREATE", truncate(trimmed));
 
         String label = post.getCategory() == Post.Category.ANONYMOUS ? "답변" : "댓글";
         notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.COMMENT,
@@ -134,6 +137,7 @@ public class PostCommentService {
             comment.setUpdatedAt(LocalDateTime.now());
             // 내용이 바뀌었으니 예전 "문제없음" 판결은 더 이상 유효하지 않다 - 다시 검토가 필요함
             comment.setReportCleared(false);
+            adminActionLogService.log("COMMENT", comment.getId(), "UPDATE", truncate(trimmed));
         }
 
         return toDto(comment, username);
@@ -155,6 +159,7 @@ public class PostCommentService {
         // 소프트 딜리트: 물리적으로 지우지 않고 상태만 변경 (관리자 페이지에서 계속 조회 가능, 6-6 항목 참고)
         comment.setDeleted(true);
         comment.setDeletedAt(LocalDateTime.now());
+        adminActionLogService.log("COMMENT", comment.getId(), "DELETE", truncate(comment.getContent()));
     }
 
     @Transactional
@@ -191,6 +196,7 @@ public class PostCommentService {
         report.setReporter(reporter);
         report.setReason(trimmedReason);
         commentReportRepository.save(report);
+        adminActionLogService.log("COMMENT", commentId, "REPORT", trimmedReason != null ? truncate(trimmedReason) : truncate(comment.getContent()));
 
         boolean wasBlind = comment.isBlind();
         postCommentRepository.incrementReportCount(commentId);
@@ -213,6 +219,7 @@ public class PostCommentService {
         commentReportRepository.findByComment_IdAndReporter_Username(commentId, username).ifPresent(report -> {
             commentReportRepository.delete(report);
             postCommentRepository.decrementReportCount(commentId);
+            adminActionLogService.log("COMMENT", commentId, "REPORT_CANCEL", truncate(report.getComment().getContent()));
         });
     }
 
@@ -292,6 +299,7 @@ public class PostCommentService {
 
         if (comment.isAccepted()) {
             comment.setAccepted(false);
+            adminActionLogService.log("COMMENT", comment.getId(), "ACCEPT_ANSWER", "채택 취소");
             return false;
         }
 
@@ -301,6 +309,7 @@ public class PostCommentService {
         notificationService.notifyIfNotSelf(comment.getAuthor(), username, Notification.Type.ACCEPTED,
                 "회원님의 답변이 채택됐어요: " + truncate(post.getTitle()),
                 "/posts/" + post.getUuid());
+        adminActionLogService.log("COMMENT", comment.getId(), "ACCEPT_ANSWER", "채택: " + truncate(post.getTitle()));
         return true;
     }
 

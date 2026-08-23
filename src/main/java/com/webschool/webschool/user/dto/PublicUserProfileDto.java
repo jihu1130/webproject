@@ -13,5 +13,6 @@ public class PublicUserProfileDto {
     private Long id;
     private String nickname;
     private String bio;
+    private long postCount; // 프로필 카드 통계 바(프로필_디자인.md) - posts의 totalElements와 동일한 값
     private Page<PublicUserProfilePostDto> posts;
 }

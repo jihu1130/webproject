@@ -19,20 +19,23 @@
     <div class="admin-container">
         <div class="page-heading admin-page-heading">
             <h1><i class="fa-solid fa-shield-halved"></i> 관리자 대시보드</h1>
-            <p class="page-sub">어떤 관리자가 언제 어떤 조치를 했는지 기록이에요 (총관리자 전용)</p>
+            <!-- 관리자 조치뿐 아니라 일반 사용자 본인의 주요 활동(글쓰기/신고/아이디 변경 등)까지
+                 포함하도록 로그 범위를 넓혀서 문구도 "관리자가"에서 "어떤 계정이"로 수정했다. -->
+            <p class="page-sub">어떤 계정이 언제 무엇을 했는지 기록이에요 (총관리자 전용)</p>
         </div>
 
         <div th:replace="~{admin/fragments/nav :: tabs('audit-log')}"></div>
 
         <div class="list-toolbar" style="margin-top: 12px;">
             <form th:action="@{/admin/audit-log}" method="get" class="admin-search-form">
-                <input type="text" name="adminUsername" placeholder="관리자 아이디" th:value="${adminUsername}">
+                <input type="text" name="adminUsername" placeholder="아이디" th:value="${adminUsername}">
                 <select name="targetType">
                     <option value="" th:selected="${targetType == null or targetType == ''}">전체 대상</option>
                     <option value="POST" th:selected="${targetType == 'POST'}">게시글</option>
                     <option value="COMMENT" th:selected="${targetType == 'COMMENT'}">댓글</option>
                     <option value="SCHEDULE_COMMENT" th:selected="${targetType == 'SCHEDULE_COMMENT'}">한마디</option>
                     <option value="USER" th:selected="${targetType == 'USER'}">계정</option>
+                    <option value="NOTICE" th:selected="${targetType == 'NOTICE'}">공지사항</option>
                 </select>
                 <input type="date" name="from" th:value="${from}" title="시작일">
                 <input type="date" name="to" th:value="${to}" title="종료일">
@@ -40,14 +43,14 @@
             </form>
         </div>
 
-        <div th:if="${logs.empty}" class="admin-empty">기록된 관리자 조치가 없어요.</div>
+        <div th:if="${logs.empty}" class="admin-empty">기록된 활동이 없어요.</div>
 
         <div class="admin-table-wrap" th:unless="${logs.empty}">
             <table class="admin-table">
                 <thead>
                 <tr>
                     <th>일시</th>
-                    <th>관리자</th>
+                    <th>계정</th>
                     <th>대상</th>
                     <th>조치</th>
                     <th>비고</th>

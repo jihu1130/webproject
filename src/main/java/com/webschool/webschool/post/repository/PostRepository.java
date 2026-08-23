@@ -79,6 +79,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 관리자용: 계정 프로필 화면 - 작성 글 수 / 최근 작성 글 미리보기
     long countByAuthor_IdAndDeletedFalse(Long authorId);
 
+    // 마이페이지 프로필 카드 통계 바 - 내가 쓴 글이 받은 좋아요 총합(프로필_디자인.md 설계 반영).
+    // 좋아요를 "준" 개수(PostLikeRepository)와는 다른, 내 글이 "받은" 개수라 별도 집계가 필요하다.
+    @Query("SELECT COALESCE(SUM(p.likeCount), 0) FROM Post p WHERE p.author.id = :authorId AND p.deleted = false")
+    long sumLikeCountByAuthor_Id(@Param("authorId") Long authorId);
+
     List<Post> findTop5ByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(Long authorId);
 
     // 공개 프로필(/users/{id})용 "작성한 게시글" 목록. 익명(ANONYMOUS) 카테고리 글은 본인 프로필에서도

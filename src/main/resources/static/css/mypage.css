@@ -118,20 +118,6 @@
     text-align: center;
 }
 
-.mypage-avatar {
-    width: 76px;
-    height: 76px;
-    margin: 0 auto 16px;
-    border-radius: 50%;
-    background: var(--brand-gradient);
-    color: #fff;
-    font-size: 30px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .mypage-name {
     font-size: 1.3rem;
     font-weight: 800;
@@ -143,17 +129,6 @@
     color: var(--muted);
     font-size: 0.9rem;
     margin: 0 0 10px;
-}
-
-.mypage-role-badge {
-    display: inline-block;
-    background: rgba(30, 79, 163, 0.1);
-    color: var(--brand-1-dark);
-    font-weight: 700;
-    font-size: 12px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    margin-bottom: 24px;
 }
 
 .mypage-info-list {

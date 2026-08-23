@@ -4,6 +4,7 @@ import com.webschool.webschool.user.dto.MyPageUpdateDto;
 import com.webschool.webschool.user.dto.RegisterDto;
 import com.webschool.webschool.user.dto.SchoolSetupDto;
 import com.webschool.webschool.user.domain.User;
+import com.webschool.webschool.user.service.MyActivityService;
 import com.webschool.webschool.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,6 +35,7 @@ public class AuthController {
 
     private final UserService userService;
     private final UserDetailsService userDetailsService;
+    private final MyActivityService myActivityService;
     // 구글 OAuth 클라이언트 등록(client-id/secret)이 안 돼 있으면 이 빈 자체가 없다(SecurityConfig
     // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
@@ -56,7 +58,9 @@ public class AuthController {
     }
 
     @GetMapping("/mypage")
-    public String myPage() {
+    public String myPage(Authentication authentication, Model model) {
+        // 프로필 카드 통계 바(게시글/댓글/받은 좋아요) - 프로필_디자인.md 설계 반영.
+        model.addAttribute("stats", myActivityService.getStats(authentication.getName()));
         return "user/mypage";
     }
 
