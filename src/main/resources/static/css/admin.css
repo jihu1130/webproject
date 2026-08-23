@@ -494,6 +494,14 @@
         -webkit-overflow-scrolling: touch;
         padding-bottom: 4px;
         scrollbar-width: thin;
+        /* 수정사항.md 지적(#8) - 가로 스크롤이 되는 건 알아도 "더 있다"는 힌트가 없어서 오른쪽으로
+           더 밀어야 뒤쪽 탭(8. 감사 로그 등)이 있다는 걸 처음엔 알아채기 어려웠다. 새 오버레이
+           엘리먼트를 추가하면 flex 아이템으로 끼어들어 레이아웃이 밀리므로, 대신 컨테이너 자체에
+           마스크를 씌워 오른쪽 끝이 항상 옅게 페이드되도록 한다 - 엘리먼트/JS 추가 없이 스크롤
+           가능하다는 시각적 신호가 됨(끝까지 스크롤해도 마지막 탭이 살짝 페이드된 채 남는 정도의
+           트레이드오프는 감수 - 흔한 네이티브 스크롤 힌트 패턴과 동일). */
+        -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
     }
 
     .admin-main-tabs .post-category-tab {

@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>관리자 - 계정 관리 - WebSchool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
@@ -43,10 +45,20 @@
             </form>
         </div>
 
+        <!-- 수정사항.md 지적(#7·#9) - 게시글/댓글/한마디 관리엔 이미 있는 일괄 처리가 계정 관리에만
+             빠져있었다. admin-bulk.js가 찾는 마크업 규약(data-bulk-table/admin-bulk-check*)을
+             comment-list.html 등과 동일하게 그대로 따른다. -->
+        <div class="admin-bulk-toolbar" id="bulkToolbar-users" th:unless="${users.empty}">
+            <span class="admin-bulk-count">0개 선택됨</span>
+            <button type="button" class="btn btn-outline-brand" data-bulk-action="/admin/users/bulk-deactivate" data-bulk-label="비활성화" disabled>선택 비활성화</button>
+            <button type="button" class="post-delete-btn" data-bulk-action="/admin/users/bulk-delete" data-bulk-label="탈퇴 처리" data-bulk-danger="true" disabled>선택 탈퇴</button>
+        </div>
+
         <div class="admin-table-wrap">
-            <table class="admin-table">
+            <table class="admin-table" th:attr="data-bulk-table=${users.empty} ? null : 'bulkToolbar-users'">
                 <thead>
                 <tr>
+                    <th class="admin-bulk-check-col"><input type="checkbox" class="admin-bulk-check-all" aria-label="전체 선택"></th>
                     <th>상태</th>
                     <th>아이디</th>
                     <th>닉네임</th>
@@ -57,6 +69,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="user : ${users}">
+                    <td class="admin-bulk-check-col"><input type="checkbox" class="admin-bulk-check" th:value="${user.id}" aria-label="선택"></td>
                     <td>
                         <span class="admin-status-badge admin-status-blind" th:if="${user.deleted}"
                               th:text="'탈퇴함(' + ${user.deletedAt} + ')'">탈퇴함</span>
@@ -130,6 +143,8 @@
     </div>
 </div>
 
+<script th:src="@{/js/csrf.js}"></script>
 <script th:src="@{/js/modal.js}"></script>
+<script th:src="@{/js/admin-bulk.js}"></script>
 </body>
 </html>

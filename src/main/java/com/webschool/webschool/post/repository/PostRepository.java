@@ -3,6 +3,7 @@ package com.webschool.webschool.post.repository;
 import com.webschool.webschool.post.domain.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -52,6 +53,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // p.visibility = PUBLIC - UNLISTED(링크 전용) 글은 목록/검색에서 항상 제외한다(Post.java 주석
     // 참고). 상세 페이지(GET /posts/{uuid})는 이 메서드를 거치지 않고 findByUuid()로 직접 조회하므로
     // uuid 링크만 있으면 그대로 열람 가능하다.
+    // 수정사항.md 지적(#4) - toListItemDto()가 author 닉네임/id를 읽는데 author가 LAZY라 목록 페이지
+    // 한 번에 글 수만큼 추가 SELECT가 나가는 N+1이었다. author는 @ManyToOne(컬렉션 아님)이라
+    // @EntityGraph+Pageable 조합에서 흔한 "인메모리 페이징" 문제(HHH000104)와 무관하게 안전하게
+    // JOIN FETCH로 묶을 수 있다(PostCommentRepository가 같은 패턴을 이미 씀).
+    @EntityGraph(attributePaths = "author")
     @Query("SELECT p FROM Post p WHERE p.deleted = false AND p.blind = false "
             + "AND p.visibility = com.webschool.webschool.post.domain.Post.Visibility.PUBLIC "
             + "AND (:category IS NULL OR p.category = :category) "

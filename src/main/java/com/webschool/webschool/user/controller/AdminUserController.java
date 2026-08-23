@@ -135,6 +135,44 @@ public class AdminUserController {
         return state.redirect();
     }
 
+    // 수정사항.md 지적(#7·#9) - 게시글/댓글/한마디 관리엔 이미 있는 일괄 처리가 계정 관리에만
+    // 빠져있었다. AdminPostController.bulkBlind()/bulkDelete()와 완전히 동일한 모양 - id별로
+    // 기존 단건 메서드를 그대로 호출하고(본인/총관리자 보호는 그 메서드들이 이미 함), 개별
+    // IllegalArgumentException은 한 건이 실패해도 나머지를 계속 처리하도록 무시한다.
+    @PostMapping("/bulk-deactivate")
+    public String bulkDeactivate(@RequestParam(required = false) List<Long> ids,
+                                  @RequestParam(required = false) String returnUrl,
+                                  Authentication authentication) {
+        if (ids != null) {
+            ids.forEach(id -> {
+                try {
+                    adminUserService.deactivateUser(id, authentication.getName());
+                } catch (IllegalArgumentException ignored) {
+                }
+            });
+        }
+        return resolveReturn(returnUrl);
+    }
+
+    @PostMapping("/bulk-delete")
+    public String bulkDelete(@RequestParam(required = false) List<Long> ids,
+                              @RequestParam(required = false) String returnUrl,
+                              Authentication authentication) {
+        if (ids != null) {
+            ids.forEach(id -> {
+                try {
+                    adminUserService.deleteUser(id, authentication.getName());
+                } catch (IllegalArgumentException ignored) {
+                }
+            });
+        }
+        return resolveReturn(returnUrl);
+    }
+
+    private static String resolveReturn(String returnUrl) {
+        return (returnUrl != null && returnUrl.startsWith("/admin/")) ? "redirect:" + returnUrl : "redirect:/admin/users";
+    }
+
     @PostMapping("/{id}/penalties")
     public String issuePenalty(@PathVariable Long id,
                                 @RequestParam UserPenalty.Type type,
