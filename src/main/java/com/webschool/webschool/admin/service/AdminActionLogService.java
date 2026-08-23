@@ -4,6 +4,8 @@ import com.webschool.webschool.admin.domain.AdminActionLog;
 import com.webschool.webschool.admin.dto.AdminActionLogDto;
 import com.webschool.webschool.admin.repository.AdminActionLogRepository;
 import com.webschool.webschool.global.util.PageUtils;
+import com.webschool.webschool.post.repository.PostCommentRepository;
+import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
@@ -50,7 +52,28 @@ public class AdminActionLogService {
             Map.entry("ACTIVATE", "정지 해제")
     );
 
+    // 감사 로그 배지 색상 - 수정사항.md 지적: 템플릿에서 "BLIND/DELETE/DEACTIVATE/DEMOTE면 빨강,
+    // 아니면 전부 초록" 식 이분법을 쓰다 보니 REPORT_UNCLEAR(문제없음 철회 - 다시 문제 있다고
+    // 되돌리는 조치인데 초록으로 표시됨)와 PERMISSIONS(권한 변경 - 긍정/부정 어느 쪽도 아닌데
+    // 초록으로 표시됨)가 잘못 분류되고 있었다. 액션별 톤을 서버에서 명시적으로 정해 이런 신규
+    // 액션 추가 시에도 분류가 누락되지 않게 한다(정의 안 된 액션은 중립으로 폴백).
+    private static final Map<String, String> ACTION_BADGE_CLASSES = Map.ofEntries(
+            Map.entry("BLIND", "admin-status-blind"),
+            Map.entry("DELETE", "admin-status-blind"),
+            Map.entry("DEACTIVATE", "admin-status-blind"),
+            Map.entry("DEMOTE", "admin-status-blind"),
+            Map.entry("REPORT_UNCLEAR", "admin-status-blind"),
+            Map.entry("UNBLIND", "admin-status-cleared"),
+            Map.entry("REPORT_CLEAR", "admin-status-cleared"),
+            Map.entry("RESTORE", "admin-status-cleared"),
+            Map.entry("PROMOTE", "admin-status-cleared"),
+            Map.entry("ACTIVATE", "admin-status-cleared"),
+            Map.entry("PERMISSIONS", "admin-status-neutral")
+    );
+
     private final AdminActionLogRepository adminActionLogRepository;
+    private final UserRepository userRepository;
+    private final PostCommentRepository postCommentRepository;
 
     // 현재 요청을 처리 중인 관리자 계정을 SecurityContext에서 직접 읽는다 - 호출부(AdminPostService
     // 등의 블라인드/삭제 메서드)마다 관리자 username 파라미터를 새로 추가할 필요 없이 기존 메서드
@@ -100,13 +123,33 @@ public class AdminActionLogService {
         return AdminActionLogDto.builder()
                 .id(l.getId())
                 .adminUsername(l.getAdminUsername())
+                .adminUserId(userRepository.findByUsername(l.getAdminUsername()).map(u -> u.getId()).orElse(null))
                 .targetType(l.getTargetType())
                 .targetTypeLabel(TARGET_TYPE_LABELS.getOrDefault(l.getTargetType(), l.getTargetType()))
                 .targetId(l.getTargetId())
+                .targetUrl(resolveTargetUrl(l.getTargetType(), l.getTargetId()))
                 .action(l.getAction())
                 .actionLabel(ACTION_LABELS.getOrDefault(l.getAction(), l.getAction()))
+                .actionBadgeClass(ACTION_BADGE_CLASSES.getOrDefault(l.getAction(), "admin-status-neutral"))
                 .detail(l.getDetail())
                 .createdAt(l.getCreatedAt().format(DISPLAY_FORMAT))
                 .build();
+    }
+
+    // 수정사항.md 지적 - 감사 로그의 "관리자"/"대상" 칸이 그냥 텍스트라 확인하러 다시 계정/게시글
+    // 관리 화면으로 가서 이름·번호로 찾아야 했다. targetType별로 이미 있는 관리자 상세 라우트로
+    // 바로 연결한다. 소프트 삭제 사이트라 삭제/블라인드된 대상도 관리자는 이 URL로 그대로 열람
+    // 가능하다(comment-list.html이 이미 쓰는 "/admin/posts/{postId}#comment-{id}" 앵커 패턴과
+    // school 패키지의 한마디 퍼머링크(SchoolController.openComment)를 그대로 재사용).
+    private String resolveTargetUrl(String targetType, Long targetId) {
+        return switch (targetType) {
+            case "POST" -> "/admin/posts/" + targetId;
+            case "USER" -> "/admin/users/" + targetId + "/profile";
+            case "SCHEDULE_COMMENT" -> "/school/comments/" + targetId;
+            case "COMMENT" -> postCommentRepository.findById(targetId)
+                    .map(c -> "/admin/posts/" + c.getPost().getId() + "#comment-" + targetId)
+                    .orElse(null);
+            default -> null;
+        };
     }
 }

@@ -89,8 +89,14 @@
     color: var(--ink);
 }
 
+/* 수정사항.md 지적 - 원래 "검색어 input + 버튼" 2개짜리 조합용으로 만든 컴포넌트인데, 신고
+   관리(4개 필드)·감사 로그(5개 필드) 화면이 select/date를 더 끼워넣으면서 컨테이너 폭(360px)을
+   실제 필요 폭(575px)이 훌쩍 넘어버렸다. flex-wrap만 추가하면 넘치는 필드가 다음 줄로 내려가서
+   찌그러지는 문제와, 모바일에서 overflow가 페이지 전체(.admin-page)까지 밀어버리던 문제가 같이
+   해결된다(새 클래스 없이 이 컴포넌트를 쓰는 모든 화면에 자동 적용). */
 .admin-search-form {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 16px;
     max-width: 360px;
@@ -140,7 +146,7 @@
 }
 
 .admin-search-form input[type="text"] {
-    flex: 1;
+    flex: 1 1 140px;
     padding: 9px 14px;
     border-radius: 9px;
     border: 1.5px solid #dcdfef;
@@ -151,6 +157,25 @@
 }
 
 .admin-search-form input[type="text"]:focus { border-color: var(--brand-1); }
+
+/* select/input[type=date]는 브라우저 기본 스타일 그대로 남아있어서(둥근 모서리 없음, 옛날 인풋
+   테두리) 옆의 텍스트 입력창과 시각적으로 따로 놀았다 - 동일한 톤으로 맞춘다. */
+.admin-search-form select,
+.admin-search-form input[type="date"] {
+    flex: 1 1 120px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: 1.5px solid #dcdfef;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.admin-search-form select:focus,
+.admin-search-form input[type="date"]:focus { border-color: var(--brand-1); }
 
 .admin-search-form button {
     width: 42px;
@@ -449,6 +474,8 @@
        예전처럼 여기서 rgba를 다시 하드코딩할 필요 없음. */
 
     .admin-search-form input[type="text"],
+    .admin-search-form select,
+    .admin-search-form input[type="date"],
     .admin-penalty-form select,
     .admin-penalty-form input[type="number"],
     .admin-penalty-form textarea {

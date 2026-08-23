@@ -284,6 +284,11 @@ public class PostCommentService {
         if (!post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("질문 작성자만 답변을 채택할 수 있습니다.");
         }
+        // 수정사항.md 지적 - 질문자가 자기 자신의 댓글을 채택할 수 있어서 "다른 사람이 도와준
+        // 답을 표시"한다는 채택 기능의 취지가 무의미해졌다.
+        if (comment.getAuthor().getUsername().equals(username)) {
+            throw new IllegalArgumentException("본인이 작성한 답변은 채택할 수 없습니다.");
+        }
 
         if (comment.isAccepted()) {
             comment.setAccepted(false);

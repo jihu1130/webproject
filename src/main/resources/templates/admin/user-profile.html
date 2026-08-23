@@ -135,6 +135,26 @@
                 </a>
             </div>
         </div>
+
+        <!-- 수정사항.md 지적 - "작성 댓글 N"이라는 통계만 있고 그 목록을 볼 방법이 없었다.
+             "최근 작성 게시글" 섹션과 완전히 동일한 구조로 복제, 댓글은 부모 게시글 상세의
+             앵커(#comment-{id})로 이동한다(comment-list.html이 이미 쓰는 패턴). -->
+        <div class="admin-report-section" style="margin-top: 20px;">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-comment"></i> 최근 작성 댓글</h3>
+
+            <div th:if="${#lists.isEmpty(profile.recentComments)}" class="post-comment-empty">작성한 댓글이 없어요.</div>
+
+            <div class="admin-report-list" th:unless="${#lists.isEmpty(profile.recentComments)}">
+                <a class="admin-report-item admin-table-title" style="display: block;" th:each="comment : ${profile.recentComments}"
+                   th:href="@{'/admin/posts/' + ${comment.postId} + '#comment-' + ${comment.id}}">
+                    <div class="admin-report-item-header">
+                        <span class="post-comment-time" th:text="${comment.createdAt}">날짜</span>
+                    </div>
+                    <div th:text="${comment.content}">댓글 내용</div>
+                    <div class="page-sub" style="margin: 2px 0 0;" th:text="'글: ' + ${comment.postTitle}">글 제목</div>
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 

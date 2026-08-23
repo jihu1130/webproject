@@ -6,6 +6,8 @@ import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.post.domain.Post;
+import com.webschool.webschool.post.domain.PostComment;
+import com.webschool.webschool.user.dto.AdminUserProfileCommentDto;
 import com.webschool.webschool.user.dto.AdminUserProfileDto;
 import com.webschool.webschool.user.dto.AdminUserProfilePostDto;
 import com.webschool.webschool.user.dto.AdminUserSummaryDto;
@@ -60,10 +62,13 @@ public class AdminUserService {
         return false;
     }
 
-    // 총관리자 전용 "관리자 권한 관리" 페이지 - 관리자 계정(총관리자 포함)만 추려서 보여준다
+    // 총관리자 전용 "관리자 권한 관리" 페이지 - 관리자 계정(총관리자 포함)만 추려서 보여준다.
+    // 수정사항.md 지적 - 탈퇴한 계정(로그인 자체가 불가능)도 이 화면에 여전히 권한 토글 대상으로
+    // 나타나서 "이 계정도 권한을 만질 수 있네?"라는 혼란을 줬다.
     public List<AdminUserSummaryDto> getAllAdmins() {
         return userRepository.findAllByOrderByIdAsc().stream()
                 .filter(User::isAdmin)
+                .filter(u -> !u.isDeleted())
                 .map(this::toSummaryDto)
                 .collect(Collectors.toList());
     }
@@ -75,6 +80,11 @@ public class AdminUserService {
         List<AdminUserProfilePostDto> recentPosts = postRepository
                 .findTop5ByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(id).stream()
                 .map(this::toProfilePostDto)
+                .collect(Collectors.toList());
+
+        List<AdminUserProfileCommentDto> recentComments = postCommentRepository
+                .findTop5ByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(id).stream()
+                .map(this::toProfileCommentDto)
                 .collect(Collectors.toList());
 
         return AdminUserProfileDto.builder()
@@ -96,6 +106,7 @@ public class AdminUserService {
                 .postCount(postRepository.countByAuthor_IdAndDeletedFalse(id))
                 .commentCount(postCommentRepository.countByAuthor_IdAndDeletedFalse(id))
                 .recentPosts(recentPosts)
+                .recentComments(recentComments)
                 .penalties(userPenaltyService.getHistory(id))
                 .build();
     }
@@ -251,6 +262,16 @@ public class AdminUserService {
                 .title(post.getTitle())
                 .categoryLabel(post.getCategory().getLabel())
                 .createdAt(post.getCreatedAt().format(DISPLAY_FORMAT))
+                .build();
+    }
+
+    private AdminUserProfileCommentDto toProfileCommentDto(PostComment comment) {
+        return AdminUserProfileCommentDto.builder()
+                .id(comment.getId())
+                .content(comment.getContent())
+                .postId(comment.getPost().getId())
+                .postTitle(comment.getPost().getTitle())
+                .createdAt(comment.getCreatedAt().format(DISPLAY_FORMAT))
                 .build();
     }
 }

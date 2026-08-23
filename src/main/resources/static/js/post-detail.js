@@ -56,7 +56,8 @@ document.addEventListener('DOMContentLoaded', function () {
             // 버그수정 프롬포트 요청 - 아이콘 전용 버튼에 title만 있고 aria-label이 없어서 스크린리더
             // 사용자에게 "버튼"으로만 들렸다. title과 동일한 문구를 aria-label로도 명시한다.
             var acceptLabel = c.accepted ? '채택 취소' : '답변으로 채택';
-            var acceptBtnHtml = (isQnaPost && isPostAuthor && !c.blind)
+            // 수정사항.md 지적 - 질문자가 자기 자신의 댓글도 채택할 수 있었다(!c.mine으로 차단)
+            var acceptBtnHtml = (isQnaPost && isPostAuthor && !c.mine && !c.blind)
                 ? '<button type="button" class="post-comment-accept-btn' + (c.accepted ? ' active' : '') + '" title="' +
                   acceptLabel + '" aria-label="' + acceptLabel + '"><i class="fa-solid fa-check"></i></button>'
                 : '';
@@ -150,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             fetch('/posts/' + postId + '/comments/' + c.id, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, WebSchoolCsrf.headers()),
                 body: 'content=' + encodeURIComponent(newContent)
             })
                 .then(function (res) {
@@ -166,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function deleteComment(id) {
         if (!(await WebSchoolModal.confirm(LABEL + '을 삭제할까요?', { danger: true }))) return;
 
-        fetch('/posts/' + postId + '/comments/' + id, { method: 'DELETE' })
+        fetch('/posts/' + postId + '/comments/' + id, { method: 'DELETE', headers: WebSchoolCsrf.headers() })
             .then(function (res) {
                 if (!res.ok) throw new Error('삭제 실패');
                 loadComments();
@@ -185,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         fetch('/posts/' + postId + '/comments/' + id + '/report', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, WebSchoolCsrf.headers()),
             body: 'reason=' + encodeURIComponent(reason)
         })
             .then(function (res) {
@@ -226,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         fetch('/users/blocks', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, WebSchoolCsrf.headers()),
             body: body
         })
             .then(function (res) {
@@ -255,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ---- QNA 답변 채택 ----
     function toggleAcceptAnswer(id) {
-        fetch('/posts/' + postId + '/comments/' + id + '/accept', { method: 'POST' })
+        fetch('/posts/' + postId + '/comments/' + id + '/accept', { method: 'POST', headers: WebSchoolCsrf.headers() })
             .then(function (res) {
                 return res.json().then(function (body) {
                     if (!res.ok) throw new Error(body.error || '채택 처리에 실패했습니다.');
@@ -272,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ---- 댓글 좋아요/북마크 ----
     function toggleCommentLike(id, btn) {
-        fetch('/posts/' + postId + '/comments/' + id + '/like', { method: 'POST' })
+        fetch('/posts/' + postId + '/comments/' + id + '/like', { method: 'POST', headers: WebSchoolCsrf.headers() })
             .then(function (res) {
                 if (!res.ok) throw new Error('처리 실패');
                 return res.json();
@@ -287,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function toggleCommentBookmark(id, btn) {
-        fetch('/posts/' + postId + '/comments/' + id + '/bookmark', { method: 'POST' })
+        fetch('/posts/' + postId + '/comments/' + id + '/bookmark', { method: 'POST', headers: WebSchoolCsrf.headers() })
             .then(function (res) {
                 if (!res.ok) throw new Error('처리 실패');
                 return res.json();
@@ -310,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             fetch('/posts/' + postId + '/comments', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, WebSchoolCsrf.headers()),
                 body: 'content=' + encodeURIComponent(content)
             })
                 .then(function (res) {
@@ -341,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             fetch('/posts/' + postId + '/report', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, WebSchoolCsrf.headers()),
                 body: 'reason=' + encodeURIComponent(reason)
             })
                 .then(function (res) {
@@ -370,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var postLikeBtn = document.getElementById('postLikeBtn');
     if (postLikeBtn) {
         postLikeBtn.addEventListener('click', function () {
-            fetch('/posts/' + postId + '/like', { method: 'POST' })
+            fetch('/posts/' + postId + '/like', { method: 'POST', headers: WebSchoolCsrf.headers() })
                 .then(function (res) {
                     if (!res.ok) throw new Error('처리 실패');
                     return res.json();
@@ -388,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var postBookmarkBtn = document.getElementById('postBookmarkBtn');
     if (postBookmarkBtn) {
         postBookmarkBtn.addEventListener('click', function () {
-            fetch('/posts/' + postId + '/bookmark', { method: 'POST' })
+            fetch('/posts/' + postId + '/bookmark', { method: 'POST', headers: WebSchoolCsrf.headers() })
                 .then(function (res) {
                     if (!res.ok) throw new Error('처리 실패');
                     return res.json();

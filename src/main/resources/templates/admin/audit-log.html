@@ -56,11 +56,19 @@
                 <tbody>
                 <tr th:each="log : ${logs}">
                     <td th:text="${log.createdAt}">날짜</td>
-                    <td th:text="${log.adminUsername}">관리자</td>
-                    <td th:text="${log.targetTypeLabel} + ' #' + ${log.targetId}">대상</td>
+                    <td>
+                        <a th:if="${log.adminUserId != null}" th:href="@{'/admin/profiles/' + ${log.adminUserId}}"
+                           class="admin-table-title" th:text="${log.adminUsername}">관리자</a>
+                        <span th:unless="${log.adminUserId != null}" th:text="${log.adminUsername}">관리자</span>
+                    </td>
+                    <td>
+                        <a th:if="${log.targetUrl != null}" th:href="${log.targetUrl}"
+                           class="admin-table-title" th:text="${log.targetTypeLabel} + ' #' + ${log.targetId}">대상</a>
+                        <span th:unless="${log.targetUrl != null}" th:text="${log.targetTypeLabel} + ' #' + ${log.targetId}">대상</span>
+                    </td>
                     <td>
                         <span class="admin-status-badge"
-                              th:classappend="${log.action == 'BLIND' or log.action == 'DELETE' or log.action == 'DEACTIVATE' or log.action == 'DEMOTE'} ? ' admin-status-blind' : ' admin-status-cleared'"
+                              th:classappend="${log.actionBadgeClass}"
                               th:text="${log.actionLabel}">조치</span>
                     </td>
                     <td th:text="${log.detail} ?: '-'">비고</td>

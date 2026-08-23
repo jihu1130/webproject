@@ -38,8 +38,19 @@ public class AuthController {
     // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
 
+    // 수정사항.md 지적 - 이미 로그인된 상태에서 /login·/register에 직접 들어가면(주소창 입력,
+    // 즐겨찾기, 뒤로가기) 네비바는 로그인 상태를 보여주면서 그 아래에 로그인/회원가입 폼이
+    // 또 뜨는 문제가 있었다. 인증된 사용자는 두 페이지 모두 홈으로 돌려보낸다.
+    private boolean isAuthenticated(Authentication authentication) {
+        return authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal());
+    }
+
     @GetMapping("/login")
-    public String loginPage(Model model) {
+    public String loginPage(Model model, Authentication authentication) {
+        if (isAuthenticated(authentication)) {
+            return "redirect:/";
+        }
         model.addAttribute("googleLoginEnabled", clientRegistrationRepositoryProvider.getIfAvailable() != null);
         return "user/login";
     }
@@ -179,7 +190,10 @@ public class AuthController {
     }
 
     @GetMapping("/register")
-    public String registerPage(Model model) {
+    public String registerPage(Model model, Authentication authentication) {
+        if (isAuthenticated(authentication)) {
+            return "redirect:/";
+        }
         model.addAttribute("registerDto", new RegisterDto());
         model.addAttribute("googleLoginEnabled", clientRegistrationRepositoryProvider.getIfAvailable() != null);
         return "user/register";

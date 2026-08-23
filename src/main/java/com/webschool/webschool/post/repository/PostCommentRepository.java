@@ -59,6 +59,10 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
     // 관리자용: 계정 프로필 화면 - 작성 댓글 수
     long countByAuthor_IdAndDeletedFalse(Long authorId);
 
+    // 관리자용: 계정 프로필 화면 - 최근 작성 댓글 5개(PostRepository.findTop5ByAuthor_Id...와 동일 패턴).
+    // 수정사항.md 지적 - "작성 댓글 N"이라는 통계는 있는데 정작 그 댓글 목록을 볼 방법이 없었다.
+    List<PostComment> findTop5ByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(Long authorId);
+
     // 마이페이지("내 활동내역")용 - 본인이 작성한 댓글 목록 (검색어 필터링은 메모리에서 처리)
     List<PostComment> findByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(Long authorId);
 

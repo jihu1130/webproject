@@ -27,5 +27,6 @@ public class AdminUserProfileDto {
     private long postCount;
     private long commentCount;
     private List<AdminUserProfilePostDto> recentPosts;
+    private List<AdminUserProfileCommentDto> recentComments;
     private List<UserPenaltyDto> penalties;
 }

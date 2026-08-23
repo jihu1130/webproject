@@ -29,6 +29,14 @@
             <span class="mypage-role-badge"
                   th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'}"
                   th:text="'부관리자'">부관리자</span>
+            <!-- 수정사항.md 지적 - 신고/게시글/한마디/공지 권한을 전부 회수당한 부관리자도 여기선
+                 계속 "부관리자"로만 보여서 실제 권한이 하나도 없다는 걸 본인이 알 방법이 없었다.
+                 admin-permissions.html이 관리자 목록에서 이미 쓰는 것과 동일한 조건. -->
+            <span class="mypage-role-badge"
+                  th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'
+                          and !loginUser.canManageReports and !loginUser.canManagePosts
+                          and !loginUser.canManageScheduleComments and !loginUser.canManageNotices}"
+                  th:text="'권한 없음'">권한 없음</span>
             <span class="mypage-role-badge"
                   th:if="${loginUser == null or loginUser.role == null or loginUser.role.name() == 'ROLE_USER'}"
                   th:text="'학생'">학생</span>
