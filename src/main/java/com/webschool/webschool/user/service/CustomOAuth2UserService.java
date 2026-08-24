@@ -51,6 +51,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User user = userRepository.findByProviderAndProviderId(User.Provider.GOOGLE, providerId)
                 .orElseGet(() -> createGoogleUser(providerId, email, name));
 
+        // 이메일 필드가 생기기 전에 가입한 기존 구글 계정 백필 - 구글이 이미 이 이메일의 소유권을
+        // 검증했으므로 별도 인증 메일 없이 바로 인증됨으로 채운다. 다른 계정이 그 사이 같은 이메일을
+        // 선점했으면(극히 드문 경우) 조용히 건너뛰고, EmailSetupInterceptor가 다음 요청에서 안내한다.
+        if (user.needsEmailSetup() && email != null && !email.isBlank()
+                && !userRepository.existsByEmail(email)) {
+            user.setEmail(email);
+            user.setEmailVerified(true);
+        }
+
         // 폼 로그인(CustomUserDetailsService)과 동일한 로그인 차단 조건 - 여기서 빠뜨리면 총관리자가
         // 계정을 정지/탈퇴 처리해도 구글 로그인으로는 그대로 들어와지는 구멍이 생긴다.
         if (user.isDeleted() || !user.isActive() || userPenaltyService.isDeactivated(user.getId())) {
@@ -79,6 +88,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.setProvider(User.Provider.GOOGLE);
         user.setProviderId(providerId);
         user.setRole(User.Role.ROLE_USER);
+        // 구글이 이미 이 이메일의 소유권을 검증했으므로 별도 인증 메일 없이 바로 인증됨 처리
+        if (email != null && !email.isBlank() && !userRepository.existsByEmail(email)) {
+            user.setEmail(email);
+            user.setEmailVerified(true);
+        }
         return userRepository.save(user);
     }
 

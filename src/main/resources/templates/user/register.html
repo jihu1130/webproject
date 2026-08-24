@@ -54,6 +54,11 @@
                     <label>별명 (선택)</label>
                     <input type="text" th:field="*{nickname}" placeholder="비워두면 아이디가 별명이 돼요">
                 </div>
+                <div class="auth-field">
+                    <label>이메일</label>
+                    <input type="email" th:field="*{email}" placeholder="example@email.com" required>
+                    <div class="auth-check-msg">비밀번호를 잊었을 때 계정을 복구하는 데 사용돼요.</div>
+                </div>
 
                 <hr class="auth-section-divider">
                 <p class="auth-section-label"><i class="fa-solid fa-school"></i> 우리 학교 설정 (필수)</p>

@@ -36,6 +36,11 @@
                     <label>별명</label>
                     <input type="text" th:field="*{nickname}" placeholder="비워두면 아이디가 별명이 돼요">
                 </div>
+                <div class="auth-field">
+                    <label>이메일</label>
+                    <input type="email" th:field="*{email}" placeholder="example@email.com" required>
+                    <div class="auth-check-msg">이메일을 바꾸면 새 주소로 다시 인증해야 해요.</div>
+                </div>
 
                 <hr class="auth-section-divider">
                 <p class="auth-section-label"><i class="fa-solid fa-key"></i> 비밀번호 변경 (선택)</p>

@@ -178,6 +178,19 @@
 }
 
 .mypage-alert-success { background: #dcfce7; color: #15803d; }
+.mypage-alert-danger { background: #fee2e2; color: #b91c1c; }
+
+.mypage-resend-form { text-align: right; margin: -8px 0 12px; }
+.mypage-resend-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--brand-1);
+    cursor: pointer;
+}
+.mypage-resend-btn:hover { text-decoration: underline; }
 
 .mypage-edit-btn {
     display: flex;

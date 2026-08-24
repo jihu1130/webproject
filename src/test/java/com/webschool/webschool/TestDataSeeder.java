@@ -89,6 +89,7 @@ class TestDataSeeder {
         dto.setPassword(username);
         dto.setConfirmPassword(username);
         dto.setNickname(username);
+        dto.setEmail(username + "@test.local");
         dto.setSchoolName(SCHOOL_NAME);
         dto.setSchoolCode(SCHOOL_CODE);
         dto.setAtptCode(ATPT_CODE);
@@ -126,6 +127,7 @@ class TestDataSeeder {
             dto.setPassword(ADMIN_PASSWORD);
             dto.setConfirmPassword(ADMIN_PASSWORD);
             dto.setNickname(ADMIN_USERNAME);
+            dto.setEmail(ADMIN_USERNAME + "@test.local");
             dto.setSchoolName(SCHOOL_NAME);
             dto.setSchoolCode(SCHOOL_CODE);
             dto.setAtptCode(ATPT_CODE);

@@ -32,6 +32,15 @@
             <div th:if="${param.accountDeleted}" class="auth-alert auth-alert-success">
                 계정이 삭제되었습니다. 그동안 이용해주셔서 감사합니다.
             </div>
+            <div th:if="${param.reset}" class="auth-alert auth-alert-success">
+                비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.
+            </div>
+            <div th:if="${param.verified}" class="auth-alert auth-alert-success">
+                이메일 인증이 완료되었습니다.
+            </div>
+            <div th:if="${param.verifyError}" class="auth-alert auth-alert-danger">
+                인증 링크가 유효하지 않거나 만료되었습니다.
+            </div>
 
             <a href="/oauth2/authorization/google" class="auth-google-btn" th:if="${googleLoginEnabled}">
                 <i class="fa-brands fa-google"></i> 구글 계정으로 로그인
@@ -50,6 +59,7 @@
                 <button type="submit" class="btn btn-brand auth-submit">로그인</button>
             </form>
 
+            <div class="auth-footer"><a href="/find-username">아이디 찾기</a> · <a href="/forgot-password">비밀번호 찾기</a></div>
             <div class="auth-footer">계정이 없으신가요? <a href="/register">회원가입</a></div>
         </div>
     </div>

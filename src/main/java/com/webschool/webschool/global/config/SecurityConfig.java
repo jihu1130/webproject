@@ -35,7 +35,9 @@ public class SecurityConfig {
                         .requestMatchers("/", "/register", "/login", "/oauth2/**", "/login/oauth2/**",
                                 "/css/**", "/js/**", "/images/**", "/uploads/**",
                                 "/api/users/check-username", "/school/api/search", "/school/api/classes",
-                                "/actuator/health").permitAll()
+                                "/actuator/health",
+                                "/find-username", "/forgot-password", "/reset-password", "/verify-email")
+                        .permitAll()
                         // 게시물 작성/수정/삭제/신고는 로그인 필요, 목록/상세/댓글 조회는 누구나 가능
                         .requestMatchers(HttpMethod.GET, "/posts/new", "/posts/*/edit").authenticated()
                         .requestMatchers(HttpMethod.GET, "/posts", "/posts/*", "/posts/*/comments").permitAll()

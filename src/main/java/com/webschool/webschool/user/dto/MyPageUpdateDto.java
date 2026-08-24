@@ -7,6 +7,7 @@ import lombok.Setter;
 public class MyPageUpdateDto {
     private String username;
     private String nickname;
+    private String email;
     private String newPassword;
     private String confirmNewPassword;
     private String schoolName;

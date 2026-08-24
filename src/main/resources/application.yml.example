@@ -71,3 +71,4 @@ neis:
 app:
   upload:
     dir: ../uploads # 프로젝트 폴더(webproject-main/webproject-main) 밖, 게시글 이미지 저장 위치
+  base-url: http://localhost:8888 # 이메일 인증/비밀번호 재설정 링크에 붙는 주소 - 배포 후 실제 도메인으로 교체

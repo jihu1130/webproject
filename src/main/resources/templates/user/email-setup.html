@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이메일 등록 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+</head>
+<body class="auth-body">
+
+<div th:replace="~{fragments/navbar :: navbar('')}"></div>
+
+<div class="auth-shell">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h3 class="auth-title"><i class="fa-solid fa-envelope"></i> 이메일을 등록해주세요</h3>
+            <p class="auth-subtitle">비밀번호를 잊었을 때 계정을 복구하려면 이메일이 꼭 필요해요.<br>등록을 마치기 전까지는 다른 화면을 이용할 수 없어요.</p>
+
+            <div th:if="${errorMessage}" class="auth-alert auth-alert-danger" th:text="${errorMessage}"></div>
+
+            <form th:action="@{/email-setup}" th:object="${setupDto}" method="post">
+                <div class="auth-field">
+                    <label>이메일</label>
+                    <input type="email" th:field="*{email}" placeholder="example@email.com" required>
+                </div>
+                <button type="submit" class="btn btn-brand auth-submit">등록 완료</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

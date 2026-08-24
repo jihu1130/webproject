@@ -50,6 +50,14 @@ public class User {
     @Column(length = 150)
     private String bio; // 남이 보는 내 프로필(/users/{id})에 표시되는 짧은 소개글 (선택 입력)
 
+    @Column(unique = true, length = 100)
+    private String email; // 이메일 인증/비밀번호 찾기용 - 이 필드가 생기기 전 계정은 null(EmailSetupInterceptor가
+    // 다음 로그인 시 입력을 강제한다). 구글 계정은 가입 시점에 구글이 준 값으로 자동 채워진다.
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean emailVerified; // 인증 여부는 강제 게이트가 아니라 마이페이지 배지 표시 용도로만 쓴다
+    // (사용자 확정 정책) - 비밀번호 찾기는 이 값과 무관하게 이메일만 등록돼 있으면 항상 동작한다.
+
     @Enumerated(EnumType.STRING)
     private Role role; // ROLE_USER, ROLE_ADMIN(부관리자), ROLE_SUPER_ADMIN(총관리자 - username="admin" 계정 전용)
 
@@ -85,6 +93,10 @@ public class User {
         return schoolCode == null || schoolCode.isBlank()
                 || grade == null || grade.isBlank()
                 || classNum == null || classNum.isBlank();
+    }
+
+    public boolean needsEmailSetup() {
+        return email == null || email.isBlank();
     }
 
     public boolean isSuperAdmin() {

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아이디 찾기 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+</head>
+<body class="auth-body">
+
+<div th:replace="~{fragments/navbar :: navbar('login')}"></div>
+
+<div class="auth-shell">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h3 class="auth-title">아이디 찾기</h3>
+            <p class="auth-subtitle">가입할 때 등록한 이메일을 입력하시면 아이디를 보내드려요.</p>
+
+            <div th:if="${param.sent}" class="auth-alert auth-alert-success">
+                입력하신 이메일로 안내를 보냈습니다. 가입 시 등록한 이메일이 아니라면 도착하지 않을 수 있어요.
+            </div>
+
+            <form th:action="@{/find-username}" method="post">
+                <div class="auth-field">
+                    <label>이메일</label>
+                    <input type="email" name="email" placeholder="가입 시 등록한 이메일" required>
+                </div>
+                <button type="submit" class="btn btn-brand auth-submit">아이디 찾기</button>
+            </form>
+
+            <div class="auth-footer">
+                <a href="/forgot-password">비밀번호 찾기</a> · <a href="/login">로그인으로 돌아가기</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

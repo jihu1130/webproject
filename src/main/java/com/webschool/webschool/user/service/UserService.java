@@ -1,6 +1,9 @@
 package com.webschool.webschool.user.service;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
+import com.webschool.webschool.global.mail.MailService;
+import com.webschool.webschool.user.domain.EmailToken;
+import com.webschool.webschool.user.dto.EmailSetupDto;
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
 import com.webschool.webschool.user.dto.RegisterDto;
 import com.webschool.webschool.user.dto.SchoolSetupDto;
@@ -19,10 +22,13 @@ import java.util.regex.Pattern;
 public class UserService {
 
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9]+$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AdminActionLogService adminActionLogService;
+    private final EmailTokenService emailTokenService;
+    private final MailService mailService;
 
     public boolean isUsernameAvailable(String username) {
         return !userRepository.existsByUsername(username);
@@ -47,6 +53,14 @@ public class UserService {
             throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
         }
 
+        String email = dto.getEmail() == null ? "" : dto.getEmail().trim();
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+
         if (dto.getSchoolName() == null || dto.getSchoolName().isBlank()
                 || dto.getSchoolCode() == null || dto.getSchoolCode().isBlank()) {
             throw new IllegalArgumentException("목록에서 학교를 검색하여 선택해주세요.");
@@ -66,6 +80,7 @@ public class UserService {
         user.setUsername(dto.getUsername());
         user.setPassword(passwordEncoder.encode(dto.getPassword())); // BCrypt 암호화
         user.setNickname(nickname);
+        user.setEmail(email);
         user.setSchoolName(dto.getSchoolName());
         user.setSchoolCode(dto.getSchoolCode());
         user.setAtptCode(dto.getAtptCode());
@@ -79,6 +94,20 @@ public class UserService {
         // 5-arg 오버로드로 실제 가입자 아이디를 직접 넘긴다.
         adminActionLogService.log("USER", saved.getId(), "REGISTER",
                 saved.getUsername() + " (" + saved.getSchoolName() + ")", saved.getUsername());
+
+        sendVerification(saved);
+    }
+
+    // 이메일 인증은 강제 게이트가 아니라서(사용자 확정 정책) 여기서 실패해도 가입/설정 자체는
+    // 그대로 성공해야 한다 - MailService가 SMTP 미설정 시 조용히 스킵하지만, 혹시 모를 다른 예외까지
+    // 가입 흐름을 막지 않도록 한 번 더 방어한다.
+    private void sendVerification(User user) {
+        try {
+            String token = emailTokenService.issue(user, EmailToken.Purpose.VERIFY_EMAIL);
+            mailService.sendVerificationLink(user, token);
+        } catch (Exception e) {
+            // 메일 발송 실패는 가입 자체를 막을 이유가 아니다 - 미인증 상태로 남고 나중에 재발송하면 됨.
+        }
     }
 
     /**
@@ -135,6 +164,20 @@ public class UserService {
         String nickname = dto.getNickname();
         user.setNickname((nickname == null || nickname.isBlank()) ? user.getUsername() : nickname.trim());
 
+        String newEmail = dto.getEmail() == null ? "" : dto.getEmail().trim();
+        if (!EMAIL_PATTERN.matcher(newEmail).matches()) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
+        if (!newEmail.equals(user.getEmail())) {
+            if (userRepository.existsByEmail(newEmail)) {
+                throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            }
+            user.setEmail(newEmail);
+            user.setEmailVerified(false); // 이메일이 바뀌었으니 새 주소로 다시 인증해야 함
+            sendVerification(user);
+            adminActionLogService.log("USER", user.getId(), "EMAIL_CHANGE", newEmail);
+        }
+
         user.setSchoolName(dto.getSchoolName());
         user.setSchoolCode(dto.getSchoolCode());
         user.setAtptCode(dto.getAtptCode());
@@ -169,6 +212,72 @@ public class UserService {
         user.setGrade(dto.getGrade());
         user.setClassNum(dto.getClassNum());
         adminActionLogService.log("USER", user.getId(), "SCHOOL_SETUP", dto.getSchoolName());
+    }
+
+    // 이메일 필드가 생기기 전에 만들어진 기존 계정(admin, user1~5 등)이 다음 로그인 시
+    // EmailSetupInterceptor에 의해 강제로 도착하는 화면 - 이메일만 다룬다(아이디/비번/닉네임은
+    // updateProfile()의 책임).
+    @Transactional
+    public void setupEmail(String username, EmailSetupDto dto) {
+        User user = getByUsername(username);
+
+        String email = dto.getEmail() == null ? "" : dto.getEmail().trim();
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+
+        user.setEmail(email);
+        user.setEmailVerified(false);
+        adminActionLogService.log("USER", user.getId(), "EMAIL_SETUP", email);
+        sendVerification(user);
+    }
+
+    @Transactional
+    public void resendVerification(String username) {
+        User user = getByUsername(username);
+        if (user.isEmailVerified() || user.needsEmailSetup()) {
+            return; // 이미 인증됐거나 등록된 이메일이 없으면 보낼 것이 없음
+        }
+        sendVerification(user);
+    }
+
+    @Transactional
+    public void verifyEmail(String token) {
+        User user = emailTokenService.consume(token, EmailToken.Purpose.VERIFY_EMAIL);
+        user.setEmailVerified(true);
+    }
+
+    // 이메일 존재 여부와 무관하게 항상 같은 결과로 보이도록(계정 열거 방지), 실제 매칭 실패는
+    // 여기서 조용히 무시하고 컨트롤러는 이 메서드 성공/실패와 상관없이 같은 안내 문구를 보여준다.
+    @Transactional
+    public void requestPasswordReset(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            if (user.getProvider() == User.Provider.GOOGLE) {
+                mailService.sendGoogleAccountNotice(user);
+                return;
+            }
+            String token = emailTokenService.issue(user, EmailToken.Purpose.RESET_PASSWORD);
+            mailService.sendPasswordResetLink(user, token);
+        });
+    }
+
+    @Transactional
+    public void requestUsernameReminder(String email) {
+        userRepository.findByEmail(email).ifPresent(mailService::sendUsernameReminder);
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword, String confirmNewPassword) {
+        if (newPassword == null || newPassword.isBlank() || !newPassword.equals(confirmNewPassword)) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+        User user = emailTokenService.consume(token, EmailToken.Purpose.RESET_PASSWORD);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        // 비로그인 상태에서 일어나는 조치라 actorUsername을 직접 넘긴다(register()와 동일한 이유).
+        adminActionLogService.log("USER", user.getId(), "PASSWORD_RESET", null, user.getUsername());
     }
 
     // "내 프로필 설정" - 남이 보는 프로필(/users/{id})에 노출되는 소개글만 다루는 가벼운 수정.

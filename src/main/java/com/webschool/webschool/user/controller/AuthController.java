@@ -1,9 +1,12 @@
 package com.webschool.webschool.user.controller;
 
+import com.webschool.webschool.user.dto.EmailSetupDto;
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
 import com.webschool.webschool.user.dto.RegisterDto;
 import com.webschool.webschool.user.dto.SchoolSetupDto;
+import com.webschool.webschool.user.domain.EmailToken;
 import com.webschool.webschool.user.domain.User;
+import com.webschool.webschool.user.service.EmailTokenService;
 import com.webschool.webschool.user.service.MyActivityService;
 import com.webschool.webschool.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +39,7 @@ public class AuthController {
     private final UserService userService;
     private final UserDetailsService userDetailsService;
     private final MyActivityService myActivityService;
+    private final EmailTokenService emailTokenService;
     // 구글 OAuth 클라이언트 등록(client-id/secret)이 안 돼 있으면 이 빈 자체가 없다(SecurityConfig
     // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
@@ -71,6 +75,7 @@ public class AuthController {
         MyPageUpdateDto dto = new MyPageUpdateDto();
         dto.setUsername(user.getUsername());
         dto.setNickname(user.getNickname());
+        dto.setEmail(user.getEmail());
         dto.setSchoolName(user.getSchoolName());
         dto.setSchoolCode(user.getSchoolCode());
         dto.setAtptCode(user.getAtptCode());
@@ -115,6 +120,7 @@ public class AuthController {
             MyPageUpdateDto dto = new MyPageUpdateDto();
             dto.setUsername(user.getUsername());
             dto.setNickname(user.getNickname());
+            dto.setEmail(user.getEmail());
             dto.setSchoolName(user.getSchoolName());
             dto.setSchoolCode(user.getSchoolCode());
             dto.setAtptCode(user.getAtptCode());
@@ -175,6 +181,92 @@ public class AuthController {
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
             return "user/school-setup";
+        }
+    }
+
+    // 이메일 필드가 생기기 전에 만들어진 기존 계정이 다음 로그인 시 EmailSetupInterceptor에 의해
+    // 강제로 도착하는 화면.
+    @GetMapping("/email-setup")
+    public String emailSetupForm(Model model) {
+        model.addAttribute("setupDto", new EmailSetupDto());
+        return "user/email-setup";
+    }
+
+    @PostMapping("/email-setup")
+    public String emailSetupSubmit(@ModelAttribute("setupDto") EmailSetupDto dto,
+                                    Authentication authentication, Model model) {
+        try {
+            userService.setupEmail(authentication.getName(), dto);
+            return "redirect:/";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "user/email-setup";
+        }
+    }
+
+    // 이메일 인증 링크 - 로그인 여부와 무관하게 동작(다른 기기에서 열 수도 있음).
+    @GetMapping("/verify-email")
+    public String verifyEmail(@RequestParam String token, Authentication authentication) {
+        String target = isAuthenticated(authentication) ? "/mypage" : "/login";
+        try {
+            userService.verifyEmail(token);
+            return "redirect:" + target + "?verified=true";
+        } catch (IllegalArgumentException e) {
+            return "redirect:" + target + "?verifyError=true";
+        }
+    }
+
+    @PostMapping("/mypage/resend-verification")
+    public String resendVerification(Authentication authentication) {
+        userService.resendVerification(authentication.getName());
+        return "redirect:/mypage?resent=true";
+    }
+
+    // 아이디 찾기 - 계정 존재 여부와 무관하게 항상 같은 안내를 보여준다(계정 열거 방지).
+    @GetMapping("/find-username")
+    public String findUsernameForm() {
+        return "user/find-username";
+    }
+
+    @PostMapping("/find-username")
+    public String findUsernameSubmit(@RequestParam String email) {
+        userService.requestUsernameReminder(email.trim());
+        return "redirect:/find-username?sent=true";
+    }
+
+    // 비밀번호 찾기 - 마찬가지로 계정 존재 여부와 무관하게 항상 같은 안내.
+    @GetMapping("/forgot-password")
+    public String forgotPasswordForm() {
+        return "user/forgot-password";
+    }
+
+    @PostMapping("/forgot-password")
+    public String forgotPasswordSubmit(@RequestParam String email) {
+        userService.requestPasswordReset(email.trim());
+        return "redirect:/forgot-password?sent=true";
+    }
+
+    @GetMapping("/reset-password")
+    public String resetPasswordForm(@RequestParam String token, Model model) {
+        try {
+            emailTokenService.peek(token, EmailToken.Purpose.RESET_PASSWORD);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/forgot-password?tokenError=true";
+        }
+        model.addAttribute("token", token);
+        return "user/reset-password";
+    }
+
+    @PostMapping("/reset-password")
+    public String resetPasswordSubmit(@RequestParam String token, @RequestParam String newPassword,
+                                       @RequestParam String confirmNewPassword, Model model) {
+        try {
+            userService.resetPassword(token, newPassword, confirmNewPassword);
+            return "redirect:/login?reset=true";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("token", token);
+            return "user/reset-password";
         }
     }
 
