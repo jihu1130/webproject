@@ -1,6 +1,7 @@
 package com.webschool.webschool.user.service;
 
 import com.webschool.webschool.post.domain.Post;
+import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.user.dto.PublicUserProfileDto;
 import com.webschool.webschool.user.dto.PublicUserProfilePostDto;
@@ -26,6 +27,7 @@ public class UserProfileService {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final PostCommentRepository postCommentRepository;
 
     public PublicUserProfileDto getProfile(Long userId, int page) {
         User user = userRepository.findById(userId)
@@ -48,6 +50,8 @@ public class UserProfileService {
                 .nickname(user.getNickname())
                 .bio(user.getBio())
                 .postCount(posts.getTotalElements())
+                .commentCount(postCommentRepository.countByAuthor_IdAndDeletedFalse(userId))
+                .likeCount(postRepository.sumLikeCountByAuthor_Id(userId))
                 .posts(posts)
                 .build();
     }

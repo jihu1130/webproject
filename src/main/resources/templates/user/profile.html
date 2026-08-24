@@ -22,7 +22,7 @@
         <a href="/posts" class="post-list-back"><i class="fa-solid fa-arrow-left"></i> 커뮤니티로</a>
 
         <div class="post-detail-card">
-            <div class="profile-card-head">
+            <div class="profile-card-head profile-card-head-center">
                 <div class="profile-card-avatar profile-card-avatar-user"
                      th:text="${#strings.isEmpty(profile.nickname)} ? '?' : ${#strings.substring(profile.nickname, 0, 1)}">?</div>
                 <div class="profile-card-identity">
@@ -33,11 +33,26 @@
             <div class="profile-card-stats">
                 <div class="profile-card-stat">
                     <strong th:text="${profile.postCount}">0</strong>
-                    <span>작성 게시글</span>
+                    <span>게시글</span>
+                </div>
+                <div class="profile-card-stat">
+                    <strong th:text="${profile.commentCount}">0</strong>
+                    <span>댓글</span>
+                </div>
+                <div class="profile-card-stat">
+                    <strong th:text="${profile.likeCount}">0</strong>
+                    <span>받은 좋아요</span>
                 </div>
             </div>
 
-            <p class="profile-bio" th:if="${profile.bio != null and !#strings.isEmpty(profile.bio)}" th:text="${profile.bio}">소개글</p>
+            <div class="profile-card-bio-box">
+                <div class="profile-card-bio-header" th:text="${profile.nickname} + ' 소개글'">소개글</div>
+                <p class="profile-card-bio-text"
+                   th:if="${profile.bio != null and !#strings.isEmpty(profile.bio)}" th:text="${profile.bio}">소개글</p>
+                <p class="profile-card-bio-text profile-card-bio-empty"
+                   th:unless="${profile.bio != null and !#strings.isEmpty(profile.bio)}">아직 작성한 소개글이 없어요.</p>
+            </div>
+
             <p class="page-sub" style="margin: 4px 0 0;">이 사람이 작성한 게시글이에요 (익명으로 쓴 글은 포함되지 않아요)</p>
 
             <!-- 버그수정 프롬포트 요청 - 예전엔 차단 버튼이 게시글/댓글 안에 인라인으로만 있어서

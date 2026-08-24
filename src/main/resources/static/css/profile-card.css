@@ -190,6 +190,31 @@ a.admin-profile-stat:hover { filter: brightness(1.35); transform: translateY(-1p
 }
 .profile-card-audit-link:hover { text-decoration: underline; }
 
+/* 소개글 박스 - 마이페이지(.mypage-profile-box)와 같은 스타일을 공개 프로필에서도 쓴다.
+   공개 프로필은 읽기 전용이라 수정 아이콘 자리만 없다(마이페이지 헤더 구조를 그대로 재사용). */
+.profile-card-bio-box {
+    text-align: left;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin: 4px 0 16px;
+}
+.profile-card-bio-header {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--ink);
+    margin-bottom: 8px;
+}
+.profile-card-bio-text {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.profile-card-bio-text.profile-card-bio-empty { color: var(--muted); font-style: italic; }
+
 /* 공개 프로필(/users/{id}) - 차단 버튼을 카드 우측 상단으로 옮겨 톤을 낮춘다(자주 쓰는
    기능이 아니라 "메인 액션"처럼 눈에 띄지 않게). 부모(.post-detail-card)는 이미
    position: relative가 걸려있다(post.css의 그라디언트 바 트릭). */

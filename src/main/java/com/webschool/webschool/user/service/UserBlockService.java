@@ -103,6 +103,7 @@ public class UserBlockService {
                 .createdAt(b.getCreatedAt().format(DISPLAY_FORMAT))
                 .expiresAt(b.getExpiresAt() != null ? b.getExpiresAt().format(DISPLAY_FORMAT) : null)
                 .permanent(b.getExpiresAt() == null)
+                .userDeleted(b.getBlocked().isDeleted())
                 .build();
     }
 }

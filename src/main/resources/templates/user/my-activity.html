@@ -89,10 +89,10 @@
 
             <ul class="post-list" th:unless="${comments.empty}">
                 <li class="post-list-item my-activity-comment-item" th:each="comment : ${comments}">
-                    <div class="my-activity-comment-body">
+                    <a th:href="@{'/posts/' + ${comment.postUuid}}" class="post-list-link my-activity-comment-body">
                         <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
                         <span th:text="${comment.content}">댓글 내용</span>
-                    </div>
+                    </a>
                     <span class="post-list-meta">
                         <a th:href="@{'/posts/' + ${comment.postUuid}}" class="post-list-title" th:text="${comment.postTitle}">게시글 제목</a>
                         <span class="post-list-date" th:text="${comment.createdAt}">날짜</span>
@@ -126,13 +126,13 @@
 
             <ul class="post-list" th:unless="${scheduleComments.empty}">
                 <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleComments}">
-                    <div class="my-activity-comment-body">
+                    <a th:href="@{'/school/comments/' + ${comment.id}}" class="post-list-link my-activity-comment-body">
                         <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
                         <span th:text="${comment.content}">한마디 내용</span>
-                    </div>
+                    </a>
                     <span class="post-list-meta">
-                        <span class="post-list-title"
-                              th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</span>
+                        <a class="post-list-title" th:href="@{'/school/comments/' + ${comment.id}}"
+                           th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</a>
                         <span class="post-list-date" th:text="${comment.createdAt}">작성일</span>
                         <form th:action="@{'/mypage/activity/schedule/' + ${comment.id} + '/delete'}" method="post" class="my-activity-delete-form"
                               data-confirm="이 한마디를 삭제할까요?" data-confirm-danger="true">
@@ -209,10 +209,10 @@
 
                 <ul class="post-list" th:unless="${commentLikes.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${commentLikes}">
-                        <div class="my-activity-comment-body">
+                        <a th:href="@{'/posts/' + ${comment.postUuid}}" class="post-list-link my-activity-comment-body">
                             <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
                             <span th:text="${comment.content}">댓글 내용</span>
-                        </div>
+                        </a>
                         <span class="post-list-meta">
                             <a th:href="@{'/posts/' + ${comment.postUuid}}" class="post-list-title" th:text="${comment.postTitle}">게시글 제목</a>
                             <span class="post-list-date" th:text="${comment.createdAt}">날짜</span>
@@ -246,13 +246,13 @@
 
                 <ul class="post-list" th:unless="${scheduleLikes.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleLikes}">
-                        <div class="my-activity-comment-body">
+                        <a th:href="@{'/school/comments/' + ${comment.id}}" class="post-list-link my-activity-comment-body">
                             <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
                             <span th:text="${comment.content}">한마디 내용</span>
-                        </div>
+                        </a>
                         <span class="post-list-meta">
-                            <span class="post-list-title"
-                                  th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</span>
+                            <a class="post-list-title" th:href="@{'/school/comments/' + ${comment.id}}"
+                               th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</a>
                             <span class="post-list-date" th:text="${comment.createdAt}">작성일</span>
                             <form th:action="@{'/mypage/activity/likes/schedule/' + ${comment.id} + '/remove'}" method="post" class="my-activity-delete-form"
                                   data-confirm="좋아요를 취소할까요?">
@@ -330,10 +330,10 @@
 
                 <ul class="post-list" th:unless="${commentBookmarks.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${commentBookmarks}">
-                        <div class="my-activity-comment-body">
+                        <a th:href="@{'/posts/' + ${comment.postUuid}}" class="post-list-link my-activity-comment-body">
                             <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
                             <span th:text="${comment.content}">댓글 내용</span>
-                        </div>
+                        </a>
                         <span class="post-list-meta">
                             <a th:href="@{'/posts/' + ${comment.postUuid}}" class="post-list-title" th:text="${comment.postTitle}">게시글 제목</a>
                             <span class="post-list-date" th:text="${comment.createdAt}">날짜</span>
@@ -367,13 +367,13 @@
 
                 <ul class="post-list" th:unless="${scheduleBookmarks.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleBookmarks}">
-                        <div class="my-activity-comment-body">
+                        <a th:href="@{'/school/comments/' + ${comment.id}}" class="post-list-link my-activity-comment-body">
                             <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
                             <span th:text="${comment.content}">한마디 내용</span>
-                        </div>
+                        </a>
                         <span class="post-list-meta">
-                            <span class="post-list-title"
-                                  th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</span>
+                            <a class="post-list-title" th:href="@{'/school/comments/' + ${comment.id}}"
+                               th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</a>
                             <span class="post-list-date" th:text="${comment.createdAt}">작성일</span>
                             <form th:action="@{'/mypage/activity/bookmarks/schedule/' + ${comment.id} + '/remove'}" method="post" class="my-activity-delete-form"
                                   data-confirm="북마크를 해제할까요?">
@@ -450,10 +450,10 @@
 
                 <ul class="post-list" th:unless="${commentReports.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${commentReports}">
-                        <div class="my-activity-comment-body">
+                        <a th:href="@{'/posts/' + ${comment.postUuid}}" class="post-list-link my-activity-comment-body">
                             <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
                             <span th:text="${comment.content}">댓글 내용</span>
-                        </div>
+                        </a>
                         <span class="post-list-meta">
                             <a th:href="@{'/posts/' + ${comment.postUuid}}" class="post-list-title" th:text="${comment.postTitle}">게시글 제목</a>
                             <span class="post-list-date" th:text="${comment.createdAt}">날짜</span>
@@ -487,13 +487,13 @@
 
                 <ul class="post-list" th:unless="${scheduleReports.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleReports}">
-                        <div class="my-activity-comment-body">
+                        <a th:href="@{'/school/comments/' + ${comment.id}}" class="post-list-link my-activity-comment-body">
                             <span class="admin-status-badge admin-status-blind" th:if="${comment.blind}">블라인드</span>
                             <span th:text="${comment.content}">한마디 내용</span>
-                        </div>
+                        </a>
                         <span class="post-list-meta">
-                            <span class="post-list-title"
-                                  th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</span>
+                            <a class="post-list-title" th:href="@{'/school/comments/' + ${comment.id}}"
+                               th:text="${comment.targetDate} + ' · ' + ${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">날짜/학교</a>
                             <span class="post-list-date" th:text="${comment.createdAt}">작성일</span>
                             <form th:action="@{'/mypage/activity/reports/schedule/' + ${comment.id} + '/cancel'}" method="post" class="my-activity-delete-form"
                                   data-confirm="신고를 취소할까요?">
@@ -526,7 +526,8 @@
 
             <ul class="post-list" th:unless="${#lists.isEmpty(blocks)}">
                 <li class="post-list-item" th:each="b : ${blocks}">
-                    <span class="post-list-title" th:text="${b.nickname}">닉네임</span>
+                    <a th:if="${!b.userDeleted}" th:href="@{'/users/' + ${b.userId}}" class="post-list-title" th:text="${b.nickname}">닉네임</a>
+                    <span th:unless="${!b.userDeleted}" class="post-list-title" th:text="${b.nickname} + ' (탈퇴함)'">닉네임</span>
                     <span class="post-list-meta">
                         <span th:text="${b.permanent} ? '영구 차단' : (${b.expiresAt} + '까지')">기간</span>
                         <span class="post-list-date" th:text="${b.createdAt} + ' 차단'">차단일</span>
