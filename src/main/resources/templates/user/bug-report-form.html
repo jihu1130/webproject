@@ -25,7 +25,7 @@
             </div>
             <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
 
-            <form th:action="@{/bug-reports/new}" method="post">
+            <form id="bugReportForm" th:action="@{/bug-reports/new}" method="post" enctype="multipart/form-data">
                 <div class="post-field">
                     <label>제목</label>
                     <input type="text" name="title" placeholder="어떤 문제인지 한 줄로 요약해주세요" maxlength="100" th:value="${title}" required>
@@ -43,6 +43,11 @@
                     <label>연락 가능한 이메일 (선택)</label>
                     <input type="email" name="contactEmail" placeholder="확인 후 연락드릴 이메일이 있다면 입력해주세요" maxlength="100" th:value="${contactEmail}">
                 </div>
+                <div class="post-field">
+                    <label>사진/영상 첨부 (선택, 최대 5개)</label>
+                    <input type="file" id="bugReportFileInput" name="files" accept="image/*,video/*" multiple>
+                    <div id="bugReportFilePreview" class="post-image-preview-grid"></div>
+                </div>
 
                 <div class="post-form-actions">
                     <a href="/" class="btn btn-outline-brand">취소</a>
@@ -52,6 +57,9 @@
         </div>
     </div>
 </div>
+
+<script th:src="@{/js/modal.js}"></script>
+<script th:src="@{/js/bug-report-form.js}"></script>
 
 </body>
 </html>

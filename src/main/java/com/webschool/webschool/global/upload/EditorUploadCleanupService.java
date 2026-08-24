@@ -1,5 +1,6 @@
 package com.webschool.webschool.global.upload;
 
+import com.webschool.webschool.bugreport.repository.BugReportAttachmentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,9 @@ public class EditorUploadCleanupService {
 
     private final PostRepository postRepository;
     private final ScheduleCommentRepository scheduleCommentRepository;
+    // 버그 리포트 첨부(BugReportService)도 이 폴더를 재사용한다 - 본문 텍스트 안에 URL이 박히는
+    // Post/ScheduleComment와 달리 별도 첨부 테이블(url 컬럼)로 참조하므로 정규식 스캔 대신 직접 조회.
+    private final BugReportAttachmentRepository bugReportAttachmentRepository;
 
     @Value("${app.upload.dir}")
     private String uploadDir;
@@ -88,6 +92,7 @@ public class EditorUploadCleanupService {
         Set<String> referenced = new HashSet<>();
         postRepository.findAll().forEach(p -> addReferences(referenced, p.getContent()));
         scheduleCommentRepository.findAll().forEach(c -> addReferences(referenced, c.getContent()));
+        bugReportAttachmentRepository.findAll().forEach(a -> referenced.add(a.getUrl()));
         return referenced;
     }
 

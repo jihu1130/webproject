@@ -8,6 +8,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 // 버그 리포트 제출 - 비로그인 사용자도 제출 가능(SecurityConfig가 permitAll로 열어둠).
 @Controller
@@ -26,11 +29,12 @@ public class BugReportController {
     public String submit(@RequestParam String title, @RequestParam String content,
                           @RequestParam(required = false) String reporterNickname,
                           @RequestParam(required = false) String contactEmail,
+                          @RequestParam(required = false) List<MultipartFile> files,
                           Authentication authentication, Model model) {
         boolean loggedIn = isAuthenticated(authentication);
         try {
             bugReportService.submitReport(loggedIn ? authentication.getName() : null,
-                    title, content, reporterNickname, contactEmail);
+                    title, content, reporterNickname, contactEmail, files);
             return "redirect:/bug-reports/new?submitted=true";
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());

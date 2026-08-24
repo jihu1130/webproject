@@ -45,6 +45,13 @@ public class FileUploadService {
     @Value("${app.upload.dir}")
     private String uploadDir;
 
+    // 버그 리포트 첨부(사진/영상만 허용, 그 외 파일은 여기서 미리 걸러서 store() 자체를 안 태운다)처럼
+    // "이미지/영상만" 제한이 필요한 다른 기능에서 재사용하는 공개 헬퍼.
+    public boolean isImageOrVideoExtension(String filename) {
+        String ext = extensionOf(filename);
+        return IMAGE_EXTENSIONS.contains(ext) || VIDEO_EXTENSIONS.contains(ext);
+    }
+
     public UploadedFileDto store(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("업로드할 파일을 선택해주세요.");

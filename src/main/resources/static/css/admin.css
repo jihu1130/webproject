@@ -207,6 +207,31 @@
     font-size: 0.8rem;
 }
 
+/* 버그 리포트 첨부 썸네일(관리자 목록) - 여러 개면 가로로 나열, 각각 새 탭으로 원본 열람 */
+.admin-bug-report-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.admin-bug-report-thumb {
+    display: block;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.admin-bug-report-thumb-video {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-size: 1rem;
+}
+
 /* 상태 배지 - "성적표 도장" 콘셉트: 테두리를 글자색과 같은 currentColor로 둘러서
    실제 도장처럼 보이게 하고, 신고 상태·계정 상태·감사 로그 조치 전부 이 4가지
    색(정상/대기/위험/중립)만 쓴다. */

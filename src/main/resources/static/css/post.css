@@ -798,7 +798,8 @@ a.post-list-nickname:hover { text-decoration: underline; }
     border: 1.5px solid #dcdfef;
 }
 
-.post-image-preview-item img {
+.post-image-preview-item img,
+.post-image-preview-item video {
     display: block;
     width: 100%;
     height: 90px;
