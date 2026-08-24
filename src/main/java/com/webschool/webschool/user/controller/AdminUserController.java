@@ -87,10 +87,29 @@ public class AdminUserController {
                                @RequestParam(defaultValue = "false") boolean canManagePosts,
                                @RequestParam(defaultValue = "false") boolean canManageScheduleComments,
                                @RequestParam(defaultValue = "false") boolean canManageNotices,
-                               RedirectAttributes redirectAttributes) {
+                               @RequestParam(defaultValue = "false") boolean canManageUsers,
+                               @RequestParam(defaultValue = "false") boolean canManageAdminPermissions,
+                               @RequestParam(defaultValue = "false") boolean canViewAuditLog,
+                               Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            adminUserService.updatePermissions(id, canManageReports, canManagePosts, canManageScheduleComments, canManageNotices);
+            adminUserService.updatePermissions(id, authentication.getName(),
+                    canManageReports, canManagePosts, canManageScheduleComments, canManageNotices,
+                    canManageUsers, canManageAdminPermissions, canViewAuditLog);
             redirectAttributes.addFlashAttribute("flashSuccess", "권한이 저장되었습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
+        }
+        return "redirect:/admin/users/admins";
+    }
+
+    // 수정사항.md #13 - 총관리자만 호출 가능(서비스 단에서 재확인). 관리자 권한 부여 화면에서
+    // 부관리자를 총관리자로 승격시키는 마지막 수단 - 총관리자 계정이 잠기는 단일 장애점을 완화.
+    @PostMapping("/{id}/promote-super")
+    public String promoteSuper(@PathVariable Long id, Authentication authentication,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            adminUserService.promoteToSuperAdmin(id, authentication.getName());
+            redirectAttributes.addFlashAttribute("flashSuccess", "총관리자로 승격했습니다.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("flashError", e.getMessage());
         }

@@ -86,6 +86,21 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean canManageNotices;
 
+    // 수정사항.md #12 지적 - 계정 관리/관리자 권한 부여/감사 로그 3개 화면은 예전엔 위임 슬롯
+    // 자체가 없이 AdminAccessInterceptor에 총관리자 전용으로 하드코딩돼 있었다. 이제 다른 4개
+    // 권한과 동일하게 개별 플래그로 위임 가능하다. canManageAdminPermissions는 특히 민감한
+    // 권한이라(다른 계정의 권한/역할을 바꿀 수 있음) AdminUserService.updatePermissions()에 자기
+    // 자신은 수정 못 하게 하는 별도 가드가 있다 - 안 그러면 이 권한을 받은 부관리자가 자기 자신에게
+    // 계정 관리 권한까지 추가로 켜버리는 권한 상승이 가능해진다(문서에 명시된 우려 사례).
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canManageUsers;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canManageAdminPermissions;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canViewAuditLog;
+
     // 구글 소셜 로그인으로 처음 가입하면 학교/학년/반이 빈 채로 계정이 만들어진다
     // (로컬 회원가입은 이 정보가 항상 필수라 이 상태가 나오지 않는다) - SchoolSetupInterceptor가
     // 이 값을 보고 학교 설정 화면 강제 이동 여부를 판단한다.
@@ -112,7 +127,8 @@ public class User {
     // 총관리자는 모든 권한을 암묵적으로 갖고, 부관리자는 canManage* 중 하나라도 켜져 있어야 한다.
     public boolean hasAnyAdminAccess() {
         return isSuperAdmin()
-                || canManageReports || canManagePosts || canManageScheduleComments || canManageNotices;
+                || canManageReports || canManagePosts || canManageScheduleComments || canManageNotices
+                || canManageUsers || canManageAdminPermissions || canViewAuditLog;
     }
 
     public enum Role {

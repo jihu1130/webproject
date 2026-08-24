@@ -6,9 +6,12 @@ import com.webschool.webschool.post.dto.PostDetailDto;
 import com.webschool.webschool.post.dto.PostFormDto;
 import com.webschool.webschool.post.dto.PostListItemDto;
 import com.webschool.webschool.post.dto.PostReportResultDto;
+import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.post.service.PostImageService;
 import com.webschool.webschool.post.service.PostService;
+import com.webschool.webschool.post.service.PostViewService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -35,6 +38,7 @@ public class PostController {
     private final PostService postService;
     private final PostImageService postImageService;
     private final NoticeService noticeService;
+    private final PostViewService postViewService;
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page,
@@ -89,11 +93,11 @@ public class PostController {
     }
 
     @GetMapping("/{uuid}")
-    public String detail(@PathVariable String uuid, Authentication authentication, HttpSession session, Model model,
-                          RedirectAttributes redirectAttributes) {
+    public String detail(@PathVariable String uuid, Authentication authentication, HttpSession session,
+                          HttpServletRequest request, Model model, RedirectAttributes redirectAttributes) {
         try {
             Long id = postService.resolveIdByUuid(uuid);
-            boolean countView = shouldCountView(session, id);
+            boolean countView = shouldCountView(session, id, ClientIpUtils.getClientIp(request));
             PostDetailDto post = postService.getDetail(id, extractUsername(authentication), countView);
             model.addAttribute("post", post);
             model.addAttribute("images", postImageService.getImages(id));
@@ -206,14 +210,24 @@ public class PostController {
         }
     }
 
+    // 세션 기반 판단(같은 방문 안에서 새로고침해도 중복 카운트 방지)에 더해, 수정사항.md 지적대로
+    // IP 기반 판단(PostViewService)을 한 겹 더 씌운다 - 세션은 새 브라우저/시크릿창/세션 만료로
+    // 쉽게 우회되지만, 같은 IP가 최근 24시간 안에 이미 본 글이면 세션이 달라도 다시 세지 않는다.
     @SuppressWarnings("unchecked")
-    private boolean shouldCountView(HttpSession session, Long id) {
+    private boolean shouldCountView(HttpSession session, Long id, String ip) {
         Set<Long> viewed = (Set<Long>) session.getAttribute(VIEWED_POSTS_SESSION_KEY);
         if (viewed == null) {
             viewed = new HashSet<>();
             session.setAttribute(VIEWED_POSTS_SESSION_KEY, viewed);
         }
-        return viewed.add(id);
+        if (!viewed.add(id)) {
+            return false; // 이번 세션에서 이미 조회함
+        }
+        if (postViewService.recentlyViewedByIp(id, ip)) {
+            return false; // 세션은 다르지만 같은 IP가 최근에 이미 조회함
+        }
+        postViewService.recordView(id, ip);
+        return true;
     }
 
     private String extractUsername(Authentication authentication) {

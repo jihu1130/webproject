@@ -35,6 +35,15 @@ public class AdminHomeController {
         if (user.isCanManageNotices()) {
             return "redirect:/admin/notices";
         }
+        if (user.isCanManageUsers()) {
+            return "redirect:/admin/users";
+        }
+        if (user.isCanManageAdminPermissions()) {
+            return "redirect:/admin/users/admins";
+        }
+        if (user.isCanViewAuditLog()) {
+            return "redirect:/admin/audit-log";
+        }
         return "redirect:/admin/access-denied";
     }
 

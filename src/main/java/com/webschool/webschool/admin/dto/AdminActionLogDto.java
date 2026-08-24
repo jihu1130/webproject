@@ -17,5 +17,6 @@ public class AdminActionLogDto {
     private String actionLabel;
     private String actionBadgeClass;
     private String detail;
+    private String ip;
     private String createdAt;
 }

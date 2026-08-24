@@ -412,6 +412,16 @@
     margin: 0;
 }
 
+/* 총관리자로 승격 버튼(수정사항.md #13) - 토글 목록과 줄이 섞이지 않도록 항상 행 끝으로 */
+.admin-permission-row-promote {
+    margin: 0 0 0 auto;
+}
+
+.admin-permission-row-promote .btn {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+}
+
 .admin-permission-toggle {
     display: inline-flex;
     align-items: center;

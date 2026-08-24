@@ -3,6 +3,7 @@ package com.webschool.webschool.admin.service;
 import com.webschool.webschool.admin.domain.AdminActionLog;
 import com.webschool.webschool.admin.dto.AdminActionLogDto;
 import com.webschool.webschool.admin.repository.AdminActionLogRepository;
+import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.user.repository.UserRepository;
@@ -12,6 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -50,6 +53,7 @@ public class AdminActionLogService {
             Map.entry("DELETE", "삭제"),
             Map.entry("RESTORE", "복구"),
             Map.entry("PROMOTE", "승격"),
+            Map.entry("PROMOTE_SUPER_ADMIN", "총관리자 승격"),
             Map.entry("DEMOTE", "강등"),
             Map.entry("PERMISSIONS", "권한 변경"),
             Map.entry("DEACTIVATE", "정지"),
@@ -84,6 +88,7 @@ public class AdminActionLogService {
             Map.entry("REPORT_CLEAR", "admin-status-cleared"),
             Map.entry("RESTORE", "admin-status-cleared"),
             Map.entry("PROMOTE", "admin-status-cleared"),
+            Map.entry("PROMOTE_SUPER_ADMIN", "admin-status-cleared"),
             Map.entry("ACTIVATE", "admin-status-cleared"),
             Map.entry("PERMISSIONS", "admin-status-neutral"),
             Map.entry("REPORT", "admin-status-blind"),
@@ -121,7 +126,20 @@ public class AdminActionLogService {
         entry.setTargetId(targetId);
         entry.setAction(action);
         entry.setDetail(detail);
+        entry.setIp(currentClientIp());
         adminActionLogRepository.save(entry);
+    }
+
+    // log()는 전부 컨트롤러가 처리 중인 요청 스레드 안에서 호출되므로(회원가입도 포함, 로그인 전이지만
+    // 여전히 HTTP 요청 처리 중) RequestContextHolder로 현재 요청을 꺼내올 수 있다. 매 호출부마다
+    // HttpServletRequest를 새로 threading하는 대신 이 한 곳에서만 꺼내도록 모아뒀다. @Scheduled
+    // 작업(EditorUploadCleanupService)처럼 요청 스레드 밖에서 호출되면 null을 반환한다.
+    private String currentClientIp() {
+        var attributes = RequestContextHolder.getRequestAttributes();
+        if (!(attributes instanceof ServletRequestAttributes servletAttributes)) {
+            return null;
+        }
+        return ClientIpUtils.getClientIp(servletAttributes.getRequest());
     }
 
     public Page<AdminActionLogDto> getLogs(int page, String adminUsername, String targetType,
@@ -163,6 +181,7 @@ public class AdminActionLogService {
                 .actionLabel(ACTION_LABELS.getOrDefault(l.getAction(), l.getAction()))
                 .actionBadgeClass(ACTION_BADGE_CLASSES.getOrDefault(l.getAction(), "admin-status-neutral"))
                 .detail(l.getDetail())
+                .ip(l.getIp())
                 .createdAt(l.getCreatedAt().format(DISPLAY_FORMAT))
                 .build();
     }

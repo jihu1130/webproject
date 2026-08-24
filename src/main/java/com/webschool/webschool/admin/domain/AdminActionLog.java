@@ -43,6 +43,11 @@ public class AdminActionLog {
     @Column(length = 300)
     private String detail; // 선택 - "ROLE_ADMIN으로 승격" 등 사람이 읽을 부가 설명
 
+    @Column(length = 45)
+    private String ip; // 조치를 실행한 요청의 클라이언트 IP(IPv6까지 고려해 45자) - 요청 스레드 밖에서
+    // 호출되면(현재는 없음) null로 남는다. 비밀번호 등 민감정보는 아니지만 개인 식별 가능 정보라
+    // 이 감사 로그 화면 자체가 총관리자 전용인 것으로 노출 범위를 제한한다.
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

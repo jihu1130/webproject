@@ -48,7 +48,9 @@
                 <span class="profile-card-status profile-card-status-inactive"
                       th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'
                               and !loginUser.canManageReports and !loginUser.canManagePosts
-                              and !loginUser.canManageScheduleComments and !loginUser.canManageNotices}"
+                              and !loginUser.canManageScheduleComments and !loginUser.canManageNotices
+                              and !loginUser.canManageUsers and !loginUser.canManageAdminPermissions
+                              and !loginUser.canViewAuditLog}"
                       th:text="'권한 없음'">권한 없음</span>
             </div>
 

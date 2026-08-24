@@ -54,6 +54,7 @@
                     <th>대상</th>
                     <th>조치</th>
                     <th>비고</th>
+                    <th>IP</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -75,6 +76,7 @@
                               th:text="${log.actionLabel}">조치</span>
                     </td>
                     <td th:text="${log.detail} ?: '-'">비고</td>
+                    <td th:text="${log.ip} ?: '-'">IP</td>
                 </tr>
                 </tbody>
             </table>

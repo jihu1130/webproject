@@ -144,6 +144,9 @@ public class AdminUserService {
             user.setCanManagePosts(false);
             user.setCanManageScheduleComments(false);
             user.setCanManageNotices(false);
+            user.setCanManageUsers(false);
+            user.setCanManageAdminPermissions(false);
+            user.setCanViewAuditLog(false);
             notificationService.notify(user, Notification.Type.ACCOUNT, "관리자 권한이 해제되었습니다.", "/mypage");
             adminActionLogService.log("USER", id, "DEMOTE", user.getUsername() + " -> ROLE_USER");
         } else if (role == User.Role.ROLE_ADMIN) {
@@ -153,12 +156,23 @@ public class AdminUserService {
         }
     }
 
-    // 부관리자 권한(신고/게시글/한마디/공지사항 관리) 토글 - 총관리자만 호출 가능(컨트롤러/인터셉터에서 이미 보장)
+    // 부관리자 권한(신고/게시글/한마디/공지사항/계정 관리/관리자 권한 부여/감사 로그) 토글 - 총관리자
+    // 또는 canManageAdminPermissions를 부여받은 부관리자가 호출 가능(컨트롤러/인터셉터에서 이미 보장).
+    // 수정사항.md #12가 우려한 권한 상승 경로(부관리자가 자기 자신에게 권한을 추가로 켜는 것)를
+    // 막기 위해 본인 대상 호출은 서비스 단에서 한 번 더 차단한다 - setRole()/deleteUser()/
+    // deactivateUser()가 이미 쓰는 것과 동일한 자기 자신 체크 패턴.
     @Transactional
-    public void updatePermissions(Long id, boolean canManageReports, boolean canManagePosts,
-                                   boolean canManageScheduleComments, boolean canManageNotices) {
+    public void updatePermissions(Long id, String actingAdminUsername,
+                                   boolean canManageReports, boolean canManagePosts,
+                                   boolean canManageScheduleComments, boolean canManageNotices,
+                                   boolean canManageUsers, boolean canManageAdminPermissions,
+                                   boolean canViewAuditLog) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getUsername().equals(actingAdminUsername)) {
+            throw new IllegalArgumentException("본인의 권한은 스스로 변경할 수 없습니다.");
+        }
 
         if (user.getRole() != User.Role.ROLE_ADMIN) {
             throw new IllegalArgumentException("부관리자 계정에만 권한을 지정할 수 있습니다.");
@@ -168,9 +182,46 @@ public class AdminUserService {
         user.setCanManagePosts(canManagePosts);
         user.setCanManageScheduleComments(canManageScheduleComments);
         user.setCanManageNotices(canManageNotices);
+        user.setCanManageUsers(canManageUsers);
+        user.setCanManageAdminPermissions(canManageAdminPermissions);
+        user.setCanViewAuditLog(canViewAuditLog);
         adminActionLogService.log("USER", id, "PERMISSIONS", user.getUsername()
                 + " (신고:" + canManageReports + " 게시글:" + canManagePosts
-                + " 한마디:" + canManageScheduleComments + " 공지:" + canManageNotices + ")");
+                + " 한마디:" + canManageScheduleComments + " 공지:" + canManageNotices
+                + " 계정관리:" + canManageUsers + " 권한부여:" + canManageAdminPermissions
+                + " 감사로그:" + canViewAuditLog + ")");
+    }
+
+    // 수정사항.md #13 지적 - 총관리자가 잠기면(비밀번호 분실 등) 복구할 방법이 앱 안에 전혀 없었다.
+    // 기존 총관리자만 호출 가능(인터셉터는 canManageAdminPermissions 플래그로도 /admin/users/admins
+    // 접근을 허용하므로, "새 총관리자를 만드는" 이 액션만큼은 서비스 단에서 별도로 isSuperAdmin()을
+    // 확인한다 - 권한 부여 화면에 들어올 수 있다고 해서 총관리자를 늘릴 수 있는 건 아니어야 함).
+    // ROLE_SUPER_ADMIN은 여러 명 존재해도 되도록 설계를 바꿨다(단일 계정 고정은 그 자체로
+    // 단일 장애점이었다는 게 문서의 핵심 지적) - 대상은 이미 신뢰된 부관리자(ROLE_ADMIN)로 제한한다.
+    @Transactional
+    public void promoteToSuperAdmin(Long id, String actingAdminUsername) {
+        User actingAdmin = userRepository.findByUsername(actingAdminUsername)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        if (!actingAdmin.isSuperAdmin()) {
+            throw new IllegalArgumentException("총관리자만 다른 계정을 총관리자로 승격할 수 있습니다.");
+        }
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getUsername().equals(actingAdminUsername)) {
+            throw new IllegalArgumentException("본인은 이미 총관리자입니다.");
+        }
+        if (user.getRole() != User.Role.ROLE_ADMIN) {
+            throw new IllegalArgumentException("부관리자 계정만 총관리자로 승격할 수 있습니다.");
+        }
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("탈퇴한 계정은 승격할 수 없습니다.");
+        }
+
+        user.setRole(User.Role.ROLE_SUPER_ADMIN);
+        notificationService.notify(user, Notification.Type.ACCOUNT, "총관리자로 승격되었습니다.", "/mypage");
+        adminActionLogService.log("USER", id, "PROMOTE_SUPER_ADMIN", user.getUsername() + " -> ROLE_SUPER_ADMIN");
     }
 
     // 관리자 강제 탈퇴 처리 - 본인 확인(비밀번호) 없이 소프트 삭제한다는 점만 UserService.deleteAccount()와 다름
@@ -253,6 +304,9 @@ public class AdminUserService {
                 .canManagePosts(user.isCanManagePosts())
                 .canManageScheduleComments(user.isCanManageScheduleComments())
                 .canManageNotices(user.isCanManageNotices())
+                .canManageUsers(user.isCanManageUsers())
+                .canManageAdminPermissions(user.isCanManageAdminPermissions())
+                .canViewAuditLog(user.isCanViewAuditLog())
                 .build();
     }
 

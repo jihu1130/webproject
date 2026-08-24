@@ -20,7 +20,7 @@
     <div class="admin-container">
         <div class="page-heading admin-page-heading">
             <h1><i class="fa-solid fa-user-shield"></i> 관리자 권한 관리</h1>
-            <p class="page-sub">부관리자마다 신고 관리 / 게시글 관리 / 한마디 관리 / 공지사항 작성 권한을 개별로 켜고 끌 수 있어요. 계정 관리는 총관리자(admin) 전용이라 부관리자에게는 부여할 수 없어요.</p>
+            <p class="page-sub">부관리자마다 신고 / 게시글 / 한마디 / 공지사항 / 계정 관리 / 관리자 권한 부여 / 감사 로그 열람 권한을 개별로 켜고 끌 수 있어요. "관리자 권한 부여"는 다른 계정의 권한 자체를 바꿀 수 있는 민감한 권한이라, 본인 스스로에게는 어떤 권한도 변경할 수 없어요.</p>
         </div>
 
         <div th:replace="~{admin/fragments/nav :: tabs('admins')}"></div>
@@ -31,10 +31,12 @@
                     <span class="admin-status-badge admin-status-cleared" th:if="${admin.role == 'ROLE_SUPER_ADMIN'}">총관리자</span>
                     <span class="admin-status-badge admin-status-pending" th:if="${admin.role == 'ROLE_ADMIN'}">부관리자</span>
                     <!-- 수정사항.md 지적 - 권한을 전부 꺼둔 부관리자도 목록에서 다른 부관리자와 구분이
-                         안 갔다. 4개 canManage* 전부 false면 "권한 없음" 배지를 따로 표시한다. -->
+                         안 갔다. 7개 canManage* 전부 false면 "권한 없음" 배지를 따로 표시한다. -->
                     <span class="admin-status-badge admin-status-blind"
-                          th:if="${admin.role == 'ROLE_ADMIN' and !admin.canManageReports and !admin.canManagePosts and !admin.canManageScheduleComments and !admin.canManageNotices}">권한 없음</span>
+                          th:if="${admin.role == 'ROLE_ADMIN' and !admin.canManageReports and !admin.canManagePosts and !admin.canManageScheduleComments and !admin.canManageNotices and !admin.canManageUsers and !admin.canManageAdminPermissions and !admin.canViewAuditLog}">권한 없음</span>
                     <span class="admin-permission-row-name" th:text="${admin.nickname} + ' (' + ${admin.username} + ')'">닉네임 (아이디)</span>
+                    <span th:if="${admin.role == 'ROLE_ADMIN' and loginUser != null and loginUser.username == admin.username}"
+                          class="admin-user-self-label">(본인 계정 - 권한 변경 불가)</span>
                 </div>
 
                 <div class="admin-permission-row-toggles" th:if="${admin.role == 'ROLE_SUPER_ADMIN'}">
@@ -43,8 +45,10 @@
 
                 <!-- 버그 수정: 체크박스 하나 잘못 눌러도 확인 없이 바로 반영됐다(부관리자 권한처럼
                      민감한 설정인데도). 확인 후에만 제출한다 - 취소하면 체크 상태를 원래대로 되돌려야
-                     하므로 change 이벤트에서 바로 판단한다. -->
-                <form th:if="${admin.role == 'ROLE_ADMIN'}" th:action="@{'/admin/users/' + ${admin.id} + '/permissions'}"
+                     하므로 change 이벤트에서 바로 판단한다. 본인 계정 행은 서버에서도 거부되지만(수정사항.md
+                     #12의 권한 상승 우려), 여기서부터 아예 폼을 안 보여줘서 헷갈리지 않게 한다. -->
+                <form th:if="${admin.role == 'ROLE_ADMIN' and (loginUser == null or loginUser.username != admin.username)}"
+                      th:action="@{'/admin/users/' + ${admin.id} + '/permissions'}"
                       method="post" class="admin-permission-row-toggles" onchange="return handlePermissionToggle(event, this);">
                     <label class="admin-permission-toggle">
                         <input type="checkbox" name="canManageReports" value="true" th:checked="${admin.canManageReports}">
@@ -62,6 +66,28 @@
                         <input type="checkbox" name="canManageNotices" value="true" th:checked="${admin.canManageNotices}">
                         <span>공지사항 작성</span>
                     </label>
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canManageUsers" value="true" th:checked="${admin.canManageUsers}">
+                        <span>계정 관리</span>
+                    </label>
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canManageAdminPermissions" value="true" th:checked="${admin.canManageAdminPermissions}">
+                        <span>관리자 권한 부여</span>
+                    </label>
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canViewAuditLog" value="true" th:checked="${admin.canViewAuditLog}">
+                        <span>감사 로그 열람</span>
+                    </label>
+                </form>
+
+                <!-- 수정사항.md #13 - 총관리자 단일 장애점 완화. 총관리자 본인만 볼 수 있고(다른
+                     화면과 동일하게 loginUser.role로 판단), 이미 부관리자인 계정만 대상으로 한다. -->
+                <form th:if="${admin.role == 'ROLE_ADMIN' and loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+                      th:action="@{'/admin/users/' + ${admin.id} + '/promote-super'}" method="post"
+                      class="admin-permission-row-promote"
+                      data-confirm="이 계정을 총관리자로 승격할까요? 총관리자는 모든 권한을 항상 갖고, 이 화면에서 다시 강등시킬 방법이 없습니다."
+                      data-confirm-danger="true">
+                    <button type="submit" class="btn btn-outline-brand">총관리자로 승격</button>
                 </form>
             </div>
         </div>

@@ -91,16 +91,22 @@
                         <span th:if="${user.role != 'ROLE_SUPER_ADMIN' and loginUser != null and loginUser.username == user.username}" class="admin-user-self-label">(본인 계정)</span>
                         <div class="admin-user-actions"
                              th:if="${user.role != 'ROLE_SUPER_ADMIN' and (loginUser == null or loginUser.username != user.username)}">
-                            <form th:if="${!user.deleted and user.role == 'ROLE_USER'}" th:action="@{'/admin/users/' + ${user.id} + '/promote'}" method="post"
-                                  data-confirm="이 계정을 부관리자로 승격할까요? 승격 직후에는 아무 권한도 없으니 '관리자 권한 관리'에서 권한을 켜주세요.">
-                                <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
-                                <button type="submit" class="btn btn-outline-brand">관리자로 승격</button>
-                            </form>
-                            <form th:if="${!user.deleted and user.role == 'ROLE_ADMIN'}" th:action="@{'/admin/users/' + ${user.id} + '/demote'}" method="post"
-                                  data-confirm="이 계정의 관리자 권한을 해제할까요?">
-                                <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
-                                <button type="submit" class="btn btn-outline-brand">권한 해제</button>
-                            </form>
+                            <!-- 승격/강등은 역할 자체를 바꾸는 조치라 계정 관리(canManageUsers)가 아니라
+                                 관리자 권한 부여(canManageAdminPermissions)로 게이팅한다(AdminAccessInterceptor의
+                                 /admin/users/{id}/promote·demote 분기와 동일한 조건) - 안 그러면 계정 관리
+                                 권한만 있는 부관리자에게 눌러도 항상 거부되는 버튼이 보이게 된다. -->
+                            <th:block th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageAdminPermissions)}">
+                                <form th:if="${!user.deleted and user.role == 'ROLE_USER'}" th:action="@{'/admin/users/' + ${user.id} + '/promote'}" method="post"
+                                      data-confirm="이 계정을 부관리자로 승격할까요? 승격 직후에는 아무 권한도 없으니 '관리자 권한 관리'에서 권한을 켜주세요.">
+                                    <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
+                                    <button type="submit" class="btn btn-outline-brand">관리자로 승격</button>
+                                </form>
+                                <form th:if="${!user.deleted and user.role == 'ROLE_ADMIN'}" th:action="@{'/admin/users/' + ${user.id} + '/demote'}" method="post"
+                                      data-confirm="이 계정의 관리자 권한을 해제할까요?">
+                                    <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
+                                    <button type="submit" class="btn btn-outline-brand">권한 해제</button>
+                                </form>
+                            </th:block>
                             <form th:if="${!user.deleted and user.active}" th:action="@{'/admin/users/' + ${user.id} + '/deactivate'}" method="post"
                                   data-confirm="이 계정을 비활성화할까요? 계정과 작성 글은 그대로 남고 로그인만 즉시 차단됩니다." data-confirm-danger="true">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>

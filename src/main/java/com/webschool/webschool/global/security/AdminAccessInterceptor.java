@@ -11,14 +11,30 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.regex.Pattern;
+
 // SecurityConfig가 "/admin/**"은 ROLE_ADMIN/ROLE_SUPER_ADMIN까지만 통과시키는데, 그 안에서도
-// 부관리자(ROLE_ADMIN)는 총관리자가 개별로 켜준 권한(신고/게시글/한마디/공지사항 관리)만 접근할 수
-// 있고 계정 관리(/admin/users)는 총관리자(ROLE_SUPER_ADMIN) 전용이다. ROLE_SUPER_ADMIN은 항상 전체 허용.
+// 부관리자(ROLE_ADMIN)는 총관리자가 개별로 켜준 권한만 접근할 수 있다. ROLE_SUPER_ADMIN은 항상 전체 허용.
 // "/admin/comments"(댓글 관리, 2026-08-10(4차) 추가)는 게시글에 종속된 하위 리소스라 별도 권한
 // 플래그 없이 게시글 관리(canManagePosts)와 같은 권한으로 묶는다.
+//
+// 수정사항.md #12 지적으로 계정 관리(canManageUsers)/관리자 권한 부여(canManageAdminPermissions)/
+// 감사 로그(canViewAuditLog) 3개도 다른 4개와 동일하게 위임 가능한 플래그로 바뀌었다(예전엔 이
+// 셋만 하드코딩으로 총관리자 전용이었음). "/admin/users/**" 하위에서도 역할/권한 자체를 바꾸는
+// promote·demote·permissions·admins(권한 부여 화면)는 canManageAdminPermissions로 더 세밀하게
+// 나누고, 계정 목록/프로필/정지/탈퇴 같은 나머지는 canManageUsers로 가른다 - 두 권한을 분리한
+// 이유는 "계정을 정지시킬 수 있는 것"과 "다른 계정에게 관리자 권한을 몰아줄 수 있는 것"은 위험도가
+// 다른 별개의 권한이기 때문(문서의 권한 상승 우려를 최소화하는 방향).
 @Component
 @RequiredArgsConstructor
 public class AdminAccessInterceptor implements HandlerInterceptor {
+
+    // /admin/users/admins(권한 부여 화면) 또는 /admin/users/{id}/promote|demote|permissions|promote-super
+    // (역할/권한 변경 액션) - 나머지 /admin/users/** 는 전부 일반 계정 관리(canManageUsers)로 취급한다.
+    // promote-super는 이 게이트를 통과해도 AdminUserService.promoteToSuperAdmin()이 별도로
+    // isSuperAdmin()을 재확인하므로 이중으로 막힌다(위 클래스 주석 참고).
+    private static final Pattern ADMIN_PERMISSION_ACTION_PATH =
+            Pattern.compile("^/admin/users/\\d+/(promote|demote|permissions|promote-super)$");
 
     private final UserRepository userRepository;
 
@@ -36,15 +52,19 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        if (uri.startsWith("/admin/users")) {
-            throw new AccessDeniedException("계정 관리는 총관리자만 접근할 수 있습니다.");
+        if (uri.equals("/admin/users/admins") || ADMIN_PERMISSION_ACTION_PATH.matcher(uri).matches()) {
+            if (!user.isCanManageAdminPermissions()) {
+                throw new AccessDeniedException("관리자 권한 부여 권한이 없습니다.");
+            }
+            return true;
         }
-        // 감사 로그(어떤 관리자가 언제 어떤 조치를 했는지)는 관리자 활동 전체를 들여다보는 화면이라
-        // 계정 관리와 동일하게 총관리자 전용으로 막는다.
-        if (uri.startsWith("/admin/audit-log")) {
-            throw new AccessDeniedException("감사 로그는 총관리자만 접근할 수 있습니다.");
+        if (uri.startsWith("/admin/users") && !user.isCanManageUsers()) {
+            throw new AccessDeniedException("계정 관리 권한이 없습니다.");
         }
-        // 버그 리포트 관리 - 위임 권한 플래그 없이 계정 관리/감사 로그와 동일하게 총관리자 전용으로 고정.
+        if (uri.startsWith("/admin/audit-log") && !user.isCanViewAuditLog()) {
+            throw new AccessDeniedException("감사 로그 열람 권한이 없습니다.");
+        }
+        // 버그 리포트 관리 - 위임 권한 플래그 없이 총관리자 전용으로 고정(사용자 확정, 이번 라운드 범위 밖).
         if (uri.startsWith("/admin/bug-reports")) {
             throw new AccessDeniedException("버그 리포트 관리는 총관리자만 접근할 수 있습니다.");
         }
