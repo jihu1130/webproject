@@ -232,6 +232,42 @@
     font-size: 1rem;
 }
 
+/* 버그 리포트 첨부 - 상세 화면(목록의 40px 썸네일보다 크게, 원본 확인이 목적) */
+.admin-bug-report-detail-attachments {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 1.5rem;
+}
+
+.admin-bug-report-detail-attachment {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface-soft);
+    text-decoration: none;
+}
+
+.admin-bug-report-detail-attachment img,
+.admin-bug-report-detail-attachment video {
+    display: block;
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background: #000;
+}
+
+.admin-bug-report-detail-filename {
+    display: block;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* 상태 배지 - "성적표 도장" 콘셉트: 테두리를 글자색과 같은 currentColor로 둘러서
    실제 도장처럼 보이게 하고, 신고 상태·계정 상태·감사 로그 조치 전부 이 4가지
    색(정상/대기/위험/중립)만 쓴다. */

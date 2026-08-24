@@ -123,6 +123,12 @@ public class BugReportService {
         return PageUtils.paginate(all, page, size);
     }
 
+    public BugReportDto getDetail(Long id) {
+        BugReport report = bugReportRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("버그 리포트를 찾을 수 없습니다."));
+        return toDto(report);
+    }
+
     @Transactional
     public void resolve(Long id, String actorUsername) {
         requireSuperAdmin(actorUsername);

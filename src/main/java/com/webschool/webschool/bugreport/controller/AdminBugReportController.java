@@ -27,6 +27,20 @@ public class AdminBugReportController {
         return "admin/bug-report-list";
     }
 
+    @GetMapping("/{id}")
+    public String detail(@PathVariable Long id,
+                          @RequestParam(defaultValue = "0") int page,
+                          @RequestParam(required = false) Integer size, Model model) {
+        try {
+            model.addAttribute("report", bugReportService.getDetail(id));
+        } catch (IllegalArgumentException e) {
+            return "redirect:/admin/bug-reports";
+        }
+        model.addAttribute("listPage", page);
+        model.addAttribute("listSize", PageUtils.normalizeSize(size));
+        return "admin/bug-report-detail";
+    }
+
     @PostMapping("/{id}/resolve")
     public String resolve(@PathVariable Long id, Authentication authentication) {
         try {

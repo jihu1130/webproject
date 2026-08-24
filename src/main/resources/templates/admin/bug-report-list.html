@@ -48,7 +48,10 @@
                         <span class="admin-status-badge admin-status-cleared" th:if="${report.resolved}">해결됨</span>
                         <span class="admin-status-badge" th:unless="${report.resolved}">처리중</span>
                     </td>
-                    <td th:text="${report.title}">제목</td>
+                    <td>
+                        <a th:href="@{'/admin/bug-reports/' + ${report.id}(page=${reports.number}, size=${reports.size})}"
+                           class="admin-table-title" th:text="${report.title}">제목</a>
+                    </td>
                     <td style="max-width: 320px; white-space: pre-wrap;" th:text="${report.content}">내용</td>
                     <td>
                         <div class="admin-bug-report-attachments" th:unless="${#lists.isEmpty(report.attachments)}">
