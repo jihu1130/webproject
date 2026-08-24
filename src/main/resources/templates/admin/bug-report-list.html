@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 버그 리포트 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-bug"></i> 버그 리포트</h1>
+            <p class="page-sub">사용자가 제출한 버그 리포트예요 - 비로그인 제출은 "익명"으로 표시돼요</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('bug-reports')}"></div>
+
+        <div th:if="${reports.empty}" class="admin-empty">
+            접수된 버그 리포트가 없어요.
+        </div>
+
+        <div class="admin-table-wrap" th:unless="${reports.empty}">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>상태</th>
+                    <th>제목</th>
+                    <th>내용</th>
+                    <th>제출자</th>
+                    <th>연락처</th>
+                    <th>제출일</th>
+                    <th>조치</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="report : ${reports}">
+                    <td>
+                        <span class="admin-status-badge admin-status-cleared" th:if="${report.resolved}">해결됨</span>
+                        <span class="admin-status-badge" th:unless="${report.resolved}">처리중</span>
+                    </td>
+                    <td th:text="${report.title}">제목</td>
+                    <td style="max-width: 320px; white-space: pre-wrap;" th:text="${report.content}">내용</td>
+                    <td th:text="${report.reporterDisplay}">제출자</td>
+                    <td th:text="${report.contactEmail} ?: '-'">연락처</td>
+                    <td th:text="${report.createdAt}">날짜</td>
+                    <td>
+                        <div class="admin-user-actions">
+                            <form th:action="@{'/admin/bug-reports/' + ${report.id} + '/resolve'}" method="post">
+                                <button type="submit" class="btn btn-outline-brand"
+                                        th:text="${report.resolved} ? '처리중으로 되돌리기' : '해결됨으로 표시'">처리</button>
+                            </form>
+                            <form th:action="@{'/admin/bug-reports/' + ${report.id} + '/delete'}" method="post"
+                                  data-confirm="이 버그 리포트를 삭제할까요?" data-confirm-danger="true">
+                                <button type="submit" class="btn btn-outline-brand">삭제</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="post-pagination" th:if="${reports.totalPages > 1}">
+            <a th:if="${reports.hasPrevious()}" th:href="@{/admin/bug-reports(page=${reports.number - 1}, size=${reports.size})}" class="post-page-link" aria-label="이전 페이지">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, reports.totalPages - 1)}"
+               th:href="@{/admin/bug-reports(page=${i}, size=${reports.size})}" th:text="${i + 1}"
+               th:classappend="${i == reports.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${reports.hasNext()}" th:href="@{/admin/bug-reports(page=${reports.number + 1}, size=${reports.size})}" class="post-page-link" aria-label="다음 페이지">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/modal.js}"></script>
+
+</body>
+</html>

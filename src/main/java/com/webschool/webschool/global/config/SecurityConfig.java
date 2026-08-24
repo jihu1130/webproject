@@ -38,6 +38,8 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/find-username", "/forgot-password", "/reset-password", "/verify-email")
                         .permitAll()
+                        // 버그 리포트는 비로그인 사용자도 제출 가능(사용자 확정 정책)
+                        .requestMatchers("/bug-reports/new").permitAll()
                         // 게시물 작성/수정/삭제/신고는 로그인 필요, 목록/상세/댓글 조회는 누구나 가능
                         .requestMatchers(HttpMethod.GET, "/posts/new", "/posts/*/edit").authenticated()
                         .requestMatchers(HttpMethod.GET, "/posts", "/posts/*", "/posts/*/comments").permitAll()

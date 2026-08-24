@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>버그 리포트 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('bug-report')}"></div>
+
+<div class="post-page">
+    <div class="post-container post-container-narrow">
+        <div class="post-form-card">
+            <h2><i class="fa-solid fa-bug"></i> 버그 리포트</h2>
+            <p class="page-sub" style="margin: -0.6rem 0 1.2rem;">사이트를 이용하다 발견한 오류나 이상한 점을 알려주세요.</p>
+
+            <div th:if="${param.submitted}" class="post-alert post-alert-success">
+                버그 리포트가 접수됐습니다. 알려주셔서 감사합니다!
+            </div>
+            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+
+            <form th:action="@{/bug-reports/new}" method="post">
+                <div class="post-field">
+                    <label>제목</label>
+                    <input type="text" name="title" placeholder="어떤 문제인지 한 줄로 요약해주세요" maxlength="100" th:value="${title}" required>
+                </div>
+                <div class="post-field">
+                    <label>내용</label>
+                    <textarea name="content" rows="8" placeholder="언제, 어떤 화면에서, 어떻게 하다가 발생했는지 자세히 적어주시면 도움이 됩니다"
+                              maxlength="2000" required th:text="${content}"></textarea>
+                </div>
+                <div class="post-field" th:unless="${isLoggedIn}">
+                    <label>이름 (선택)</label>
+                    <input type="text" name="reporterNickname" placeholder="비워두면 익명으로 접수돼요" maxlength="30" th:value="${reporterNickname}">
+                </div>
+                <div class="post-field">
+                    <label>연락 가능한 이메일 (선택)</label>
+                    <input type="email" name="contactEmail" placeholder="확인 후 연락드릴 이메일이 있다면 입력해주세요" maxlength="100" th:value="${contactEmail}">
+                </div>
+
+                <div class="post-form-actions">
+                    <a href="/" class="btn btn-outline-brand">취소</a>
+                    <button type="submit" class="btn btn-brand">제출하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

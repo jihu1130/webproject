@@ -44,6 +44,10 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/admin/audit-log")) {
             throw new AccessDeniedException("감사 로그는 총관리자만 접근할 수 있습니다.");
         }
+        // 버그 리포트 관리 - 위임 권한 플래그 없이 계정 관리/감사 로그와 동일하게 총관리자 전용으로 고정.
+        if (uri.startsWith("/admin/bug-reports")) {
+            throw new AccessDeniedException("버그 리포트 관리는 총관리자만 접근할 수 있습니다.");
+        }
         // 게시글/댓글/한마디 관리 화면에서 작성자 이름을 눌러 프로필을 보는 기능(2026-08-10(5차) 추가) -
         // 계정 관리(/admin/users)는 총관리자 전용이지만, 이 조회 전용 화면은 신고/게시글/한마디 관리
         // 권한이 하나라도 있는 부관리자라면 볼 수 있게 한다(그 권한으로 이미 같은 정보(실명 닉네임 등)를

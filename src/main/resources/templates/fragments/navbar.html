@@ -45,6 +45,11 @@
                 <i class="fa-solid fa-moon"></i>
             </button>
 
+            <!-- 버그 리포트 - 비로그인 사용자도 제출 가능해서 로그인 여부와 무관하게 항상 노출(사용자 확정). -->
+            <a href="/bug-reports/new" class="site-nav-theme-toggle" aria-label="버그 리포트" title="버그 리포트">
+                <i class="fa-solid fa-bug"></i>
+            </a>
+
             <div class="site-nav-auth">
                 <div class="site-nav-guest" sec:authorize="!isAuthenticated()">
                     <a href="/login" class="btn-nav btn-nav-ghost">로그인</a>
