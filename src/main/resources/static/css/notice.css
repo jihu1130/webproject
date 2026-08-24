@@ -50,10 +50,18 @@
 /* 수정사항.md 지적 - 다크모드 대응이 전혀 없었다. 호박색 오버레이는 옅은 rgba라 어두운 배경
    위에서는 거의 안 보여서 불투명도를 올리고 글자색을 밝은 앰버로 바꾼다. */
 @media (prefers-color-scheme: dark) {
-    .notice-badge { background: rgba(217, 119, 6, 0.3); color: #fbbf24; }
-    .notice-list-item-active { background: rgba(217, 119, 6, 0.14); }
-    .notice-list-item-active:hover { background: rgba(217, 119, 6, 0.2); }
-    .notice-banner { background: rgba(217, 119, 6, 0.16); border-color: rgba(217, 119, 6, 0.35); }
-    .notice-banner:hover { background: rgba(217, 119, 6, 0.22); }
-    .notice-banner i.fa-chevron-right { color: #fbbf24; }
+    html:not([data-theme="light"]) .notice-badge { background: rgba(217, 119, 6, 0.3); color: #fbbf24; }
+    html:not([data-theme="light"]) .notice-list-item-active { background: rgba(217, 119, 6, 0.14); }
+    html:not([data-theme="light"]) .notice-list-item-active:hover { background: rgba(217, 119, 6, 0.2); }
+    html:not([data-theme="light"]) .notice-banner { background: rgba(217, 119, 6, 0.16); border-color: rgba(217, 119, 6, 0.35); }
+    html:not([data-theme="light"]) .notice-banner:hover { background: rgba(217, 119, 6, 0.22); }
+    html:not([data-theme="light"]) .notice-banner i.fa-chevron-right { color: #fbbf24; }
 }
+
+/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
+html[data-theme="dark"] .notice-badge { background: rgba(217, 119, 6, 0.3); color: #fbbf24; }
+html[data-theme="dark"] .notice-list-item-active { background: rgba(217, 119, 6, 0.14); }
+html[data-theme="dark"] .notice-list-item-active:hover { background: rgba(217, 119, 6, 0.2); }
+html[data-theme="dark"] .notice-banner { background: rgba(217, 119, 6, 0.16); border-color: rgba(217, 119, 6, 0.35); }
+html[data-theme="dark"] .notice-banner:hover { background: rgba(217, 119, 6, 0.22); }
+html[data-theme="dark"] .notice-banner i.fa-chevron-right { color: #fbbf24; }

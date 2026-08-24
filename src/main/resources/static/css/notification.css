@@ -119,6 +119,10 @@
    #f8f9fc 호버 배경)만 var()로 교체하면 나머지는 이미 var(--surface)/var(--ink) 등을 쓰고 있어
    자동으로 맞춰진다. */
 @media (prefers-color-scheme: dark) {
-    .notif-list { border-color: var(--border); }
-    .notif-item-btn:hover { background: var(--surface-soft); }
+    html:not([data-theme="light"]) .notif-list { border-color: var(--border); }
+    html:not([data-theme="light"]) .notif-item-btn:hover { background: var(--surface-soft); }
 }
+
+/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
+html[data-theme="dark"] .notif-list { border-color: var(--border); }
+html[data-theme="dark"] .notif-item-btn:hover { background: var(--surface-soft); }

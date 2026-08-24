@@ -907,31 +907,58 @@ a.comment-nickname:hover { text-decoration: underline; }
    (테마 변수 도입 이전에 만들어진 화면이라 추정). 큰 구조는 그대로 두고 배경색만 var(--surface)/
    var(--surface-soft)로 교체한다. */
 @media (prefers-color-scheme: dark) {
-    .vacation-dday-badge,
-    .cal-control-icon,
-    .cal-navbar,
-    .cal-nav-btn,
-    .cal-nav-select-group select,
-    .cal-grid-card,
-    .day-detail-panel,
-    .day-detail-close,
-    .day-detail-day-nav-btn,
-    .day-detail-print-btn {
+    html:not([data-theme="light"]) .vacation-dday-badge,
+    html:not([data-theme="light"]) .cal-control-icon,
+    html:not([data-theme="light"]) .cal-navbar,
+    html:not([data-theme="light"]) .cal-nav-btn,
+    html:not([data-theme="light"]) .cal-nav-select-group select,
+    html:not([data-theme="light"]) .cal-grid-card,
+    html:not([data-theme="light"]) .day-detail-panel,
+    html:not([data-theme="light"]) .day-detail-close,
+    html:not([data-theme="light"]) .day-detail-day-nav-btn,
+    html:not([data-theme="light"]) .day-detail-print-btn {
         background: var(--surface);
     }
 
-    .cal-control-item input,
-    .cal-control-item select {
+    html:not([data-theme="light"]) .cal-control-item input,
+    html:not([data-theme="light"]) .cal-control-item select {
         background: var(--surface);
         color: var(--ink);
     }
 
-    .cal-dow-header,
-    .meal-box,
-    .timetable-empty,
-    .comment-item {
+    html:not([data-theme="light"]) .cal-dow-header,
+    html:not([data-theme="light"]) .meal-box,
+    html:not([data-theme="light"]) .timetable-empty,
+    html:not([data-theme="light"]) .comment-item {
         background: var(--surface-soft);
     }
+}
+
+/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
+html[data-theme="dark"] .vacation-dday-badge,
+html[data-theme="dark"] .cal-control-icon,
+html[data-theme="dark"] .cal-navbar,
+html[data-theme="dark"] .cal-nav-btn,
+html[data-theme="dark"] .cal-nav-select-group select,
+html[data-theme="dark"] .cal-grid-card,
+html[data-theme="dark"] .day-detail-panel,
+html[data-theme="dark"] .day-detail-close,
+html[data-theme="dark"] .day-detail-day-nav-btn,
+html[data-theme="dark"] .day-detail-print-btn {
+    background: var(--surface);
+}
+
+html[data-theme="dark"] .cal-control-item input,
+html[data-theme="dark"] .cal-control-item select {
+    background: var(--surface);
+    color: var(--ink);
+}
+
+html[data-theme="dark"] .cal-dow-header,
+html[data-theme="dark"] .meal-box,
+html[data-theme="dark"] .timetable-empty,
+html[data-theme="dark"] .comment-item {
+    background: var(--surface-soft);
 }
 
 /* Phase 7 - 시간표 인쇄: 인쇄 버튼을 누르면 #printableTimetableSection(시간표 영역)만 보이게 하고

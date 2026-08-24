@@ -50,13 +50,20 @@
     --surface-soft: #eceee5;
 }
 
-/* 다크모드는 prefers-color-scheme 시스템 설정만 따르고 수동 토글 스위치는 범위에 없다.
+/* 다크모드 - 두 경로가 동시에 존재한다:
+   1) prefers-color-scheme 시스템 설정(JS 없이도, 명시적으로 고른 적 없을 때 동작하는 기본값)
+   2) navbar의 다크모드 토글 버튼이 <html>에 찍는 data-theme="dark"/"light" 속성(수동 선택,
+      localStorage에 저장되어 시스템 설정보다 우선함 - dark-mode.js 참고)
+   그래서 다크 팔레트를 두 번 정의한다: @media 블록은 "시스템이 다크 + 사용자가 명시적으로
+   라이트를 고르지 않았을 때"만 적용되도록 :not([data-theme="light"])로 가드하고, 아래
+   :root[data-theme="dark"] 블록은 시스템 설정과 무관하게 사용자가 명시적으로 다크를 골랐을 때
+   무조건 적용된다. 두 블록은 항상 같은 값을 유지해야 한다(값을 고치면 양쪽 다 고칠 것).
    사이트 대부분이 이미 이 파일의 변수(--surface, --bg, --ink, --muted, --border, --nav-bg
    등)를 쓰고 있어서, 여기서 값만 다시 정의하면 대부분의 화면이 자동으로 다크 테마를
    따라간다(post.css/calendar.css 등 개별 파일에 하드코딩된 값들은 각 파일에서 별도로
-   손봐야 함 - 아래 각 CSS 파일의 다크모드 보강 참고). */
+   손봐야 함 - 아래 각 CSS 파일의 다크모드 보강 참고, 이 파일과 동일한 이중 가드 패턴을 쓴다). */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
         --ink: #eeece2;
         --muted: #a9b0bc;
         --surface: #1b212b;
@@ -92,10 +99,10 @@
         --warn-soft: rgba(234, 184, 104, 0.16);
     }
 
-    body { background-color: var(--bg); color: var(--ink); }
+    html:not([data-theme="light"]) body { background-color: var(--bg); color: var(--ink); }
 
-    .btn-outline-brand { background: var(--surface); }
-    .btn-outline-danger { background: var(--surface); }
+    html:not([data-theme="light"]) .btn-outline-brand { background: var(--surface); }
+    html:not([data-theme="light"]) .btn-outline-danger { background: var(--surface); }
 
     /* 폼 입력 요소는 대부분 배경색을 따로 안 정하고 브라우저 기본값(흰색)에 기대고 있어서, 다크
        모드에서 검은 카드 위에 하얀 입력창만 튀는 문제가 생긴다. theme.css가 항상 제일 먼저
@@ -105,17 +112,71 @@
        위 규칙으로 이미 따라가지만, 브라우저가 그리는 달력 아이콘·스피너 같은 네이티브 폼 컨트롤
        크롬은 별도로 color-scheme을 안 알려주면 항상 라이트 테마(검은 아이콘)로 그려져서 어두운
        입력창 배경 위에서 거의 안 보였다. */
-    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-    textarea,
-    select {
+    html:not([data-theme="light"]) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    html:not([data-theme="light"]) textarea,
+    html:not([data-theme="light"]) select {
         background-color: var(--surface);
         color: var(--ink);
         border-color: var(--border);
         color-scheme: dark;
     }
 
-    input::placeholder, textarea::placeholder { color: var(--muted); }
+    html:not([data-theme="light"]) input::placeholder,
+    html:not([data-theme="light"]) textarea::placeholder { color: var(--muted); }
 }
+
+/* 위 @media 블록과 동일한 값 - 시스템 설정과 무관하게 사용자가 다크모드를 명시적으로 골랐을 때. */
+:root[data-theme="dark"] {
+    --ink: #eeece2;
+    --muted: #a9b0bc;
+    --surface: #1b212b;
+    --surface-soft: #232a35;
+    --bg: #14181f;
+    --border: #3a4250;
+
+    --nav-bg: #0d1520;
+
+    --brand-1: #7ea6e6;
+    --brand-2: #7ea6e6;
+    --brand-1-dark: #a9c4ee;
+    --brand-2-dark: #a9c4ee;
+
+    --brand-gradient: var(--brand-1);
+    --brand-gradient-dark: var(--brand-1-dark);
+    --brand-gradient-soft: rgba(126, 166, 230, 0.14);
+    --brand-gradient-tint-1: rgba(126, 166, 230, 0.08);
+    --brand-gradient-tint-2: rgba(126, 166, 230, 0.16);
+    --brand-gradient-tint-3: rgba(126, 166, 230, 0.06);
+
+    --danger: #ef8b80;
+    --danger-dark: #f5b3ab;
+    --danger-border: #6b2b24;
+    --danger-soft: rgba(239, 139, 128, 0.16);
+
+    --accent: #f0c15e;
+    --accent-soft: rgba(240, 193, 94, 0.16);
+    --success: #7ecb9a;
+    --success-soft: rgba(126, 203, 154, 0.16);
+    --warn: #eab868;
+    --warn-soft: rgba(234, 184, 104, 0.16);
+}
+
+html[data-theme="dark"] body { background-color: var(--bg); color: var(--ink); }
+
+html[data-theme="dark"] .btn-outline-brand { background: var(--surface); }
+html[data-theme="dark"] .btn-outline-danger { background: var(--surface); }
+
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+    background-color: var(--surface);
+    color: var(--ink);
+    border-color: var(--border);
+    color-scheme: dark;
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder { color: var(--muted); }
 
 * {
     box-sizing: border-box;

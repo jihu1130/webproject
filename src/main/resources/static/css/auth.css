@@ -234,17 +234,29 @@ body.auth-body {
 .mypage-delete-btn:hover { background: #fef2f2; }
 
 @media (prefers-color-scheme: dark) {
-    .auth-field input,
-    .auth-field select,
-    .auth-field textarea {
+    html:not([data-theme="light"]) .auth-field input,
+    html:not([data-theme="light"]) .auth-field select,
+    html:not([data-theme="light"]) .auth-field textarea {
         background: var(--surface);
         color: var(--ink);
     }
-    .auth-google-btn { background: var(--surface); color: var(--ink); }
-    .auth-google-btn:hover { background: var(--surface-soft); }
-    .mypage-delete-btn { background: var(--surface); }
-    .mypage-delete-btn:hover { background: var(--danger-soft); }
+    html:not([data-theme="light"]) .auth-google-btn { background: var(--surface); color: var(--ink); }
+    html:not([data-theme="light"]) .auth-google-btn:hover { background: var(--surface-soft); }
+    html:not([data-theme="light"]) .mypage-delete-btn { background: var(--surface); }
+    html:not([data-theme="light"]) .mypage-delete-btn:hover { background: var(--danger-soft); }
 }
+
+/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
+html[data-theme="dark"] .auth-field input,
+html[data-theme="dark"] .auth-field select,
+html[data-theme="dark"] .auth-field textarea {
+    background: var(--surface);
+    color: var(--ink);
+}
+html[data-theme="dark"] .auth-google-btn { background: var(--surface); color: var(--ink); }
+html[data-theme="dark"] .auth-google-btn:hover { background: var(--surface-soft); }
+html[data-theme="dark"] .mypage-delete-btn { background: var(--surface); }
+html[data-theme="dark"] .mypage-delete-btn:hover { background: var(--danger-soft); }
 
 /* 버그수정 프롬포트 요청 - 반응형 규칙이 아예 없었다(post.css 등의 560px 기준과 동일하게 맞춤). */
 @media (max-width: 560px) {

@@ -3,6 +3,21 @@
 <body>
 
 <th:block th:fragment="navbar(active)">
+<!-- 다크모드 초기화 - body의 맨 첫 내용으로 동기 실행되어(navbar 프래그먼트가 모든 페이지에서
+     body 맨 위에 온다) 페이지가 눈에 보이기 전에 data-theme을 정한다. localStorage에 저장된
+     수동 선택이 있으면 그 값을, 없으면 시스템 설정을 따른다. 이 스크립트가 실패하거나
+     JS가 꺼져있어도 theme.css의 prefers-color-scheme 분기가 그대로 폴백이 된다. -->
+<script>
+(function () {
+    try {
+        var saved = localStorage.getItem('theme');
+        var theme = (saved === 'light' || saved === 'dark')
+            ? saved
+            : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+})();
+</script>
 <nav class="site-nav">
     <div class="site-nav-inner">
         <a href="/" class="site-nav-brand"><i class="fa-solid fa-graduation-cap"></i> WebSchool</a>
@@ -25,6 +40,10 @@
                 <input type="text" name="keyword" placeholder="통합검색" aria-label="통합검색">
                 <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
+
+            <button type="button" id="themeToggle" class="site-nav-theme-toggle" aria-label="다크모드로 전환" title="다크모드 전환">
+                <i class="fa-solid fa-moon"></i>
+            </button>
 
             <div class="site-nav-auth">
                 <div class="site-nav-guest" sec:authorize="!isAuthenticated()">
@@ -50,6 +69,7 @@
     </div>
 </nav>
 <script th:src="@{/js/navbar.js}"></script>
+<script th:src="@{/js/dark-mode.js}"></script>
 <script th:if="${loginUser != null}" th:src="@{/js/notification.js}"></script>
 </th:block>
 

@@ -403,11 +403,20 @@ html { scroll-behavior: smooth; }
    그대로 둬도 괜찮다(대비 기준이 페이지 배경이 아니라 그라데이션이라 다크모드 영향 없음) -
    아래 콘텐츠 카드류만 손보면 된다. */
 @media (prefers-color-scheme: dark) {
-    .bento-card,
-    .step-card {
+    html:not([data-theme="light"]) .bento-card,
+    html:not([data-theme="light"]) .step-card {
         background: var(--surface);
     }
-    .bento-card-soon { background: var(--surface-soft); border-color: var(--border); }
-    .bento-badge-soon { background: var(--surface-soft); }
-    .steps-section { background: var(--surface-soft); }
+    html:not([data-theme="light"]) .bento-card-soon { background: var(--surface-soft); border-color: var(--border); }
+    html:not([data-theme="light"]) .bento-badge-soon { background: var(--surface-soft); }
+    html:not([data-theme="light"]) .steps-section { background: var(--surface-soft); }
 }
+
+/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
+html[data-theme="dark"] .bento-card,
+html[data-theme="dark"] .step-card {
+    background: var(--surface);
+}
+html[data-theme="dark"] .bento-card-soon { background: var(--surface-soft); border-color: var(--border); }
+html[data-theme="dark"] .bento-badge-soon { background: var(--surface-soft); }
+html[data-theme="dark"] .steps-section { background: var(--surface-soft); }

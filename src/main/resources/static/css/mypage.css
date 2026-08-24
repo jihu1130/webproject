@@ -260,13 +260,21 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    .my-activity-edit-btn,
-    .mypage-edit-btn,
-    .mypage-logout-btn {
+    html:not([data-theme="light"]) .my-activity-edit-btn,
+    html:not([data-theme="light"]) .mypage-edit-btn,
+    html:not([data-theme="light"]) .mypage-logout-btn {
         background: var(--surface);
     }
-    .mypage-logout-btn:hover { background: var(--surface-soft); }
+    html:not([data-theme="light"]) .mypage-logout-btn:hover { background: var(--surface-soft); }
 }
+
+/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
+html[data-theme="dark"] .my-activity-edit-btn,
+html[data-theme="dark"] .mypage-edit-btn,
+html[data-theme="dark"] .mypage-logout-btn {
+    background: var(--surface);
+}
+html[data-theme="dark"] .mypage-logout-btn:hover { background: var(--surface-soft); }
 
 /* 버그수정 프롬포트 요청 - 이 파일에 반응형 규칙이 아예 없었다(플렉스박스 덕에 375px에서도
    우연히 안 깨졌을 뿐, 의도적으로 설계된 건 아니었음). post.css/navbar.css/admin.css가 이미 쓰는

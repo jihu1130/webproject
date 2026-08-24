@@ -1038,15 +1038,28 @@ a.post-comment-nickname:hover { text-decoration: underline; }
    팔레트만으로 자동 대응되지만, 아래 작은 배지/버튼들은 흰 배경을 하드코딩해뒀어서 따로 손봐야
    다크 배경 위에서 하얗게 튀지 않는다. */
 @media (prefers-color-scheme: dark) {
-    .post-category-tab,
-    .post-page-link,
-    .post-delete-btn,
-    .post-report-btn,
-    .post-like-btn, .post-bookmark-btn,
-    .post-image-existing-remove,
-    .post-comment-edit-form button {
+    html:not([data-theme="light"]) .post-category-tab,
+    html:not([data-theme="light"]) .post-page-link,
+    html:not([data-theme="light"]) .post-delete-btn,
+    html:not([data-theme="light"]) .post-report-btn,
+    html:not([data-theme="light"]) .post-like-btn, html:not([data-theme="light"]) .post-bookmark-btn,
+    html:not([data-theme="light"]) .post-image-existing-remove,
+    html:not([data-theme="light"]) .post-comment-edit-form button {
         background: var(--surface);
     }
 
-    .post-comment-edit-input { background: var(--surface); color: var(--ink); }
+    html:not([data-theme="light"]) .post-comment-edit-input { background: var(--surface); color: var(--ink); }
 }
+
+/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
+html[data-theme="dark"] .post-category-tab,
+html[data-theme="dark"] .post-page-link,
+html[data-theme="dark"] .post-delete-btn,
+html[data-theme="dark"] .post-report-btn,
+html[data-theme="dark"] .post-like-btn, html[data-theme="dark"] .post-bookmark-btn,
+html[data-theme="dark"] .post-image-existing-remove,
+html[data-theme="dark"] .post-comment-edit-form button {
+    background: var(--surface);
+}
+
+html[data-theme="dark"] .post-comment-edit-input { background: var(--surface); color: var(--ink); }
