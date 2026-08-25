@@ -4,11 +4,17 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 
+// @DynamicUpdate - Post.java/PostComment.java와 동일한 이유. points를 UserRepository
+// .addPoints()로 원자적 벌크 UPDATE하는데, 이 어노테이션이 없으면 같은 계정을 다루는 다른
+// 트랜잭션(예: 관리자 계정 관리 화면에서 role 변경)이 자기 메모리에 들고 있던 오래된 points
+// 값까지 포함해서 UPDATE를 날려 방금 적립된 포인트를 조용히 덮어쓸 수 있다.
 @Entity
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = {"provider", "provider_id"}))
+@DynamicUpdate
 @Getter @Setter
 @NoArgsConstructor
 public class User {
@@ -100,6 +106,22 @@ public class User {
 
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean canViewAuditLog;
+
+    // 포인트/티어 시스템(todo.md 요구사항) - 게시글/댓글 작성, 좋아요 받음, QnA 답변 채택 등
+    // 활동에 따라 UserPointService가 적립한다(일일 획득 한도 있음, 어뷰징 방지). 소비형(화폐)
+    // 개념으로 설계했지만 소비 기능은 아직 미구현(사용자 확정) - 지금은 오르기만 한다. 신규
+    // 가입 시 0점이 아니라 기본 10점에서 시작한다(사용자 요청 - "얼마나 성실한지"가 숫자로
+    // 드러나야 하니 텅 빈 0보다 낮은 시작점을 주지 않기 위함). active 필드와 동일한 이유로
+    // Java 필드 초기값을 직접 준다 - int 기본값(0)이 JPA INSERT에 그대로 실려서 컬럼의
+    // DB 레벨 default는 신규 가입 흐름에서 적용되지 않는다(User는 UserService.register()/
+    // CustomOAuth2UserService 등 여러 경로에서 생성되므로 매 생성 지점마다 값을 세팅하는 대신
+    // 필드 초기값 하나로 전부 커버).
+    @Column(nullable = false, columnDefinition = "int default 10")
+    private int points = 10;
+
+    public PointTier getTier() {
+        return PointTier.forPoints(points);
+    }
 
     // 구글 소셜 로그인으로 처음 가입하면 학교/학년/반이 빈 채로 계정이 만들어진다
     // (로컬 회원가입은 이 정보가 항상 필수라 이 상태가 나오지 않는다) - SchoolSetupInterceptor가

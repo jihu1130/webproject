@@ -30,6 +30,13 @@ public class PostComment {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
+    // 대댓글(1depth 답글, 2026-08-25 추가) - null이면 최상위 댓글, 아니면 답글이다. 답글에는
+    // 답글을 달 수 없다(1depth만 허용, PostCommentService.createComment()에서 검증) - parentComment
+    // 자신이 이미 parentComment를 갖고 있으면(=답글의 답글이 되려는 시도) 거부한다.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private PostComment parentComment;
+
     @Column(nullable = false, length = 500)
     private String content;
 

@@ -100,6 +100,10 @@
 .profile-card-stamp-super { background: var(--accent-soft); color: var(--accent); }
 .profile-card-stamp-admin { background: var(--brand-gradient-soft); color: var(--brand-1); }
 .profile-card-stamp-user  { background: var(--surface-soft); color: var(--muted); }
+/* 포인트/티어 시스템 - 다른 배지(.post-comment-accepted-badge 등)와 동일하게 테마 토큰 대신
+   고정 앰버 톤을 직접 쓴다(성취/등급 느낌의 색은 라이트/다크 전환과 무관하게 항상 같아야
+   자연스러움). */
+.profile-card-stamp-tier { background: #fef3c7; color: #92400e; }
 
 .profile-card-stamp-row {
     display: flex;

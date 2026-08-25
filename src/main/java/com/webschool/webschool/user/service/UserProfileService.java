@@ -52,6 +52,8 @@ public class UserProfileService {
                 .postCount(posts.getTotalElements())
                 .commentCount(postCommentRepository.countByAuthor_IdAndDeletedFalse(userId))
                 .likeCount(postRepository.sumLikeCountByAuthor_Id(userId))
+                .points(user.getPoints())
+                .tierLabel(user.getTier().getLabel())
                 .posts(posts)
                 .build();
     }

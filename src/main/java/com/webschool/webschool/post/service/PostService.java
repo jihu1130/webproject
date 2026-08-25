@@ -20,6 +20,7 @@ import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserPenaltyService;
+import com.webschool.webschool.user.service.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,6 +51,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final UserPenaltyService userPenaltyService;
+    private final UserPointService userPointService;
     private final AdminActionLogService adminActionLogService;
 
     // pageSize: 사용자가 "페이지당 N개 보기"로 고를 수 있는 페이지 크기 (PageUtils.normalizeSize()로
@@ -134,6 +136,7 @@ public class PostService {
         // 기록한다. log()가 SecurityContextHolder에서 현재 로그인 사용자를 그대로 읽으므로 호출부만
         // 추가하면 된다(시그니처 변경 불필요).
         adminActionLogService.log("POST", saved.getId(), "CREATE", truncate(title) + " [" + category.getLabel() + "]");
+        userPointService.award(author, UserPointService.POST_CREATE, "게시글 작성");
         return saved.getUuid();
     }
 
@@ -300,6 +303,7 @@ public class PostService {
             notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.LIKE,
                     user.getNickname() + "님이 회원님의 글 '" + truncate(post.getTitle()) + "'을(를) 좋아합니다.",
                     "/posts/" + post.getUuid());
+            userPointService.award(post.getAuthor(), UserPointService.LIKE_RECEIVED, "게시글 좋아요 받음");
         }
         return Map.of("liked", liked, "likeCount", displayLikeCount);
     }

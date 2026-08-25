@@ -16,5 +16,7 @@ public class PublicUserProfileDto {
     private long postCount; // 프로필 카드 통계 바(프로필_디자인.md) - posts의 totalElements와 동일한 값
     private long commentCount; // 마이페이지와 동일한 집계(post.PostCommentRepository), 어느 글에 달았는지는 노출 안 함
     private long likeCount; // 마이페이지와 동일한 집계(PostRepository.sumLikeCountByAuthor_Id), 어느 글이 받았는지는 노출 안 함
+    private int points; // 포인트/티어 시스템(todo.md 요구사항)
+    private String tierLabel;
     private Page<PublicUserProfilePostDto> posts;
 }

@@ -52,6 +52,10 @@
                               and !loginUser.canManageUsers and !loginUser.canManageAdminPermissions
                               and !loginUser.canViewAuditLog}"
                       th:text="'권한 없음'">권한 없음</span>
+                <!-- 포인트/티어 시스템(todo.md 요구사항) - 역할 스탬프 옆에 티어 배지를 추가로 표시.
+                     loginUser는 DTO가 아니라 엔티티라 getTier()가 그대로 프로퍼티 접근(.tier)된다. -->
+                <span class="profile-card-stamp profile-card-stamp-tier" th:if="${loginUser != null}"
+                      th:text="${loginUser.tier.label}">티어</span>
             </div>
 
             <div class="profile-card-stats">
@@ -66,6 +70,10 @@
                 <div class="profile-card-stat">
                     <strong th:text="${stats.likeCount}">0</strong>
                     <span>받은 좋아요</span>
+                </div>
+                <div class="profile-card-stat" th:if="${loginUser != null}">
+                    <strong th:text="${loginUser.points}">0</strong>
+                    <span>포인트</span>
                 </div>
             </div>
 

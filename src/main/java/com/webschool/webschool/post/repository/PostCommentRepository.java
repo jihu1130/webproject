@@ -34,8 +34,12 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
     // 일반 사용자용: 삭제되지 않은 댓글만 조회. 버그 수정(N+1) - author가 LAZY라 댓글마다 작성자를
     // 따로 조회했는데, @EntityGraph로 한 번의 JOIN FETCH에 묶었다(PostCommentService.getComments()의
     // 신고/좋아요/북마크 여부 배치 조회와 함께 적용해야 진짜 효과가 있음).
-    @EntityGraph(attributePaths = "author")
+    @EntityGraph(attributePaths = {"author", "parentComment"})
     List<PostComment> findByPost_IdAndDeletedFalseOrderByCreatedAtAsc(Long postId);
+
+    // 대댓글(1depth 답글) 삭제 가드용 - 답글이 달린 댓글은 삭제할 수 없다(PostCommentService
+    // .deleteComment() 참고, 답글이 부모 없이 붕 뜬 상태로 남는 것을 막기 위한 단순한 방어).
+    boolean existsByParentComment_IdAndDeletedFalse(Long parentCommentId);
 
     // 관리자용: 블라인드 처리됐거나 신고가 있는 댓글 (삭제된 댓글은 제외) - "신고 관리 > 댓글" 탭
     @Query("SELECT c FROM PostComment c WHERE c.deleted = false AND (c.blind = true OR c.reportCount > 0) "

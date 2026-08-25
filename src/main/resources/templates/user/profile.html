@@ -27,6 +27,7 @@
                      th:text="${#strings.isEmpty(profile.nickname)} ? '?' : ${#strings.substring(profile.nickname, 0, 1)}">?</div>
                 <div class="profile-card-identity">
                     <h1 class="profile-card-name" th:text="${profile.nickname}">닉네임</h1>
+                    <span class="profile-card-stamp profile-card-stamp-tier" th:text="${profile.tierLabel}">티어</span>
                 </div>
             </div>
 
@@ -42,6 +43,10 @@
                 <div class="profile-card-stat">
                     <strong th:text="${profile.likeCount}">0</strong>
                     <span>받은 좋아요</span>
+                </div>
+                <div class="profile-card-stat">
+                    <strong th:text="${profile.points}">0</strong>
+                    <span>포인트</span>
                 </div>
             </div>
 

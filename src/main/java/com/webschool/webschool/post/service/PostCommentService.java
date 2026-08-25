@@ -20,6 +20,7 @@ import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserBlockService;
 import com.webschool.webschool.user.service.UserPenaltyService;
+import com.webschool.webschool.user.service.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +53,7 @@ public class PostCommentService {
     private final UserPenaltyService userPenaltyService;
     private final UserBlockService userBlockService;
     private final AdminActionLogService adminActionLogService;
+    private final UserPointService userPointService;
 
     // 버그 수정(N+1) - 댓글마다 신고/좋아요/북마크 여부를 개별 existsBy 쿼리로 확인하던 것을, 이 글의
     // 댓글 id 목록 전체에 대해 한 번씩만(총 3번) 배치 조회해서 메모리에서 lookup하도록 교체했다
@@ -82,7 +84,7 @@ public class PostCommentService {
     }
 
     @Transactional
-    public PostCommentDto createComment(Long postId, String username, String content) {
+    public PostCommentDto createComment(Long postId, String username, String content, Long parentId) {
         String trimmed = validateContent(content);
 
         Post post = postRepository.findById(postId)
@@ -101,18 +103,49 @@ public class PostCommentService {
             userBlockService.assertNotBlocked(author, post.getAuthor());
         }
 
+        // 대댓글(1depth 답글) - parentId가 있으면 그 댓글에 달리는 답글이다. 1depth만 허용하므로
+        // 부모로 지정하려는 댓글이 이미 다른 댓글의 답글이면(=parentComment가 또 있으면) 거부한다.
+        PostComment parentComment = null;
+        if (parentId != null) {
+            parentComment = postCommentRepository.findById(parentId)
+                    .orElseThrow(() -> new IllegalArgumentException("답글을 달 댓글을 찾을 수 없습니다."));
+            if (parentComment.isDeleted()) {
+                throw new IllegalArgumentException("삭제된 댓글에는 답글을 달 수 없습니다.");
+            }
+            if (!parentComment.getPost().getId().equals(postId)) {
+                throw new IllegalArgumentException("답글을 달 댓글을 찾을 수 없습니다.");
+            }
+            if (parentComment.getParentComment() != null) {
+                throw new IllegalArgumentException("답글에는 답글을 달 수 없습니다.");
+            }
+        }
+
         PostComment comment = new PostComment();
         comment.setPost(post);
         comment.setAuthor(author);
         comment.setContent(trimmed);
+        comment.setParentComment(parentComment);
 
         postCommentRepository.save(comment);
-        adminActionLogService.log("COMMENT", comment.getId(), "CREATE", truncate(trimmed));
+        adminActionLogService.log("COMMENT", comment.getId(), parentComment != null ? "REPLY" : "CREATE", truncate(trimmed));
 
         String label = post.getCategory() == Post.Category.ANONYMOUS ? "답변" : "댓글";
-        notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.COMMENT,
-                author.getNickname() + "님이 회원님의 글에 " + label + "을 남겼어요: " + truncate(post.getTitle()),
-                "/posts/" + post.getUuid());
+        if (parentComment != null) {
+            notificationService.notifyIfNotSelf(parentComment.getAuthor(), username, Notification.Type.REPLY,
+                    author.getNickname() + "님이 회원님의 " + label + "에 답글을 남겼어요: " + truncate(post.getTitle()),
+                    "/posts/" + post.getUuid());
+            // 게시글 작성자에게도 알림(중복 방지: 답글 대상이 곧 게시글 작성자면 위에서 이미 알림을 보냈다)
+            if (!post.getAuthor().getId().equals(parentComment.getAuthor().getId())) {
+                notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.COMMENT,
+                        author.getNickname() + "님이 회원님의 글에 답글을 남겼어요: " + truncate(post.getTitle()),
+                        "/posts/" + post.getUuid());
+            }
+        } else {
+            notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.COMMENT,
+                    author.getNickname() + "님이 회원님의 글에 " + label + "을 남겼어요: " + truncate(post.getTitle()),
+                    "/posts/" + post.getUuid());
+        }
+        userPointService.award(author, UserPointService.COMMENT_CREATE, label + " 작성");
 
         return toDto(comment, username);
     }
@@ -154,6 +187,14 @@ public class PostCommentService {
 
         if (!comment.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 댓글만 삭제할 수 있습니다.");
+        }
+
+        // 답글이 달린 댓글은 삭제할 수 없다 - 삭제된 댓글은 목록 조회 쿼리에서 아예 제외되는데
+        // (findByPost_IdAndDeletedFalse...), 그 밑에 남은 답글만 부모 없이 붕 뜨는 걸 막기 위한
+        // 단순한 방어(답글까지 함께 지우는 cascade보다 안전 - 답글 작성자 동의 없이 남의 글이
+        // 같이 사라지면 안 됨).
+        if (postCommentRepository.existsByParentComment_IdAndDeletedFalse(commentId)) {
+            throw new IllegalArgumentException("답글이 달린 댓글은 삭제할 수 없습니다. 답글을 먼저 삭제해주세요.");
         }
 
         // 소프트 딜리트: 물리적으로 지우지 않고 상태만 변경 (관리자 페이지에서 계속 조회 가능, 6-6 항목 참고)
@@ -250,6 +291,7 @@ public class PostCommentService {
             notificationService.notifyIfNotSelf(comment.getAuthor(), username, Notification.Type.LIKE,
                     user.getNickname() + "님이 회원님의 댓글을 좋아합니다.",
                     "/posts/" + comment.getPost().getUuid());
+            userPointService.award(comment.getAuthor(), UserPointService.LIKE_RECEIVED, "댓글 좋아요 받음");
         }
         return Map.of("liked", liked, "likeCount", displayLikeCount);
     }
@@ -284,6 +326,10 @@ public class PostCommentService {
             throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
         }
 
+        if (comment.getParentComment() != null) {
+            throw new IllegalArgumentException("답글은 답변으로 채택할 수 없습니다.");
+        }
+
         Post post = comment.getPost();
         if (post.getCategory() != Post.Category.QNA) {
             throw new IllegalArgumentException("질의응답 게시글에서만 답변을 채택할 수 있습니다.");
@@ -309,6 +355,7 @@ public class PostCommentService {
         notificationService.notifyIfNotSelf(comment.getAuthor(), username, Notification.Type.ACCEPTED,
                 "회원님의 답변이 채택됐어요: " + truncate(post.getTitle()),
                 "/posts/" + post.getUuid());
+        userPointService.award(comment.getAuthor(), UserPointService.ANSWER_ACCEPTED, "답변 채택됨");
         adminActionLogService.log("COMMENT", comment.getId(), "ACCEPT_ANSWER", "채택: " + truncate(post.getTitle()));
         return true;
     }
@@ -394,6 +441,7 @@ public class PostCommentService {
 
         return PostCommentDto.builder()
                 .id(c.getId())
+                .parentId(c.getParentComment() != null ? c.getParentComment().getId() : null)
                 .nickname(c.getAuthor().isDeleted() ? "탈퇴한 사용자" : c.getAuthor().getNickname())
                 .authorId(c.getAuthor().getId())
                 .authorLinkable(!c.getAuthor().isDeleted())

@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
+    // 대댓글(1depth 답글, 2026-08-25 추가) - 서버는 정렬 순서를 보장하지 않는 평평한(flat) 목록을
+    // 주므로(getComments()가 QNA 채택 답변을 맨 위로 올리는 정렬을 하기 때문에 답글이 부모 바로
+    // 뒤에 온다는 보장이 없다), 클라이언트에서 parentId 기준으로 답글을 부모 밑에 묶어서 그린다.
     function renderComments(comments) {
         var list = document.getElementById('postCommentList');
 
@@ -39,91 +42,163 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        list.innerHTML = '';
+        var repliesByParent = {};
         comments.forEach(function (c) {
-            var item = document.createElement('div');
-            item.className = 'post-comment-item' + (c.blind ? ' post-comment-item-blind' : '')
-                + (c.accepted ? ' post-comment-item-accepted' : '');
-
-            var editedBadge = c.edited ? ' <span class="post-comment-edited">(수정됨)</span>' : '';
-            var blindBadge = c.blind ? ' <span class="post-comment-blind-badge">블라인드</span>' : '';
-            var acceptedBadge = c.accepted ? ' <span class="post-comment-accepted-badge"><i class="fa-solid fa-check"></i> 채택된 답변</span>' : '';
-            var nicknameHtml = c.authorLinkable
-                ? '<a href="/users/' + c.authorId + '" class="post-comment-nickname">' + escapeHtml(c.nickname) + '</a>'
-                : '<span class="post-comment-nickname">' + escapeHtml(c.nickname) + '</span>';
-            var canBlock = !c.mine && isLoggedIn && !isAnonymousPost && c.authorLinkable;
-            // QNA 답변 채택 버튼 - 질문 작성자에게만, 블라인드/삭제 예정 댓글이 아닌 경우에 노출
-            // 버그수정 프롬포트 요청 - 아이콘 전용 버튼에 title만 있고 aria-label이 없어서 스크린리더
-            // 사용자에게 "버튼"으로만 들렸다. title과 동일한 문구를 aria-label로도 명시한다.
-            var acceptLabel = c.accepted ? '채택 취소' : '답변으로 채택';
-            // 수정사항.md 지적 - 질문자가 자기 자신의 댓글도 채택할 수 있었다(!c.mine으로 차단)
-            var acceptBtnHtml = (isQnaPost && isPostAuthor && !c.mine && !c.blind)
-                ? '<button type="button" class="post-comment-accept-btn' + (c.accepted ? ' active' : '') + '" title="' +
-                  acceptLabel + '" aria-label="' + acceptLabel + '"><i class="fa-solid fa-check"></i></button>'
-                : '';
-            var actionsHtml = acceptBtnHtml + (c.mine
-                ? '<button type="button" class="post-comment-edit-btn" title="수정" aria-label="수정"><i class="fa-solid fa-pen"></i></button>' +
-                  '<button type="button" class="post-comment-delete-btn" title="삭제" aria-label="삭제"><i class="fa-solid fa-xmark"></i></button>'
-                : (isLoggedIn
-                    ? ((canBlock ? '<button type="button" class="post-comment-block-btn" title="차단" aria-label="차단"><i class="fa-solid fa-user-slash"></i></button>' : '') +
-                       (c.reportedByMe
-                        ? '<button type="button" class="post-comment-report-btn" title="이미 신고했어요" aria-label="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
-                        : '<button type="button" class="post-comment-report-btn" title="신고" aria-label="신고"><i class="fa-solid fa-flag"></i></button>'))
-                    : ''));
-            var likeBookmarkHtml = isLoggedIn
-                ? '<button type="button" class="post-comment-like-btn' + (c.likedByMe ? ' active' : '') + '" title="좋아요" aria-label="좋아요">' +
-                      '<i class="fa-solid fa-heart"></i> <span class="post-comment-like-count">' + c.likeCount + '</span></button>' +
-                  '<button type="button" class="post-comment-bookmark-btn' + (c.bookmarkedByMe ? ' active' : '') + '" title="북마크" aria-label="북마크">' +
-                      '<i class="fa-solid fa-bookmark"></i></button>'
-                : '';
-
-            item.innerHTML =
-                '<div class="post-comment-item-header">' +
-                    nicknameHtml +
-                    '<span class="post-comment-time"><span class="post-comment-time-value">' + escapeHtml(c.createdAt) + '</span>' + editedBadge + blindBadge + acceptedBadge + '</span>' +
-                    likeBookmarkHtml +
-                    actionsHtml +
-                '</div>' +
-                '<div class="post-comment-content">' + escapeHtml(c.content) + '</div>';
-
-            WebSchoolTimeago.apply(item.querySelector('.post-comment-time-value'));
-
-            var editBtn = item.querySelector('.post-comment-edit-btn');
-            if (editBtn) {
-                editBtn.addEventListener('click', function () { startEditComment(item, c); });
+            if (c.parentId) {
+                (repliesByParent[c.parentId] = repliesByParent[c.parentId] || []).push(c);
             }
+        });
 
-            var delBtn = item.querySelector('.post-comment-delete-btn');
-            if (delBtn) {
-                delBtn.addEventListener('click', function () { deleteComment(c.id); });
-            }
+        list.innerHTML = '';
+        comments.filter(function (c) { return !c.parentId; }).forEach(function (c) {
+            list.appendChild(buildCommentItem(c, false));
+            (repliesByParent[c.id] || []).forEach(function (r) {
+                list.appendChild(buildCommentItem(r, true));
+            });
+        });
+    }
 
-            var reportBtn = item.querySelector('.post-comment-report-btn');
-            if (reportBtn) {
-                reportBtn.addEventListener('click', function () { reportComment(c.id, reportBtn); });
-            }
+    function buildCommentItem(c, isReply) {
+        var item = document.createElement('div');
+        item.className = 'post-comment-item' + (isReply ? ' post-comment-item-reply' : '')
+            + (c.blind ? ' post-comment-item-blind' : '')
+            + (c.accepted ? ' post-comment-item-accepted' : '');
 
-            var blockBtn = item.querySelector('.post-comment-block-btn');
-            if (blockBtn) {
-                blockBtn.addEventListener('click', function () { blockUser(c.authorId, c.nickname); });
-            }
+        var editedBadge = c.edited ? ' <span class="post-comment-edited">(수정됨)</span>' : '';
+        var blindBadge = c.blind ? ' <span class="post-comment-blind-badge">블라인드</span>' : '';
+        var acceptedBadge = c.accepted ? ' <span class="post-comment-accepted-badge"><i class="fa-solid fa-check"></i> 채택된 답변</span>' : '';
+        var nicknameHtml = c.authorLinkable
+            ? '<a href="/users/' + c.authorId + '" class="post-comment-nickname">' + escapeHtml(c.nickname) + '</a>'
+            : '<span class="post-comment-nickname">' + escapeHtml(c.nickname) + '</span>';
+        var canBlock = !c.mine && isLoggedIn && !isAnonymousPost && c.authorLinkable;
+        // QNA 답변 채택 버튼 - 질문 작성자에게만, 블라인드/삭제 예정 댓글이 아닌 경우에 노출.
+        // 답글은 채택 대상이 아니다(서버도 acceptAnswer()에서 동일하게 거부 - PostCommentService 참고).
+        // 버그수정 프롬포트 요청 - 아이콘 전용 버튼에 title만 있고 aria-label이 없어서 스크린리더
+        // 사용자에게 "버튼"으로만 들렸다. title과 동일한 문구를 aria-label로도 명시한다.
+        var acceptLabel = c.accepted ? '채택 취소' : '답변으로 채택';
+        // 수정사항.md 지적 - 질문자가 자기 자신의 댓글도 채택할 수 있었다(!c.mine으로 차단)
+        var acceptBtnHtml = (!isReply && isQnaPost && isPostAuthor && !c.mine && !c.blind)
+            ? '<button type="button" class="post-comment-accept-btn' + (c.accepted ? ' active' : '') + '" title="' +
+              acceptLabel + '" aria-label="' + acceptLabel + '"><i class="fa-solid fa-check"></i></button>'
+            : '';
+        // 답글 버튼 - 최상위 댓글에만(답글에는 답글을 달 수 없음, 1depth 제한), 로그인한 경우에만.
+        var replyBtnHtml = (!isReply && isLoggedIn && !c.blind)
+            ? '<button type="button" class="post-comment-reply-btn" title="답글" aria-label="답글"><i class="fa-solid fa-reply"></i></button>'
+            : '';
+        var actionsHtml = acceptBtnHtml + replyBtnHtml + (c.mine
+            ? '<button type="button" class="post-comment-edit-btn" title="수정" aria-label="수정"><i class="fa-solid fa-pen"></i></button>' +
+              '<button type="button" class="post-comment-delete-btn" title="삭제" aria-label="삭제"><i class="fa-solid fa-xmark"></i></button>'
+            : (isLoggedIn
+                ? ((canBlock ? '<button type="button" class="post-comment-block-btn" title="차단" aria-label="차단"><i class="fa-solid fa-user-slash"></i></button>' : '') +
+                   (c.reportedByMe
+                    ? '<button type="button" class="post-comment-report-btn" title="이미 신고했어요" aria-label="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
+                    : '<button type="button" class="post-comment-report-btn" title="신고" aria-label="신고"><i class="fa-solid fa-flag"></i></button>'))
+                : ''));
+        var likeBookmarkHtml = isLoggedIn
+            ? '<button type="button" class="post-comment-like-btn' + (c.likedByMe ? ' active' : '') + '" title="좋아요" aria-label="좋아요">' +
+                  '<i class="fa-solid fa-heart"></i> <span class="post-comment-like-count">' + c.likeCount + '</span></button>' +
+              '<button type="button" class="post-comment-bookmark-btn' + (c.bookmarkedByMe ? ' active' : '') + '" title="북마크" aria-label="북마크">' +
+                  '<i class="fa-solid fa-bookmark"></i></button>'
+            : '';
 
-            var acceptBtn = item.querySelector('.post-comment-accept-btn');
-            if (acceptBtn) {
-                acceptBtn.addEventListener('click', function () { toggleAcceptAnswer(c.id); });
-            }
+        item.innerHTML =
+            '<div class="post-comment-item-header">' +
+                nicknameHtml +
+                '<span class="post-comment-time"><span class="post-comment-time-value">' + escapeHtml(c.createdAt) + '</span>' + editedBadge + blindBadge + acceptedBadge + '</span>' +
+                likeBookmarkHtml +
+                actionsHtml +
+            '</div>' +
+            '<div class="post-comment-content">' + escapeHtml(c.content) + '</div>';
 
-            var likeBtn = item.querySelector('.post-comment-like-btn');
-            if (likeBtn) {
-                likeBtn.addEventListener('click', function () { toggleCommentLike(c.id, likeBtn); });
-            }
+        WebSchoolTimeago.apply(item.querySelector('.post-comment-time-value'));
 
-            var bookmarkBtn = item.querySelector('.post-comment-bookmark-btn');
-            if (bookmarkBtn) {
-                bookmarkBtn.addEventListener('click', function () { toggleCommentBookmark(c.id, bookmarkBtn); });
-            }
+        var editBtn = item.querySelector('.post-comment-edit-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', function () { startEditComment(item, c); });
+        }
 
-            list.appendChild(item);
+        var delBtn = item.querySelector('.post-comment-delete-btn');
+        if (delBtn) {
+            delBtn.addEventListener('click', function () { deleteComment(c.id); });
+        }
+
+        var reportBtn = item.querySelector('.post-comment-report-btn');
+        if (reportBtn) {
+            reportBtn.addEventListener('click', function () { reportComment(c.id, reportBtn); });
+        }
+
+        var blockBtn = item.querySelector('.post-comment-block-btn');
+        if (blockBtn) {
+            blockBtn.addEventListener('click', function () { blockUser(c.authorId, c.nickname); });
+        }
+
+        var acceptBtn = item.querySelector('.post-comment-accept-btn');
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', function () { toggleAcceptAnswer(c.id); });
+        }
+
+        var replyBtn = item.querySelector('.post-comment-reply-btn');
+        if (replyBtn) {
+            replyBtn.addEventListener('click', function () { startReplyComment(item, c); });
+        }
+
+        var likeBtn = item.querySelector('.post-comment-like-btn');
+        if (likeBtn) {
+            likeBtn.addEventListener('click', function () { toggleCommentLike(c.id, likeBtn); });
+        }
+
+        var bookmarkBtn = item.querySelector('.post-comment-bookmark-btn');
+        if (bookmarkBtn) {
+            bookmarkBtn.addEventListener('click', function () { toggleCommentBookmark(c.id, bookmarkBtn); });
+        }
+
+        return item;
+    }
+
+    // 답글 작성 - startEditComment()와 동일한 인라인 폼 패턴(다시 불러오지 않고 그 댓글 밑에 폼만
+    // 붙였다 뗀다). 버튼을 다시 누르면 폼을 닫는 토글로 동작(실수로 두 번 눌러도 폼이 중복 생기지 않게).
+    function startReplyComment(item, c) {
+        var existing = item.querySelector('.post-comment-reply-form');
+        if (existing) {
+            existing.remove();
+            return;
+        }
+
+        var replyForm = document.createElement('form');
+        replyForm.className = 'post-comment-reply-form';
+        replyForm.innerHTML =
+            '<input type="text" class="post-comment-reply-input" maxlength="500" placeholder="답글을 남겨보세요">' +
+            '<button type="submit">등록</button>' +
+            '<button type="button" class="post-comment-reply-cancel">취소</button>';
+        item.appendChild(replyForm);
+
+        var input = replyForm.querySelector('.post-comment-reply-input');
+        input.focus();
+
+        replyForm.querySelector('.post-comment-reply-cancel').addEventListener('click', function () {
+            replyForm.remove();
+        });
+
+        replyForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var content = input.value.trim();
+            if (!content) return;
+
+            fetch('/posts/' + postId + '/comments', {
+                method: 'POST',
+                headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, WebSchoolCsrf.headers()),
+                body: 'content=' + encodeURIComponent(content) + '&parentId=' + encodeURIComponent(c.id)
+            })
+                .then(function (res) {
+                    if (!res.ok) return res.json().then(function (body) { throw new Error(body.error || '등록 실패'); });
+                    return res.json();
+                })
+                .then(function () {
+                    loadComments();
+                })
+                .catch(function (err) {
+                    WebSchoolModal.alert(err.message || '답글 등록에 실패했습니다.');
+                });
         });
     }
 

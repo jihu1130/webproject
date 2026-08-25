@@ -59,6 +59,7 @@ public class AdminActionLogService {
             Map.entry("DEACTIVATE", "정지"),
             Map.entry("ACTIVATE", "정지 해제"),
             Map.entry("CREATE", "작성"),
+            Map.entry("REPLY", "답글 작성"),
             Map.entry("UPDATE", "수정"),
             Map.entry("REPORT", "신고"),
             Map.entry("REPORT_CANCEL", "신고 취소"),

@@ -31,9 +31,10 @@ public class PostCommentController {
     @PostMapping
     @ResponseBody
     public PostCommentDto create(@PathVariable String postUuid, @RequestParam String content,
+                                  @RequestParam(required = false) Long parentId,
                                   Authentication authentication) {
         Long postId = postService.resolveIdByUuid(postUuid);
-        return postCommentService.createComment(postId, authentication.getName(), content);
+        return postCommentService.createComment(postId, authentication.getName(), content, parentId);
     }
 
     @PutMapping("/{commentId}")

@@ -881,6 +881,14 @@ a.post-list-nickname:hover { text-decoration: underline; }
 
 .post-comment-item:last-child { border-bottom: none; }
 
+/* 대댓글(1depth 답글) - 부모 댓글 밑에 들여쓰기 + 왼쪽 선으로 종속 관계를 표시한다.
+   답글에는 답글을 달 수 없으므로(1depth 제한) 이 클래스는 한 단계 이상 중첩되지 않는다. */
+.post-comment-item-reply {
+    margin-left: 28px;
+    padding-left: 12px;
+    border-left: 2px solid var(--border);
+}
+
 .post-comment-item-header {
     display: flex;
     align-items: center;
@@ -968,9 +976,10 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     word-break: break-word;
 }
 
-.post-comment-edit-form { display: flex; gap: 6px; }
+.post-comment-edit-form, .post-comment-reply-form { display: flex; gap: 6px; }
+.post-comment-reply-form { margin-top: 8px; }
 
-.post-comment-edit-input {
+.post-comment-edit-input, .post-comment-reply-input {
     flex: 1;
     padding: 6px 10px;
     border-radius: 7px;
@@ -980,9 +989,9 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     outline: none;
 }
 
-.post-comment-edit-input:focus { border-color: var(--brand-1); }
+.post-comment-edit-input:focus, .post-comment-reply-input:focus { border-color: var(--brand-1); }
 
-.post-comment-edit-form button {
+.post-comment-edit-form button, .post-comment-reply-form button {
     padding: 6px 12px;
     border-radius: 7px;
     border: 1.5px solid #dcdfef;
@@ -1045,11 +1054,13 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     html:not([data-theme="light"]) .post-report-btn,
     html:not([data-theme="light"]) .post-like-btn, html:not([data-theme="light"]) .post-bookmark-btn,
     html:not([data-theme="light"]) .post-image-existing-remove,
-    html:not([data-theme="light"]) .post-comment-edit-form button {
+    html:not([data-theme="light"]) .post-comment-edit-form button,
+    html:not([data-theme="light"]) .post-comment-reply-form button {
         background: var(--surface);
     }
 
-    html:not([data-theme="light"]) .post-comment-edit-input { background: var(--surface); color: var(--ink); }
+    html:not([data-theme="light"]) .post-comment-edit-input,
+    html:not([data-theme="light"]) .post-comment-reply-input { background: var(--surface); color: var(--ink); }
 }
 
 /* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
@@ -1059,8 +1070,10 @@ html[data-theme="dark"] .post-delete-btn,
 html[data-theme="dark"] .post-report-btn,
 html[data-theme="dark"] .post-like-btn, html[data-theme="dark"] .post-bookmark-btn,
 html[data-theme="dark"] .post-image-existing-remove,
-html[data-theme="dark"] .post-comment-edit-form button {
+html[data-theme="dark"] .post-comment-edit-form button,
+html[data-theme="dark"] .post-comment-reply-form button {
     background: var(--surface);
 }
 
-html[data-theme="dark"] .post-comment-edit-input { background: var(--surface); color: var(--ink); }
+html[data-theme="dark"] .post-comment-edit-input,
+html[data-theme="dark"] .post-comment-reply-input { background: var(--surface); color: var(--ink); }
