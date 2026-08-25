@@ -126,18 +126,14 @@ public class SchoolService {
     }
 
     // 방학 D-Day - 오늘이 이미 방학 기간이면 개학(등교 재개)까지 며칠 남았는지(D-N),
-    // 아니면 다가올 방학(식)까지 며칠 남았는지(D-N)를 계산한다. 두 경우 모두 과거
-    // 날짜는 보지 않고 항상 내일(today+1)부터 미래 방향으로만 검색한다. 캘린더
-    // 페이지에서 학교 선택 시 배지로 보여주는 용도.
+    // 아니면 다가올 방학(식)까지 며칠 남았는지(D-N)를 계산한다. 미래 방향 검색(다가올
+    // 방학/개학)은 항상 내일(today+1)부터만 본다. 캘린더 페이지에서 학교 선택 시
+    // 배지로 보여주는 용도.
     public VacationDdayDto getVacationDday(String atptCode, String schoolCode) {
         LocalDate today = LocalDate.now();
         DateTimeFormatter ymd = DateTimeFormatter.ofPattern("yyyyMMdd");
-        String todayYmd = today.format(ymd);
 
-        List<CalendarEventDto> todayVacation = neisApiService.fetchEventsInRange(
-                atptCode, schoolCode, todayYmd, todayYmd, VACATION_KEYWORD);
-
-        if (!todayVacation.isEmpty()) {
+        if (isCurrentlyInVacation(atptCode, schoolCode, today, ymd)) {
             CalendarEventDto resume = findVacationEnd(atptCode, schoolCode, today, ymd);
             if (resume == null) {
                 return null;
@@ -164,6 +160,51 @@ public class SchoolService {
                         .dday((int) ChronoUnit.DAYS.between(today, LocalDate.parse(nearest.getDate())))
                         .build())
                 .orElse(null);
+    }
+
+    // todo.md 지적 - "오늘 날짜에 '방학' 키워드가 붙은 일정이 있는가"만으로 방학 여부를
+    // 판단하면, "방학식"/"개학"처럼 하루짜리 시작·끝 표시만 등록하는 학교(예: 서울고)는
+    // 방학식 다음날부터는 그날 자체엔 아무 일정도 없으니 "방학 아님"으로 잘못 판단돼
+    // 엉뚱하게 다음 방학(예: 겨울방학)까지의 D-Day가 떴다. 매일 "여름방학"으로 반복
+    // 등록하는 학교(아산배방중 등)만 우연히 정상 동작했던 것.
+    //
+    // 실제 NEIS 데이터로 검증하며 처음 짠 버전(마지막 "방학" 마커 이후 "개학" 마커가
+    // 없으면 방학 중)은 반대 방향으로 새 버그를 만들었다: 아산배방중처럼 매일 반복
+    // 등록하다가 어느 날부터 그냥 등록을 멈추는 학교(명시적 "개학" 마커 자체가 없음)는
+    // 방학이 실제로 끝난 지 한참 지나도(예: 2주 전에 끝났어도) 계속 "방학 중"으로
+    // 잘못 판단됐다 - 서울고 사례를 고치려다 아산배방중 사례를 깨뜨린 것.
+    //
+    // 최종 로직: 최근 VACATION_SEARCH_WINDOW_DAYS일 안에서 "방학" 키워드가 붙은 가장
+    // 최근 날짜(마커)를 찾는다.
+    //   1) 마커가 오늘이면 - 지금 당장 방학 중(매일 반복형이든 단발성이든 공통).
+    //   2) 마커가 오늘이 아니고, 마커 하루 전날도 "방학"으로 등록돼 있으면(=매일 반복
+    //      등록되던 구간의 꼬리) - 그 반복이 오늘까지 이어지지 않고 마커에서 끊겼다는
+    //      뜻이므로 이미 방학이 끝난 것(아산배방중 사례).
+    //   3) 마커가 하루짜리 고립된 표시면(전날은 "방학"이 아님, 서울고의 "방학식"처럼)
+    //      명시적 "개학" 마커가 나올 때까지는 여전히 방학 중이라고 본다.
+    private boolean isCurrentlyInVacation(String atptCode, String schoolCode, LocalDate today, DateTimeFormatter ymd) {
+        LocalDate lookbackStart = today.minusDays(VACATION_SEARCH_WINDOW_DAYS);
+        List<CalendarEventDto> recentVacationMarkers = neisApiService.fetchEventsInRange(
+                atptCode, schoolCode, lookbackStart.format(ymd), today.format(ymd), VACATION_KEYWORD);
+        Set<LocalDate> markerDates = recentVacationMarkers.stream()
+                .map(e -> LocalDate.parse(e.getDate()))
+                .collect(Collectors.toSet());
+        LocalDate lastVacationMarker = markerDates.stream()
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+        if (lastVacationMarker == null) {
+            return false;
+        }
+        if (lastVacationMarker.equals(today)) {
+            return true;
+        }
+        if (markerDates.contains(lastVacationMarker.minusDays(1))) {
+            return false; // 매일 반복 등록되던 구간의 꼬리 - 오늘까지 안 이어졌으니 이미 끝남
+        }
+
+        List<CalendarEventDto> resumedSince = neisApiService.fetchEventsInRange(
+                atptCode, schoolCode, lastVacationMarker.plusDays(1).format(ymd), today.format(ymd), RESUME_KEYWORD);
+        return resumedSince.isEmpty();
     }
 
     // 지금 방학 중일 때 등교가 재개되는 날을 찾는다. 내일부터 미래 방향으로만 검색한다

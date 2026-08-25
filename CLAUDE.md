@@ -69,10 +69,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   분리해 새 서비스로 뽑는 게 이 코드베이스의 컨벤션.
 - **권한 체계 3단계**: `ROLE_USER` / `ROLE_ADMIN`(부관리자, `User`의
   `canManageReports`/`canManagePosts`/`canManageScheduleComments`/
-  `canManageNotices` 플래그로 기능별 권한을 개별 On/Off) / `ROLE_SUPER_ADMIN`(총관리자, `username="admin"`
-  계정 전용 — 앱 안에 이 롤을 부여하는 UI/API가 없어 DB 직접 수정 또는
-  `SuperAdminSeeder`로만 승격 가능, 유일하게 이 계정만 총관리자가 될 수
-  있도록 고정된 설계). `/admin/**` 하위 경로별 실제 접근 제어는
+  `canManageNotices`/`canManageUsers`/`canManageAdminPermissions`/
+  `canViewAuditLog` 7개 플래그로 기능별 권한을 개별 On/Off) / `ROLE_SUPER_ADMIN`
+  (총관리자 — 2026-08-25부터 `username="admin"` 단일 계정 고정이 아니라 여러
+  명 존재 가능. 앱 안에서 부여하는 방법은 기존 총관리자가 관리자 권한 관리
+  화면(`/admin/users/admins`)에서 "총관리자로 승격" 버튼을 누르는 것뿐 —
+  `AdminUserService.promoteToSuperAdmin()`이 호출부가 실제 `isSuperAdmin()`인지
+  서비스 단에서 재확인한다, DB 직접 수정이나 `SuperAdminSeeder`로도 여전히
+  가능). `canManageAdminPermissions`는 다른 계정의 권한/역할 자체를 바꿀 수
+  있는 민감한 권한이라 `AdminUserService.updatePermissions()`가 본인 대상
+  호출을 서버 단에서 거부한다(권한 상승 방지 - `setRole()`/`deleteUser()`가
+  이미 쓰던 자기 자신 체크와 동일 패턴). `/admin/**` 하위 경로별 실제 접근 제어는
   `global.security.AdminAccessInterceptor`가 담당하고,
   `global.advice.GlobalModelAdvice`가 모든 화면에 `loginUser` 엔티티를
   주입해 템플릿에서 권한 플래그를 바로 쓸 수 있게 한다. 새로운 관리자
@@ -225,8 +232,11 @@ com.webschool.webschool
   리셋.
 - **금지어 필터**: `post.util.BannedWordFilter` — 부분 문자열 포함 검사만
   하는 단순 구현(우회 쉬움), 단어 목록도 예시 수준 — 운영 전 보강 필요.
-- **조회수 중복 방지**: `HttpSession` 기반 세션당 1회만 카운트 — 세션
-  만료/새 브라우저로 우회 가능한 경량 방지책.
+- **조회수 중복 방지**: `HttpSession` 기반 세션당 1회 카운트에 더해(2026-08-25부터)
+  `post.service.PostViewService`가 IP 기반 판단을 한 겹 더 씌운다 - 같은 IP가
+  최근 24시간 안에 이미 본 글이면 세션이 달라도(새 브라우저/시크릿창/세션
+  만료/로그아웃 후 재방문) 다시 세지 않는다. 학교 공용 네트워크처럼 여러
+  사용자가 같은 IP를 공유하면 오탐 가능성은 감수하는 트레이드오프.
 - **캘린더 학사일정 검색**: `SchoolService.findNearestEvent(keyword)` —
   같은 이름이 매년 반복되므로(예: "기말고사") 오늘과 가장 가까운 것 하나만
   찾아 반환. 방학 D-Day(`getVacationDday()`)도 같은 방식으로 "방학"
