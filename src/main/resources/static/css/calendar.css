@@ -877,8 +877,12 @@ a.comment-nickname:hover { text-decoration: underline; }
 
 /* 한마디 안의 설문 위젯 - post.css의 기본 .poll-widget은 게시글 상세(넓은 본문 컬럼) 기준
    크기라, 캘린더 옆 패널의 작은 한마디 카드(.comment-item, 8~13px대 글자) 안에 그대로 들어가면
-   눈에 띄게 커 보였다(사용자 지적). 카드 톤에 맞춰 전체적으로 한 단계씩 줄인다. */
-.comment-poll-widget {
+   눈에 띄게 커 보였다(사용자 지적). 카드 톤에 맞춰 전체적으로 한 단계씩 줄인다.
+   .poll-widget.comment-poll-widget으로 클래스 두 개를 다 걸어 명시도를 올려둔 것 - calendar.html은
+   post.css를 calendar.css보다 "뒤에" 불러오는데(comment-form.html은 반대 순서), 명시도가 같으면
+   나중에 로드되는 쪽이 이기다 보니 로드 순서에 기대서 .comment-poll-widget 하나만 걸었을 때는
+   페이지에 따라 post.css의 기본 padding(16px)에 조용히 덮여버렸다. */
+.poll-widget.comment-poll-widget {
     margin-top: 8px;
     padding: 10px;
     border-radius: 9px;

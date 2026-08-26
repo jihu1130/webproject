@@ -9,5 +9,7 @@ import java.util.List;
 public interface PostContestVoteRepository extends JpaRepository<PostContestVote, Long> {
     List<PostContestVote> findByWeekStart(LocalDate weekStart);
 
+    List<PostContestVote> findByEntry_Id(Long entryId);
+
     boolean existsByVoter_IdAndWeekStart(Long voterId, LocalDate weekStart);
 }

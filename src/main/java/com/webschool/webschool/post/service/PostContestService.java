@@ -101,26 +101,41 @@ public class PostContestService {
         Map<Long, List<PostContestVote>> votesByEntry = votes.stream()
                 .collect(Collectors.groupingBy(v -> v.getEntry().getId()));
 
-        Long viewerId = viewerUsername == null ? null
-                : userRepository.findByUsername(viewerUsername).map(User::getId).orElse(null);
+        Long viewerId = resolveViewerId(viewerUsername);
 
         return entries.stream()
-                .map(entry -> {
-                    List<PostContestVote> entryVotes = votesByEntry.getOrDefault(entry.getId(), List.of());
-                    boolean votedByMe = viewerId != null && entryVotes.stream()
-                            .anyMatch(v -> v.getVoter().getId().equals(viewerId));
-                    return PostContestEntryDto.builder()
-                            .entryId(entry.getId())
-                            .postUuid(entry.getPost().getUuid())
-                            .postTitle(entry.getPost().getTitle())
-                            .authorNickname(entry.getNominator().getNickname())
-                            .voteCount(entryVotes.size())
-                            .votedByMe(votedByMe)
-                            .mine(viewerId != null && entry.getNominator().getId().equals(viewerId))
-                            .build();
-                })
+                .map(entry -> toDto(entry, votesByEntry.getOrDefault(entry.getId(), List.of()), viewerId))
                 .sorted((a, b) -> Integer.compare(b.getVoteCount(), a.getVoteCount()))
                 .collect(Collectors.toList());
+    }
+
+    // 게시물 상세 페이지에서 "이번 주 인기글 후보"로 신청된 상태를 바로 보여주고 그 자리에서
+    // 투표할 수 있게 하기 위한 조회(원래는 /posts/contest 목록에서만 투표 가능했는데, 글을 읽던
+    // 중 바로 투표할 수 있어야 자연스럽다는 피드백으로 추가). 이번 주 후보가 아니면 빈 값.
+    public java.util.Optional<PostContestEntryDto> findEntryForPost(Long postId, String viewerUsername) {
+        LocalDate weekStart = currentWeekStart();
+        Long viewerId = resolveViewerId(viewerUsername);
+        return entryRepository.findByPost_IdAndWeekStart(postId, weekStart)
+                .map(entry -> toDto(entry, voteRepository.findByEntry_Id(entry.getId()), viewerId));
+    }
+
+    private Long resolveViewerId(String viewerUsername) {
+        return viewerUsername == null ? null
+                : userRepository.findByUsername(viewerUsername).map(User::getId).orElse(null);
+    }
+
+    private PostContestEntryDto toDto(PostContestEntry entry, List<PostContestVote> entryVotes, Long viewerId) {
+        boolean votedByMe = viewerId != null && entryVotes.stream()
+                .anyMatch(v -> v.getVoter().getId().equals(viewerId));
+        return PostContestEntryDto.builder()
+                .entryId(entry.getId())
+                .postUuid(entry.getPost().getUuid())
+                .postTitle(entry.getPost().getTitle())
+                .authorNickname(entry.getNominator().getNickname())
+                .voteCount(entryVotes.size())
+                .votedByMe(votedByMe)
+                .mine(viewerId != null && entry.getNominator().getId().equals(viewerId))
+                .build();
     }
 
     // 매주 월요일 자정, 지난 주(월~일) 콘테스트를 마감하고 득표 상위 3명에게 포인트를 지급한다.

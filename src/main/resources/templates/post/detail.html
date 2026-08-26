@@ -73,6 +73,20 @@
                 </button>
             </div>
 
+            <!-- 이번 주 인기글 콘테스트 후보 투표 위젯 - 이 글이 이번 주 후보로 신청돼 있을 때만
+                 노출(PostController.detail()이 PostContestService.findEntryForPost()로 조회).
+                 원래 /posts/contest 목록에서만 투표할 수 있었는데, 글을 읽는 자리에서 바로 투표할
+                 수 있어야 자연스럽다는 요청으로 추가. -->
+            <div class="contest-post-widget" th:if="${contestEntry != null}">
+                <span class="contest-post-widget-label"><i class="fa-solid fa-trophy"></i> 이번 주 인기글 후보</span>
+                <span class="contest-entry-votes" th:text="${contestEntry.voteCount} + '표'">0표</span>
+                <span th:if="${contestEntry.mine}" class="contest-entry-mine-badge">내 후보</span>
+                <button type="button" id="contestVoteBtn" class="btn btn-brand contest-vote-btn" th:if="${!contestEntry.mine}"
+                        sec:authorize="isAuthenticated()"
+                        th:data-entry-id="${contestEntry.entryId}" th:disabled="${contestEntry.votedByMe}"
+                        th:text="${contestEntry.votedByMe} ? '투표완료' : '투표하기'">투표하기</button>
+            </div>
+
             <div class="post-detail-actions">
                 <div class="post-detail-actions-owner" th:if="${post.mine}">
                     <a th:href="@{'/posts/' + ${post.uuid} + '/edit'}" class="btn btn-outline-brand">

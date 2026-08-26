@@ -585,6 +585,12 @@ a.post-list-nickname:hover { text-decoration: underline; }
     margin: -6px 0 14px;
 }
 
+/* 설문 위젯 바로 아래에 좋아요/북마크 줄이 오면 위 -6px 음수 마진이 poll-widget의
+   테두리 박스 안쪽으로 파고들어 겹쳐 보였다 - 그 경우엔 마진을 취소한다. */
+.poll-widget + .post-like-bookmark-row {
+    margin-top: 14px;
+}
+
 .post-like-btn, .post-bookmark-btn {
     display: inline-flex;
     align-items: center;
@@ -1355,6 +1361,25 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     color: var(--muted);
     padding: 6px 12px;
 }
+
+/* 게시글 상세에서 그 글이 이번 주 콘테스트 후보일 때 바로 투표할 수 있는 위젯(post/detail.html) -
+   /posts/contest 목록까지 가지 않아도 글을 읽던 자리에서 바로 투표할 수 있게 한다. */
+.contest-post-widget {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface-soft);
+}
+.contest-post-widget-label { font-weight: 700; color: var(--ink); font-size: 0.88rem; }
+.contest-post-widget-label i { color: var(--brand-1); }
+.contest-post-widget .contest-entry-votes,
+.contest-post-widget .contest-vote-btn,
+.contest-post-widget .contest-entry-mine-badge { margin-left: auto; }
 
 /* 다크모드 - 카드류(.post-detail-card 등)는 이미 var(--surface)를 쓰고 있어서 theme.css의 다크
    팔레트만으로 자동 대응되지만, 아래 작은 배지/버튼들은 흰 배경을 하드코딩해뒀어서 따로 손봐야

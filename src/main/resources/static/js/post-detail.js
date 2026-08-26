@@ -478,4 +478,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
     }
+
+    // ---- 이번 주 인기글 콘테스트 후보 투표 ----
+    var contestVoteBtn = document.getElementById('contestVoteBtn');
+    if (contestVoteBtn) {
+        contestVoteBtn.addEventListener('click', function () {
+            var entryId = contestVoteBtn.getAttribute('data-entry-id');
+            fetch('/posts/contest/entries/' + entryId + '/vote', { method: 'POST', headers: WebSchoolCsrf.headers() })
+                .then(function (res) {
+                    if (!res.ok) {
+                        return res.json().then(function (body) { throw new Error(body.error || '투표에 실패했습니다.'); });
+                    }
+                    contestVoteBtn.disabled = true;
+                    contestVoteBtn.textContent = '투표완료';
+                    var votesEl = document.querySelector('.contest-post-widget .contest-entry-votes');
+                    if (votesEl) {
+                        votesEl.textContent = (parseInt(votesEl.textContent, 10) + 1) + '표';
+                    }
+                })
+                .catch(function (err) {
+                    WebSchoolModal.alert(err.message || '투표에 실패했습니다.');
+                });
+        });
+    }
 });

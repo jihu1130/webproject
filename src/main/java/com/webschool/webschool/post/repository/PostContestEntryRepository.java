@@ -5,9 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface PostContestEntryRepository extends JpaRepository<PostContestEntry, Long> {
     List<PostContestEntry> findByWeekStartOrderByIdAsc(LocalDate weekStart);
 
     boolean existsByNominator_IdAndWeekStart(Long nominatorId, LocalDate weekStart);
+
+    Optional<PostContestEntry> findByPost_IdAndWeekStart(Long postId, LocalDate weekStart);
 }

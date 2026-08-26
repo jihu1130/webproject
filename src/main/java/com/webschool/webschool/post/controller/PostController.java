@@ -10,6 +10,7 @@ import com.webschool.webschool.post.dto.PostListItemDto;
 import com.webschool.webschool.post.dto.PostReportResultDto;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
+import com.webschool.webschool.post.service.PostContestService;
 import com.webschool.webschool.post.service.PostImageService;
 import com.webschool.webschool.post.service.PostService;
 import com.webschool.webschool.post.service.PostViewService;
@@ -51,6 +52,7 @@ public class PostController {
     private final NoticeService noticeService;
     private final PostViewService postViewService;
     private final PollService pollService;
+    private final PostContestService postContestService;
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page,
@@ -139,9 +141,11 @@ public class PostController {
         try {
             Long id = postService.resolveIdByUuid(uuid);
             boolean countView = shouldCountView(session, id, ClientIpUtils.getClientIp(request));
-            PostDetailDto post = postService.getDetail(id, extractUsername(authentication), countView);
+            String username = extractUsername(authentication);
+            PostDetailDto post = postService.getDetail(id, username, countView);
             model.addAttribute("post", post);
             model.addAttribute("images", postImageService.getImages(id));
+            model.addAttribute("contestEntry", postContestService.findEntryForPost(id, username).orElse(null));
             return "post/detail";
         } catch (IllegalArgumentException e) {
             // 버그 수정: 예전엔 여기서 이유 없이 그냥 목록으로 튕겨나갔다(오래된 링크, 삭제된 글,
