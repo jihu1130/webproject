@@ -13,6 +13,7 @@ public class PublicUserProfileDto {
     private Long id;
     private String nickname;
     private String bio;
+    private String profileImageUrl;
     private long postCount; // 프로필 카드 통계 바(프로필_디자인.md) - posts의 totalElements와 동일한 값
     private long commentCount; // 마이페이지와 동일한 집계(post.PostCommentRepository), 어느 글에 달았는지는 노출 안 함
     private long likeCount; // 마이페이지와 동일한 집계(PostRepository.sumLikeCountByAuthor_Id), 어느 글이 받았는지는 노출 안 함

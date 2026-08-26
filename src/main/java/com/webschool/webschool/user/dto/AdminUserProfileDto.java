@@ -12,6 +12,7 @@ public class AdminUserProfileDto {
     private Long id;
     private String username;
     private String nickname;
+    private String profileImageUrl;
     private String role;
     private String schoolName;
     private String schoolKind;

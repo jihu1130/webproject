@@ -91,6 +91,7 @@ public class AdminUserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .nickname(user.getNickname())
+                .profileImageUrl(user.getProfileImageUrl())
                 .role(user.getRole().name())
                 .schoolName(user.getSchoolName())
                 .schoolKind(user.getSchoolKind())

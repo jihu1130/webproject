@@ -2,6 +2,7 @@ package com.webschool.webschool.user.service;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.mail.MailService;
+import com.webschool.webschool.global.upload.FileUploadService;
 import com.webschool.webschool.user.domain.EmailToken;
 import com.webschool.webschool.user.dto.EmailSetupDto;
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
@@ -29,6 +31,7 @@ public class UserService {
     private final AdminActionLogService adminActionLogService;
     private final EmailTokenService emailTokenService;
     private final MailService mailService;
+    private final FileUploadService fileUploadService;
 
     public boolean isUsernameAvailable(String username) {
         return !userRepository.existsByUsername(username);
@@ -293,6 +296,22 @@ public class UserService {
         user.setBio(bio == null || bio.isBlank() ? null : bio.trim());
         adminActionLogService.log("USER", user.getId(), "BIO_UPDATE",
                 bio == null || bio.isBlank() ? "(비움)" : truncate(bio.trim()));
+    }
+
+    @Transactional
+    public void updateProfileImage(String username, MultipartFile file) {
+        User user = getByUsername(username);
+        String url = fileUploadService.storeProfileImage(file, user.getProfileImageUrl());
+        user.setProfileImageUrl(url);
+        adminActionLogService.log("USER", user.getId(), "PROFILE_IMAGE_UPDATE", "프로필 사진 변경");
+    }
+
+    @Transactional
+    public void resetProfileImage(String username) {
+        User user = getByUsername(username);
+        fileUploadService.deleteProfileImage(user.getProfileImageUrl());
+        user.setProfileImageUrl(null);
+        adminActionLogService.log("USER", user.getId(), "PROFILE_IMAGE_UPDATE", "기본 이미지로 되돌림");
     }
 
     // 계정 탈퇴(소프트 딜리트) - 본인 확인을 위해 현재 비밀번호를 재입력받는다

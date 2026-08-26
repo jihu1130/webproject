@@ -22,7 +22,7 @@
                 <div class="profile-card-avatar"
                      th:classappend="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'} ? 'profile-card-avatar-super'
                                      : (${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')">
-                    <span th:text="${loginUser != null and !#strings.isEmpty(loginUser.nickname)} ? ${#strings.substring(loginUser.nickname,0,1)} : '?'">?</span>
+                    <img th:src="@{${loginUser != null and loginUser.profileImageUrl != null} ? ${loginUser.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
                     <i class="fa-brands fa-google profile-card-avatar-google" th:if="${loginUser != null and loginUser.provider.name() == 'GOOGLE'}"></i>
                 </div>
 
@@ -108,26 +108,14 @@
                 </form>
             </div>
 
-            <div class="mypage-profile-box">
-                <div class="mypage-profile-box-header">
-                    <span th:text="${loginUser != null ? loginUser.nickname : '회원'} + ' 소개글'">소개글</span>
-                    <a href="/mypage/profile" class="mypage-profile-edit-link" title="소개글 수정" aria-label="소개글 수정"><i class="fa-solid fa-pen"></i></a>
-                </div>
-                <p class="mypage-profile-bio"
-                   th:if="${loginUser != null and !#strings.isEmpty(loginUser.bio)}"
-                   th:text="${loginUser.bio}">소개글</p>
-                <p class="mypage-profile-bio mypage-profile-bio-empty"
-                   th:unless="${loginUser != null and !#strings.isEmpty(loginUser.bio)}">아직 작성한 소개글이 없어요.</p>
-                <a th:if="${loginUser != null}" th:href="@{'/users/' + ${loginUser.id}}" class="mypage-profile-posts-link">
-                    <span th:text="${loginUser.nickname} + '이 쓴 게시글 보러가기'">쓴 게시글 보러가기</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </a>
-            </div>
-
             <div th:if="${param.updated}" class="mypage-alert mypage-alert-success">정보가 저장되었습니다.</div>
             <div th:if="${param.verified}" class="mypage-alert mypage-alert-success">이메일 인증이 완료되었습니다.</div>
             <div th:if="${param.verifyError}" class="mypage-alert mypage-alert-danger">인증 링크가 유효하지 않거나 만료되었습니다.</div>
             <div th:if="${param.resent}" class="mypage-alert mypage-alert-success">인증 메일을 다시 보냈습니다.</div>
+
+            <a href="/mypage/profile" class="mypage-edit-btn">
+                <i class="fa-solid fa-id-card"></i> 프로필 설정
+            </a>
 
             <a href="/mypage/edit" class="mypage-edit-btn">
                 <i class="fa-solid fa-user-pen"></i> 내 정보 수정

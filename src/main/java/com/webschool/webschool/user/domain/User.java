@@ -119,6 +119,11 @@ public class User {
     @Column(nullable = false, columnDefinition = "int default 10")
     private int points = 10;
 
+    // 프로필 사진 - 업로드한 적 없으면 null(화면에서 static/images/default-avatar.svg로 대체
+    // 표시). FileUploadService.storeProfileImage()로 저장하며, 경로만 이 컬럼에 남긴다
+    // (게시글 이미지와 동일한 "실제 파일은 app.upload.dir, DB엔 경로만" 패턴).
+    private String profileImageUrl;
+
     public PointTier getTier() {
         return PointTier.forPoints(points);
     }

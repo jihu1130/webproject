@@ -10,6 +10,7 @@
     <link rel="stylesheet" th:href="@{/css/navbar.css}">
     <link rel="stylesheet" th:href="@{/css/auth.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/profile-card.css}">
 </head>
 <body class="auth-body">
 
@@ -19,9 +20,29 @@
     <div class="auth-wrapper">
         <div class="auth-card">
             <h3 class="auth-title">내 프로필 설정</h3>
-            <p class="auth-subtitle">다른 사람이 보는 내 프로필(<span th:text="'/users/' + ${loginUser?.id}"></span>)에 표시될 소개글이에요</p>
+            <p class="auth-subtitle">다른 사람이 보는 내 프로필(<span th:text="'/users/' + ${loginUser?.id}"></span>)에 표시될 사진과 소개글이에요</p>
 
             <div th:if="${errorMessage}" class="auth-alert auth-alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${param.updated}" class="auth-alert auth-alert-success">저장되었습니다.</div>
+
+            <div class="auth-field" style="text-align:center;">
+                <label>프로필 사진</label>
+                <div class="profile-card-avatar profile-card-avatar-user" style="margin: 0 auto 12px;">
+                    <img id="profileImagePreview"
+                         th:src="@{${loginUser != null and loginUser.profileImageUrl != null} ? ${loginUser.profileImageUrl} : '/images/default-avatar.svg'}"
+                         alt="프로필 사진">
+                </div>
+                <form th:action="@{/mypage/profile/image}" method="post" enctype="multipart/form-data" class="auth-field-inline" style="justify-content:center;">
+                    <input type="file" id="profileImageInput" name="profileImage" accept="image/*" required>
+                    <button type="submit" class="btn btn-outline-brand btn-usercheck">사진 올리기</button>
+                </form>
+                <form th:if="${loginUser != null and loginUser.profileImageUrl != null}"
+                      th:action="@{/mypage/profile/image/reset}" method="post" style="margin-top:6px;">
+                    <button type="submit" class="mypage-profile-edit-link" style="background:none;border:none;cursor:pointer;">기본 이미지로 되돌리기</button>
+                </form>
+            </div>
+
+            <hr class="auth-section-divider">
 
             <form th:action="@{/mypage/profile}" method="post">
                 <div class="auth-field">
@@ -45,6 +66,31 @@
             <div class="auth-footer"><a href="/mypage">마이페이지로 돌아가기</a></div>
 
             <script>
+                /* "사진 올리기"를 실제로 눌러 서버에 반영되기 전까지는 선택만 한 파일을 원형
+                   아바타에 미리 보여준다 - 눌러야 적용, 안 누르면 그대로(폼 제출 전이라 서버
+                   상태는 안 바뀜). objectURL은 원본 이미지로 되돌릴 때(파일 선택 취소) 누수
+                   없이 해제한다. */
+                (function () {
+                    var fileInput = document.getElementById('profileImageInput');
+                    var avatarImg = document.getElementById('profileImagePreview');
+                    var originalSrc = avatarImg.src;
+                    var objectUrl = null;
+
+                    fileInput.addEventListener('change', function () {
+                        if (objectUrl) {
+                            URL.revokeObjectURL(objectUrl);
+                            objectUrl = null;
+                        }
+                        var file = fileInput.files && fileInput.files[0];
+                        if (!file) {
+                            avatarImg.src = originalSrc;
+                            return;
+                        }
+                        objectUrl = URL.createObjectURL(file);
+                        avatarImg.src = objectUrl;
+                    });
+                })();
+
                 (function () {
                     var input = document.getElementById('bioInput');
                     var preview = document.getElementById('bioPreview');

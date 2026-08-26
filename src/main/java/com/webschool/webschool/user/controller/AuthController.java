@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -152,6 +153,28 @@ public class AuthController {
             model.addAttribute("bio", bio);
             return "user/profile-edit";
         }
+    }
+
+    // 프로필 사진 업로드/되돌리기 - 소개글(/mypage/profile)과 같은 "남이 보는 내 프로필" 설정
+    // 화면 안에 있지만, 파일 업로드라 별도 엔드포인트로 분리했다(폼이 섞이면 사진만 실패했을 때
+    // 방금 입력한 소개글까지 같이 날아가 보이는 게 어색해서).
+    @PostMapping("/mypage/profile/image")
+    public String myProfileImageSubmit(@RequestParam("profileImage") MultipartFile profileImage,
+                                        Authentication authentication, Model model) {
+        try {
+            userService.updateProfileImage(authentication.getName(), profileImage);
+            return "redirect:/mypage/profile?updated=true";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("bio", userService.getByUsername(authentication.getName()).getBio());
+            return "user/profile-edit";
+        }
+    }
+
+    @PostMapping("/mypage/profile/image/reset")
+    public String myProfileImageReset(Authentication authentication) {
+        userService.resetProfileImage(authentication.getName());
+        return "redirect:/mypage/profile?updated=true";
     }
 
     // 구글 소셜 로그인 첫 가입 시 비어있는 학교/학년/반을 채우는 화면 - SchoolSetupInterceptor가

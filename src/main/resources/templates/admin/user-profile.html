@@ -41,8 +41,9 @@
             <div class="profile-card-head">
                 <div class="profile-card-avatar"
                      th:classappend="${profile.role == 'ROLE_SUPER_ADMIN'} ? 'profile-card-avatar-super'
-                                     : (${profile.role == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')"
-                     th:text="${#strings.isEmpty(profile.nickname)} ? '?' : ${#strings.substring(profile.nickname, 0, 1)}">?</div>
+                                     : (${profile.role == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')">
+                    <img th:src="@{${profile.profileImageUrl != null} ? ${profile.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
+                </div>
                 <div class="profile-card-identity">
                     <div class="profile-card-name-row">
                         <h1 class="profile-card-name" th:text="${profile.nickname}">닉네임</h1>

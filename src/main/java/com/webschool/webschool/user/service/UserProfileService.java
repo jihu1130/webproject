@@ -49,6 +49,7 @@ public class UserProfileService {
                 .id(user.getId())
                 .nickname(user.getNickname())
                 .bio(user.getBio())
+                .profileImageUrl(user.getProfileImageUrl())
                 .postCount(posts.getTotalElements())
                 .commentCount(postCommentRepository.countByAuthor_IdAndDeletedFalse(userId))
                 .likeCount(postRepository.sumLikeCountByAuthor_Id(userId))

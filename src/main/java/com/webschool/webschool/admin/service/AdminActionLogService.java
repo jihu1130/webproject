@@ -68,6 +68,7 @@ public class AdminActionLogService {
             Map.entry("USERNAME_CHANGE", "아이디 변경"),
             Map.entry("PASSWORD_CHANGE", "비밀번호 변경"),
             Map.entry("BIO_UPDATE", "소개글 수정"),
+            Map.entry("PROFILE_IMAGE_UPDATE", "프로필 사진 변경"),
             Map.entry("SELF_DELETE", "회원 탈퇴"),
             Map.entry("SCHOOL_SETUP", "학교 설정"),
             Map.entry("PENALTY_ISSUE", "제재 부여"),

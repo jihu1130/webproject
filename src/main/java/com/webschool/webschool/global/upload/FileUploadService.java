@@ -39,6 +39,7 @@ public class FileUploadService {
     private static final long MAX_IMAGE_SIZE = 15L * 1024 * 1024;   // 15MB
     private static final long MAX_VIDEO_SIZE = 300L * 1024 * 1024;  // 300MB
     private static final long MAX_OTHER_SIZE = 50L * 1024 * 1024;   // 50MB
+    private static final long MAX_PROFILE_IMAGE_SIZE = 5L * 1024 * 1024; // 5MB - 프로필 사진은 에디터 첨부보다 작게 제한
 
     private static final DateTimeFormatter MONTH_BUCKET = DateTimeFormatter.ofPattern("yyyyMM");
 
@@ -93,6 +94,50 @@ public class FileUploadService {
                 .originalFilename(file.getOriginalFilename())
                 .kind(kind)
                 .build();
+    }
+
+    // 프로필 사진 업로드 - editor 업로드(store())와 달리 이미지 확장자만 허용하고, 계정당 파일이
+    // 하나뿐이라 새로 올리면 기존 파일을 지운다(editor 업로드는 본문 여러 곳에서 참조될 수 있어
+    // 못 지우고 EditorUploadCleanupService가 별도로 정리하지만, 프로필 사진은 User.profileImageUrl
+    // 컬럼 하나만 그 파일을 가리키므로 교체 시점에 바로 지워도 안전하다).
+    public String storeProfileImage(MultipartFile file, String previousUrl) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 사진을 선택해주세요.");
+        }
+
+        String ext = extensionOf(file.getOriginalFilename());
+        if (!IMAGE_EXTENSIONS.contains(ext)) {
+            throw new IllegalArgumentException("이미지 파일(jpg, png, gif, webp 등)만 업로드할 수 있습니다.");
+        }
+        if (file.getSize() > MAX_PROFILE_IMAGE_SIZE) {
+            throw new IllegalArgumentException("프로필 사진은 5MB 이하만 업로드할 수 있습니다.");
+        }
+
+        String storedFilename = UUID.randomUUID() + "." + ext;
+        Path dir = baseDir().resolve("profile");
+
+        try {
+            Files.createDirectories(dir);
+            Files.copy(file.getInputStream(), dir.resolve(storedFilename), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("사진 저장에 실패했습니다.");
+        }
+
+        deleteProfileImage(previousUrl);
+        return "/uploads/profile/" + storedFilename;
+    }
+
+    // 기본 이미지로 되돌리거나 새 사진으로 교체할 때 이전 파일을 지운다. 실패해도(이미 없거나
+    // 권한 문제 등) 업로드/되돌리기 자체를 막을 이유는 없어서 예외를 던지지 않고 조용히 넘어간다.
+    public void deleteProfileImage(String url) {
+        if (url == null || !url.startsWith("/uploads/profile/")) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(baseDir().resolve(url.substring("/uploads/".length())));
+        } catch (IOException ignored) {
+            // best-effort 정리 - 실패해도 무시
+        }
     }
 
     private String extensionOf(String filename) {
