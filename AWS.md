@@ -60,32 +60,103 @@
 
 ## 1단계 체크리스트 — EC2 서버 구축
 
-- [ ] 집 컴퓨터에 AWS CLI 설치
-- [ ] 위 IAM 링크에서 `webschool-deploy` 사용자용 새 액세스 키 발급
+- [x] 집 컴퓨터에 AWS CLI 설치 (winget, `aws-cli/2.36.29`)
+- [x] 위 IAM 링크에서 `webschool-deploy` 사용자용 새 액세스 키 발급
       (학원에서 만들었던 키는 폐기 예정 — 새로 발급)
-- [ ] `aws configure`로 CLI 인증 설정 (Access Key / Secret / 리전
-      `ap-northeast-2` / 출력형식 `json`)
-- [ ] EC2 인스턴스 생성
-  - AMI: Amazon Linux 2023
-  - 인스턴스 유형: `t2.micro` 또는 `t3.micro` (프리티어 대상)
+- [x] `aws configure`로 CLI 인증 설정 (Access Key / Secret / 리전
+      `ap-northeast-2` / 출력형식 `json`) — `aws sts get-caller-identity`로
+      `webschool-deploy` 계정 확인됨
+- [x] EC2 인스턴스 생성
+  - AMI: Amazon Linux 2023 (`ami-0159816442b921a1c`)
+  - 인스턴스 유형: `t3.micro`
   - 리전: `ap-northeast-2` (서울)
-  - 보안 그룹: 인바운드 `8888`(앱 직접 테스트용), `80`/`443`(4단계 nginx용)만
-    열기 — `22`(SSH)는 열지 않음
-  - IAM 역할: `AmazonSSMManagedInstanceCore` 정책 붙은 역할 연결(SSM 접속용)
-- [ ] `aws ssm start-session --target <인스턴스ID>`로 접속 확인
-- [ ] Java 21 설치 (`sudo dnf install java-21-amazon-corretto` 등)
-- [ ] MySQL 8 설치 + `webschool` 데이터베이스 생성 + 강한 root 비밀번호 설정
-- [ ] 프로젝트 빌드: `./gradlew bootJar` (로컬에서 빌드 후 업로드, 또는
-      서버에서 git clone 후 직접 빌드)
-- [ ] 서버용 `application.yml` 작성 — 로컬 파일과 마찬가지로 **git에 올리지
-      않음**, DB 비밀번호/NEIS 키/구글 자격증명은 서버에만 존재
-- [ ] `systemd` 서비스 등록 (재부팅 시 자동 시작, 크래시 시 자동 재시작)
-- [ ] 보안 그룹의 `8888` 포트로 공인 IP 접속 확인
-      (`http://<EC2 공인 IP>:8888`)
+  - 보안 그룹: `webschool-sg`(`sg-0cfa1334493058db0`) — 인바운드 `8888`/`80`/`443`만
+    열림, `22`(SSH)는 열지 않음. 키페어 없이 생성(SSM 전용, 학원 등 다른
+    컴퓨터에서도 AWS CLI 자격증명만 있으면 접속 가능하게 하는 결정)
+  - IAM 역할: `webschool-ec2-ssm-role`(`AmazonSSMManagedInstanceCore` 정책)
+    + 인스턴스 프로필 `webschool-ec2-ssm-profile`
+- [x] `aws ssm start-session --target <인스턴스ID>`로 접속 확인 — SSM 에이전트
+      Online 확인 + `send-command`로 원격 명령 실행 성공(`whoami` → `root`).
+      대화형 접속용 Session Manager Plugin도 로컬에 설치 완료
+      (`winget install Amazon.SessionManagerPlugin`)
+- [x] Java 21 설치 (`sudo dnf install -y java-21-amazon-corretto`, Corretto 21.0.12)
+- [x] MySQL 8 설치 + `webschool` 데이터베이스 생성 + 강한 root 비밀번호 설정
+      (`mysql-community-server` 8.0.46, MySQL 공식 yum repo 추가해서 설치 —
+      AL2023 기본 repo엔 없음)
+- [x] 프로젝트 빌드: `./gradlew bootJar` (로컬에서 빌드) — **서버에서 git
+      clone은 실패함**(레포가 private이라 인증 필요, 서버에 GitHub 토큰을
+      두고 싶지 않아서 포기). 대신 로컬 빌드 → S3(`webschool-deploy-938436186735`
+      버킷, `webschool.jar`) 업로드 → EC2가 `webschool-ec2-ssm-role`에 붙인
+      스코프 제한 S3 읽기 정책으로 다운로드하는 방식 사용. 코드 갱신할 때마다
+      이 순서(로컬 빌드 → S3 업로드 → 서버에서 재다운로드 → 서비스 재시작)
+      반복하면 됨(4~5단계에서 자동화 예정)
+- [x] 서버용 `application.yml` 작성 (`/opt/webschool/application.yml`, 권한 600) —
+      로컬 파일과 마찬가지로 git에 올리지 않음. 구글 OAuth 블록은 일부러 제외함
+      (리디렉션 URI가 `localhost` 전용으로 등록돼 있어서 IP로 접속하는 지금
+      단계에선 어차피 동작 안 함 — 4단계 도메인+HTTPS 확정되면 그때 추가)
+- [x] `systemd` 서비스 등록 (`/etc/systemd/system/webschool.service`,
+      재부팅 시 자동 시작 확인됨, `Restart=always`로 크래시 시 자동 재시작)
+- [x] 보안 그룹의 `8888` 포트로 공인 IP 접속 확인 — Elastic IP
+      `54.180.206.13`으로 `/actuator/health` 200, `/` 200 확인됨 (2026-08-26)
 
-## 완료 후 기록할 것 (진행하면서 채워나가기)
+### ⚠️ t3.micro 메모리 부족(OOM) 사고 — 겪은 문제와 해결
 
-- EC2 인스턴스 ID:
-- EC2 퍼블릭 IP:
-- 배포일:
-- 사용한 AMI/인스턴스 타입:
+배포 당일 겪은 문제라 기록해둠. **t2.micro/t3.micro는 RAM 1GB인데, Amazon
+Linux 2023은 "실제 메모리가 800MB보다 크면 zram 스왑을 자동으로 설정하지
+않는" 정책이라(`zram0: system has too much memory (913MB), limit is 800MB,
+ignoring` 로그) 프리티어 인스턴스엔 기본적으로 스왑이 전혀 없다.** MySQL +
+Spring Boot(Hibernate/Security/Thymeleaf 다 올라가는 무거운 앱)를 동시에
+띄우자마자 메모리가 바닥나 인스턴스 전체가 응답 불능 상태(SSM 명령도 몇
+분째 `Pending`)가 됐고, 재부팅해도 부팅 직후 두 서비스가 동시에 다시
+자동 시작되며 똑같이 멈추는 상황이 반복됐다.
+
+**해결**: EC2 user-data에 `#cloud-boothook`(매 부팅마다 실행되는 cloud-init
+스크립트, 일반 user-data와 달리 최초 부팅 1회로 안 끝남)으로 1GB 스왑파일을
+자동 생성하도록 설정. 그리고 `webschool.service`의 `ExecStart`에 JVM 힙을
+`-Xms128m -Xmx350m -Xss512k -XX:MaxMetaspaceSize=180m -XX:+UseSerialGC
+-XX:TieredStopAtLevel=1`로 제한(기본 힙/GC 설정은 이 정도 메모리에서 감당이
+안 됨 — SerialGC가 G1보다 관리 오버헤드가 훨씬 적어서 이런 저사양 환경에
+적합). 두 조치 이후로는 재부팅만으로 MySQL→앱 순서로 자동 기동되고 메모리도
+안정적(스왑 100~200MB 선에서 유지, OOM 재발 안 함).
+
+**주의할 것**: 이후에도 메모리 관련 이상 증상(SSM 명령이 몇 분째 `Pending`,
+외부 접속 안 됨)이 보이면 가장 먼저 `free -h`로 스왑이 살아있는지 확인할 것
+— `/swapfile`이 사라졌거나(디스크 공간 부족 등) `swapon`이 안 걸려있으면
+같은 사고가 재발한다. 서비스 하나라도 더 무거워지면(이미지 처리 등)
+`t3.small`(RAM 2GB) 업그레이드를 고려.
+
+**EC2 stop/start 시 퍼블릭 IP가 바뀐다는 것도 이번에 직접 겪음**(reboot과
+달리 stop 후 start는 새 IP 할당) — 그래서 Elastic IP(`54.180.206.13`,
+`eipalloc-0d9d2d109408e5a95`)를 할당해 인스턴스에 고정 연결함(러닝 중인
+인스턴스에 붙어있는 동안은 무료). 앞으로 IP는 이 값 그대로 유지됨 — 4단계
+도메인 연결 전까지는 이 IP를 기준으로 접속.
+
+## 완료 후 기록할 것
+
+- EC2 인스턴스 ID: `i-0992a58038aca44da`
+- EC2 퍼블릭 IP(Elastic IP, 고정): `54.180.206.13`
+  (`eipalloc-0d9d2d109408e5a95`)
+- 배포일: 2026-08-26
+- 사용한 AMI/인스턴스 타입: Amazon Linux 2023 (`ami-0159816442b921a1c`) /
+  `t3.micro`
+- 보안 그룹: `webschool-sg` (`sg-0cfa1334493058db0`)
+- IAM 역할/인스턴스 프로필: `webschool-ec2-ssm-role` / `webschool-ec2-ssm-profile`
+  (SSM 정책 + S3 아티팩트 읽기 전용 정책 `webschool-s3-artifact-read`)
+- 배포 아티팩트 S3 버킷: `webschool-deploy-938436186735` (퍼블릭 접근 완전
+  차단, 인스턴스 역할만 읽기 가능)
+- 앱 경로: 서버의 `/opt/webschool/webschool.jar` +
+  `/opt/webschool/application.yml`(권한 600), 업로드 파일 저장 위치는
+  `/opt/uploads`
+- 접속 확인: `http://54.180.206.13:8888/actuator/health` → `{"status":"UP"}`,
+  `http://54.180.206.13:8888/` → 200
+
+## 다음에 할 일
+
+- 2단계(DB 백업 cron화), 3단계(S3로 업로드 파일 이전)는 아직 안 함
+- 4단계(도메인+HTTPS)까지는 구글 로그인 비활성 상태로 둘 것 — 리디렉션 URI가
+  `localhost`로 등록돼 있어서 지금은 붙여도 어차피 실패함
+- 코드 갱신 시 수동 절차: 로컬에서 `./gradlew bootJar` →
+  `aws s3 cp build/libs/webschool-0.0.1-SNAPSHOT.jar
+  s3://webschool-deploy-938436186735/webschool.jar` → SSM으로 서버 접속해
+  `sudo aws s3 cp s3://webschool-deploy-938436186735/webschool.jar
+  /opt/webschool/webschool.jar` 후 `sudo systemctl restart webschool`
