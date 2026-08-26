@@ -22,3 +22,8 @@ backups/
 # 민감 정보(DB 비밀번호, NEIS API 키, 구글 OAuth 시크릿 등)가 들어가는 실제 설정 파일 -
 # application.yml.example을 복사해서 로컬에만 만들 것. 커밋 대상에서 절대 빼지 말 것.
 src/main/resources/application.yml
+
+# 작업용 메모/문서(CLAUDE.md, todo.md, AWS.md 등) - 코드와 무관한 로컬 참고 문서라 원격에는
+# 올리지 않는다. README.md는 깃허브 저장소 소개 화면에 쓰이므로 예외로 계속 커밋한다.
+*.md
+!README.md
