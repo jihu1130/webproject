@@ -22,18 +22,34 @@
     <div class="site-nav-inner">
         <a href="/" class="site-nav-brand"><i class="fa-solid fa-graduation-cap"></i> WebSchool</a>
 
+        <!-- 모바일 전용 - 드로어를 안 열어도 알림/마이페이지는 바로 보이고 눌리게 상단바에
+             항상 떠 있게 한다(로그인 상태에서만, 데스크톱은 이미 메뉴 줄에 그대로 있어서 숨김). -->
+        <div class="site-nav-mobile-quick" sec:authorize="isAuthenticated()">
+            <a href="/notifications" class="site-nav-bell" title="알림">
+                <i class="fa-solid fa-bell"></i>
+                <span class="site-nav-bell-badge"
+                      th:classappend="${unreadNotificationCount == 0} ? ' is-hidden'"
+                      th:text="${unreadNotificationCount > 99} ? '99+' : ${unreadNotificationCount}">0</span>
+            </a>
+            <a href="/mypage" class="site-nav-mobile-profile" title="마이페이지">
+                <i class="fa-solid fa-circle-user"></i>
+            </a>
+        </div>
+
         <button type="button" id="siteNavToggle" class="site-nav-toggle" aria-label="메뉴 열기" aria-expanded="false" aria-controls="siteNavMenu">
             <i class="fa-solid fa-bars"></i>
         </button>
 
+        <div id="siteNavBackdrop" class="site-nav-backdrop"></div>
+
         <div id="siteNavMenu" class="site-nav-menu">
             <div class="site-nav-links">
-                <a href="/" class="site-nav-link" th:classappend="${active == 'home'} ? ' active' : ''">홈</a>
-                <a href="/school/calendar" class="site-nav-link" title="학사 & 급식 캘린더" th:classappend="${active == 'calendar'} ? ' active' : ''">캘린더</a>
-                <a href="/posts" class="site-nav-link" th:classappend="${active == 'community'} ? ' active' : ''">커뮤니티</a>
-                <a href="/notices" class="site-nav-link" th:classappend="${active == 'notices'} ? ' active' : ''">공지</a>
+                <a href="/" class="site-nav-link" th:classappend="${active == 'home'} ? ' active' : ''"><i class="fa-solid fa-house site-nav-link-icon"></i><span>홈</span></a>
+                <a href="/school/calendar" class="site-nav-link" title="학사 & 급식 캘린더" th:classappend="${active == 'calendar'} ? ' active' : ''"><i class="fa-solid fa-calendar-days site-nav-link-icon"></i><span>캘린더</span></a>
+                <a href="/posts" class="site-nav-link" th:classappend="${active == 'community'} ? ' active' : ''"><i class="fa-solid fa-comments site-nav-link-icon"></i><span>커뮤니티</span></a>
+                <a href="/notices" class="site-nav-link" th:classappend="${active == 'notices'} ? ' active' : ''"><i class="fa-solid fa-bullhorn site-nav-link-icon"></i><span>공지</span></a>
                 <a href="/admin" class="site-nav-link" th:if="${loginUser != null and loginUser.hasAnyAdminAccess()}"
-                   th:classappend="${active == 'admin'} ? ' active' : ''">관리자</a>
+                   th:classappend="${active == 'admin'} ? ' active' : ''"><i class="fa-solid fa-user-shield site-nav-link-icon"></i><span>관리자</span></a>
             </div>
 
             <form th:action="@{/search}" method="get" class="site-nav-search">
@@ -41,14 +57,18 @@
                 <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
-            <button type="button" id="themeToggle" class="site-nav-theme-toggle" aria-label="다크모드로 전환" title="다크모드 전환">
-                <i class="fa-solid fa-moon"></i>
-            </button>
+            <div class="site-nav-utility">
+                <button type="button" id="themeToggle" class="site-nav-theme-toggle" aria-label="다크모드로 전환" title="다크모드 전환">
+                    <i class="fa-solid fa-moon"></i>
+                    <span id="themeToggleLabel" class="site-nav-utility-label">다크모드</span>
+                </button>
 
-            <!-- 버그 리포트 - 비로그인 사용자도 제출 가능해서 로그인 여부와 무관하게 항상 노출(사용자 확정). -->
-            <a href="/bug-reports/new" class="site-nav-theme-toggle" aria-label="버그 리포트" title="버그 리포트">
-                <i class="fa-solid fa-bug"></i>
-            </a>
+                <!-- 버그 리포트 - 비로그인 사용자도 제출 가능해서 로그인 여부와 무관하게 항상 노출(사용자 확정). -->
+                <a href="/bug-reports/new" class="site-nav-theme-toggle" aria-label="버그 리포트" title="버그 리포트">
+                    <i class="fa-solid fa-bug"></i>
+                    <span class="site-nav-utility-label">버그 제보</span>
+                </a>
+            </div>
 
             <div class="site-nav-auth">
                 <div class="site-nav-guest" sec:authorize="!isAuthenticated()">
@@ -58,7 +78,7 @@
                 <div class="site-nav-user" sec:authorize="isAuthenticated()">
                     <a href="/notifications" class="site-nav-bell" title="알림">
                         <i class="fa-solid fa-bell"></i>
-                        <span id="notificationBadge" class="site-nav-bell-badge"
+                        <span class="site-nav-bell-badge"
                               th:classappend="${unreadNotificationCount == 0} ? ' is-hidden'"
                               th:text="${unreadNotificationCount > 99} ? '99+' : ${unreadNotificationCount}">0</span>
                     </a>

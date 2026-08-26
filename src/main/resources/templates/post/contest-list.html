@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>이번 주 인기 게시글 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('community')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
+
+<div class="post-page">
+    <div class="post-container post-container-narrow">
+        <div class="post-list-header">
+            <div class="page-heading post-page-heading">
+                <h1><i class="fa-solid fa-trophy"></i> 이번 주 인기 게시글</h1>
+                <p class="page-sub">본인 게시물을 후보로 신청하고, 마음에 드는 글에 투표해보세요 (월~일, 인당 신청 1개·투표 1표) — 매주 월요일 자정 득표 상위 3명에게 포인트 지급(30/20/10점)</p>
+            </div>
+            <a href="/posts" class="btn btn-outline-brand"><i class="fa-solid fa-arrow-left"></i> 커뮤니티로</a>
+        </div>
+
+        <div th:if="${entries.empty}" class="post-list-empty">
+            아직 이번 주 후보가 없어요. 게시물 상세 페이지에서 "이번 주 인기글 후보 신청" 버튼으로 신청해보세요!
+        </div>
+
+        <div class="contest-entry-list">
+            <div class="contest-entry" th:each="entry, iter : ${entries}">
+                <span class="contest-entry-rank" th:text="${iter.index + 1}">1</span>
+                <div class="contest-entry-body">
+                    <a th:href="@{'/posts/' + ${entry.postUuid}}" class="contest-entry-title" th:text="${entry.postTitle}">제목</a>
+                    <span class="contest-entry-author" th:text="${entry.authorNickname}">작성자</span>
+                </div>
+                <span class="contest-entry-votes" th:text="${entry.voteCount} + '표'">0표</span>
+                <button type="button" class="btn btn-brand contest-vote-btn" th:if="${!entry.mine}"
+                        th:data-entry-id="${entry.entryId}" th:disabled="${entry.votedByMe}"
+                        th:text="${entry.votedByMe} ? '투표완료' : '투표하기'">투표하기</button>
+                <span th:if="${entry.mine}" class="contest-entry-mine-badge">내 후보</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/csrf.js}"></script>
+<script>
+    document.querySelectorAll('.contest-vote-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var entryId = btn.getAttribute('data-entry-id');
+            fetch('/posts/contest/entries/' + entryId + '/vote', {
+                method: 'POST',
+                headers: WebSchoolCsrf.headers()
+            }).then(function (res) {
+                if (!res.ok) {
+                    return res.json().then(function (body) { throw new Error(body.error || '투표에 실패했습니다.'); });
+                }
+                window.location.reload();
+            }).catch(function (err) {
+                alert(err.message);
+            });
+        });
+    });
+</script>
+</body>
+</html>

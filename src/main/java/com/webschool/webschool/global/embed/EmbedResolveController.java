@@ -7,6 +7,7 @@ import com.webschool.webschool.school.domain.ScheduleComment;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,10 +37,10 @@ public class EmbedResolveController {
 
     @GetMapping("/resolve")
     @ResponseBody
-    public ResponseEntity<?> resolve(@RequestParam String url) {
+    public ResponseEntity<?> resolve(@RequestParam String url, Authentication authentication) {
         Matcher postMatcher = POST_PATTERN.matcher(url);
         if (postMatcher.find()) {
-            return resolvePost(postMatcher.group(1));
+            return resolvePost(postMatcher.group(1), authentication);
         }
 
         Matcher scheduleMatcher = SCHEDULE_PATTERN.matcher(url);
@@ -50,9 +51,17 @@ public class EmbedResolveController {
         return ResponseEntity.badRequest().body(Map.of("error", "게시물 또는 오늘의 한마디 링크만 삽입할 수 있어요."));
     }
 
-    private ResponseEntity<?> resolvePost(String uuid) {
+    private ResponseEntity<?> resolvePost(String uuid, Authentication authentication) {
         Post post = postRepository.findByUuid(uuid).orElse(null);
         if (post == null || post.isDeleted()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "게시물을 찾을 수 없어요."));
+        }
+        // 비공개(PRIVATE) 게시물은 작성자 본인에게만 카드로 만들어준다 - 이 엔드포인트는 제목을
+        // 돌려주므로, 막지 않으면 uuid를 아는 사람이 상세 페이지(PostService.getDetail()에서 차단됨)
+        // 대신 여기로 제목만 빼갈 수 있다. 카드가 본문에 스냅샷으로 박히면 그 글을 읽는 제3자에게도
+        // 제목이 그대로 노출되므로 작성자 본인 확인이 필요하다.
+        if (post.getVisibility() == Post.Visibility.PRIVATE
+                && (authentication == null || !post.getAuthor().getUsername().equals(authentication.getName()))) {
             return ResponseEntity.badRequest().body(Map.of("error", "게시물을 찾을 수 없어요."));
         }
         return ResponseEntity.ok(Map.of(

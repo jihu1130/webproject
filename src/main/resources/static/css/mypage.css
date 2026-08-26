@@ -68,7 +68,10 @@
    소개글을 여기서 바로 확인/수정하고, 실제 공개 프로필로도 바로 이동할 수 있게 한다. */
 .mypage-profile-box {
     text-align: left;
-    background: var(--surface-2, #f4f4f6);
+    /* var(--surface-soft) - 원래 쓰던 --surface-2는 theme.css에 정의된 적이 없어 항상
+       폴백값(#f4f4f6, 고정 밝은 회색)만 렌더링되고 있었다. 다크모드에서 이 고정 밝은 회색
+       배경 위에 흰 글자(var(--ink))가 그대로 얹혀 대비가 1.08:1까지 떨어졌던 원인. */
+    background: var(--surface-soft);
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 14px 16px;
@@ -227,7 +230,8 @@
     font-size: 0.95rem;
     font-weight: 700;
     margin-bottom: 12px;
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 글자 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--brand-fixed);
     color: #fff;
     transition: filter 0.15s ease;
 }

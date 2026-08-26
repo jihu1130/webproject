@@ -27,9 +27,10 @@
             작성자 본인과 관리자에게만 보여요.
         </div>
 
-        <div class="post-unlisted-banner" th:if="${post.unlisted}">
-            <i class="fa-solid fa-link"></i>
-            링크로만 공개된 글이에요. 커뮤니티 목록·검색에는 나타나지 않아요.
+        <!-- 공개범위 배너 - 전체 공개가 아닐 때만. 문구는 Post.Visibility enum의 라벨/설명 그대로. -->
+        <div class="post-visibility-banner" th:if="${post.visibility != 'PUBLIC'}">
+            <i class="fa-solid" th:classappend="${post.visibility == 'PRIVATE'} ? 'fa-lock' : 'fa-link'"></i>
+            <span><strong th:text="${post.visibilityLabel}">링크 공개</strong> 글이에요. <span th:text="${post.visibilityDescription}">설명</span></span>
         </div>
 
         <div class="post-detail-card">
@@ -57,6 +58,12 @@
                 </a>
             </div>
 
+            <!-- 설문(투표) 위젯 - poll.js가 GET /polls/by-post/{id}로 자기 데이터를 스스로 불러와
+                 채운다(설문이 없으면 204를 받아 숨겨진 채로 남는다). 비로그인 방문자에게는 애초에
+                 렌더링하지 않는다 - /polls/** 는 로그인이 필요해서(SecurityConfig) 어차피 호출해도
+                 로그인 페이지로 리다이렉트만 될 뿐이다. -->
+            <div id="pollWidget" class="poll-widget" hidden th:if="${loginUser != null}"></div>
+
             <div class="post-like-bookmark-row" sec:authorize="isAuthenticated()">
                 <button type="button" id="postLikeBtn" class="post-like-btn" aria-label="좋아요" th:classappend="${post.likedByMe} ? ' active' : ''">
                     <i class="fa-solid fa-heart"></i> <span id="postLikeCount" th:text="${post.likeCount}">0</span>
@@ -74,6 +81,15 @@
                     <form th:action="@{'/posts/' + ${post.uuid} + '/delete'}" method="post"
                           data-confirm="정말 삭제하시겠어요?" data-confirm-danger="true" class="post-delete-form">
                         <button type="submit" class="post-delete-btn"><i class="fa-solid fa-trash"></i> 삭제</button>
+                    </form>
+                    <!-- 인기 게시글 주간 콘테스트 후보 신청(todo.md 4번 항목) - 본인 게시물만, 회차당
+                         인당 1개. 이미 신청했으면 서버가 flashError로 안내(PostContestController.
+                         nominate()) - 별도 조회 없이 항상 노출해서 PostService에 새 의존성을 안 만든다. -->
+                    <form th:action="@{/posts/contest/nominate}" method="post" class="post-contest-nominate-form">
+                        <input type="hidden" name="postUuid" th:value="${post.uuid}">
+                        <button type="submit" class="btn btn-outline-brand">
+                            <i class="fa-solid fa-trophy"></i> 이번 주 인기글 후보 신청
+                        </button>
                     </form>
                 </div>
                 <button type="button" id="reportBtn" class="post-report-btn"
@@ -119,5 +135,9 @@
 <script th:src="@{/js/modal.js}"></script>
 <script th:src="@{/js/timeago.js}"></script>
 <script th:src="@{/js/post-detail.js}"></script>
+<script th:src="@{/js/poll.js}"></script>
+<script th:if="${loginUser != null}" th:inline="javascript">
+    initPollWidget(document.getElementById('pollWidget'), '/polls/by-post/' + /*[[${post.id}]]*/ 0);
+</script>
 </body>
 </html>

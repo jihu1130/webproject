@@ -37,7 +37,8 @@
     width: 52px;
     height: 52px;
     border-radius: 16px;
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 아이콘 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--brand-fixed);
     color: white;
     display: flex;
     align-items: center;
@@ -215,7 +216,8 @@
     flex-shrink: 0;
     border-radius: 8px;
     border: none;
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 아이콘 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--brand-fixed);
     color: white;
     cursor: pointer;
     display: flex;
@@ -320,7 +322,8 @@
     height: 30px;
     border-radius: 8px;
     border: none;
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 글자 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--brand-fixed);
     color: white;
     font-weight: 700;
     font-size: 0.82rem;
@@ -333,7 +336,22 @@
 .cal-nav-today-btn:active { transform: translateY(1px); }
 
 @media (max-width: 640px) {
-    .cal-controls-bar { flex-direction: column; align-items: stretch; }
+    /* column 대신 row+wrap 유지 - 예전엔 column으로 바꾸면서 .cal-control-wide의
+       flex-basis:220px(가로 폭 기준)가 세로(높이) 기준으로 뒤집혀 학교 검색/일정 검색 박스가
+       220px 높이로 늘어나는 버그가 있었다(사용자 지적, 수정 이력 참고). row+wrap을 유지하고
+       검색창류만 flex-basis:100%로 항상 자기 줄을 강제로 차지하게 하면 그 버그 자체가 애초에
+       안 생기면서, 학년/반처럼 좁은 항목은 자연스럽게 한 줄에 나란히 배치된다(사용자 요청). */
+    .cal-controls-bar { flex-wrap: wrap; }
+
+    .cal-control-wide { flex: 1 1 100%; }
+
+    .cal-control-item:not(.cal-control-wide) {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .cal-control-item:not(.cal-control-wide) select { flex: 1; min-width: 0; }
+
     .cal-control-divider { display: none; }
     .cal-navbar { gap: 6px; padding: 8px 10px; }
     .cal-nav-today-btn { margin-left: 0; flex: 1 1 100%; justify-content: center; order: 10; }
@@ -490,7 +508,8 @@
 }
 
 .cal-day-selected .cal-day-num {
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 숫자 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--brand-fixed);
     color: white !important;
     font-weight: 800;
     animation: day-highlight-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -574,8 +593,7 @@
 }
 
 .day-detail-close,
-.day-detail-day-nav-btn,
-.day-detail-print-btn {
+.day-detail-day-nav-btn {
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -591,8 +609,7 @@
 }
 
 .day-detail-close:hover,
-.day-detail-day-nav-btn:hover,
-.day-detail-print-btn:hover {
+.day-detail-day-nav-btn:hover {
     background: #f1f2f6;
     color: var(--ink);
 }
@@ -668,7 +685,8 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 숫자 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--brand-fixed);
     color: white;
     font-size: 0.7rem;
     font-weight: 800;
@@ -828,6 +846,53 @@ a.comment-nickname:hover { text-decoration: underline; }
     word-break: break-word;
 }
 
+/* 긴 한마디 전체보기/짧게보기 - JS(calendar.js)가 내용이 일정 높이를 넘으면 .is-collapsible을
+   붙이고 버튼을 넣는다. 접혔을 때는 max-height로 자른 뒤 하단에 카드 배경색과 같은 그라데이션을
+   얹어 "잘렸다"는 걸 시각적으로 알려준다. */
+.comment-content.is-collapsible.is-collapsed {
+    max-height: 4.5em;
+    overflow: hidden;
+    position: relative;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.4em), transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 1.4em), transparent 100%);
+}
+
+.comment-content-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--brand-1-dark);
+    cursor: pointer;
+}
+.comment-content-toggle:hover { text-decoration: underline; }
+.comment-content-toggle i { font-size: 9px; transition: transform 0.15s ease; }
+.comment-content-toggle[aria-expanded="true"] i { transform: rotate(180deg); }
+
+/* 한마디 안의 설문 위젯 - post.css의 기본 .poll-widget은 게시글 상세(넓은 본문 컬럼) 기준
+   크기라, 캘린더 옆 패널의 작은 한마디 카드(.comment-item, 8~13px대 글자) 안에 그대로 들어가면
+   눈에 띄게 커 보였다(사용자 지적). 카드 톤에 맞춰 전체적으로 한 단계씩 줄인다. */
+.comment-poll-widget {
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: 9px;
+}
+.comment-poll-widget .poll-widget-question { font-size: 12.5px; margin-bottom: 3px; }
+.comment-poll-widget .poll-widget-meta { font-size: 10.5px; margin-bottom: 6px; }
+.comment-poll-widget .poll-widget-options { gap: 5px; }
+.comment-poll-widget .poll-widget-option { padding: 6px 8px; border-radius: 7px; }
+.comment-poll-widget .poll-widget-option-label { font-size: 12px; }
+.comment-poll-widget .poll-widget-option-count { font-size: 10.5px; }
+.comment-poll-widget .poll-widget-custom-row { margin-top: 6px; }
+.comment-poll-widget .poll-widget-custom-input { padding: 6px 9px; font-size: 12px; }
+.comment-poll-widget .poll-widget-submit { margin-top: 8px; padding: 6px 14px; font-size: 12px; }
+
 /* 한마디 작성/수정은 리치 에디터가 필요해 전용 페이지(/school/comments/new, /{id}/edit)로 분리됐다
    (2026-08-19) - 이 섹션 헤더의 버튼은 그 페이지로 이동시키는 링크일 뿐이다. */
 .comment-section-header {
@@ -846,7 +911,8 @@ a.comment-nickname:hover { text-decoration: underline; }
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 글자 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--brand-fixed);
     color: white;
     display: inline-flex;
     align-items: center;
@@ -894,7 +960,9 @@ a.comment-nickname:hover { text-decoration: underline; }
 }
 
 .cal-legend-dot-today { background: rgba(250, 204, 21, 0.42); }
-.cal-legend-dot-selected { background: var(--brand-gradient); }
+/* --brand-fixed - 실제 "선택된 날"(.cal-day-selected .cal-day-num)을 --brand-fixed로 고정해둬서
+   범례 색도 맞춰야 다크모드에서 안 어긋난다 */
+.cal-legend-dot-selected { background: var(--brand-fixed); }
 .cal-legend-dot-event { background: linear-gradient(135deg, rgba(30, 79, 163, 0.14), rgba(30, 79, 163, 0.14)); }
 
 @media (max-width: 640px) {
@@ -915,8 +983,7 @@ a.comment-nickname:hover { text-decoration: underline; }
     html:not([data-theme="light"]) .cal-grid-card,
     html:not([data-theme="light"]) .day-detail-panel,
     html:not([data-theme="light"]) .day-detail-close,
-    html:not([data-theme="light"]) .day-detail-day-nav-btn,
-    html:not([data-theme="light"]) .day-detail-print-btn {
+    html:not([data-theme="light"]) .day-detail-day-nav-btn {
         background: var(--surface);
     }
 
@@ -932,6 +999,29 @@ a.comment-nickname:hover { text-decoration: underline; }
     html:not([data-theme="light"]) .comment-item {
         background: var(--surface-soft);
     }
+
+    /* .meal-box는 배경만 위에서 var(--surface-soft)로 바뀌고 글자색(#495057, 라이트모드
+       고정 회색)은 그대로라 다크 카드 위에서 대비가 1.77:1까지 떨어졌었다. */
+    html:not([data-theme="light"]) .meal-box { color: var(--ink); }
+
+    /* 버그 수정: .timetable-row:nth-child(odd)의 줄무늬 배경(#f8f9fc, 라이트모드 고정값)이
+       위 목록에서 빠져 있어서 다크모드에서도 그대로 밝게 남아있었다 - 그 위의 글자색은
+       .timetable-subject { color: var(--ink) }로 다크모드에서 밝은 색(#eeece2)이 되므로,
+       밝은 배경 위에 밝은 글씨가 겹쳐 홀수 줄만 흐릿해 보였다. */
+    html:not([data-theme="light"]) .timetable-row:nth-child(odd) { background: var(--surface-soft); }
+
+    /* .cal-legend는 캘린더 그리드 위에 얹히는 반투명 "유리" 배경이라 항상 밝은 흰색
+       (rgba(255,255,255,0.82))으로 고정돼 있었는데, 다크모드에서도 안 바뀌어서 그 위의
+       글자(var(--muted)/var(--ink), 다크모드용 밝은 색)가 밝은 배경과 겹쳐 대비가
+       1.18~2.18:1까지 떨어졌었다. */
+    html:not([data-theme="light"]) .cal-legend { background: rgba(13, 21, 32, 0.82); }
+
+    /* 일/토요일 숫자(빨강/파랑)는 라이트모드 대비로 고른 고정 색이라 다크 배경에서 각각
+       3.82:1/4.39:1로 기준(4.5:1) 미달이었다 - 다크모드에서 더 밝은 톤으로 보정. */
+    html:not([data-theme="light"]) .cal-dow-header .dow-sun,
+    html:not([data-theme="light"]) .cal-day-num-sun { color: #ff6b64; }
+    html:not([data-theme="light"]) .cal-dow-header .dow-sat,
+    html:not([data-theme="light"]) .cal-day-num-sat { color: #5b9dec; }
 }
 
 /* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
@@ -943,8 +1033,7 @@ html[data-theme="dark"] .cal-nav-select-group select,
 html[data-theme="dark"] .cal-grid-card,
 html[data-theme="dark"] .day-detail-panel,
 html[data-theme="dark"] .day-detail-close,
-html[data-theme="dark"] .day-detail-day-nav-btn,
-html[data-theme="dark"] .day-detail-print-btn {
+html[data-theme="dark"] .day-detail-day-nav-btn {
     background: var(--surface);
 }
 
@@ -961,22 +1050,10 @@ html[data-theme="dark"] .comment-item {
     background: var(--surface-soft);
 }
 
-/* Phase 7 - 시간표 인쇄: 인쇄 버튼을 누르면 #printableTimetableSection(시간표 영역)만 보이게 하고
-   나머지 화면(네비바/캘린더 그리드/급식/한마디 등)은 전부 숨긴다. */
-@media print {
-    body * {
-        visibility: hidden;
-    }
-
-    #printableTimetableSection,
-    #printableTimetableSection * {
-        visibility: visible;
-    }
-
-    #printableTimetableSection {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-    }
-}
+html[data-theme="dark"] .meal-box { color: var(--ink); }
+html[data-theme="dark"] .timetable-row:nth-child(odd) { background: var(--surface-soft); }
+html[data-theme="dark"] .cal-legend { background: rgba(13, 21, 32, 0.82); }
+html[data-theme="dark"] .cal-dow-header .dow-sun,
+html[data-theme="dark"] .cal-day-num-sun { color: #ff6b64; }
+html[data-theme="dark"] .cal-dow-header .dow-sat,
+html[data-theme="dark"] .cal-day-num-sat { color: #5b9dec; }

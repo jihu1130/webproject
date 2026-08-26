@@ -101,6 +101,15 @@ public class PostService {
             throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
         }
 
+        // 공개범위 PRIVATE(비공개) - 링크(uuid)를 알아도 작성자 본인과 관리자 외에는 못 연다.
+        // UNLISTED와 갈리는 지점이 정확히 여기다: UNLISTED는 목록/검색에서만 빠지고(PostRepository.
+        // search()의 visibility = PUBLIC 조건) 상세는 누구나 열 수 있는 반면, PRIVATE는 상세 진입
+        // 자체를 막는다. 블라인드와 동일하게 "없는 글"처럼 처리해서 uuid로 존재 여부를 떠보는 것도
+        // 막는다(존재하면 403, 없으면 404처럼 응답이 갈리면 그 자체가 정보 노출이라서).
+        if (post.getVisibility() == Post.Visibility.PRIVATE && !mine && !isAdmin(currentUsername)) {
+            throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
+        }
+
         // 원자적 벌크 UPDATE로 조회수 증가(PostRepository.incrementViewCount() 참고) - 엔티티
         // 필드는 건드리지 않고(다른 필드 변경 시 stale 값으로 덮어쓰는 걸 막기 위함, Post.java의
         // @DynamicUpdate 주석 참고), 화면 표시용 값만 로컬 변수로 따로 계산한다.
@@ -129,7 +138,7 @@ public class PostService {
         post.setContent(content);
         post.setCategory(category);
         post.setAuthor(author);
-        post.setVisibility(form.isUnlisted() ? Post.Visibility.UNLISTED : Post.Visibility.PUBLIC);
+        post.setVisibility(parseVisibility(form.getVisibility()));
 
         Post saved = postRepository.save(post);
         // 감사 로그 커버리지 확장(사용자 요청) - 관리자 조치뿐 아니라 일반 사용자 본인의 주요 활동도
@@ -156,7 +165,7 @@ public class PostService {
         dto.setTitle(post.getTitle());
         dto.setContent(post.getContent());
         dto.setCategory(post.getCategory().name());
-        dto.setUnlisted(post.getVisibility() == Post.Visibility.UNLISTED);
+        dto.setVisibility(post.getVisibility().name());
         return dto;
     }
 
@@ -177,7 +186,7 @@ public class PostService {
             throw new IllegalArgumentException("본인이 작성한 게시물만 수정할 수 있습니다.");
         }
 
-        Post.Visibility visibility = form.isUnlisted() ? Post.Visibility.UNLISTED : Post.Visibility.PUBLIC;
+        Post.Visibility visibility = parseVisibility(form.getVisibility());
         boolean changed = !title.equals(post.getTitle()) || !content.equals(post.getContent())
                 || category != post.getCategory() || visibility != post.getVisibility();
 
@@ -383,6 +392,21 @@ public class PostService {
         }
     }
 
+    // 공개범위 파싱 - parseCategory()와 달리 잘못된 값에도 예외를 던지지 않고 가장 안전한 쪽
+    // (PUBLIC)으로 폴백한다. 카테고리는 폼에 라디오가 항상 하나 선택돼 있어서 값이 비면 조작으로
+    // 봐야 하지만, 공개범위는 값이 비어 들어올 수 있는 경로(구버전 캐시된 폼 등)가 있어도
+    // "글쓰기가 실패"하는 것보다 기본값으로 저장되는 게 낫다.
+    private Post.Visibility parseVisibility(String value) {
+        if (value == null || value.isBlank()) {
+            return Post.Visibility.PUBLIC;
+        }
+        try {
+            return Post.Visibility.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            return Post.Visibility.PUBLIC;
+        }
+    }
+
     private String validateTitle(String title) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("제목을 입력해주세요.");
@@ -471,7 +495,9 @@ public class PostService {
                 .edited(p.getUpdatedAt() != null)
                 .mine(mine)
                 .reportedByMe(reportedByMe)
-                .unlisted(p.getVisibility() == Post.Visibility.UNLISTED)
+                .visibility(p.getVisibility().name())
+                .visibilityLabel(p.getVisibility().getLabel())
+                .visibilityDescription(p.getVisibility().getDescription())
                 .build();
     }
 }

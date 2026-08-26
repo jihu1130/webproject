@@ -25,5 +25,9 @@ public class PostDetailDto {
     private boolean edited; // 수정된 게시물인지 여부
     private boolean mine; // 현재 로그인한 사용자가 작성한 게시물인지 여부
     private boolean reportedByMe; // 현재 로그인한 사용자가 이미 이 게시물을 신고했는지 여부
-    private boolean unlisted; // 목록/검색엔 안 뜨고 링크로만 공개된 게시물인지 여부
+    // 공개범위 - Post.Visibility의 enum name / 화면 문구. 상세 페이지 배너는 PUBLIC이 아닐 때만
+    // 뜨므로 템플릿에서 visibility != 'PUBLIC' 하나로 분기하고 문구는 라벨/설명을 그대로 쓴다.
+    private String visibility;
+    private String visibilityLabel;
+    private String visibilityDescription;
 }

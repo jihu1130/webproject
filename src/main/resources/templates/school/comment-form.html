@@ -45,6 +45,59 @@
                     <input type="hidden" id="commentFormHidden" name="content" th:value="${contentValue}">
                 </div>
 
+                <!-- 설문(투표) 첨부 - post/form.html과 동일한 섹션(작성 시에만, 질문이 비어있으면
+                     설문 없이 그냥 한마디만 등록된다). -->
+                <div class="post-field post-poll-field" th:if="${mode != 'edit'}">
+                    <label class="post-poll-toggle">
+                        <input type="checkbox" id="pollToggle">
+                        <span>설문(투표) 첨부하기</span>
+                    </label>
+                    <div id="pollFields" class="post-poll-fields" hidden>
+                        <input type="text" name="pollQuestion" id="pollQuestion" maxlength="200"
+                               placeholder="질문을 입력하세요 (예: 오늘 시간표 어떤가요?)">
+                        <div id="pollOptionList" class="post-poll-option-list">
+                            <div class="post-poll-option-row">
+                                <input type="text" name="pollOptions" class="post-poll-option-input" maxlength="100" placeholder="옵션 1">
+                            </div>
+                            <div class="post-poll-option-row">
+                                <input type="text" name="pollOptions" class="post-poll-option-input" maxlength="100" placeholder="옵션 2">
+                            </div>
+                        </div>
+                        <button type="button" id="pollAddOptionBtn" class="btn btn-outline-brand post-poll-add-btn">+ 옵션 추가</button>
+
+                        <button type="button" id="pollAdvancedToggle" class="post-poll-advanced-toggle" aria-expanded="false" aria-controls="pollAdvancedFields">
+                            <i class="fa-solid fa-chevron-down"></i> 세부 설정 (복수 선택 · 공개 범위 등)
+                        </button>
+                        <div id="pollAdvancedFields" class="post-poll-advanced-fields" hidden>
+                            <label class="post-poll-checkbox">
+                                <input type="checkbox" name="pollAllowMultiple" value="true"> 복수 선택 허용
+                            </label>
+                            <label class="post-poll-checkbox">
+                                <input type="checkbox" name="pollAllowCustomOption" value="true"> "기타" 직접 추가 허용
+                            </label>
+                            <label class="post-poll-checkbox">
+                                <input type="checkbox" name="pollAnonymous" value="true"> 익명 투표 (누가 뭘 골랐는지 숨김)
+                            </label>
+
+                            <div class="post-poll-scope">
+                                <label>결과 공개 범위</label>
+                                <label class="post-poll-radio">
+                                    <input type="radio" name="pollVisibilityScope" value="SAME_CLASS" checked> 같은 학교·학년·반
+                                </label>
+                                <label class="post-poll-radio">
+                                    <input type="radio" name="pollVisibilityScope" value="SAME_GRADE"> 같은 학년
+                                </label>
+                                <label class="post-poll-same-school-only" id="pollSameSchoolOnlyWrap" hidden>
+                                    <input type="checkbox" name="pollSameSchoolOnly" value="true" checked> 같은 학교 안에서만
+                                </label>
+                                <label class="post-poll-radio">
+                                    <input type="radio" name="pollVisibilityScope" value="PUBLIC_LINK"> 전체 공개 (링크로 누구나)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="post-form-actions">
                     <a th:href="${cancelUrl}" class="btn btn-outline-brand">취소</a>
                     <button type="submit" class="btn btn-brand" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
@@ -58,6 +111,7 @@
 <script th:src="@{/js/modal.js}"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script th:src="@{/js/rich-editor.js}"></script>
+<script th:src="@{/js/poll-editor.js}"></script>
 <script>
     initRichEditor({
         editorId: 'commentFormEditor',

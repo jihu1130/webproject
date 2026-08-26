@@ -4,7 +4,10 @@ body.auth-body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: var(--brand-gradient-dark);
+    /* --brand-fixed-dark(고정 남색) - 예전엔 --brand-gradient-dark라 다크모드에서 페이지
+       전체 배경이 밝은 하늘색으로 뒤집혀 다크모드를 켠 의미가 없어졌었다(theme.css 상단
+       주석 참고) */
+    background: var(--brand-fixed-dark);
 }
 
 .auth-shell {
@@ -44,7 +47,9 @@ body.auth-body {
     display: block;
     font-weight: 600;
     font-size: 0.9rem;
-    color: #374151;
+    /* var(--ink) - 원래 고정 회색(#374151)이라 다크모드 카드 배경 위에서 대비 1.57:1까지
+       떨어졌었다 */
+    color: var(--ink);
     margin-bottom: 0.4rem;
 }
 
@@ -106,8 +111,11 @@ body.auth-body {
     min-height: 1.1rem;
     font-weight: 600;
 }
-.auth-check-msg.success { color: #16a34a; }
-.auth-check-msg.error { color: #dc2626; }
+/* var(--success)/var(--danger) - 고정 색이라 다크모드 카드 배경 위에서 초록은 4.7:1로
+   간신히, 빨강은 3.6:1로 기준(4.5:1) 미달이었다. 두 토큰 모두 다크모드용 값이 이미
+   theme.css에 정의돼 있어 교체만으로 해결된다. */
+.auth-check-msg.success { color: var(--success); }
+.auth-check-msg.error { color: var(--danger); }
 .auth-check-msg.pending { color: var(--muted); }
 
 .auth-password-strength {
@@ -244,6 +252,11 @@ body.auth-body {
     html:not([data-theme="light"]) .auth-google-btn:hover { background: var(--surface-soft); }
     html:not([data-theme="light"]) .mypage-delete-btn { background: var(--surface); }
     html:not([data-theme="light"]) .mypage-delete-btn:hover { background: var(--danger-soft); }
+
+    /* 안내 배너(.auth-alert-*) - 원래 고정 파스텔 배경(#fee2e2/#dcfce7)이라 글자 자체는
+       읽혔지만, 다크 페이지 위에서 혼자 밝게 튀어서 다크모드를 켠 느낌이 안 났다. */
+    html:not([data-theme="light"]) .auth-alert-danger { background: var(--danger-soft); color: var(--danger); }
+    html:not([data-theme="light"]) .auth-alert-success { background: var(--success-soft); color: var(--success); }
 }
 
 /* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
@@ -257,6 +270,9 @@ html[data-theme="dark"] .auth-google-btn { background: var(--surface); color: va
 html[data-theme="dark"] .auth-google-btn:hover { background: var(--surface-soft); }
 html[data-theme="dark"] .mypage-delete-btn { background: var(--surface); }
 html[data-theme="dark"] .mypage-delete-btn:hover { background: var(--danger-soft); }
+
+html[data-theme="dark"] .auth-alert-danger { background: var(--danger-soft); color: var(--danger); }
+html[data-theme="dark"] .auth-alert-success { background: var(--success-soft); color: var(--success); }
 
 /* 버그수정 프롬포트 요청 - 반응형 규칙이 아예 없었다(post.css 등의 560px 기준과 동일하게 맞춤). */
 @media (max-width: 560px) {

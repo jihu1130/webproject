@@ -110,7 +110,30 @@ public class Post {
         }
     }
 
+    // 공개범위 3단계. Category가 label을 들고 있는 것과 동일한 패턴으로 화면 문구까지 enum에 모아둔다
+    // (작성 폼의 라디오 라벨/설명과 상세 페이지 배너가 전부 여기서 나오므로 문구가 한 곳에서만 관리됨).
+    // PRIVATE를 추가해도 컬럼은 그대로 varchar(20)이라 스키마 변경이 필요 없다 - 다만 CLAUDE.md의
+    // "ddl-auto가 enum 값 추가를 못 잡는다"는 함정은 컬럼 타입이 바뀔 때 얘기고, 여기선 기존 행이
+    // 쓰던 값(PUBLIC/UNLISTED)을 지우는 게 아니라 새 값만 더하는 것이라 기존 데이터도 안전하다.
     public enum Visibility {
-        PUBLIC, UNLISTED
+        PUBLIC("전체 공개", "커뮤니티 목록과 검색에 노출돼요."),
+        UNLISTED("링크 공개", "목록·검색에는 안 뜨고, 링크를 아는 사람만 볼 수 있어요."),
+        PRIVATE("비공개", "나와 관리자만 볼 수 있어요.");
+
+        private final String label;
+        private final String description;
+
+        Visibility(String label, String description) {
+            this.label = label;
+            this.description = description;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public String getDescription() {
+            return description;
+        }
     }
 }

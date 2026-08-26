@@ -1,5 +1,7 @@
 package com.webschool.webschool.school.controller;
 
+import com.webschool.webschool.poll.dto.PollCreateRequest;
+import com.webschool.webschool.poll.service.PollService;
 import com.webschool.webschool.school.domain.ScheduleComment;
 import com.webschool.webschool.school.dto.CalendarEventDto;
 import com.webschool.webschool.school.dto.ScheduleCommentDto;
@@ -34,6 +36,7 @@ public class SchoolController {
     private final NeisApiService neisApiService;
     private final SchoolService schoolService;
     private final ScheduleCommentService scheduleCommentService;
+    private final PollService pollService;
 
     // 1. 캘린더 페이지 요청 (/school/calendar)
     // http://localhost:8888/school/calendar
@@ -189,10 +192,24 @@ public class SchoolController {
                                      @RequestParam(defaultValue = "1") String grade,
                                      @RequestParam(defaultValue = "1") String classNm,
                                      @RequestParam String content,
+                                     @RequestParam(value = "pollQuestion", required = false) String pollQuestion,
+                                     @RequestParam(value = "pollOptions", required = false) List<String> pollOptions,
+                                     @RequestParam(value = "pollAllowMultiple", required = false, defaultValue = "false") boolean pollAllowMultiple,
+                                     @RequestParam(value = "pollAllowCustomOption", required = false, defaultValue = "false") boolean pollAllowCustomOption,
+                                     @RequestParam(value = "pollAnonymous", required = false, defaultValue = "false") boolean pollAnonymous,
+                                     @RequestParam(value = "pollVisibilityScope", required = false) String pollVisibilityScope,
+                                     @RequestParam(value = "pollSameSchoolOnly", required = false, defaultValue = "true") boolean pollSameSchoolOnly,
                                      Authentication authentication, Model model) {
         try {
+            PollCreateRequest pollForm = buildPollRequest(pollQuestion, pollOptions, pollAllowMultiple,
+                    pollAllowCustomOption, pollAnonymous, pollVisibilityScope, pollSameSchoolOnly);
+            // 설문 데이터가 잘못됐으면 한마디부터 저장하기 전에 여기서 먼저 걸러낸다(PostController.
+            // create()와 동일한 이유 - 안 그러면 한마디는 이미 만들어진 채로 에러 화면이 뜨고, 다시
+            // 제출하면 한마디가 중복 생성될 수 있다).
+            pollService.validate(pollForm);
             ScheduleCommentDto dto = scheduleCommentService.createComment(
                     atptCode, schoolCode, LocalDate.parse(date), grade, classNm, authentication.getName(), content);
+            pollService.createPollForComment(dto.getId(), authentication.getName(), pollForm);
             return "redirect:/school/comments/" + dto.getId();
         } catch (IllegalArgumentException e) {
             model.addAttribute("mode", "create");
@@ -347,6 +364,22 @@ public class SchoolController {
 
     private LocalDate parseDate(String date) {
         return LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyyMMdd"));
+    }
+
+    // PostController.buildPollRequest()와 동일한 조립 로직 - 설문 첨부 파라미터를 받는 화면(게시글
+    // 작성/한마디 작성) 두 곳뿐이라 공용 유틸로 뽑지 않고 그대로 중복해 둔다.
+    private PollCreateRequest buildPollRequest(String question, List<String> options, boolean allowMultiple,
+                                                boolean allowCustomOption, boolean anonymous,
+                                                String visibilityScope, boolean sameSchoolOnly) {
+        PollCreateRequest req = new PollCreateRequest();
+        req.setQuestion(question);
+        req.setOptions(options);
+        req.setAllowMultiple(allowMultiple);
+        req.setAllowCustomOption(allowCustomOption);
+        req.setAnonymous(anonymous);
+        req.setVisibilityScope(visibilityScope);
+        req.setSameSchoolOnly(sameSchoolOnly);
+        return req;
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -13,4 +13,7 @@ public class MyPostSummaryDto {
     private String createdAt;
     private int viewCount;
     private boolean blind;
+    // 공개범위 배지 - 전체 공개(PUBLIC)면 null이라 배지가 아예 안 뜬다. 내 글 목록에서 어떤 글이
+    // 링크 공개/비공개인지 한눈에 보이게 하려는 용도.
+    private String visibilityLabel;
 }

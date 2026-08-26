@@ -13,6 +13,21 @@
     --brand-1-dark: #163a7a;
     --brand-2-dark: #163a7a;
 
+    /* 다크모드 버그 수정 - --brand-1/--brand-gradient(-dark)는 다크모드에서 "짙은 남색 →
+       밝은 하늘색"으로 뒤집힌다(아래 다크모드 블록 주석 참고, 다크 배경 위에 놓일 텍스트/아이콘용
+       대비 보정). 문제는 이 색을 "흰 글자를 얹는 진한 배경"이나 "브랜드 밴드 배경"으로 쓰는
+       컴포넌트(.btn-brand, .btn-nav-accent, CTA 밴드 등)가 여러 CSS 파일에 흩어져 있는데,
+       다크모드에서 배경이 밝은 하늘색으로 바뀌어도 글자는 여전히 흰색 그대로라 대비가
+       1.7~2.5:1까지 떨어져 거의 안 보였다(WCAG 최소 4.5:1). 이 토큰은 라이트/다크모드
+       어디서도 절대 안 바뀌는 고정 남색이라, "흰 글자를 얹는 진한 브랜드 배경"에는 --brand-1
+       대신 이걸 쓸 것 - 라이트모드에서는 --brand-1과 값이 같아 기존 화면이 그대로 보이고,
+       다크모드에서는 배경이 밝아지지 않아 흰 글자 대비가 계속 유지된다. */
+    --brand-fixed: #1e4fa3;
+    --brand-fixed-dark: #163a7a;
+    /* --danger도 같은 이유(다크모드에서 밝은 산호색으로 뒤집힘)로 흰 글자를 얹는 알림
+       배지(.site-nav-bell-badge) 배경에 쓰면 대비가 2.42:1까지 떨어졌다 - 고정 버전 추가. */
+    --danger-fixed: #b5342a;
+
     --brand-gradient: var(--brand-1);
     --brand-gradient-dark: var(--brand-1-dark);
     --brand-gradient-soft: rgba(30, 79, 163, 0.10);
@@ -204,9 +219,10 @@ body {
     cursor: pointer;
 }
 
-/* 브랜드 그라데이션 버튼 (주요 액션) */
+/* 브랜드 그라데이션 버튼 (주요 액션) - 배경은 --brand-fixed(고정 남색, 위 주석 참고)를 써서
+   다크모드에서도 흰 글자 대비가 유지되게 한다. */
 .btn-brand {
-    background: var(--brand-gradient);
+    background: var(--brand-fixed);
     border: none;
     color: #fff;
     font-weight: 700;

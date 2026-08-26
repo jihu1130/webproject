@@ -71,13 +71,74 @@
                     <div id="postImagePreview" class="post-image-preview-grid"></div>
                 </div>
 
-                <!-- 게시글 제한적 공개(링크 전용) - 커뮤니티 목록/검색엔 안 뜨지만 링크(uuid URL)로는
-                     누구나 열람할 수 있다. -->
+                <!-- 공개범위 - 전체 공개 / 링크 공개(목록·검색에서만 제외) / 비공개(작성자와 관리자만
+                     열람). 옵션과 문구는 Post.Visibility enum에서 그대로 내려온다
+                     (PostController.visibilityOptions()). -->
                 <div class="post-field">
-                    <label class="post-visibility-toggle">
-                        <input type="checkbox" th:field="*{unlisted}">
-                        <span>링크로만 공개하기 (커뮤니티 목록·검색에 노출되지 않아요)</span>
+                    <label>공개범위</label>
+                    <div class="post-visibility-radio-group">
+                        <label class="post-visibility-radio" th:each="option : ${visibilityOptions}">
+                            <input type="radio" th:field="*{visibility}" th:value="${option.name()}">
+                            <span class="post-visibility-radio-text">
+                                <span class="post-visibility-radio-label" th:text="${option.label}">전체 공개</span>
+                                <span class="post-visibility-radio-desc" th:text="${option.description}">설명</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 설문(투표) 첨부 - 선택 사항. 질문이 비어있으면 아무 설문도 안 만들어진다
+                     (PollService.isBlank()). 수정 화면에서는 다루지 않는다(작성 시에만 첨부 가능 -
+                     이미 투표가 쌓인 설문을 수정 화면에서 바꾸는 흐름은 이번 범위 밖). -->
+                <div class="post-field post-poll-field" th:if="${mode != 'edit'}">
+                    <label class="post-poll-toggle">
+                        <input type="checkbox" id="pollToggle">
+                        <span>설문(투표) 첨부하기</span>
                     </label>
+                    <div id="pollFields" class="post-poll-fields" hidden>
+                        <input type="text" name="pollQuestion" id="pollQuestion" maxlength="200"
+                               placeholder="질문을 입력하세요 (예: 오늘 시간표 어떤가요?)">
+                        <div id="pollOptionList" class="post-poll-option-list">
+                            <div class="post-poll-option-row">
+                                <input type="text" name="pollOptions" class="post-poll-option-input" maxlength="100" placeholder="옵션 1">
+                            </div>
+                            <div class="post-poll-option-row">
+                                <input type="text" name="pollOptions" class="post-poll-option-input" maxlength="100" placeholder="옵션 2">
+                            </div>
+                        </div>
+                        <button type="button" id="pollAddOptionBtn" class="btn btn-outline-brand post-poll-add-btn">+ 옵션 추가</button>
+
+                        <button type="button" id="pollAdvancedToggle" class="post-poll-advanced-toggle" aria-expanded="false" aria-controls="pollAdvancedFields">
+                            <i class="fa-solid fa-chevron-down"></i> 세부 설정 (복수 선택 · 공개 범위 등)
+                        </button>
+                        <div id="pollAdvancedFields" class="post-poll-advanced-fields" hidden>
+                            <label class="post-poll-checkbox">
+                                <input type="checkbox" name="pollAllowMultiple" value="true"> 복수 선택 허용
+                            </label>
+                            <label class="post-poll-checkbox">
+                                <input type="checkbox" name="pollAllowCustomOption" value="true"> "기타" 직접 추가 허용
+                            </label>
+                            <label class="post-poll-checkbox">
+                                <input type="checkbox" name="pollAnonymous" value="true"> 익명 투표 (누가 뭘 골랐는지 숨김)
+                            </label>
+
+                            <div class="post-poll-scope">
+                                <label>결과 공개 범위</label>
+                                <label class="post-poll-radio">
+                                    <input type="radio" name="pollVisibilityScope" value="SAME_CLASS" checked> 같은 학교·학년·반
+                                </label>
+                                <label class="post-poll-radio">
+                                    <input type="radio" name="pollVisibilityScope" value="SAME_GRADE"> 같은 학년
+                                </label>
+                                <label class="post-poll-same-school-only" id="pollSameSchoolOnlyWrap" hidden>
+                                    <input type="checkbox" name="pollSameSchoolOnly" value="true" checked> 같은 학교 안에서만
+                                </label>
+                                <label class="post-poll-radio">
+                                    <input type="radio" name="pollVisibilityScope" value="PUBLIC_LINK"> 전체 공개 (링크로 누구나)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="post-form-actions">
@@ -99,6 +160,7 @@
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script th:src="@{/js/rich-editor.js}"></script>
 <script th:src="@{/js/post-form.js}"></script>
+<script th:src="@{/js/poll-editor.js}"></script>
 <script>
     window.__postQuill = initRichEditor({
         editorId: 'postContentEditor',

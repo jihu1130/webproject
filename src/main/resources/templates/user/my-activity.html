@@ -56,6 +56,8 @@
                     </a>
                     <span class="post-list-meta">
                         <span class="admin-status-badge admin-status-blind" th:if="${post.blind}">블라인드</span>
+                        <span class="admin-status-badge admin-status-neutral" th:if="${post.visibilityLabel}"
+                              th:text="${post.visibilityLabel}">링크 공개</span>
                         <span class="post-list-date" th:text="${post.createdAt}">날짜</span>
                         <span class="post-list-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>
                         <a th:href="@{'/posts/' + ${post.uuid} + '/edit'}" class="my-activity-edit-btn">수정</a>

@@ -237,6 +237,7 @@ public class MyActivityService {
                 .createdAt(p.getCreatedAt().format(DATE_TIME))
                 .viewCount(p.getViewCount())
                 .blind(p.isBlind())
+                .visibilityLabel(p.getVisibility() == Post.Visibility.PUBLIC ? null : p.getVisibility().getLabel())
                 .build();
     }
 

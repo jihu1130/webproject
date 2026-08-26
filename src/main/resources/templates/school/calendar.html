@@ -152,9 +152,6 @@
                     <button type="button" id="dayDetailNextDay" class="day-detail-day-nav-btn" aria-label="다음날">
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
-                    <button type="button" id="dayDetailPrint" class="day-detail-print-btn" title="시간표 인쇄" aria-label="시간표 인쇄">
-                        <i class="fa-solid fa-print"></i>
-                    </button>
                     <button type="button" id="dayDetailClose" class="day-detail-close" aria-label="닫기">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
@@ -171,8 +168,8 @@
                             <div id="mealContent" class="meal-box">급식 정보를 불러오는 중...</div>
                         </div>
 
-                        <div class="day-detail-section" id="printableTimetableSection">
-                            <h4 id="printTimetableTitle"><i class="fa-solid fa-book-open"></i> 시간표</h4>
+                        <div class="day-detail-section">
+                            <h4><i class="fa-solid fa-book-open"></i> 시간표</h4>
                             <div id="timetableList" class="timetable-list"></div>
                         </div>
                     </div>
@@ -217,6 +214,7 @@
 <script th:src="@{/js/school-search.js}"></script>
 <script th:src="@{/js/class-select.js}"></script>
 <script th:src="@{/js/grade-select.js}"></script>
+<script th:src="@{/js/poll.js}"></script>
 <script th:src="@{/js/calendar.js}"></script>
 </body>
 </html>

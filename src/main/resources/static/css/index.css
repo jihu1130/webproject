@@ -115,8 +115,10 @@ html { scroll-behavior: smooth; }
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
-.hero-cta-primary { background: #fff; color: var(--brand-1); }
-.hero-cta-primary:hover { color: var(--brand-1-dark); transform: translateY(-2px); box-shadow: 0 0.6rem 1.4rem rgba(0, 0, 0, 0.25); }
+/* --brand-fixed(고정 남색) - 흰 배경 위 글자라 다크모드에서 --brand-1이 밝은 하늘색으로
+   뒤집히면 대비가 2.48:1까지 떨어졌었다(theme.css 상단 주석 참고) */
+.hero-cta-primary { background: #fff; color: var(--brand-fixed); }
+.hero-cta-primary:hover { color: var(--brand-fixed-dark); transform: translateY(-2px); box-shadow: 0 0.6rem 1.4rem rgba(0, 0, 0, 0.25); }
 
 .hero-cta-secondary { border: 1.5px solid rgba(255, 255, 255, 0.5); color: #fff; }
 .hero-cta-secondary:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
@@ -281,7 +283,8 @@ html { scroll-behavior: smooth; }
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 숫자 대비 유지 */
+    background: var(--brand-fixed);
     color: #fff;
     font-weight: 800;
     font-size: 0.9rem;
@@ -316,7 +319,10 @@ html { scroll-behavior: smooth; }
 .cta-band {
     position: relative;
     overflow: hidden;
-    background: var(--brand-gradient-dark);
+    /* --brand-fixed(고정 남색) - 흰 글자를 얹는 밴드라 다크모드에서 밝은 하늘색으로 뒤집히면
+       안 된다(theme.css 상단 주석 참고, 예전엔 --brand-gradient-dark라 다크모드에서 대비
+       1.78:1까지 떨어졌었다) */
+    background: var(--brand-fixed);
     padding: 80px 24px;
     text-align: center;
 }
@@ -346,7 +352,8 @@ html { scroll-behavior: smooth; }
     gap: 8px;
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
-.cta-btn-primary { background: #fff; color: var(--brand-1); }
+/* --brand-fixed(고정 남색) - 흰 배경 위 글자, 다크모드에서도 대비 유지(theme.css 상단 주석) */
+.cta-btn-primary { background: #fff; color: var(--brand-fixed); }
 .cta-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0.6rem 1.4rem rgba(0, 0, 0, 0.25); }
 .cta-btn-secondary { border: 1.5px solid rgba(255, 255, 255, 0.5); color: #fff; }
 .cta-btn-secondary:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); }
@@ -399,9 +406,10 @@ html { scroll-behavior: smooth; }
 .back-to-top.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .back-to-top:hover { filter: brightness(1.08); }
 
-/* 다크모드 - hero-cta-primary/cta-btn-primary는 그라데이션 배경 "위"에 얹힌 버튼이라 흰 배경을
-   그대로 둬도 괜찮다(대비 기준이 페이지 배경이 아니라 그라데이션이라 다크모드 영향 없음) -
-   아래 콘텐츠 카드류만 손보면 된다. */
+/* 다크모드 - hero-cta-primary/cta-btn-primary의 흰 배경 자체는 그대로 둬도 되지만(둘 다
+   여전히 밝은 색 위 어두운 텍스트 조합이 필요), 글자색은 --brand-fixed로 고정해뒀다(위에서
+   수정 - 예전엔 var(--brand-1)이라 다크모드에서 대비가 무너졌었다). 아래는 그 외 콘텐츠
+   카드류. */
 @media (prefers-color-scheme: dark) {
     html:not([data-theme="light"]) .bento-card,
     html:not([data-theme="light"]) .step-card {

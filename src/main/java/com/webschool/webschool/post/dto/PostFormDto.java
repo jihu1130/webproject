@@ -8,5 +8,7 @@ public class PostFormDto {
     private String title;
     private String content;
     private String category; // Post.Category enum name (FREE / ANONYMOUS / QNA)
-    private boolean unlisted; // true면 Post.Visibility.UNLISTED(목록/검색엔 안 뜨지만 링크로는 열람 가능)
+    // 공개범위 - Post.Visibility enum name (PUBLIC / UNLISTED / PRIVATE). 카테고리와 동일하게
+    // 문자열로 받고 PostService.parseVisibility()가 검증한다(잘못된 값은 PUBLIC으로 폴백).
+    private String visibility;
 }

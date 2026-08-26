@@ -132,7 +132,38 @@
 
         if (hidden.value) {
             quill.root.innerHTML = hidden.value;
+            // innerHTML 직접 대입은 Quill을 거치지 않아 text-change가 안 뜨고, 그러면 아래 설명대로
+            // ql-blank가 그대로 남아 수정 화면 진입 순간 placeholder가 기존 본문 위에 겹쳐 보인다.
+            syncBlankClass();
         }
+
+        // Quill은 placeholder를 CSS(.ql-editor.ql-blank::before)로만 그리고, 그 ql-blank 클래스는
+        // 오직 text-change 이벤트에서만 갱신한다(quill 2.0.2: EDITOR_CHANGE 핸들러에서
+        // root.classList.toggle('ql-blank', editor.isBlank())). 그런데 한글 IME로 입력하면
+        // compositionstart 시점에 Quill의 Composition 모듈이 scroll.batchStart()를 걸어 조합이
+        // 끝날 때까지 text-change 자체가 발생하지 않는다 - 그래서 첫 글자를 조합하는 동안
+        // "내용을 입력하세요" placeholder가 안 지워진 채 입력 중인 글자와 겹쳐 보였다(사용자 신고).
+        // 조합이 시작되면 클래스를 직접 떼고, 조합이 끝난 뒤 Quill이 모델을 따라잡으면 실제로
+        // 비어있는지를 다시 계산해서 되돌린다.
+        function isEditorBlank() {
+            // 빈 에디터는 <p><br></p> 하나뿐이라 getLength()가 1이다. 이미지/동영상 같은 임베드만
+            // 들어있어도 길이가 2 이상이 되므로 "글자는 없지만 사진은 있는" 경우도 blank가 아니다.
+            return quill.getLength() <= 1 && quill.root.textContent.trim() === '';
+        }
+
+        function syncBlankClass() {
+            quill.root.classList.toggle('ql-blank', isEditorBlank());
+        }
+
+        quill.root.addEventListener('compositionstart', function () {
+            quill.root.classList.remove('ql-blank');
+        });
+        quill.root.addEventListener('compositionend', function () {
+            // Quill의 compositionend 핸들러가 queueMicrotask로 batchEnd()를 돌려 모델을 갱신하므로,
+            // 그보다 뒤에 실행되도록 우리도 마이크로태스크로 미룬다(리스너 등록이 Quill보다 늦어서
+            // 같은 이벤트에서 우리 마이크로태스크가 항상 뒤에 큐잉된다).
+            queueMicrotask(syncBlankClass);
+        });
 
         function syncHidden() {
             var html = quill.root.innerHTML;

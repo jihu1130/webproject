@@ -270,6 +270,17 @@ com.webschool.webschool
   `RichEmbedBlot`이 예시. 이때 태그명이 Quill이 이미 쓰고 있는 태그(`a`=link 포맷 등)와
   겹치면 저장된 글을 다시 열었을 때 어느 블롯으로 되살릴지 모호해지므로 블롯마다
   서로 다른 태그를 쓸 것.
+- **Quill의 placeholder는 한글 IME 조합 중에 저절로 안 사라진다** — Quill은 placeholder를
+  CSS(`.ql-editor.ql-blank::before`)로만 그리고 그 `ql-blank` 클래스를 **오직 `text-change`
+  이벤트에서만** 갱신하는데(quill 2.0.2), 한글 입력은 `compositionstart` 시점에 Quill의
+  Composition 모듈이 `scroll.batchStart()`를 걸어 조합이 끝날 때까지 `text-change` 자체를
+  막는다. 그래서 첫 글자를 조합하는 동안 "내용을 입력하세요"가 안 지워진 채 입력 중인 글자와
+  겹쳐 보였다(실사용자 신고로 발견 - 영문 타이핑만으로 테스트하면 `text-change`가 매 글자
+  발생해서 절대 재현되지 않는다, **에디터 관련 수정은 반드시 한글로 테스트할 것**).
+  `rich-editor.js`가 `compositionstart`에서 클래스를 직접 떼고 `compositionend` 뒤
+  마이크로태스크에서 실제 비어있는지로 되돌리는 식으로 해결. 같은 이유로
+  `quill.root.innerHTML = ...` 직접 대입(수정 화면에서 기존 본문 채우기)도 `text-change`를
+  안 띄우므로 그 직후 `ql-blank`를 손수 갱신해줘야 한다.
 - **`ddl-auto: update`가 못 잡아내는 스키마 드리프트가 있다**: enum 값
   추가(예: `User.Role`에 새 값 추가)가 자동 반영 안 될 때가 있었고,
   엔티티 필드명이 SQL 예약어(`read`/`order`/`group`/`key` 등)와 겹치면

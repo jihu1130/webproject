@@ -52,4 +52,19 @@ public class UserPointService {
         log.setReason(reason);
         userPointLogRepository.save(log);
     }
+
+    // 인기 게시글 주간 콘테스트(todo.md 4번 항목) 전용 - award()와 달리 일일 획득 한도(DAILY_CAP)를
+    // 건너뛴다. 콘테스트 보상은 그 주의 특별한 성과에 대한 큰 보너스(1위 30점 등)라, 그날 이미 다른
+    // 활동으로 한도를 채웠다는 이유로 조용히 깎이면 "우승했는데 왜 포인트가 안 오르지"라는 혼란만
+    // 남긴다. UserPointLog는 award()와 동일하게 남겨서 마이페이지 "포인트 내역"에 그대로 잡힌다.
+    @Transactional
+    public void awardBonus(User user, int points, String reason) {
+        userRepository.addPoints(user.getId(), points);
+
+        UserPointLog log = new UserPointLog();
+        log.setUser(user);
+        log.setPoints(points);
+        log.setReason(reason);
+        userPointLogRepository.save(log);
+    }
 }

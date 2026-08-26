@@ -3,7 +3,12 @@
     top: 0;
     z-index: 500;
     background: var(--nav-bg);
-    backdrop-filter: blur(10px);
+    /* backdrop-filter는 --nav-bg가 항상 불투명(알파 없는 hex)이라 실제로는 아무 시각 효과가
+       없었는데도, filter류 속성이 있으면 그 자체가 자손 position:fixed 요소의 containing
+       block이 되어버려서(스펙상 sticky는 해당 안 되지만 backdrop-filter/filter는 해당됨)
+       모바일 드로어(.site-nav-menu)의 top/bottom/right가 뷰포트가 아니라 이 nav 높이(약
+       64px) 기준으로 계산되는 버그를 만들었다 - 시각 효과 없이 버그만 유발하고 있었으므로
+       제거. */
 }
 
 .site-nav-inner {
@@ -175,7 +180,8 @@
 }
 
 .btn-nav-accent {
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 글자 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--brand-fixed);
     color: #fff;
 }
 
@@ -211,7 +217,8 @@
     height: 16px;
     padding: 0 4px;
     border-radius: 999px;
-    background: var(--danger, #b5342a);
+    /* --danger-fixed(고정 빨강) - 다크모드에서도 흰 숫자 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--danger-fixed);
     color: #fff;
     font-size: 10px;
     font-weight: 800;
@@ -239,49 +246,212 @@
     margin: 0;
 }
 
-/* Phase 7 - 모바일 햄버거 메뉴: 768px 이하에서는 링크/로그인 영역을 감춰두고 버튼으로 펼친다.
-   그 위 화면에서는 .site-nav-toggle이 숨겨져 있어 .site-nav-menu가 항상 펼쳐진 것과 동일하게 보인다. */
+/* 모바일 메뉴에서만 쓰는 요소들 - 데스크톱에서는 항상 숨겨둔다.
+   .site-nav-utility는 데스크톱에서 display:contents로 완전히 지워서, 안의 버튼/링크가
+   전과 동일하게 .site-nav-menu의 직속 flex 아이템처럼 배치되게 한다(레이아웃에 아무 영향 없음). */
+.site-nav-backdrop { display: none; }
+.site-nav-mobile-quick { display: none; }
+.site-nav-link-icon { display: none; }
+.site-nav-utility-label { display: none; }
+.site-nav-utility { display: contents; }
+
+/* Phase 7/8 - 모바일 메뉴: 768px 이하에서는 상단바(브랜드+토글)만 남기고 나머지를 오른쪽에서
+   슬라이드 인하는 전체높이 드로어로 뺀다. 이전엔 .site-nav-menu가 그냥 접혔다 펼쳐지며 페이지를
+   아래로 밀어내는 방식이었는데, 아이콘 버튼(다크모드/버그 제보)이 라벨 없이 왼쪽에 덩그러니
+   떠 있고 섹션 구분도 옅은 실선 하나뿐이라 데스크톱 대비 훨씬 불편하다는 지적이 있어 다시 짰다
+   (라벨 추가, 카드형 섹션 구분, 백드롭+ESC/바깥클릭 닫기, 스크롤 락 - navbar.js 참고). */
 @media (max-width: 768px) {
+    /* 드로어(.site-nav-menu)가 position:fixed; top:0으로 화면 오른쪽을 위에서부터 덮기 때문에,
+       브랜드/토글 버튼을 드로어보다 z-index를 높여 그 위에 계속 떠 있게 한다(배경색이 같아서
+       이어붙인 것처럼 자연스럽다) - 안 그러면 열었을 때 정작 닫기(X) 버튼이 드로어에 가려 안
+       보이는 문제가 생긴다. */
+    .site-nav-brand,
+    .site-nav-toggle {
+        position: relative;
+        z-index: 902;
+    }
+
+    /* 드로어(.site-nav-menu)가 열려있지 않을 때는 flex 흐름에서 완전히 빠지므로(아래
+       position:fixed 참고), 모바일에서 상단바에 남는 flex 아이템은 브랜드/퀵액세스/토글
+       셋뿐이다 - space-between으로 브랜드는 왼쪽 끝, 토글은 오른쪽 끝에 붙이고 그 사이에
+       퀵액세스(알림/마이페이지)가 자연스럽게 놓이게 한다. */
+    .site-nav-inner {
+        justify-content: space-between;
+    }
+
+    .site-nav-mobile-quick {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .site-nav-mobile-profile {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 1.25rem;
+        text-decoration: none;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .site-nav-mobile-profile:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+    }
+
     .site-nav-toggle {
         display: flex;
     }
 
+    .site-nav-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(6, 10, 20, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 900;
+    }
+
+    .site-nav-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
     .site-nav-menu {
-        display: none;
-        width: 100%;
+        display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: 14px;
-        margin-top: 14px;
+        gap: 22px;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(85vw, 340px);
+        margin-top: 0;
+        padding: 20px 18px max(20px, env(safe-area-inset-bottom));
+        background: var(--nav-bg);
+        box-shadow: -16px 0 40px rgba(0, 0, 0, 0.35);
+        overflow-y: auto;
+        z-index: 901;
+        visibility: hidden;
+        transform: translateX(100%);
+        transition: transform 0.25s ease, visibility 0s linear 0.25s;
     }
 
     .site-nav-menu.open {
-        display: flex;
+        visibility: visible;
+        transform: translateX(0);
+        transition: transform 0.25s ease;
+    }
+
+    /* 드로어 맨 위는 상단바의 브랜드/닫기 버튼과 높이를 맞춰, 열렸을 때 두 X 버튼이
+       나란히 보이는 것처럼 자연스럽게 이어지게 한다. */
+    .site-nav-menu::before {
+        content: '';
+        display: block;
+        height: 46px;
+        flex-shrink: 0;
     }
 
     .site-nav-links {
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
         margin-right: 0;
         width: 100%;
     }
 
     .site-nav-link {
-        padding: 10px 4px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 10px;
+        border-bottom: none;
+        border-radius: 10px;
+        font-size: 1rem;
     }
+
+    .site-nav-link-icon {
+        display: inline-flex;
+        width: 20px;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 0.95rem;
+    }
+
+    .site-nav-link:hover,
+    .site-nav-link.active {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .site-nav-link.active .site-nav-link-icon { color: var(--brand-2); }
 
     .site-nav-search {
         width: 100%;
+        padding-top: 14px;
+        border: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 0;
+        background: none;
     }
 
     .site-nav-search input {
         flex: 1;
         width: auto;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        padding: 0.6rem 0.75rem;
+    }
+
+    .site-nav-search button {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        margin-left: 8px;
+        padding: 0 0.75rem;
+    }
+
+    .site-nav-utility {
+        display: flex;
+        gap: 10px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .site-nav-theme-toggle {
+        flex: 1;
+        width: auto;
+        height: auto;
+        min-height: 44px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.06);
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 4px;
+    }
+
+    .site-nav-theme-toggle:hover {
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    .site-nav-utility-label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
     }
 
     .site-nav-auth {
         width: 100%;
+        padding-top: 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
     }
 
     .site-nav-guest,
@@ -292,12 +462,42 @@
         gap: 8px;
     }
 
+    .site-nav-guest .btn-nav,
+    .site-nav-user .btn-nav {
+        padding: 0.75rem 1.1rem;
+    }
+
     .site-nav-user {
-        flex-direction: row;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+            "bell greet"
+            "logout logout";
+        align-items: center;
+        gap: 10px;
+    }
+
+    .site-nav-bell { grid-area: bell; }
+
+    .site-nav-greeting {
+        grid-area: greet;
+        padding: 0.5rem 0.6rem;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+    }
+
+    .site-nav-logout-form { grid-area: logout; }
+
+    .site-nav-logout-form .btn-nav {
+        width: 100%;
     }
 
     .btn-nav {
         text-align: center;
     }
+}
+
+/* 모바일 드로어가 열려있는 동안 뒤 배경 스크롤 잠금 (navbar.js가 body에 붙였다 뗀다) */
+body.site-nav-lock-scroll {
+    overflow: hidden;
 }

@@ -25,6 +25,8 @@
     flex-wrap: wrap;
 }
 
+.post-list-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
 .post-page-heading h1 {
     font-size: 1.4rem;
     font-weight: 800;
@@ -359,7 +361,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
 
 /* 게시글 제한적 공개(링크 전용) 안내 - blind-banner와 달리 문제 상황이 아니라 작성자가 의도한
    상태라 경고 톤(주황) 대신 차분한 브랜드 톤을 쓴다. */
-.post-unlisted-banner {
+.post-visibility-banner {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -520,11 +522,27 @@ a.post-list-nickname:hover { text-decoration: underline; }
     margin-bottom: 20px;
 }
 
-.post-detail-actions-owner { display: flex; gap: 8px; }
+.post-detail-actions-owner { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+/* theme.css의 .btn-brand/.btn-outline-brand는 padding/border-radius/font-size를 일부러
+   안 정해두고 각 화면에서 채우게 돼있는데(post-form-actions .btn 등), 이 줄이 빠져있어서
+   "수정" 버튼만 여백 없이 테두리에 글자가 붙어 나오고 있었다(옆의 삭제/좋아요/북마크는
+   각자 자기 클래스에 크기가 있어 정상). 삭제 버튼과 정확히 같은 크기로 맞춘다. */
+.post-detail-actions-owner .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
 
 .post-delete-form { margin: 0; }
 
 .post-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 8px 16px;
     border-radius: 8px;
     border: 1.5px solid var(--danger-border);
@@ -670,7 +688,10 @@ a.post-list-nickname:hover { text-decoration: underline; }
     margin-bottom: 6px;
 }
 
-.post-field input,
+/* :not(checkbox):not(radio) - 이 규칙이 .post-field 안의 모든 input을 잡다 보니 설문
+   체크박스/라디오(.post-poll-checkbox 등)까지 100% 폭 + 테두리 박스로 늘려버려서, 네이티브
+   체크박스가 200px 가까이 늘어나고 그 뒤 라벨 문구가 오른쪽 끝으로 밀려나는 버그가 있었다. */
+.post-field input:not([type="checkbox"]):not([type="radio"]),
 .post-field textarea {
     width: 100%;
     padding: 11px 14px;
@@ -684,26 +705,64 @@ a.post-list-nickname:hover { text-decoration: underline; }
     transition: border-color 0.15s ease;
 }
 
-.post-field input:focus,
+.post-field input:not([type="checkbox"]):not([type="radio"]):focus,
 .post-field textarea:focus { border-color: var(--brand-1); }
 
 /* 게시글 제한적 공개(링크 전용) 체크박스 - .post-field label의 block/굵게 스타일을 벗어나
    체크박스+문구가 한 줄에 나란히 오도록 별도 지정 */
-.post-visibility-toggle {
-    display: flex !important;
-    align-items: center;
+/* 공개범위 라디오 - 카테고리 라디오(.post-category-radio)와 같은 톤이지만 옵션마다 설명 한 줄이
+   더 붙어서 세로로 쌓이고, 좁은 화면에서 설명이 잘리지 않도록 한 줄에 하나씩 꽉 채운다. */
+.post-visibility-radio-group {
+    display: grid;
     gap: 8px;
+}
+
+.post-visibility-radio {
+    display: flex !important;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 9px;
+    border: 1.5px solid #dcdfef;
+    cursor: pointer;
     font-weight: 500 !important;
-    font-size: 0.88rem !important;
-    color: var(--muted);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.post-visibility-radio:has(input:checked) {
+    border-color: var(--brand-1);
+    background: rgba(30, 79, 163, 0.06);
+}
+
+.post-visibility-radio input[type="radio"] {
+    margin: 2px 0 0;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--brand-1);
     cursor: pointer;
 }
 
-.post-visibility-toggle input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--brand-1);
-    cursor: pointer;
+.post-visibility-radio-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.post-visibility-radio-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.post-visibility-radio:has(input:checked) .post-visibility-radio-label {
+    color: var(--brand-1-dark);
+}
+
+.post-visibility-radio-desc {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
 }
 
 .post-category-radio-group {
@@ -1044,6 +1103,259 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     .post-detail-card, .post-form-card, .post-comment-section { padding: 22px; }
 }
 
+/* 설문(투표) 첨부 - 작성 폼 섹션. 처음부터 var() 테마 변수만 써서 calendar.css에서 겪은
+   "하드코딩 색상이 다크모드 예외 목록에서 빠짐" 문제가 애초에 나지 않도록 한다. */
+.post-poll-toggle {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600 !important;
+    cursor: pointer;
+}
+
+.post-poll-fields {
+    margin-top: 12px;
+    padding: 16px 18px;
+    background: var(--surface-soft);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: post-poll-reveal 0.18s ease;
+}
+
+@keyframes post-poll-reveal {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .post-poll-fields { animation: none; }
+}
+
+.post-poll-fields input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.88rem;
+}
+
+.post-poll-option-list { display: flex; flex-direction: column; gap: 8px; }
+
+.post-poll-option-row { display: flex; align-items: center; gap: 8px; }
+.post-poll-option-row input { flex: 1; }
+
+.post-poll-option-remove {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.post-poll-option-remove:hover { border-color: var(--brand-1); color: var(--brand-1); }
+
+.post-poll-add-btn { align-self: flex-start; padding: 6px 14px; font-size: 0.82rem; }
+
+.post-poll-checkbox {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500 !important;
+    font-size: 0.85rem;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.post-poll-scope { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.post-poll-scope > label:first-child { font-weight: 700; font-size: 0.85rem; color: var(--ink); }
+
+.post-poll-radio, .post-poll-same-school-only {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500 !important;
+    font-size: 0.85rem;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.post-poll-same-school-only { margin-left: 22px; color: var(--muted); }
+
+/* 설문 관련 체크박스/라디오는 전부 네이티브 컨트롤을 그대로 쓰되(디자인 시스템 전체가
+   체크박스를 커스텀 렌더링하지 않으므로 통일성 유지), 브랜드 색과 살짝 큰 크기만 입혀
+   터치하기 편하게 한다. */
+.post-poll-toggle input[type="checkbox"],
+.post-poll-checkbox input[type="checkbox"],
+.post-poll-radio input[type="radio"],
+.post-poll-same-school-only input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--brand-1);
+    cursor: pointer;
+}
+
+.post-poll-toggle input[type="checkbox"] { width: 17px; height: 17px; }
+
+/* 세부 설정 접기/펼치기 - 질문/옵션은 항상 보이고, 자주 안 쓰는 나머지 설정만 기본 접어둔다 */
+.post-poll-advanced-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 2px 0;
+    margin-top: 2px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--brand-1);
+    cursor: pointer;
+}
+
+.post-poll-advanced-toggle i {
+    font-size: 0.68rem;
+    transition: transform 0.15s ease;
+}
+
+.post-poll-advanced-toggle[aria-expanded="true"] i { transform: rotate(180deg); }
+
+.post-poll-advanced-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 12px;
+    margin-top: 2px;
+    border-top: 1px dashed var(--border);
+}
+
+/* 설문 결과 위젯 - 게시글 상세/한마디 상세에서 poll.js가 채워 넣는다. */
+.poll-widget {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-soft);
+}
+
+.poll-widget-question { font-weight: 700; font-size: 0.95rem; color: var(--ink); margin-bottom: 4px; }
+.poll-widget-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
+.poll-widget-options { display: flex; flex-direction: column; gap: 8px; }
+
+.poll-widget-option {
+    position: relative;
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.poll-widget-option.voted { border-color: var(--brand-1); }
+.poll-widget-option input { flex-shrink: 0; accent-color: var(--brand-1); }
+.poll-widget-option-label { flex: 1; font-size: 0.86rem; font-weight: 600; color: var(--ink); z-index: 1; }
+.poll-widget-option-count { font-size: 0.78rem; color: var(--muted); z-index: 1; }
+
+.poll-widget-option-bar {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+.poll-widget-option-bar span {
+    display: block;
+    height: 100%;
+    background: rgba(30, 79, 163, 0.12);
+    transition: width 0.2s ease;
+}
+
+.poll-widget-custom-row { margin-top: 10px; }
+.poll-widget-custom-input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+.poll-widget-submit { margin-top: 12px; padding: 9px 20px; font-size: 0.85rem; }
+
+/* 인기 게시글 주간 콘테스트 - post/contest-list.html */
+.post-list-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1.5px dashed var(--border);
+    border-radius: 12px;
+}
+
+.contest-entry-list { display: flex; flex-direction: column; gap: 10px; }
+
+.contest-entry {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+}
+
+.contest-entry-rank {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--brand-gradient);
+    color: white;
+    font-weight: 800;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contest-entry-body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.contest-entry-title {
+    font-weight: 700;
+    color: var(--ink);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.contest-entry-title:hover { color: var(--brand-1); }
+.contest-entry-author { font-size: 0.8rem; color: var(--muted); }
+
+.contest-entry-votes { flex-shrink: 0; font-weight: 700; color: var(--brand-1-dark); font-size: 0.9rem; }
+.contest-vote-btn { flex-shrink: 0; padding: 8px 16px; font-size: 0.82rem; }
+.contest-vote-btn:disabled { opacity: 0.6; cursor: default; }
+.contest-entry-mine-badge {
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 6px 12px;
+}
+
 /* 다크모드 - 카드류(.post-detail-card 등)는 이미 var(--surface)를 쓰고 있어서 theme.css의 다크
    팔레트만으로 자동 대응되지만, 아래 작은 배지/버튼들은 흰 배경을 하드코딩해뒀어서 따로 손봐야
    다크 배경 위에서 하얗게 튀지 않는다. */
@@ -1061,6 +1373,12 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 
     html:not([data-theme="light"]) .post-comment-edit-input,
     html:not([data-theme="light"]) .post-comment-reply-input { background: var(--surface); color: var(--ink); }
+
+    /* 카테고리 배지(익명/질의응답) - 라이트모드 전용 고정 회색/파랑 글자(#4b5563/#0369a1)라
+       다크모드 카드 배경 위에서 대비가 2.1~2.7:1까지 떨어져 거의 안 보였다(수정사항.md
+       지적 - 커뮤니티 목록 전체에서 반복 노출되는 배지라 영향이 컸다). */
+    html:not([data-theme="light"]) .post-category-badge-ANONYMOUS { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+    html:not([data-theme="light"]) .post-category-badge-QNA { background: rgba(126, 166, 230, 0.16); color: var(--brand-1-dark); }
 }
 
 /* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
@@ -1077,3 +1395,6 @@ html[data-theme="dark"] .post-comment-reply-form button {
 
 html[data-theme="dark"] .post-comment-edit-input,
 html[data-theme="dark"] .post-comment-reply-input { background: var(--surface); color: var(--ink); }
+
+html[data-theme="dark"] .post-category-badge-ANONYMOUS { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+html[data-theme="dark"] .post-category-badge-QNA { background: rgba(126, 166, 230, 0.16); color: var(--brand-1-dark); }

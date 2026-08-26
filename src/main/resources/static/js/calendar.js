@@ -68,20 +68,6 @@ document.addEventListener('DOMContentLoaded', function () {
         handleDayClick(formatLocalDate(d));
     }
 
-    // Phase 7 - 시간표 인쇄: #printableTimetableSection만 보이도록 @media print(calendar.css)에서
-    // 처리한다. 인쇄본에 어느 날짜/학년/반인지 알 수 있도록 제목에 잠깐 붙였다가 인쇄 후 되돌린다.
-    document.getElementById('dayDetailPrint').addEventListener('click', function () {
-        var titleEl = document.getElementById('printTimetableTitle');
-        var originalHtml = titleEl.innerHTML;
-        var dateText = document.getElementById('dayDetailDate').textContent;
-        var classText = document.getElementById('dayDetailClass').textContent;
-        titleEl.innerHTML = '<i class="fa-solid fa-book-open"></i> ' + escapeHtml(dateText) + ' ' + escapeHtml(classText) + ' 시간표';
-
-        window.print();
-
-        titleEl.innerHTML = originalHtml;
-    });
-
     // ── 달력 그리드 ─────────────────────────────────────────────
 
     function formatLocalDate(date) {
@@ -815,9 +801,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${actionsHtml}
                 </div>
                 <div class="comment-content post-rich-content">${c.content}</div>
+                <div class="poll-widget comment-poll-widget" hidden></div>
             `;
 
             WebSchoolTimeago.apply(item.querySelector('.comment-time-value'));
+
+            // 설문(투표) 위젯 - poll.js가 GET /polls/by-comment/{id}로 자기 데이터를 스스로 불러와
+            // 채운다(설문이 없는 한마디는 204를 받아 숨겨진 채로 남는다, post/detail.html과 동일 패턴).
+            if (typeof initPollWidget === 'function') {
+                initPollWidget(item.querySelector('.comment-poll-widget'), '/polls/by-comment/' + c.id);
+            }
 
             var shareBtn = item.querySelector('.comment-share-btn');
             if (shareBtn) {
@@ -845,6 +838,26 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             commentList.appendChild(item);
+
+            // 긴 한마디 전체보기/짧게보기 - 접었을 때 CSS max-height(4.5em, 13px 기준 약 3줄)보다
+            // 실제 내용이 뚜렷하게 긴 경우에만 버튼을 붙인다(collapsed 클래스를 붙이기 전, 자연
+            // 높이 상태에서 scrollHeight를 재야 정확하다 - 붙인 뒤에 재면 이미 잘려있어 항상
+            // 같은 값이 나온다).
+            var contentEl = item.querySelector('.comment-content');
+            if (contentEl && contentEl.scrollHeight > 90) {
+                contentEl.classList.add('is-collapsible', 'is-collapsed');
+                var toggleBtn = document.createElement('button');
+                toggleBtn.type = 'button';
+                toggleBtn.className = 'comment-content-toggle';
+                toggleBtn.setAttribute('aria-expanded', 'false');
+                toggleBtn.innerHTML = '전체보기 <i class="fa-solid fa-chevron-down"></i>';
+                toggleBtn.addEventListener('click', function () {
+                    var collapsed = contentEl.classList.toggle('is-collapsed');
+                    toggleBtn.setAttribute('aria-expanded', String(!collapsed));
+                    toggleBtn.innerHTML = (collapsed ? '전체보기' : '짧게보기') + ' <i class="fa-solid fa-chevron-down"></i>';
+                });
+                contentEl.insertAdjacentElement('afterend', toggleBtn);
+            }
         });
 
         if (pendingHighlightCommentId) {

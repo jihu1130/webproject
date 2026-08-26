@@ -7,11 +7,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!toggle) return;
 
     var icon = toggle.querySelector('i');
+    var label = document.getElementById('themeToggleLabel');
 
     function applyIcon(theme) {
         icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
         toggle.setAttribute('aria-label', theme === 'dark' ? '라이트모드로 전환' : '다크모드로 전환');
         toggle.setAttribute('title', theme === 'dark' ? '라이트모드로 전환' : '다크모드로 전환');
+        if (label) label.textContent = theme === 'dark' ? '라이트모드' : '다크모드';
     }
 
     applyIcon(document.documentElement.getAttribute('data-theme'));

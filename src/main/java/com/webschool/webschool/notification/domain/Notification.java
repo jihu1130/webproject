@@ -50,7 +50,7 @@ public class Notification {
 
     public enum Type {
         COMMENT("댓글"), LIKE("좋아요"), REPORT_ACTION("신고 처리"), ACCOUNT("계정"), ANNOUNCEMENT("공지사항"),
-        ACCEPTED("답변 채택"), REPLY("답글");
+        ACCEPTED("답변 채택"), REPLY("답글"), CONTEST_WIN("콘테스트 수상");
 
         private final String label;
 

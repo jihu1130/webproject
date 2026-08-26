@@ -126,16 +126,23 @@ Spring Boot(Hibernate/Security/Thymeleaf 다 올라가는 무거운 앱)를 동�
 `t3.small`(RAM 2GB) 업그레이드를 고려.
 
 **EC2 stop/start 시 퍼블릭 IP가 바뀐다는 것도 이번에 직접 겪음**(reboot과
-달리 stop 후 start는 새 IP 할당) — 그래서 Elastic IP(`54.180.206.13`,
-`eipalloc-0d9d2d109408e5a95`)를 할당해 인스턴스에 고정 연결함(러닝 중인
-인스턴스에 붙어있는 동안은 무료). 앞으로 IP는 이 값 그대로 유지됨 — 4단계
-도메인 연결 전까지는 이 IP를 기준으로 접속.
+달리 stop 후 start는 새 IP 할당) — 그래서 배포 검증 중엔 Elastic IP를
+할당해 고정 연결했었음(러닝 중인 인스턴스에 붙어있는 동안은 무료). **단,
+2026-08-26 당일 검증을 마치고 비용 절감을 위해 인스턴스를 정지시키면서
+이 Elastic IP는 반납함**(정지된 인스턴스에 붙어있으면 소액 유휴 요금이
+붙기 때문 — 안 쓸 땐 반납이 정답). 그래서 **다음에 인스턴스를 다시 켜면
+퍼블릭 IP가 이전과 다른 새 값으로 랜덤 할당됨** — 이 문서의 `54.180.206.13`은
+더 이상 유효하지 않다. 계속 켜둘 계획이 서면(4단계 도메인 연결 전까지라도)
+Elastic IP를 다시 할당하는 걸 고려할 것(`aws ec2 allocate-address` +
+`associate-address`).
 
 ## 완료 후 기록할 것
 
-- EC2 인스턴스 ID: `i-0992a58038aca44da`
-- EC2 퍼블릭 IP(Elastic IP, 고정): `54.180.206.13`
-  (`eipalloc-0d9d2d109408e5a95`)
+- EC2 인스턴스 ID: `i-0992a58038aca44da` — **현재 상태: 정지됨(stopped)**,
+  비용 절감을 위해 2026-08-26 검증 완료 후 의도적으로 정지. 다시 쓰려면
+  `aws ec2 start-instances --instance-ids i-0992a58038aca44da`
+- EC2 퍼블릭 IP: 없음(Elastic IP `eipalloc-0d9d2d109408e5a95` 반납함,
+  `54.180.206.13`은 더 이상 이 인스턴스 소유 아님) — 재시작 시 새 IP 확인 필요
 - 배포일: 2026-08-26
 - 사용한 AMI/인스턴스 타입: Amazon Linux 2023 (`ami-0159816442b921a1c`) /
   `t3.micro`
@@ -143,12 +150,26 @@ Spring Boot(Hibernate/Security/Thymeleaf 다 올라가는 무거운 앱)를 동�
 - IAM 역할/인스턴스 프로필: `webschool-ec2-ssm-role` / `webschool-ec2-ssm-profile`
   (SSM 정책 + S3 아티팩트 읽기 전용 정책 `webschool-s3-artifact-read`)
 - 배포 아티팩트 S3 버킷: `webschool-deploy-938436186735` (퍼블릭 접근 완전
-  차단, 인스턴스 역할만 읽기 가능)
+  차단, 인스턴스 역할만 읽기 가능) — `webschool.jar`(배포용 fat jar)
 - 앱 경로: 서버의 `/opt/webschool/webschool.jar` +
   `/opt/webschool/application.yml`(권한 600), 업로드 파일 저장 위치는
   `/opt/uploads`
-- 접속 확인: `http://54.180.206.13:8888/actuator/health` → `{"status":"UP"}`,
-  `http://54.180.206.13:8888/` → 200
+- 접속 확인(2026-08-26, 정지 전): `/actuator/health` → `{"status":"UP"}`,
+  `/` → 200, 정상 확인 완료
+- 테스트 계정 시딩 완료: `TestDataSeeder`(`user1`~`user5`, `admin/admin` 등)
+  + `SuperAdminSeeder`(`admin`을 `ROLE_SUPER_ADMIN`으로 승격) 서버 DB에
+  실행 완료 — **`admin/admin`이 실제 공개 서버에 존재하니 운영 전 비밀번호
+  교체 필수**
+- 서버 DB 접속(다른 컴퓨터에서): 3306이 외부에 막혀있어 SSM 포트 포워딩
+  필요 — `aws ssm start-session --target i-0992a58038aca44da
+  --document-name AWS-StartPortForwardingSession
+  --parameters portNumber=3306,localPortNumber=13306` 실행 후
+  `127.0.0.1:13306`으로 MySQL 클라이언트 접속(계정 `root`, 비밀번호는
+  서버 `application.yml` 참고 — 이 문서엔 안 적음)
+- 다음 재시작 시 해야 할 것: 인스턴스 시작 → SSM 온라인 확인 → 새 퍼블릭
+  IP 확인(`aws ec2 describe-instances`) → (필요시 Elastic IP 재할당) →
+  `mysqld`/`webschool` 서비스가 `enabled` 상태라 자동 기동됨(수동 시작
+  불필요) → `curl http://<새IP>:8888/actuator/health`로 확인
 
 ## 다음에 할 일
 
@@ -160,3 +181,4 @@ Spring Boot(Hibernate/Security/Thymeleaf 다 올라가는 무거운 앱)를 동�
   s3://webschool-deploy-938436186735/webschool.jar` → SSM으로 서버 접속해
   `sudo aws s3 cp s3://webschool-deploy-938436186735/webschool.jar
   /opt/webschool/webschool.jar` 후 `sudo systemctl restart webschool`
+  https://xn--220b31d95hq8o.xn--3e0b707e/

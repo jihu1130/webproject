@@ -1,6 +1,8 @@
 package com.webschool.webschool.post.controller;
 
 import com.webschool.webschool.notice.service.NoticeService;
+import com.webschool.webschool.poll.dto.PollCreateRequest;
+import com.webschool.webschool.poll.service.PollService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.dto.PostDetailDto;
 import com.webschool.webschool.post.dto.PostFormDto;
@@ -35,10 +37,20 @@ public class PostController {
 
     private static final String VIEWED_POSTS_SESSION_KEY = "viewedPostIds";
 
+    // 공개범위 라디오 옵션 - 작성/수정 폼을 그리는 경로가 4개(newForm / create 검증실패 재렌더 /
+    // editForm / update 검증실패 재렌더)라 각 메서드에서 따로 담지 않고 @ModelAttribute로 한 번만
+    // 선언한다. 라벨/설명 문구는 enum(Post.Visibility)이 들고 있으므로 옵션을 늘려도 템플릿은
+    // 그대로 두면 된다.
+    @ModelAttribute("visibilityOptions")
+    public Post.Visibility[] visibilityOptions() {
+        return Post.Visibility.values();
+    }
+
     private final PostService postService;
     private final PostImageService postImageService;
     private final NoticeService noticeService;
     private final PostViewService postViewService;
+    private final PollService pollService;
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page,
@@ -70,6 +82,7 @@ public class PostController {
     public String newForm(Model model) {
         PostFormDto form = new PostFormDto();
         form.setCategory(Post.Category.FREE.name());
+        form.setVisibility(Post.Visibility.PUBLIC.name());
         model.addAttribute("postForm", form);
         model.addAttribute("mode", "create");
         return "post/form";
@@ -78,18 +91,46 @@ public class PostController {
     @PostMapping
     public String create(@ModelAttribute("postForm") PostFormDto postForm,
                           @RequestParam(value = "images", required = false) List<MultipartFile> images,
+                          @RequestParam(value = "pollQuestion", required = false) String pollQuestion,
+                          @RequestParam(value = "pollOptions", required = false) List<String> pollOptions,
+                          @RequestParam(value = "pollAllowMultiple", required = false, defaultValue = "false") boolean pollAllowMultiple,
+                          @RequestParam(value = "pollAllowCustomOption", required = false, defaultValue = "false") boolean pollAllowCustomOption,
+                          @RequestParam(value = "pollAnonymous", required = false, defaultValue = "false") boolean pollAnonymous,
+                          @RequestParam(value = "pollVisibilityScope", required = false) String pollVisibilityScope,
+                          @RequestParam(value = "pollSameSchoolOnly", required = false, defaultValue = "true") boolean pollSameSchoolOnly,
                           Authentication authentication, Model model) {
         try {
             postImageService.validate(images);
+            PollCreateRequest pollForm = buildPollRequest(pollQuestion, pollOptions, pollAllowMultiple,
+                    pollAllowCustomOption, pollAnonymous, pollVisibilityScope, pollSameSchoolOnly);
+            // 설문 데이터가 잘못됐으면 게시글부터 저장하기 전에 여기서 먼저 걸러낸다 - 그렇지 않으면
+            // 게시글은 이미 만들어진 채로 에러 화면이 뜨고, 사용자가 다시 제출하면 게시글이 중복
+            // 생성될 수 있다.
+            pollService.validate(pollForm);
             String uuid = postService.createPost(authentication.getName(), postForm);
             Long id = postService.resolveIdByUuid(uuid);
             postImageService.saveImages(id, authentication.getName(), images);
+            pollService.createPollForPost(id, authentication.getName(), pollForm);
             return "redirect:/posts/" + uuid;
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
             model.addAttribute("mode", "create");
             return "post/form";
         }
+    }
+
+    private PollCreateRequest buildPollRequest(String question, List<String> options, boolean allowMultiple,
+                                                boolean allowCustomOption, boolean anonymous,
+                                                String visibilityScope, boolean sameSchoolOnly) {
+        PollCreateRequest req = new PollCreateRequest();
+        req.setQuestion(question);
+        req.setOptions(options);
+        req.setAllowMultiple(allowMultiple);
+        req.setAllowCustomOption(allowCustomOption);
+        req.setAnonymous(anonymous);
+        req.setVisibilityScope(visibilityScope);
+        req.setSameSchoolOnly(sameSchoolOnly);
+        return req;
     }
 
     @GetMapping("/{uuid}")
