@@ -109,7 +109,8 @@ public class PostController {
             // 게시글은 이미 만들어진 채로 에러 화면이 뜨고, 사용자가 다시 제출하면 게시글이 중복
             // 생성될 수 있다.
             pollService.validate(pollForm);
-            String uuid = postService.createPost(authentication.getName(), postForm);
+            boolean hasPoll = pollQuestion != null && !pollQuestion.isBlank();
+            String uuid = postService.createPost(authentication.getName(), postForm, hasPoll);
             Long id = postService.resolveIdByUuid(uuid);
             postImageService.saveImages(id, authentication.getName(), images);
             pollService.createPollForPost(id, authentication.getName(), pollForm);

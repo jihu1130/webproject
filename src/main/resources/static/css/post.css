@@ -1130,6 +1130,10 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     gap: 10px;
     animation: post-poll-reveal 0.18s ease;
 }
+/* display:flex가 명시도가 같은 브라우저 기본 [hidden]{display:none}보다 우선 적용돼(작성자
+   스타일시트가 UA 기본보다 항상 이김) 체크박스를 꺼도 이 영역이 계속 보이는 버그가 있었다
+   (사용자 신고) - hidden 속성이 있을 땐 이 규칙을 명시적으로 꺼준다. */
+.post-poll-fields[hidden] { display: none; }
 
 @keyframes post-poll-reveal {
     from { opacity: 0; transform: translateY(-6px); }
@@ -1244,6 +1248,7 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     margin-top: 2px;
     border-top: 1px dashed var(--border);
 }
+.post-poll-advanced-fields[hidden] { display: none; }
 
 /* 설문 결과 위젯 - 게시글 상세/한마디 상세에서 poll.js가 채워 넣는다. */
 .poll-widget {

@@ -123,9 +123,9 @@ public class PostService {
     }
 
     @Transactional
-    public String createPost(String username, PostFormDto form) {
+    public String createPost(String username, PostFormDto form, boolean pollAttached) {
         String title = validateTitle(form.getTitle());
-        String content = validateContent(form.getContent());
+        String content = validateContent(form.getContent(), pollAttached);
         Post.Category category = parseCategory(form.getCategory());
 
         User author = userRepository.findByUsername(username)
@@ -172,7 +172,7 @@ public class PostService {
     @Transactional
     public void updatePost(Long id, String username, PostFormDto form) {
         String title = validateTitle(form.getTitle());
-        String content = validateContent(form.getContent());
+        String content = validateContent(form.getContent(), false);
         Post.Category category = parseCategory(form.getCategory());
 
         Post post = postRepository.findById(id)
@@ -421,14 +421,22 @@ public class PostService {
 
     // 리치 에디터(Quill)가 보낸 HTML을 저장 전에 항상 여기서 정제한다 - th:utext로 그대로 렌더링하므로
     // 이 단계를 거치지 않은 값이 저장되면 안 된다(HtmlSanitizer가 유일한 XSS 방어선).
-    private String validateContent(String content) {
+    // pollAttached: 설문을 함께 첨부하는 글쓰기라면 본문이 비어있어도 통과시킨다 - 설문 자체가
+    // 내용 역할을 하므로 "내용을 입력해주세요"로 막을 이유가 없다는 사용자 요청으로 추가.
+    private String validateContent(String content, boolean pollAttached) {
         if (content == null || content.isBlank()) {
+            if (pollAttached) {
+                return "";
+            }
             throw new IllegalArgumentException("내용을 입력해주세요.");
         }
         String sanitized = HtmlSanitizer.sanitize(content.trim());
         String plainText = HtmlSanitizer.toPlainText(sanitized);
         // Quill은 빈 에디터도 "<p><br></p>"처럼 빈 태그를 보낼 수 있어 순수 텍스트 기준으로 판단한다.
         if (plainText.isBlank() && !sanitized.contains("<img") && !sanitized.contains("<video")) {
+            if (pollAttached) {
+                return sanitized;
+            }
             throw new IllegalArgumentException("내용을 입력해주세요.");
         }
         if (sanitized.length() > MAX_CONTENT_LENGTH) {

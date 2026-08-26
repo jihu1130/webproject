@@ -207,8 +207,9 @@ public class SchoolController {
             // create()와 동일한 이유 - 안 그러면 한마디는 이미 만들어진 채로 에러 화면이 뜨고, 다시
             // 제출하면 한마디가 중복 생성될 수 있다).
             pollService.validate(pollForm);
+            boolean hasPoll = pollQuestion != null && !pollQuestion.isBlank();
             ScheduleCommentDto dto = scheduleCommentService.createComment(
-                    atptCode, schoolCode, LocalDate.parse(date), grade, classNm, authentication.getName(), content);
+                    atptCode, schoolCode, LocalDate.parse(date), grade, classNm, authentication.getName(), content, hasPoll);
             pollService.createPollForComment(dto.getId(), authentication.getName(), pollForm);
             return "redirect:/school/comments/" + dto.getId();
         } catch (IllegalArgumentException e) {
@@ -321,7 +322,7 @@ public class SchoolController {
             @RequestParam String content,
             Authentication authentication) {
 
-        return scheduleCommentService.createComment(atptCode, schoolCode, parseDate(date), grade, classNm, authentication.getName(), content);
+        return scheduleCommentService.createComment(atptCode, schoolCode, parseDate(date), grade, classNm, authentication.getName(), content, false);
     }
 
     // 7. 댓글 수정 (본인 작성 댓글만)

@@ -69,8 +69,9 @@ public class ScheduleCommentService {
 
     @Transactional
     public ScheduleCommentDto createComment(String atptCode, String schoolCode, LocalDate date,
-                                             String grade, String classNm, String username, String content) {
-        String trimmed = validateContent(content);
+                                             String grade, String classNm, String username, String content,
+                                             boolean pollAttached) {
+        String trimmed = validateContent(content, pollAttached);
 
         School school = findOrCreateSchool(atptCode, schoolCode);
         User user = userRepository.findByUsername(username)
@@ -93,7 +94,7 @@ public class ScheduleCommentService {
 
     @Transactional
     public ScheduleCommentDto updateComment(Long id, String username, String content) {
-        String trimmed = validateContent(content);
+        String trimmed = validateContent(content, false);
 
         ScheduleComment comment = scheduleCommentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
@@ -314,14 +315,20 @@ public class ScheduleCommentService {
     }
 
     // PostService.validateContent()와 동일한 정제 로직 - th:utext로 그대로 렌더링하므로 이 단계가
-    // 유일한 XSS 방어선이다.
-    private String validateContent(String content) {
+    // 유일한 XSS 방어선이다. pollAttached: 설문이 함께 첨부되면 내용이 비어도 통과(PostService와 동일 규칙).
+    private String validateContent(String content, boolean pollAttached) {
         if (content == null || content.isBlank()) {
+            if (pollAttached) {
+                return "";
+            }
             throw new IllegalArgumentException("댓글 내용을 입력해주세요.");
         }
         String sanitized = HtmlSanitizer.sanitize(content.trim());
         String plainText = HtmlSanitizer.toPlainText(sanitized);
         if (plainText.isBlank() && !sanitized.contains("<img") && !sanitized.contains("<video")) {
+            if (pollAttached) {
+                return sanitized;
+            }
             throw new IllegalArgumentException("댓글 내용을 입력해주세요.");
         }
         if (sanitized.length() > MAX_CONTENT_LENGTH) {

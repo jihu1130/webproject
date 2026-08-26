@@ -177,7 +177,13 @@
         if (form) {
             form.addEventListener('submit', function (e) {
                 syncHidden();
-                if (config.required && quill.getText().trim() === '' && hidden.value.indexOf('<img') === -1
+                // 설문(투표)을 첨부했으면 그 자체가 내용 역할을 하므로 본문이 비어도 통과시킨다
+                // (post/form.html, school/comment-form.html의 #pollToggle 체크박스 - 서버(PostService/
+                // ScheduleCommentService)도 동일한 규칙으로 검증하니 여기서만 막으면 안 된다).
+                var pollToggle = document.getElementById('pollToggle');
+                var pollQuestion = document.getElementById('pollQuestion');
+                var pollAttached = !!(pollToggle && pollToggle.checked && pollQuestion && pollQuestion.value.trim() !== '');
+                if (!pollAttached && config.required && quill.getText().trim() === '' && hidden.value.indexOf('<img') === -1
                         && hidden.value.indexOf('<video') === -1 && hidden.value.indexOf('<figure') === -1
                         && hidden.value.indexOf('<aside') === -1) {
                     e.preventDefault();
