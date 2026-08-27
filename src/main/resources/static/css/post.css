@@ -188,21 +188,44 @@
 .post-search-options {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 8px;
     flex-wrap: wrap;
     font-size: 0.82rem;
     color: var(--muted);
 }
 
+/* 카테고리 탭(.post-category-tab)과 같은 "알약형" 언어로 통일 - 선택되면 카테고리 탭의
+   .active와 동일하게 브랜드색으로 꽉 채운다. 라디오 자체는 지우지 않고 화면에서만
+   숨겨서 키보드 포커스/접근성은 그대로 유지한다. */
 .post-search-scope {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-weight: 600;
+    gap: 5px;
+    padding: 5px 13px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.8rem;
     cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.post-search-scope input[type="radio"] { accent-color: var(--brand-1); cursor: pointer; }
+.post-search-scope:hover { border-color: var(--brand-1); color: var(--brand-1); }
+
+.post-search-scope:has(input:checked) {
+    background: var(--brand-gradient);
+    border-color: transparent;
+    color: #fff;
+}
+
+.post-search-scope input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
 
 .post-search-sort {
     margin-left: auto;
@@ -265,6 +288,9 @@
 .page-size-select select:focus { border-color: var(--brand-1); }
 
 /* 게시물 목록 */
+/* .post-empty는 커뮤니티 목록뿐 아니라 공개 프로필/상점/포인트 내역/검색결과/공지/알림 등
+   7개 화면이 전부 공유하는 빈 상태 컴포넌트라, 아이콘을 각 템플릿에 일일이 넣는 대신
+   ::before로 한 번에 붙인다 - 새로 .post-empty를 쓰는 화면이 생겨도 자동으로 적용됨. */
 .post-empty {
     background: var(--surface);
     border: 1px dashed var(--border);
@@ -273,6 +299,16 @@
     text-align: center;
     color: var(--muted);
     font-weight: 600;
+}
+
+.post-empty::before {
+    display: block;
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f01c";
+    font-size: 1.7rem;
+    margin-bottom: 12px;
+    color: var(--border);
 }
 
 .post-list {
@@ -317,22 +353,25 @@
 
 .post-list-title {
     font-weight: 700;
-    font-size: 0.98rem;
+    font-size: 1.05rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+/* 제목·닉네임·날짜·조회수가 굵기/크기 차이 없이 한 줄에 나열돼 위계가 평평하다는 진단
+   (추가 제안) - 제목은 키우고, 메타 정보(닉네임 포함)는 전부 옅은 톤으로 낮춰서
+   "제목부터 읽고 필요하면 메타를 본다"는 시선 순서를 만든다. */
 .post-list-meta {
     display: flex;
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
     color: var(--muted);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
 }
 
-.post-list-nickname { font-weight: 600; color: var(--brand-1-dark); text-decoration: none; }
+.post-list-nickname { font-weight: 500; color: var(--brand-1-dark); text-decoration: none; }
 a.post-list-nickname:hover { text-decoration: underline; }
 
 .post-list-date { border-bottom: 1px dotted transparent; }
@@ -1691,6 +1730,16 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     color: var(--muted);
     padding: 6px 12px;
 }
+
+/* 콘테스트 과거 우승 이력(post/contest-history.html) - 회차(주)별로 묶어서 보여준다. */
+.contest-week-group { margin-bottom: 24px; }
+.contest-week-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin: 0 0 10px;
+}
+.contest-entry-prize { flex-shrink: 0; font-weight: 800; color: var(--brand-1); font-size: 0.9rem; }
 
 /* 게시글 상세에서 그 글이 이번 주 콘테스트 후보일 때 바로 투표할 수 있는 위젯(post/detail.html) -
    /posts/contest 목록까지 가지 않아도 글을 읽던 자리에서 바로 투표할 수 있게 한다. */
