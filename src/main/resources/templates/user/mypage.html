@@ -120,35 +120,41 @@
             <div th:if="${param.attendance != null and param.attendance[0] == 'success'}" class="mypage-alert mypage-alert-success">출석체크 완료! 포인트가 적립되었습니다.</div>
             <div th:if="${param.attendance != null and param.attendance[0] == 'already'}" class="mypage-alert mypage-alert-success">오늘은 이미 출석체크를 완료했습니다.</div>
 
-            <form th:if="${loginUser != null and !attendanceCheckedInToday}"
-                  th:action="@{/mypage/attendance}" method="post" class="mypage-resend-form">
-                <button type="submit" class="mypage-edit-btn">
-                    <i class="fa-solid fa-calendar-check"></i> 출석체크하기 (+3P)
-                </button>
-            </form>
-            <div th:if="${loginUser != null and attendanceCheckedInToday}" class="mypage-edit-btn" style="opacity:.6;pointer-events:none;">
-                <i class="fa-solid fa-calendar-check"></i> 오늘 출석체크 완료
+            <!-- 예전엔 이 6개 버튼이 전부 세로로 꽉 채운 한 줄짜리라 모바일에서 스크롤을 한참
+                 내려야 로그아웃까지 보였다(사용자 지적 - 폰 화면 한 눈에 안 들어옴). 아이콘+라벨
+                 타일을 3열 그리드로 배치해서 세로 공간을 절반 이하로 줄인다. 로그아웃은 "탐색"이
+                 아니라 "세션 종료"라 성격이 달라서 그리드 밖에 예전처럼 전체너비로 따로 둔다. -->
+            <div class="mypage-quick-grid">
+                <form th:if="${loginUser != null and !attendanceCheckedInToday}"
+                      th:action="@{/mypage/attendance}" method="post" class="mypage-quick-grid-form">
+                    <button type="submit" class="mypage-quick-tile">
+                        <i class="fa-solid fa-calendar-check"></i> 출석체크 (+3P)
+                    </button>
+                </form>
+                <div th:if="${loginUser != null and attendanceCheckedInToday}" class="mypage-quick-tile mypage-quick-tile-done">
+                    <i class="fa-solid fa-calendar-check"></i> 출석체크 완료
+                </div>
+
+                <a href="/mypage/profile" class="mypage-quick-tile">
+                    <i class="fa-solid fa-id-card"></i> 프로필 설정
+                </a>
+
+                <a href="/mypage/edit" class="mypage-quick-tile">
+                    <i class="fa-solid fa-user-pen"></i> 내 정보 수정
+                </a>
+
+                <a href="/mypage/activity" class="mypage-quick-tile">
+                    <i class="fa-solid fa-clock-rotate-left"></i> 내 활동내역
+                </a>
+
+                <a href="/mypage/points" class="mypage-quick-tile">
+                    <i class="fa-solid fa-coins"></i> 포인트 내역
+                </a>
+
+                <a href="/shop" class="mypage-quick-tile">
+                    <i class="fa-solid fa-store"></i> 상점
+                </a>
             </div>
-
-            <a href="/mypage/profile" class="mypage-edit-btn">
-                <i class="fa-solid fa-id-card"></i> 프로필 설정
-            </a>
-
-            <a href="/mypage/edit" class="mypage-edit-btn">
-                <i class="fa-solid fa-user-pen"></i> 내 정보 수정
-            </a>
-
-            <a href="/mypage/activity" class="mypage-cal-btn">
-                <i class="fa-solid fa-clock-rotate-left"></i> 내 활동내역
-            </a>
-
-            <a href="/mypage/points" class="mypage-cal-btn">
-                <i class="fa-solid fa-coins"></i> 포인트 내역
-            </a>
-
-            <a href="/shop" class="mypage-cal-btn">
-                <i class="fa-solid fa-store"></i> 상점
-            </a>
 
             <form th:action="@{/logout}" method="post" class="mypage-logout-form">
                 <button type="submit" class="mypage-logout-btn">로그아웃</button>

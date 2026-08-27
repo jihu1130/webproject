@@ -152,51 +152,61 @@
 }
 .mypage-resend-btn:hover { text-decoration: underline; }
 
-.mypage-edit-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* 마이페이지 바로가기 - 예전엔 .mypage-edit-btn/.mypage-cal-btn 6개가 전부 세로로 꽉 채운 한 줄씩이라
+   모바일에서 로그아웃까지 보려면 한참 스크롤해야 했다(사용자 지적). 아이콘 위·라벨 아래 타일을
+   3열 그리드로 깔아서 같은 6개 항목을 2줄 안에 담는다. */
+.mypage-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    background: var(--surface);
-    border: 1.5px solid var(--brand-1);
-    color: var(--brand-1);
-    transition: background 0.15s ease;
-}
-
-.mypage-edit-btn:hover {
-    background: rgba(30, 79, 163, 0.08);
-    color: var(--brand-1);
-}
-
-.mypage-cal-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-size: 0.95rem;
-    font-weight: 700;
     margin-bottom: 12px;
-    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 글자 대비 유지, theme.css 상단 주석 참고 */
-    background: var(--brand-fixed);
-    color: #fff;
-    transition: filter 0.15s ease;
 }
 
-.mypage-cal-btn:hover {
-    filter: brightness(1.06);
-    color: #fff;
+.mypage-quick-grid-form { display: contents; }
+
+.mypage-quick-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 14px 4px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
+
+.mypage-quick-tile i {
+    font-size: 1.15rem;
+    color: var(--brand-1);
+}
+
+.mypage-quick-tile:hover {
+    border-color: var(--brand-1);
+    background: rgba(30, 79, 163, 0.06);
+    transform: translateY(-1px);
+}
+
+/* 출석체크를 이미 완료한 상태 - 다른 타일과 똑같이 눌리는 것처럼 보이면 안 되니 성공 톤으로
+   구분하고 클릭도 막는다(예전 .mypage-edit-btn 시절엔 opacity+pointer-events:none 인라인
+   스타일로만 처리해서 "비활성"인지 "완료"인지 색만으로는 구분이 안 됐다). */
+.mypage-quick-tile-done {
+    background: var(--success-soft);
+    color: var(--success);
+    pointer-events: none;
+}
+
+.mypage-quick-tile-done i { color: var(--success); }
 
 .mypage-logout-form {
     margin: 0;
