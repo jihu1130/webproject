@@ -14,7 +14,7 @@ fi
 
 BACKUP_FILE="$1"
 DB_NAME="webschool"
-DEFAULTS_FILE="${MYSQL_DEFAULTS_FILE:-$HOME/.my.cnf}"
+DEFAULTS_FILE="${MYSQL_DEFAULTS_FILE:-${HOME:-/root}/.my.cnf}"
 
 if [ ! -f "$BACKUP_FILE" ]; then
     echo "백업 파일을 찾을 수 없음: $BACKUP_FILE" >&2

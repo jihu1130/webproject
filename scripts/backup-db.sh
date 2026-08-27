@@ -15,7 +15,7 @@ set -euo pipefail
 
 DB_NAME="webschool"
 KEEP_COUNT=14
-DEFAULTS_FILE="${MYSQL_DEFAULTS_FILE:-$HOME/.my.cnf}"
+DEFAULTS_FILE="${MYSQL_DEFAULTS_FILE:-${HOME:-/root}/.my.cnf}"
 BACKUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/backups"
 
 if [ ! -f "$DEFAULTS_FILE" ]; then
