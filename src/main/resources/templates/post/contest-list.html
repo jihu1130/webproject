@@ -24,7 +24,10 @@
                 <h1><i class="fa-solid fa-trophy"></i> 이번 주 인기 게시글</h1>
                 <p class="page-sub">본인 게시물을 후보로 신청하고, 마음에 드는 글에 투표해보세요 (월~일, 인당 신청 1개·투표 1표) — 매주 월요일 자정 득표 상위 3명에게 포인트 지급(30/20/10점)</p>
             </div>
-            <a href="/posts" class="btn btn-outline-brand"><i class="fa-solid fa-arrow-left"></i> 커뮤니티로</a>
+            <div class="post-list-header-actions">
+                <a href="/posts/contest/history" class="btn btn-outline-brand"><i class="fa-solid fa-clock-rotate-left"></i> 지난 우승 이력</a>
+                <a href="/posts" class="btn btn-outline-brand"><i class="fa-solid fa-arrow-left"></i> 커뮤니티로</a>
+            </div>
         </div>
 
         <div th:if="${entries.empty}" class="post-list-empty">

@@ -1,8 +1,10 @@
 package com.webschool.webschool.post.controller;
 
+import com.webschool.webschool.post.dto.ContestWeekResultDto;
 import com.webschool.webschool.post.dto.PostContestEntryDto;
 import com.webschool.webschool.post.service.PostContestService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -25,6 +27,13 @@ public class PostContestController {
         List<PostContestEntryDto> entries = postContestService.getCurrentWeekEntries(authentication.getName());
         model.addAttribute("entries", entries);
         return "post/contest-list";
+    }
+
+    @GetMapping("/history")
+    public String history(@RequestParam(defaultValue = "0") int page, Model model) {
+        Page<ContestWeekResultDto> weeks = postContestService.getResultHistory(page, 8);
+        model.addAttribute("weeks", weeks);
+        return "post/contest-history";
     }
 
     @PostMapping("/nominate")

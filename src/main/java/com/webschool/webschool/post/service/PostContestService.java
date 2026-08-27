@@ -1,18 +1,24 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostContestEntry;
+import com.webschool.webschool.post.domain.PostContestResult;
 import com.webschool.webschool.post.domain.PostContestVote;
+import com.webschool.webschool.post.dto.ContestWeekResultDto;
 import com.webschool.webschool.post.dto.PostContestEntryDto;
+import com.webschool.webschool.post.dto.PostContestResultDto;
 import com.webschool.webschool.post.repository.PostContestEntryRepository;
+import com.webschool.webschool.post.repository.PostContestResultRepository;
 import com.webschool.webschool.post.repository.PostContestVoteRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserPointService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,6 +43,7 @@ public class PostContestService {
 
     private final PostContestEntryRepository entryRepository;
     private final PostContestVoteRepository voteRepository;
+    private final PostContestResultRepository resultRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final UserPointService userPointService;
@@ -177,7 +185,53 @@ public class PostContestService {
                     "'" + truncate(entry.getPost().getTitle()) + "'이(가) 이번 주 인기 게시글 " + rank
                             + "위(" + voteCount + "표)에 선정돼 " + prize + "포인트를 받았어요!",
                     "/posts/" + entry.getPost().getUuid());
+
+            PostContestResult result = new PostContestResult();
+            result.setWeekStart(previousWeekStart);
+            result.setRank(rank);
+            result.setPost(entry.getPost());
+            result.setAuthor(author);
+            result.setVoteCount((int) voteCount);
+            result.setPrizePoints(prize);
+            resultRepository.save(result);
         }
+    }
+
+    // 콘테스트 과거 우승 이력(todo.md "콘테스트/설문 후속" 항목) - 회차(주)별로 묶어서 최신 순으로
+    // 보여준다. 회차당 최대 3행뿐이라 DB 페이지 쿼리 대신 PageUtils로 회차 단위 페이지네이션한다
+    // (PageUtils 설계 의도와 동일 - 데이터 규모가 작다고 가정).
+    public Page<ContestWeekResultDto> getResultHistory(int page, int size) {
+        List<PostContestResult> all = resultRepository.findAllByOrderByWeekStartDescRankAsc();
+
+        List<ContestWeekResultDto> weeks = new ArrayList<>();
+        LocalDate currentWeek = null;
+        List<PostContestResultDto> currentResults = null;
+        for (PostContestResult result : all) {
+            if (currentWeek == null || !currentWeek.equals(result.getWeekStart())) {
+                if (currentWeek != null) {
+                    weeks.add(ContestWeekResultDto.builder().weekStart(currentWeek).results(currentResults).build());
+                }
+                currentWeek = result.getWeekStart();
+                currentResults = new ArrayList<>();
+            }
+            currentResults.add(toResultDto(result));
+        }
+        if (currentWeek != null) {
+            weeks.add(ContestWeekResultDto.builder().weekStart(currentWeek).results(currentResults).build());
+        }
+
+        return PageUtils.paginate(weeks, page, size);
+    }
+
+    private PostContestResultDto toResultDto(PostContestResult result) {
+        return PostContestResultDto.builder()
+                .rank(result.getRank())
+                .postUuid(result.getPost().getUuid())
+                .postTitle(result.getPost().getTitle())
+                .authorNickname(result.getAuthor().isDeleted() ? "탈퇴한 사용자" : result.getAuthor().getNickname())
+                .voteCount(result.getVoteCount())
+                .prizePoints(result.getPrizePoints())
+                .build();
     }
 
     private String truncate(String text) {
