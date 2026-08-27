@@ -112,6 +112,18 @@
             <div th:if="${param.verified}" class="mypage-alert mypage-alert-success">이메일 인증이 완료되었습니다.</div>
             <div th:if="${param.verifyError}" class="mypage-alert mypage-alert-danger">인증 링크가 유효하지 않거나 만료되었습니다.</div>
             <div th:if="${param.resent}" class="mypage-alert mypage-alert-success">인증 메일을 다시 보냈습니다.</div>
+            <div th:if="${param.attendance != null and param.attendance[0] == 'success'}" class="mypage-alert mypage-alert-success">출석체크 완료! 포인트가 적립되었습니다.</div>
+            <div th:if="${param.attendance != null and param.attendance[0] == 'already'}" class="mypage-alert mypage-alert-success">오늘은 이미 출석체크를 완료했습니다.</div>
+
+            <form th:if="${loginUser != null and !attendanceCheckedInToday}"
+                  th:action="@{/mypage/attendance}" method="post" class="mypage-resend-form">
+                <button type="submit" class="mypage-edit-btn">
+                    <i class="fa-solid fa-calendar-check"></i> 출석체크하기 (+3P)
+                </button>
+            </form>
+            <div th:if="${loginUser != null and attendanceCheckedInToday}" class="mypage-edit-btn" style="opacity:.6;pointer-events:none;">
+                <i class="fa-solid fa-calendar-check"></i> 오늘 출석체크 완료
+            </div>
 
             <a href="/mypage/profile" class="mypage-edit-btn">
                 <i class="fa-solid fa-id-card"></i> 프로필 설정

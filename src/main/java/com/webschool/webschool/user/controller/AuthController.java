@@ -6,6 +6,7 @@ import com.webschool.webschool.user.dto.RegisterDto;
 import com.webschool.webschool.user.dto.SchoolSetupDto;
 import com.webschool.webschool.user.domain.EmailToken;
 import com.webschool.webschool.user.domain.User;
+import com.webschool.webschool.user.service.AttendanceService;
 import com.webschool.webschool.user.service.EmailTokenService;
 import com.webschool.webschool.user.service.MyActivityService;
 import com.webschool.webschool.user.service.UserService;
@@ -41,6 +42,7 @@ public class AuthController {
     private final UserDetailsService userDetailsService;
     private final MyActivityService myActivityService;
     private final EmailTokenService emailTokenService;
+    private final AttendanceService attendanceService;
     // 구글 OAuth 클라이언트 등록(client-id/secret)이 안 돼 있으면 이 빈 자체가 없다(SecurityConfig
     // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
@@ -66,7 +68,18 @@ public class AuthController {
     public String myPage(Authentication authentication, Model model) {
         // 프로필 카드 통계 바(게시글/댓글/받은 좋아요) - 프로필_디자인.md 설계 반영.
         model.addAttribute("stats", myActivityService.getStats(authentication.getName()));
+        User user = userService.getByUsername(authentication.getName());
+        model.addAttribute("attendanceCheckedInToday", attendanceService.hasCheckedInToday(user.getId()));
         return "user/mypage";
+    }
+
+    // 출석체크(todo.md 요구사항) - 매일 방문 시 기본 포인트 지급. 하루 한 번만 지급되며,
+    // 이미 체크인했으면 checkIn()이 조용히 아무 것도 하지 않는다.
+    @PostMapping("/mypage/attendance")
+    public String checkInAttendance(Authentication authentication) {
+        User user = userService.getByUsername(authentication.getName());
+        boolean checkedIn = attendanceService.checkIn(user);
+        return "redirect:/mypage?attendance=" + (checkedIn ? "success" : "already");
     }
 
     @GetMapping("/mypage/edit")
