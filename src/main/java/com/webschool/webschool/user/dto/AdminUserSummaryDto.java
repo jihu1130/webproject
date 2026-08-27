@@ -22,4 +22,5 @@ public class AdminUserSummaryDto {
     private boolean canManageUsers;
     private boolean canManageAdminPermissions;
     private boolean canViewAuditLog;
+    private boolean canManageShop;
 }

@@ -25,9 +25,12 @@ public class AdminUserProfileDto {
     private boolean canManagePosts;
     private boolean canManageScheduleComments;
     private boolean canManageNotices;
+    private boolean canManageShop;
     private long postCount;
     private long commentCount;
     private List<AdminUserProfilePostDto> recentPosts;
     private List<AdminUserProfileCommentDto> recentComments;
     private List<UserPenaltyDto> penalties;
+    private String equippedTitle;
+    private String equippedAvatarColor;
 }

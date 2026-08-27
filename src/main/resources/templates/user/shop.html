@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상점 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/shop.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
+
+<div class="post-page">
+    <div class="post-container">
+        <div class="page-heading post-page-heading">
+            <h1><i class="fa-solid fa-store"></i> 상점</h1>
+            <p class="page-sub">포인트로 칭호와 아바타 색상을 사서 꾸며보세요 - 지금 내 포인트: <strong th:text="${points} + 'P'">0P</strong></p>
+        </div>
+
+        <h2 class="shop-section-title"><i class="fa-solid fa-tag"></i> 칭호</h2>
+        <div th:if="${#lists.isEmpty(catalog.titles)}" class="post-empty">아직 판매 중인 칭호가 없어요.</div>
+        <div class="shop-grid" th:unless="${#lists.isEmpty(catalog.titles)}">
+            <div class="shop-item-card" th:each="item : ${catalog.titles}">
+                <span class="shop-item-badge" th:text="${item.equipped} ? '장착중' : (${item.owned} ? '보유중' : '')"></span>
+                <div class="shop-item-preview shop-item-preview-title" th:text="${item.value}">칭호</div>
+                <div class="shop-item-name" th:text="${item.label}">이름</div>
+                <div class="shop-item-price" th:text="${item.price} + 'P'">0P</div>
+
+                <form th:if="${!item.owned}" th:action="@{'/shop/purchase/' + ${item.id}}" method="post">
+                    <button type="submit" class="btn btn-brand shop-item-btn">구매하기</button>
+                </form>
+                <form th:if="${item.owned and !item.equipped}" th:action="@{'/shop/equip/' + ${item.id}}" method="post">
+                    <button type="submit" class="btn btn-outline-brand shop-item-btn">장착하기</button>
+                </form>
+                <form th:if="${item.equipped}" th:action="@{/shop/unequip/TITLE}" method="post">
+                    <button type="submit" class="btn btn-outline-brand shop-item-btn">장착 해제</button>
+                </form>
+            </div>
+        </div>
+
+        <h2 class="shop-section-title"><i class="fa-solid fa-palette"></i> 아바타 색상</h2>
+        <div th:if="${#lists.isEmpty(catalog.colors)}" class="post-empty">아직 판매 중인 색상이 없어요.</div>
+        <div class="shop-grid" th:unless="${#lists.isEmpty(catalog.colors)}">
+            <div class="shop-item-card" th:each="item : ${catalog.colors}">
+                <span class="shop-item-badge" th:text="${item.equipped} ? '장착중' : (${item.owned} ? '보유중' : '')"></span>
+                <div class="shop-item-preview shop-item-preview-color" th:style="'background:' + ${item.value}"></div>
+                <div class="shop-item-name" th:text="${item.label}">이름</div>
+                <div class="shop-item-price" th:text="${item.price} + 'P'">0P</div>
+
+                <form th:if="${!item.owned}" th:action="@{'/shop/purchase/' + ${item.id}}" method="post">
+                    <button type="submit" class="btn btn-brand shop-item-btn">구매하기</button>
+                </form>
+                <form th:if="${item.owned and !item.equipped}" th:action="@{'/shop/equip/' + ${item.id}}" method="post">
+                    <button type="submit" class="btn btn-outline-brand shop-item-btn">장착하기</button>
+                </form>
+                <form th:if="${item.equipped}" th:action="@{/shop/unequip/AVATAR_COLOR}" method="post">
+                    <button type="submit" class="btn btn-outline-brand shop-item-btn">장착 해제</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

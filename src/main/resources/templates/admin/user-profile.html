@@ -41,7 +41,8 @@
             <div class="profile-card-head">
                 <div class="profile-card-avatar"
                      th:classappend="${profile.role == 'ROLE_SUPER_ADMIN'} ? 'profile-card-avatar-super'
-                                     : (${profile.role == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')">
+                                     : (${profile.role == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')"
+                     th:style="${profile.equippedAvatarColor != null} ? 'border-color:' + ${profile.equippedAvatarColor}">
                     <img th:src="@{${profile.profileImageUrl != null} ? ${profile.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
                 </div>
                 <div class="profile-card-identity">
@@ -49,6 +50,8 @@
                         <h1 class="profile-card-name" th:text="${profile.nickname}">닉네임</h1>
                         <span class="profile-card-stamp profile-card-stamp-super" th:if="${profile.role == 'ROLE_SUPER_ADMIN'}">총관리자</span>
                         <span class="profile-card-stamp profile-card-stamp-admin" th:if="${profile.role == 'ROLE_ADMIN'}">부관리자</span>
+                        <span class="profile-card-stamp profile-card-stamp-title" th:if="${profile.equippedTitle != null}"
+                              th:text="${profile.equippedTitle}">칭호</span>
                     </div>
                     <p class="profile-card-username" th:text="'아이디: ' + ${profile.username}">아이디</p>
                     <span class="profile-card-status profile-card-status-deleted" th:if="${profile.deleted}" th:text="'탈퇴함 (' + ${profile.deletedAt} + ')'">탈퇴함</span>

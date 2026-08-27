@@ -19,5 +19,7 @@ public class PublicUserProfileDto {
     private long likeCount; // 마이페이지와 동일한 집계(PostRepository.sumLikeCountByAuthor_Id), 어느 글이 받았는지는 노출 안 함
     private int points; // 포인트/티어 시스템(todo.md 요구사항)
     private String tierLabel;
+    private String equippedTitle;       // 포인트 소비 상점(todo.md 요구사항)
+    private String equippedAvatarColor;
     private Page<PublicUserProfilePostDto> posts;
 }

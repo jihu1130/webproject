@@ -23,12 +23,15 @@
 
         <div class="post-detail-card">
             <div class="profile-card-head profile-card-head-center">
-                <div class="profile-card-avatar profile-card-avatar-user">
+                <div class="profile-card-avatar profile-card-avatar-user"
+                     th:style="${profile.equippedAvatarColor != null} ? 'border-color:' + ${profile.equippedAvatarColor}">
                     <img th:src="@{${profile.profileImageUrl != null} ? ${profile.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
                 </div>
                 <div class="profile-card-identity">
                     <h1 class="profile-card-name" th:text="${profile.nickname}">닉네임</h1>
                     <span class="profile-card-stamp profile-card-stamp-tier" th:text="${profile.tierLabel}">티어</span>
+                    <span class="profile-card-stamp profile-card-stamp-title" th:if="${profile.equippedTitle != null}"
+                          th:text="${profile.equippedTitle}">칭호</span>
                 </div>
             </div>
 

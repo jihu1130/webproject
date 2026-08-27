@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 상점 관리 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="post-list-header">
+            <div class="page-heading admin-page-heading">
+                <h1><i class="fa-solid fa-store"></i> 상점 관리</h1>
+                <p class="page-sub">포인트로 구매하는 칭호/아바타 색상 카탈로그예요 - 판매중지해도 이미 구매한 사용자의 장착 상태는 유지돼요</p>
+            </div>
+            <a href="/admin/shop-items/new" class="btn-brand post-write-btn">
+                <i class="fa-solid fa-plus"></i> 새 상품 등록
+            </a>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('shop-items')}"></div>
+
+        <div th:if="${#lists.isEmpty(items)}" class="admin-empty">등록된 상품이 없어요.</div>
+
+        <div class="admin-table-wrap" th:unless="${#lists.isEmpty(items)}">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>상태</th>
+                    <th>종류</th>
+                    <th>이름</th>
+                    <th>적용값</th>
+                    <th>가격</th>
+                    <th>관리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${items}">
+                    <td>
+                        <span class="admin-status-badge admin-status-cleared" th:if="${item.active}">판매중</span>
+                        <span class="admin-status-badge" th:unless="${item.active}">판매중지</span>
+                    </td>
+                    <td th:text="${item.type == 'TITLE'} ? '칭호' : '아바타 색상'">종류</td>
+                    <td th:text="${item.label}">이름</td>
+                    <td th:text="${item.value}">값</td>
+                    <td th:text="${item.price} + 'P'">가격</td>
+                    <td>
+                        <a th:href="@{'/admin/shop-items/' + ${item.id} + '/edit'}" class="btn btn-outline-brand" style="padding: 4px 10px; font-size: 0.82rem;">수정</a>
+                        <form th:action="@{'/admin/shop-items/' + ${item.id} + '/active'}" method="post" style="display:inline;">
+                            <input type="hidden" name="active" th:value="${!item.active}">
+                            <button type="submit" class="btn btn-outline-brand" style="padding: 4px 10px; font-size: 0.82rem;"
+                                    th:text="${item.active} ? '판매중지' : '판매재개'">판매중지</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

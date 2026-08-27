@@ -107,6 +107,11 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean canViewAuditLog;
 
+    // 상점 카탈로그(칭호/색상) 관리 - todo.md "포인트 소비" 항목, 다른 6개 canManage*와 동일한
+    // 위임 패턴(AdminAccessInterceptor/admin-permissions.html 참고).
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canManageShop;
+
     // 포인트/티어 시스템(todo.md 요구사항) - 게시글/댓글 작성, 좋아요 받음, QnA 답변 채택 등
     // 활동에 따라 UserPointService가 적립한다(일일 획득 한도 있음, 어뷰징 방지). 소비형(화폐)
     // 개념으로 설계했지만 소비 기능은 아직 미구현(사용자 확정) - 지금은 오르기만 한다. 신규
@@ -124,9 +129,9 @@ public class User {
     // (게시글 이미지와 동일한 "실제 파일은 app.upload.dir, DB엔 경로만" 패턴).
     private String profileImageUrl;
 
-    // 포인트 소비 상점(todo.md 요구사항) - 아직 상점 화면/구매 로직은 없는 스캐폴딩 단계(ShopItem
-    // 참고)라 이 두 필드도 지금은 항상 null이고 어디서도 세팅되지 않는다. 상점이 실제로 구현되면
-    // 구매한 ShopItem.value를 여기에 저장해 닉네임 옆 칭호/아바타 테두리 색상으로 렌더링할 예정.
+    // 포인트 소비 상점(todo.md 요구사항) - ShopService.equip()/unequip()이 구매한 ShopItem.value를
+    // 여기에 저장하고, 마이페이지/공개 프로필/관리자 프로필 3개 화면이 닉네임 옆 칭호 배지 ·
+    // 아바타 테두리 색으로 렌더링한다.
     private String equippedTitle;       // 현재 장착 중인 칭호 문구
     private String equippedAvatarColor; // 현재 장착 중인 아바타 테두리/배지 색상 (CSS 색상값)
 
@@ -161,7 +166,7 @@ public class User {
     public boolean hasAnyAdminAccess() {
         return isSuperAdmin()
                 || canManageReports || canManagePosts || canManageScheduleComments || canManageNotices
-                || canManageUsers || canManageAdminPermissions || canViewAuditLog;
+                || canManageUsers || canManageAdminPermissions || canViewAuditLog || canManageShop;
     }
 
     public enum Role {

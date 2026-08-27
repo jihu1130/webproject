@@ -113,6 +113,9 @@
    고정 앰버 톤을 직접 쓴다(성취/등급 느낌의 색은 라이트/다크 전환과 무관하게 항상 같아야
    자연스러움). */
 .profile-card-stamp-tier { background: #fef3c7; color: #92400e; }
+/* 포인트 소비 상점(todo.md 요구사항) - 장착한 칭호 배지. 티어 배지(앰버)와 헷갈리지 않게
+   보라 톤을 쓴다 - 둘 다 "성취/치장" 계열이라 테마 토큰 대신 고정 색을 쓰는 이유는 티어 배지와 동일. */
+.profile-card-stamp-title { background: #ede9fe; color: #6d28d9; }
 
 .profile-card-stamp-row {
     display: flex;

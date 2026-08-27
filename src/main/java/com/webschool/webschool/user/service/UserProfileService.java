@@ -55,6 +55,8 @@ public class UserProfileService {
                 .likeCount(postRepository.sumLikeCountByAuthor_Id(userId))
                 .points(user.getPoints())
                 .tierLabel(user.getTier().getLabel())
+                .equippedTitle(user.getEquippedTitle())
+                .equippedAvatarColor(user.getEquippedAvatarColor())
                 .posts(posts)
                 .build();
     }

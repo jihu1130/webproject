@@ -21,7 +21,8 @@
             <div class="profile-card-head profile-card-head-center">
                 <div class="profile-card-avatar"
                      th:classappend="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'} ? 'profile-card-avatar-super'
-                                     : (${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')">
+                                     : (${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')"
+                     th:style="${loginUser != null and loginUser.equippedAvatarColor != null} ? 'border-color:' + ${loginUser.equippedAvatarColor}">
                     <img th:src="@{${loginUser != null and loginUser.profileImageUrl != null} ? ${loginUser.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
                     <i class="fa-brands fa-google profile-card-avatar-google" th:if="${loginUser != null and loginUser.provider.name() == 'GOOGLE'}"></i>
                 </div>
@@ -56,6 +57,10 @@
                      loginUser는 DTO가 아니라 엔티티라 getTier()가 그대로 프로퍼티 접근(.tier)된다. -->
                 <span class="profile-card-stamp profile-card-stamp-tier" th:if="${loginUser != null}"
                       th:text="${loginUser.tier.label}">티어</span>
+                <!-- 포인트 소비 상점(todo.md 요구사항) - 장착한 칭호가 있을 때만 표시 -->
+                <span class="profile-card-stamp profile-card-stamp-title"
+                      th:if="${loginUser != null and loginUser.equippedTitle != null}"
+                      th:text="${loginUser.equippedTitle}">칭호</span>
             </div>
 
             <div class="profile-card-stats">
@@ -139,6 +144,10 @@
 
             <a href="/mypage/points" class="mypage-cal-btn">
                 <i class="fa-solid fa-coins"></i> 포인트 내역
+            </a>
+
+            <a href="/shop" class="mypage-cal-btn">
+                <i class="fa-solid fa-store"></i> 상점
             </a>
 
             <form th:action="@{/logout}" method="post" class="mypage-logout-form">

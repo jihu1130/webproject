@@ -104,11 +104,14 @@ public class AdminUserService {
                 .canManagePosts(user.isCanManagePosts())
                 .canManageScheduleComments(user.isCanManageScheduleComments())
                 .canManageNotices(user.isCanManageNotices())
+                .canManageShop(user.isCanManageShop())
                 .postCount(postRepository.countByAuthor_IdAndDeletedFalse(id))
                 .commentCount(postCommentRepository.countByAuthor_IdAndDeletedFalse(id))
                 .recentPosts(recentPosts)
                 .recentComments(recentComments)
                 .penalties(userPenaltyService.getHistory(id))
+                .equippedTitle(user.getEquippedTitle())
+                .equippedAvatarColor(user.getEquippedAvatarColor())
                 .build();
     }
 
@@ -167,7 +170,7 @@ public class AdminUserService {
                                    boolean canManageReports, boolean canManagePosts,
                                    boolean canManageScheduleComments, boolean canManageNotices,
                                    boolean canManageUsers, boolean canManageAdminPermissions,
-                                   boolean canViewAuditLog) {
+                                   boolean canViewAuditLog, boolean canManageShop) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -186,11 +189,12 @@ public class AdminUserService {
         user.setCanManageUsers(canManageUsers);
         user.setCanManageAdminPermissions(canManageAdminPermissions);
         user.setCanViewAuditLog(canViewAuditLog);
+        user.setCanManageShop(canManageShop);
         adminActionLogService.log("USER", id, "PERMISSIONS", user.getUsername()
                 + " (신고:" + canManageReports + " 게시글:" + canManagePosts
                 + " 한마디:" + canManageScheduleComments + " 공지:" + canManageNotices
                 + " 계정관리:" + canManageUsers + " 권한부여:" + canManageAdminPermissions
-                + " 감사로그:" + canViewAuditLog + ")");
+                + " 감사로그:" + canViewAuditLog + " 상점:" + canManageShop + ")");
     }
 
     // 수정사항.md #13 지적 - 총관리자가 잠기면(비밀번호 분실 등) 복구할 방법이 앱 안에 전혀 없었다.
@@ -308,6 +312,7 @@ public class AdminUserService {
                 .canManageUsers(user.isCanManageUsers())
                 .canManageAdminPermissions(user.isCanManageAdminPermissions())
                 .canViewAuditLog(user.isCanViewAuditLog())
+                .canManageShop(user.isCanManageShop())
                 .build();
     }
 

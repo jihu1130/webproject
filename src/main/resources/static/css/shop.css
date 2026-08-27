@@ -1,0 +1,79 @@
+/* 포인트 소비 상점(/shop) - post.css의 카드/버튼 스타일을 그대로 물려받고, 상품 그리드만 이 파일에서 정의한다. */
+
+.shop-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    color: var(--ink);
+    margin: 24px 0 12px;
+}
+
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 8px;
+}
+
+.shop-item-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.shop-item-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-1);
+}
+
+.shop-item-preview {
+    width: 100%;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--surface-soft);
+}
+
+.shop-item-preview-title {
+    font-weight: 800;
+    color: var(--ink);
+    padding: 10px 8px;
+}
+
+.shop-item-preview-color {
+    height: 40px;
+    border-radius: 50%;
+    width: 40px;
+    min-height: 40px;
+    border: 2px solid var(--border);
+}
+
+.shop-item-name {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.shop-item-price {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.shop-item-btn {
+    width: 100%;
+    padding: 8px;
+    font-size: 0.85rem;
+}

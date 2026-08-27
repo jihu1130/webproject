@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${mode == 'edit'} ? '상점 상품 수정 - WebSchool' : '상점 상품 등록 - WebSchool'">상점 상품 등록 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="post-page">
+    <div class="post-container post-container-narrow">
+        <div th:replace="~{admin/fragments/breadcrumb :: crumb('상점 관리', '/admin/shop-items')}"></div>
+
+        <div class="post-form-card">
+            <h2 th:text="${mode == 'edit'} ? '상점 상품 수정' : '상점 상품 등록'">상점 상품 등록</h2>
+            <p class="page-sub" style="margin: -0.6rem 0 1.2rem;">
+                칭호는 적용값을 이름과 똑같이 입력하고, 아바타 색상은 적용값에 실제 CSS 색상(예: #d4af37)을 입력하세요.
+            </p>
+
+            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+
+            <form th:action="${mode == 'edit'} ? @{'/admin/shop-items/' + ${itemId}} : @{/admin/shop-items}" method="post">
+                <div class="post-field" th:if="${mode != 'edit'}">
+                    <label>종류</label>
+                    <select name="type" required>
+                        <option value="TITLE" th:selected="${type == 'TITLE'}">칭호</option>
+                        <option value="AVATAR_COLOR" th:selected="${type == 'AVATAR_COLOR'}">아바타 색상</option>
+                    </select>
+                </div>
+                <div class="post-field" th:if="${mode == 'edit'}">
+                    <label>종류</label>
+                    <input type="text" th:value="${type == 'TITLE'} ? '칭호' : '아바타 색상'" disabled>
+                </div>
+                <div class="post-field">
+                    <label>이름</label>
+                    <input type="text" name="label" placeholder="예: 성실왕 / 골드" maxlength="50" th:value="${label}" required>
+                </div>
+                <div class="post-field">
+                    <label>적용값</label>
+                    <input type="text" name="value" placeholder="칭호는 이름과 동일하게, 색상은 #d4af37 형식" maxlength="20" th:value="${value}" required>
+                </div>
+                <div class="post-field">
+                    <label>가격 (포인트)</label>
+                    <input type="number" name="price" min="1" th:value="${price}" required>
+                </div>
+
+                <div class="post-form-actions">
+                    <a href="/admin/shop-items" class="btn btn-outline-brand">취소</a>
+                    <button type="submit" class="btn btn-brand" th:text="${mode == 'edit'} ? '수정 완료' : '등록 완료'">등록 완료</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
