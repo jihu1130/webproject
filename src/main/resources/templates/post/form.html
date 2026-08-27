@@ -65,9 +65,19 @@
                     </div>
                 </div>
 
+                <!-- 본문 중간에 넣는 에디터 삽입 이미지(위 🖼 버튼)와는 별개로, 목록·검색 결과에
+                     썸네일로 쓰이는 "대표 이미지" 첨부칸이다. 라벨/안내문으로 용도를 분명히 구분해서
+                     위 에디터 버튼과 같은 기능처럼 보이지 않게 한다(사용자 지적 - 업로드 창이 2개로
+                     보여 혼란스러움). 백엔드로 넘어가는 name="images" 파라미터는 그대로 유지. -->
                 <div class="post-field">
-                    <label>이미지 첨부 (jpg/jpeg/png/gif/webp, 장당 5MB 이하, 여러 장 가능)</label>
-                    <input type="file" id="postImageInput" name="images" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                    <label>대표 이미지 <span class="post-field-optional">(선택)</span></label>
+                    <p class="post-content-guide">목록·검색 결과에 썸네일로 보여요. 본문 안에 사진을 넣고 싶다면 위 에디터의 🖼 버튼을 쓰세요.</p>
+                    <div class="post-image-dropzone" id="postImageDropzone">
+                        <i class="fa-solid fa-image"></i>
+                        <span class="post-image-dropzone-text">클릭하거나 파일을 끌어다 놓으세요</span>
+                        <span class="post-image-dropzone-hint">jpg · jpeg · png · gif · webp, 장당 5MB 이하, 여러 장 가능</span>
+                        <input type="file" id="postImageInput" name="images" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                    </div>
                     <div id="postImagePreview" class="post-image-preview-grid"></div>
                 </div>
 

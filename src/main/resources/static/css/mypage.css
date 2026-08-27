@@ -31,7 +31,7 @@
     padding: 8px 16px;
     border-radius: 8px;
     border: 1.5px solid var(--brand-1);
-    background: #fff;
+    background: var(--surface);
     color: var(--brand-1);
     font-weight: 700;
     font-size: 0.9rem;
@@ -137,8 +137,8 @@
     text-align: center;
 }
 
-.mypage-alert-success { background: #dcfce7; color: #15803d; }
-.mypage-alert-danger { background: #fee2e2; color: #b91c1c; }
+.mypage-alert-success { background: var(--success-soft); color: var(--success); }
+.mypage-alert-danger { background: var(--danger-soft); color: var(--danger); }
 
 .mypage-resend-form { text-align: right; margin: -8px 0 12px; }
 .mypage-resend-btn {
@@ -164,7 +164,7 @@
     font-size: 0.95rem;
     font-weight: 700;
     margin-bottom: 10px;
-    background: #fff;
+    background: var(--surface);
     border: 1.5px solid var(--brand-1);
     color: var(--brand-1);
     transition: background 0.15s ease;
@@ -207,7 +207,7 @@
     padding: 12px;
     border-radius: 10px;
     border: 1.5px solid var(--border);
-    background: #fff;
+    background: var(--surface);
     color: var(--muted);
     font-weight: 700;
     font-size: 0.95rem;
@@ -216,26 +216,13 @@
 }
 
 .mypage-logout-btn:hover {
-    background: #f8f9fc;
+    background: var(--surface-soft);
     color: var(--ink);
 }
 
-@media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .my-activity-edit-btn,
-    html:not([data-theme="light"]) .mypage-edit-btn,
-    html:not([data-theme="light"]) .mypage-logout-btn {
-        background: var(--surface);
-    }
-    html:not([data-theme="light"]) .mypage-logout-btn:hover { background: var(--surface-soft); }
-}
-
-/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .my-activity-edit-btn,
-html[data-theme="dark"] .mypage-edit-btn,
-html[data-theme="dark"] .mypage-logout-btn {
-    background: var(--surface);
-}
-html[data-theme="dark"] .mypage-logout-btn:hover { background: var(--surface-soft); }
+/* 예전엔 위 버튼들의 배경이 #fff/#f8f9fc로 하드코딩돼 있어서 다크모드용 재정의 블록이 따로
+   필요했다. 지금은 base 규칙이 전부 var(--surface)/var(--surface-soft)를 직접 쓰므로
+   theme.css의 다크 팔레트 재정의만으로 자동 대응되어 이 블록은 더 이상 필요 없다. */
 
 /* 버그수정 프롬포트 요청 - 이 파일에 반응형 규칙이 아예 없었다(플렉스박스 덕에 375px에서도
    우연히 안 깨졌을 뿐, 의도적으로 설계된 건 아니었음). post.css/navbar.css/admin.css가 이미 쓰는

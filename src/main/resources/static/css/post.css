@@ -52,6 +52,35 @@
     font-size: 0.9rem;
 }
 
+/* "이번 주 인기글" 진입 버튼 - 예전엔 .btn-outline-brand라 "커뮤니티로" 뒤로가기 버튼과
+   톤이 똑같아서 매주 도는 콘테스트라는 특별함이 하나도 안 드러났다. 프로필 티어 배지
+   (profile-card.css .profile-card-stamp-tier)와 같은 계열의 금색을 써서 "성취/이벤트"
+   느낌을 통일한다 - 티어 배지처럼 라이트/다크 모드와 무관하게 항상 같은 고정 톤을 쓴다
+   (성취 색은 테마가 바뀌어도 그대로여야 자연스럽다는 게 이 배지의 기존 규칙, profile-card.css
+   상단 주석 참고). */
+.post-contest-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1.5px solid #f2c94c;
+    color: #92400e;
+    box-shadow: 0 2px 10px rgba(217, 164, 6, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.post-contest-btn:hover {
+    filter: brightness(1.03);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(217, 164, 6, 0.32);
+    color: #92400e;
+}
+.post-contest-btn:active { transform: translateY(0); box-shadow: 0 2px 10px rgba(217, 164, 6, 0.25); }
+
 /* 카테고리 탭 (목록 필터) */
 .post-category-tabs {
     display: flex;
@@ -63,8 +92,8 @@
 .post-category-tab {
     padding: 7px 16px;
     border-radius: 20px;
-    border: 1.5px solid #dcdfef;
-    background: #fff;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
     color: var(--muted);
     font-size: 0.85rem;
     font-weight: 700;
@@ -92,7 +121,7 @@
     color: var(--brand-1-dark);
 }
 
-.post-category-badge-ANONYMOUS { background: rgba(107, 114, 128, 0.14); color: #4b5563; }
+.post-category-badge-ANONYMOUS { background: rgba(107, 114, 128, 0.14); color: var(--muted); }
 .post-category-badge-QNA { background: rgba(30, 79, 163, 0.14); color: #0369a1; }
 
 /* 검색 */
@@ -107,7 +136,7 @@
     flex: 1;
     padding: 9px 14px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.88rem;
     outline: none;
@@ -139,7 +168,7 @@
     flex: 1;
     padding: 9px 14px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.88rem;
     outline: none;
@@ -179,7 +208,7 @@
     margin-left: auto;
     padding: 6px 10px;
     border-radius: 8px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.82rem;
     color: var(--ink);
@@ -223,7 +252,7 @@
 .page-size-select select {
     padding: 8px 12px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.85rem;
     color: var(--ink);
@@ -252,7 +281,7 @@
     padding: 0;
     background: var(--surface);
     border-radius: 16px;
-    border: 1px solid #f0f1fa;
+    border: 1px solid var(--border);
     box-shadow: 0 14px 44px rgba(30, 27, 58, 0.08);
     overflow: hidden;
 }
@@ -274,7 +303,7 @@
     transition: background 0.15s ease;
 }
 
-.post-list-item:hover { background: #f8f9fc; }
+.post-list-item:hover { background: var(--surface-soft); }
 
 .post-list-link {
     display: flex;
@@ -327,8 +356,8 @@ a.post-list-nickname:hover { text-decoration: underline; }
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    border: 1.5px solid #dcdfef;
-    background: #fff;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
     color: var(--ink);
     font-size: 0.85rem;
     font-weight: 700;
@@ -349,9 +378,9 @@ a.post-list-nickname:hover { text-decoration: underline; }
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #fff7ed;
-    border: 1.5px solid #fdba74;
-    color: #c2410c;
+    background: var(--warn-soft);
+    border: 1.5px solid var(--warn);
+    color: var(--warn);
     border-radius: 12px;
     padding: 12px 16px;
     font-size: 0.85rem;
@@ -380,7 +409,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     background: var(--surface);
     border-radius: 18px;
     box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
-    border: 1px solid #f0f1fa;
+    border: 1px solid var(--border);
     padding: 32px;
     position: relative;
     overflow: hidden;
@@ -474,7 +503,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     align-items: center;
     gap: 6px;
     padding: 8px 14px;
-    border: 1px solid var(--line, #e5e7eb);
+    border: 1px solid var(--border);
     border-radius: 9px;
     color: var(--brand-1-dark);
     text-decoration: none;
@@ -489,7 +518,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     flex-direction: column;
     gap: 2px;
     padding: 10px 14px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     border-left: 4px solid var(--brand-1);
     border-radius: 8px;
     text-decoration: none;
@@ -513,6 +542,242 @@ a.post-list-nickname:hover { text-decoration: underline; }
 .rich-editor-container .ql-toolbar { border-radius: 9px 9px 0 0; }
 .rich-editor-container .ql-container { border-radius: 0 0 9px 9px; font-size: 0.98rem; }
 .rich-editor-container .ql-editor { min-height: 220px; }
+
+/* 제목 드롭다운(Quill 기본 header 포맷) 한글 라벨 - Quill snow 테마는 라벨을
+   ::before의 content로만 그리므로(글자 자체가 마크업에 없음) CSS로만 교체 가능하다.
+   toolbar 설정이 header: [2, 3, false]라 값 없음(false)은 "본문"으로 표시한다.
+   주의: Quill은 툴바(.ql-toolbar)를 에디터 컨테이너(.rich-editor-container, 곧 .ql-container)의
+   자식이 아니라 "형제"로 삽입한다 - 그래서 .rich-editor-container를 조상으로 잡는 선택자는
+   툴바 안의 이 드롭다운에 닿지 않는다(둘 다 .post-field 밑에 나란히 있음). */
+.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label::before,
+.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-item::before {
+    content: '본문';
+}
+.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="2"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="2"]::before {
+    content: '제목 2';
+}
+.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="3"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="3"]::before {
+    content: '제목 3';
+}
+
+/* 리치 에디터(Quill) 다크모드 - quill.snow.css(CDN)는 라이트 고정 테마라 대부분의 요소는
+   배경을 따로 안 정해서 부모(var(--surface))를 그대로 물려받아 저절로 어울리지만, 흰 배경/
+   회색 선을 직접 하드코딩해둔 요소(아이콘, 드롭다운 패널, 링크 삽입 툴팁, placeholder)는
+   다크모드에서도 항상 라이트 색 그대로 남는다. form.html/comment-form.html 둘 다
+   quill.snow.css를 post.css보다 나중에 불러오므로, 명시도를 quill 쪽 선택자보다 확실히
+   높게 잡아야(html[data-theme] 접두사) 로드 순서와 무관하게 이긴다. */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) .ql-toolbar.ql-snow,
+    html:not([data-theme="light"]) .ql-container.ql-snow {
+        border-color: var(--border);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-picker {
+        color: var(--muted);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow .ql-stroke-miter {
+        stroke: var(--muted);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-fill,
+    html:not([data-theme="light"]) .ql-snow .ql-stroke.ql-fill {
+        fill: var(--muted);
+    }
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:hover,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:focus,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button.ql-active,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label:hover,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label.ql-active,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item:hover,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item.ql-selected {
+        color: var(--brand-1);
+    }
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:hover .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:focus .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button.ql-active .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label:hover .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item:hover .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-fill {
+        fill: var(--brand-1);
+    }
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:hover .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:focus .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item:hover .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-stroke {
+        stroke: var(--brand-1);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-picker-options {
+        background-color: var(--surface);
+        border-color: var(--border);
+    }
+    html:not([data-theme="light"]) .ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-label,
+    html:not([data-theme="light"]) .ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-options {
+        border-color: var(--border);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-tooltip {
+        background-color: var(--surface);
+        border-color: var(--border);
+        color: var(--ink);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-tooltip input[type="text"] {
+        background-color: var(--surface);
+        color: var(--ink);
+        border-color: var(--border);
+    }
+    html:not([data-theme="light"]) .ql-editor.ql-blank::before {
+        color: var(--muted);
+    }
+}
+
+/* 위 규칙들과 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
+html[data-theme="dark"] .ql-toolbar.ql-snow,
+html[data-theme="dark"] .ql-container.ql-snow {
+    border-color: var(--border);
+}
+html[data-theme="dark"] .ql-snow .ql-picker {
+    color: var(--muted);
+}
+html[data-theme="dark"] .ql-snow .ql-stroke,
+html[data-theme="dark"] .ql-snow .ql-stroke-miter {
+    stroke: var(--muted);
+}
+html[data-theme="dark"] .ql-snow .ql-fill,
+html[data-theme="dark"] .ql-snow .ql-stroke.ql-fill {
+    fill: var(--muted);
+}
+html[data-theme="dark"] .ql-snow.ql-toolbar button:hover,
+html[data-theme="dark"] .ql-snow.ql-toolbar button:focus,
+html[data-theme="dark"] .ql-snow.ql-toolbar button.ql-active,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label:hover,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label.ql-active,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item:hover,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item.ql-selected {
+    color: var(--brand-1);
+}
+html[data-theme="dark"] .ql-snow.ql-toolbar button:hover .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar button:focus .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar button.ql-active .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label:hover .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item:hover .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-fill {
+    fill: var(--brand-1);
+}
+html[data-theme="dark"] .ql-snow.ql-toolbar button:hover .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar button:focus .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item:hover .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-stroke {
+    stroke: var(--brand-1);
+}
+html[data-theme="dark"] .ql-snow .ql-picker-options {
+    background-color: var(--surface);
+    border-color: var(--border);
+}
+html[data-theme="dark"] .ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-label,
+html[data-theme="dark"] .ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-options {
+    border-color: var(--border);
+}
+html[data-theme="dark"] .ql-snow .ql-tooltip {
+    background-color: var(--surface);
+    border-color: var(--border);
+    color: var(--ink);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+html[data-theme="dark"] .ql-snow .ql-tooltip input[type="text"] {
+    background-color: var(--surface);
+    color: var(--ink);
+    border-color: var(--border);
+}
+html[data-theme="dark"] .ql-editor.ql-blank::before {
+    color: var(--muted);
+}
+
+/* "📎" 첨부 버튼 팝오버 - 사진/동영상/파일/링크카드 4종을 한 버튼 밑에 모은다(rich-editor.js
+   setupAttachPopover/toggleAttachPopover 참고 - 예전엔 이 4개가 각자 툴바 아이콘으로 늘어서
+   있어서 "서식" 버튼들과 구분이 안 됐다). var(--surface) 등 테마 토큰만 쓰므로 다크모드는
+   theme.css 재정의를 그대로 물려받는다. */
+.rich-attach-anchor { position: relative; }
+
+.rich-attach-popover {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 140px;
+    z-index: 20;
+}
+
+.rich-attach-popover-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: none;
+    background: none;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.rich-attach-popover-item:hover { background: var(--surface-soft); }
+
+.rich-attach-popover-icon { font-size: 1rem; }
+
+/* 드래그로 텍스트를 선택하면 그 위에 뜨는 디스코드/노션 스타일 플로팅 서식 툴바
+   (rich-editor.js setupSelectionToolbar) - 상단 고정 툴바는 그대로 두고, 선택한 글자를
+   바로 굵게/기울임 처리할 수 있는 지름길로 덧붙인다. document.body에 직접 붙기 때문에
+   에디터 카드의 overflow/스크롤과 무관하게 항상 선택 영역 바로 위에 뜬다.
+   --nav-bg/--brand-fixed는 라이트·다크 모드 어디서도 항상 짙은 남색으로 고정이라(theme.css
+   상단 설명 참고), 흰 아이콘 대비를 위해 별도 다크모드 분기 없이 그대로 쓴다. */
+.rich-selection-toolbar {
+    position: absolute;
+    display: flex;
+    gap: 2px;
+    background: var(--nav-bg);
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    z-index: 30;
+}
+
+.rich-selection-toolbar-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.rich-selection-toolbar-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.rich-selection-toolbar-btn.is-active { background: var(--brand-fixed); color: #fff; }
 
 .post-detail-actions {
     display: flex;
@@ -546,7 +811,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     padding: 8px 16px;
     border-radius: 8px;
     border: 1.5px solid var(--danger-border);
-    background: #fff;
+    background: var(--surface);
     color: var(--danger);
     font-weight: 700;
     font-size: 0.9rem;
@@ -568,7 +833,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     padding: 8px 16px;
     border-radius: 8px;
     border: 1.5px solid var(--border);
-    background: #fff;
+    background: var(--surface);
     color: var(--muted);
     font-weight: 700;
     font-size: 0.85rem;
@@ -598,7 +863,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     padding: 7px 14px;
     border-radius: 999px;
     border: 1.5px solid var(--border);
-    background: #fff;
+    background: var(--surface);
     color: var(--muted);
     font-weight: 700;
     font-size: 0.85rem;
@@ -606,8 +871,8 @@ a.post-list-nickname:hover { text-decoration: underline; }
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.post-like-btn:hover { border-color: #fca5a5; color: #e11d48; }
-.post-like-btn.active { background: #fee2e2; color: #e11d48; border-color: #fca5a5; }
+.post-like-btn:hover { border-color: var(--danger-border); color: var(--danger); }
+.post-like-btn.active { background: var(--danger-soft); color: var(--danger); border-color: var(--danger-border); }
 
 .post-bookmark-btn:hover { border-color: var(--brand-1); color: var(--brand-1); }
 .post-bookmark-btn.active { background: rgba(30, 79, 163, 0.1); color: var(--brand-1-dark); border-color: var(--brand-1); }
@@ -662,7 +927,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     background: var(--surface);
     border-radius: 18px;
     box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
-    border: 1px solid #f0f1fa;
+    border: 1px solid var(--border);
     padding: 32px;
 }
 
@@ -681,8 +946,8 @@ a.post-list-nickname:hover { text-decoration: underline; }
     font-weight: 600;
 }
 
-.post-alert-danger { background: #fee2e2; color: #b91c1c; }
-.post-alert-success { background: #dcfce7; color: #15803d; }
+.post-alert-danger { background: var(--danger-soft); color: var(--danger); }
+.post-alert-success { background: var(--success-soft); color: var(--success); }
 
 .post-field { margin-bottom: 18px; }
 
@@ -694,6 +959,12 @@ a.post-list-nickname:hover { text-decoration: underline; }
     margin-bottom: 6px;
 }
 
+.post-field-optional {
+    font-weight: 500;
+    font-size: 0.8em;
+    color: var(--muted);
+}
+
 /* :not(checkbox):not(radio) - 이 규칙이 .post-field 안의 모든 input을 잡다 보니 설문
    체크박스/라디오(.post-poll-checkbox 등)까지 100% 폭 + 테두리 박스로 늘려버려서, 네이티브
    체크박스가 200px 가까이 늘어나고 그 뒤 라벨 문구가 오른쪽 끝으로 밀려나는 버그가 있었다. */
@@ -702,7 +973,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     width: 100%;
     padding: 11px 14px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.92rem;
     color: var(--ink);
@@ -729,7 +1000,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     gap: 10px;
     padding: 10px 14px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     cursor: pointer;
     font-weight: 500 !important;
     transition: border-color 0.15s ease, background 0.15s ease;
@@ -783,7 +1054,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     gap: 6px;
     padding: 8px 14px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-size: 0.88rem;
     font-weight: 600;
     color: var(--ink);
@@ -826,7 +1097,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     display: block;
     border-radius: 10px;
     overflow: hidden;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     cursor: pointer;
 }
 
@@ -845,8 +1116,62 @@ a.post-list-nickname:hover { text-decoration: underline; }
     padding: 4px;
     font-size: 0.75rem;
     font-weight: 700;
-    color: #dc2626;
-    background: #fff;
+    color: var(--danger);
+    background: var(--surface);
+}
+
+/* 대표 이미지 첨부칸 - 예전엔 스타일 없는 네이티브 input[type=file] 그대로라 주변 카드형
+   디자인과 붕 떠 보였다. 클릭 영역 전체를 커버하는 투명 input을 얹은 드롭존 카드로 바꾸고,
+   드래그해서 파일을 놓아도 되게 한다(브라우저가 file input에 드롭하면 기본으로 .files를
+   채워주므로 change 리스너 하나로 클릭/드롭 둘 다 처리됨 - post-form.js 참고). */
+.post-image-dropzone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 28px 16px;
+    border: 1.5px dashed var(--border);
+    border-radius: 12px;
+    background: var(--surface-soft);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.post-image-dropzone:hover,
+.post-image-dropzone.is-dragover {
+    border-color: var(--brand-1);
+    background: var(--brand-gradient-tint-1);
+}
+
+.post-image-dropzone i {
+    font-size: 1.4rem;
+    color: var(--brand-1);
+}
+
+.post-image-dropzone-text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.post-image-dropzone-hint {
+    font-size: 0.76rem;
+    color: var(--muted);
+}
+
+.post-image-dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    opacity: 0;
+    cursor: pointer;
 }
 
 /* 새로 첨부할 이미지 미리보기 */
@@ -860,7 +1185,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
 .post-image-preview-item {
     border-radius: 10px;
     overflow: hidden;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
 }
 
 .post-image-preview-item img,
@@ -917,7 +1242,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     background: var(--surface);
     border-radius: 18px;
     box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
-    border: 1px solid #f0f1fa;
+    border: 1px solid var(--border);
     padding: 24px 28px 28px;
 }
 
@@ -1000,13 +1325,13 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 }
 .post-author-block-btn:hover { color: var(--danger-dark); background: var(--danger-soft); }
 
-.post-comment-like-btn.active, .post-comment-like-btn.active:hover { color: #e11d48 !important; background: #fee2e2 !important; }
+.post-comment-like-btn.active, .post-comment-like-btn.active:hover { color: var(--danger) !important; background: var(--danger-soft) !important; }
 .post-comment-bookmark-btn.active, .post-comment-bookmark-btn.active:hover { color: var(--brand-1) !important; background: rgba(30, 79, 163, 0.1) !important; }
 .post-comment-like-count { font-size: 0.78rem; margin-left: 2px; }
 
 .post-comment-blind-badge {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: var(--danger-soft);
+    color: var(--danger);
     font-weight: 700;
     font-size: 10px;
     padding: 2px 8px;
@@ -1018,21 +1343,21 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 
 /* QNA 답변 채택(네이버 지식인 스타일) */
 .post-comment-item-accepted {
-    background: #f0fdf4;
-    border: 1px solid #86efac;
+    background: var(--success-soft);
+    border: 1px solid var(--success);
     border-radius: 10px;
     padding: 10px 12px;
 }
 .post-comment-accepted-badge {
-    background: #dcfce7;
-    color: #15803d;
+    background: var(--success-soft);
+    color: var(--success);
     font-weight: 700;
     font-size: 10px;
     padding: 2px 8px;
     border-radius: 20px;
     margin-left: 4px;
 }
-.post-comment-accept-btn.active, .post-comment-accept-btn.active:hover { color: #15803d !important; background: #dcfce7 !important; }
+.post-comment-accept-btn.active, .post-comment-accept-btn.active:hover { color: var(--success) !important; background: var(--success-soft) !important; }
 
 .post-comment-content {
     font-size: 0.9rem;
@@ -1048,7 +1373,7 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     flex: 1;
     padding: 6px 10px;
     border-radius: 7px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.88rem;
     outline: none;
@@ -1059,8 +1384,8 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 .post-comment-edit-form button, .post-comment-reply-form button {
     padding: 6px 12px;
     border-radius: 7px;
-    border: 1.5px solid #dcdfef;
-    background: #fff;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
     font-size: 0.82rem;
     font-weight: 700;
     cursor: pointer;
@@ -1076,7 +1401,7 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     flex: 1;
     padding: 10px 14px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.9rem;
     outline: none;
@@ -1386,45 +1711,19 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 .contest-post-widget .contest-vote-btn,
 .contest-post-widget .contest-entry-mine-badge { margin-left: auto; }
 
-/* 다크모드 - 카드류(.post-detail-card 등)는 이미 var(--surface)를 쓰고 있어서 theme.css의 다크
-   팔레트만으로 자동 대응되지만, 아래 작은 배지/버튼들은 흰 배경을 하드코딩해뒀어서 따로 손봐야
-   다크 배경 위에서 하얗게 튀지 않는다. */
+/* 다크모드 - 카드류(.post-detail-card 등)와 버튼류(.post-category-tab 등)는 이제 전부
+   var(--surface)/var(--border)/var(--danger)/var(--success) 같은 theme.css 토큰만 쓰므로
+   theme.css의 다크 팔레트 재정의만으로 자동 대응된다(예전엔 #fff/#dcdfef/#fee2e2 등을
+   하드코딩해뒀어서 이 아래에 배경색만 다시 덮어쓰는 규칙이 따로 필요했었다). 카테고리 배지
+   (익명/질의응답)만 라이트/다크에서 톤 자체가 다른 rgba 배경을 쓰므로 예외적으로 계속 남겨둔다. */
 @media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .post-category-tab,
-    html:not([data-theme="light"]) .post-page-link,
-    html:not([data-theme="light"]) .post-delete-btn,
-    html:not([data-theme="light"]) .post-report-btn,
-    html:not([data-theme="light"]) .post-like-btn, html:not([data-theme="light"]) .post-bookmark-btn,
-    html:not([data-theme="light"]) .post-image-existing-remove,
-    html:not([data-theme="light"]) .post-comment-edit-form button,
-    html:not([data-theme="light"]) .post-comment-reply-form button {
-        background: var(--surface);
-    }
-
-    html:not([data-theme="light"]) .post-comment-edit-input,
-    html:not([data-theme="light"]) .post-comment-reply-input { background: var(--surface); color: var(--ink); }
-
-    /* 카테고리 배지(익명/질의응답) - 라이트모드 전용 고정 회색/파랑 글자(#4b5563/#0369a1)라
-       다크모드 카드 배경 위에서 대비가 2.1~2.7:1까지 떨어져 거의 안 보였다(수정사항.md
-       지적 - 커뮤니티 목록 전체에서 반복 노출되는 배지라 영향이 컸다). */
-    html:not([data-theme="light"]) .post-category-badge-ANONYMOUS { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+    html:not([data-theme="light"]) .post-category-badge-ANONYMOUS { background: rgba(255, 255, 255, 0.08); }
     html:not([data-theme="light"]) .post-category-badge-QNA { background: rgba(126, 166, 230, 0.16); color: var(--brand-1-dark); }
 }
 
 /* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .post-category-tab,
-html[data-theme="dark"] .post-page-link,
-html[data-theme="dark"] .post-delete-btn,
-html[data-theme="dark"] .post-report-btn,
-html[data-theme="dark"] .post-like-btn, html[data-theme="dark"] .post-bookmark-btn,
-html[data-theme="dark"] .post-image-existing-remove,
-html[data-theme="dark"] .post-comment-edit-form button,
-html[data-theme="dark"] .post-comment-reply-form button {
-    background: var(--surface);
-}
-
-html[data-theme="dark"] .post-comment-edit-input,
-html[data-theme="dark"] .post-comment-reply-input { background: var(--surface); color: var(--ink); }
+html[data-theme="dark"] .post-category-badge-ANONYMOUS { background: rgba(255, 255, 255, 0.08); }
+html[data-theme="dark"] .post-category-badge-QNA { background: rgba(126, 166, 230, 0.16); color: var(--brand-1-dark); }
 
 html[data-theme="dark"] .post-category-badge-ANONYMOUS { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
 html[data-theme="dark"] .post-category-badge-QNA { background: rgba(126, 166, 230, 0.16); color: var(--brand-1-dark); }

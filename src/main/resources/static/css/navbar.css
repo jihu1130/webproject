@@ -16,7 +16,12 @@
     margin: 0 auto;
     padding: 14px 24px;
     display: flex;
-    align-items: center;
+    /* center였는데, 관리자 링크·긴 닉네임 등으로 .site-nav-menu 쪽 내용이 한 줄에 다 안
+       들어가 자기 안에서 두 줄로 접히면(내부에 flex-wrap이 걸려있음) 그 늘어난 높이만큼
+       .site-nav-brand가 세로 가운데로 밀려서 마치 로고가 둘째 줄에 뚝 떨어진 것처럼 보였다
+       (사용자 스크린샷으로 확인). flex-start면 무슨 일이 있어도 브랜드는 항상 첫 줄
+       상단에 고정된다. */
+    align-items: flex-start;
     gap: 24px;
     flex-wrap: wrap;
 }
@@ -53,7 +58,11 @@
 .site-nav-menu {
     display: flex;
     align-items: center;
-    gap: 24px;
+    /* 24px였는데, 구분선(.site-nav-divider) 2개가 늘어나면서 항목 수가 4개→6개가 돼
+       gap이 걸리는 자리도 3곳→5곳으로 늘었다(관리자 링크까지 있으면 1140px 안에 한 줄로
+       안 들어가서 항상 두 줄로 접히는 문제가 있었다 - 사용자 스크린샷으로 확인). 간격을
+       줄여서 6개 항목이 늘어도 한 줄에 들어가게 한다. */
+    gap: 14px;
     flex: 1;
     flex-wrap: wrap;
     justify-content: space-between;
@@ -103,7 +112,14 @@
     color: #fff;
     font-size: 0.85rem;
     padding: 0.4rem 0.6rem;
-    width: 140px;
+    width: 124px;
+    transition: width 0.2s ease;
+}
+
+/* 검색어가 8자만 넘어도 안이 안 보일 만큼 좁았다 - 포커스일 때만 넓혀서 평소엔 내비바를
+   덜 차지하고, 실제로 입력할 때는 편하게 한다. */
+.site-nav-search input:focus {
+    width: 220px;
 }
 
 .site-nav-search input::placeholder {
@@ -246,14 +262,33 @@
     margin: 0;
 }
 
-/* 모바일 메뉴에서만 쓰는 요소들 - 데스크톱에서는 항상 숨겨둔다.
-   .site-nav-utility는 데스크톱에서 display:contents로 완전히 지워서, 안의 버튼/링크가
-   전과 동일하게 .site-nav-menu의 직속 flex 아이템처럼 배치되게 한다(레이아웃에 아무 영향 없음). */
+/* 모바일 메뉴에서만 쓰는 요소들 - 데스크톱에서는 항상 숨겨둔다. */
 .site-nav-backdrop { display: none; }
 .site-nav-mobile-quick { display: none; }
 .site-nav-link-icon { display: none; }
 .site-nav-utility-label { display: none; }
-.site-nav-utility { display: contents; }
+
+/* 메뉴/검색/유틸(다크모드·버그제보)/계정이 구획 없이 한 줄로 나열돼 지저분해 보인다는 지적 -
+   데스크톱에서는 유틸 아이콘 두 개를 옅은 배경의 알약(pill)으로 묶어 "여기가 한 그룹"임을
+   드러내고, 양옆에 얇은 구분선(.site-nav-divider)을 둬서 [메뉴+검색] · [유틸] · [계정] 세
+   구역으로 눈에 들어오게 한다. 예전엔 display:contents로 완전히 지워서 버튼/링크가 그냥
+   .site-nav-menu의 직속 flex 아이템처럼만 보였다. */
+.site-nav-utility {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.site-nav-divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.16);
+    flex-shrink: 0;
+}
 
 /* Phase 7/8 - 모바일 메뉴: 768px 이하에서는 상단바(브랜드+토글)만 남기고 나머지를 오른쪽에서
    슬라이드 인하는 전체높이 드로어로 뺀다. 이전엔 .site-nav-menu가 그냥 접혔다 펼쳐지며 페이지를
@@ -270,6 +305,9 @@
         position: relative;
         z-index: 902;
     }
+
+    /* 데스크톱 전용 구분선 - 모바일 드로어는 섹션마다 이미 border-top으로 구분돼 있어 따로 필요없다. */
+    .site-nav-divider { display: none; }
 
     /* 드로어(.site-nav-menu)가 열려있지 않을 때는 flex 흐름에서 완전히 빠지므로(아래
        position:fixed 참고), 모바일에서 상단바에 남는 flex 아이템은 브랜드/퀵액세스/토글
@@ -420,7 +458,9 @@
     .site-nav-utility {
         display: flex;
         gap: 10px;
-        padding-top: 18px;
+        padding: 18px 0 0;
+        border-radius: 0;
+        background: none;
         border-top: 1px solid rgba(255, 255, 255, 0.14);
     }
 

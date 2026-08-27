@@ -100,17 +100,16 @@
         registerBlots();
 
         var icons = Quill.import('ui/icons');
-        icons['richfile-image'] = '🖼'; // 🖼
-        icons['richfile-video'] = '🎬'; // 🎬
-        icons['richfile-file'] = '📎';  // 📎
-        icons['richfile-embed'] = '🔗'; // 🔗
+        icons['richfile-attach'] = '📎'; // 📎 - 사진/동영상/파일/링크카드 4종을 한 버튼으로 통합(아래 setupAttachPopover)
 
+        // 예전엔 삽입 버튼이 🖼/🎬/📎/🔗 4개가 서식 버튼들과 나란히 늘어서 있어서 "삽입"과 "서식"이
+        // 구분 안 됐다(사용자 지적) - 이제 삽입은 "📎" 버튼 하나 + 팝오버로 묶는다.
         var toolbar = config.toolbar || [
             ['bold', 'italic', 'underline', 'strike'],
             [{ header: [2, 3, false] }],
             [{ list: 'ordered' }, { list: 'bullet' }],
             ['blockquote', 'link'],
-            ['richfile-image', 'richfile-video', 'richfile-file', 'richfile-embed'],
+            ['richfile-attach'],
             ['clean']
         ];
 
@@ -121,14 +120,15 @@
                 toolbar: {
                     container: toolbar,
                     handlers: {
-                        'richfile-image': function () { triggerUpload(quill, 'image/*'); },
-                        'richfile-video': function () { triggerUpload(quill, 'video/*'); },
-                        'richfile-file': function () { triggerUpload(quill, '*/*'); },
-                        'richfile-embed': function () { insertEmbedCard(quill); }
+                        'richfile-attach': function () { toggleAttachPopover(quill, this); }
                     }
                 }
             }
         });
+
+        setupAttachPopover(quill);
+        setupSelectionToolbar(quill);
+        setupMarkdownShortcuts(quill);
 
         if (hidden.value) {
             quill.root.innerHTML = hidden.value;
@@ -193,6 +193,262 @@
         }
 
         return quill;
+    }
+
+    // "📎" 버튼 하나에 사진/동영상/파일/링크카드 4개를 모아두는 팝오버 - 예전엔 이 4개가 각자
+    // 툴바 버튼으로 늘어서 있어서 뭐가 "서식"이고 뭐가 "삽입"인지 구분이 안 됐다(사용자 지적).
+    var activeAttachPopover = null;
+
+    function toggleAttachPopover(quill, toolbarModule) {
+        var button = toolbarModule.container.querySelector('.ql-richfile-attach');
+        if (!button) return;
+
+        if (activeAttachPopover && activeAttachPopover.button === button) {
+            closeAttachPopover();
+            return;
+        }
+        closeAttachPopover();
+
+        var formats = button.closest('.ql-formats');
+        formats.classList.add('rich-attach-anchor');
+
+        var popover = document.createElement('div');
+        popover.className = 'rich-attach-popover';
+
+        var options = [
+            { label: '사진', icon: '🖼', accept: 'image/*' },
+            { label: '동영상', icon: '🎬', accept: 'video/*' },
+            { label: '파일', icon: '📎', accept: '*/*' },
+            { label: '링크 카드', icon: '🔗', embed: true }
+        ];
+        options.forEach(function (opt) {
+            var item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'rich-attach-popover-item';
+            item.innerHTML = '<span class="rich-attach-popover-icon">' + opt.icon + '</span>' + opt.label;
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+                closeAttachPopover();
+                if (opt.embed) {
+                    insertEmbedCard(quill);
+                } else {
+                    triggerUpload(quill, opt.accept);
+                }
+            });
+            popover.appendChild(item);
+        });
+
+        formats.appendChild(popover);
+        activeAttachPopover = { popover: popover, button: button, formats: formats };
+
+        // 팝오버 바깥을 클릭하거나 Esc를 누르면 닫는다 - 리스너는 이번에 연 팝오버 하나에만
+        // 걸었다가 닫힐 때 같이 떼어내서(document에 계속 쌓이지 않게) 누적을 막는다.
+        function onDocClick(e) {
+            if (!popover.contains(e.target) && e.target !== button) {
+                closeAttachPopover();
+            }
+        }
+        function onKeydown(e) {
+            if (e.key === 'Escape') closeAttachPopover();
+        }
+        // 이 클릭 자체(버튼을 누른 클릭)로 바로 닫히지 않도록 다음 이벤트 루프부터 리스닝한다.
+        setTimeout(function () {
+            document.addEventListener('click', onDocClick);
+            document.addEventListener('keydown', onKeydown);
+        }, 0);
+        activeAttachPopover.cleanup = function () {
+            document.removeEventListener('click', onDocClick);
+            document.removeEventListener('keydown', onKeydown);
+        };
+    }
+
+    function closeAttachPopover() {
+        if (!activeAttachPopover) return;
+        activeAttachPopover.cleanup();
+        activeAttachPopover.popover.remove();
+        activeAttachPopover.formats.classList.remove('rich-attach-anchor');
+        activeAttachPopover = null;
+    }
+
+    function setupAttachPopover() {
+        // 팝오버 DOM 자체는 toggleAttachPopover가 열릴 때마다 새로 만들고 닫힐 때 지우므로,
+        // 여기서는 별도 초기화가 필요 없다(핸들러 등록은 initRichEditor의 toolbar handlers에서 함).
+    }
+
+    // 드래그로 텍스트를 선택하면 선택 영역 위에 뜨는 디스코드/노션 스타일 플로팅 서식 툴바.
+    // 상단 고정 툴바는 그대로 두고(발견성을 위해), 텍스트를 고르는 동안 커서를 툴바까지 옮기지
+    // 않아도 되는 지름길로 덧붙인다.
+    function setupSelectionToolbar(quill) {
+        var bubble = document.createElement('div');
+        bubble.className = 'rich-selection-toolbar';
+        bubble.hidden = true;
+        document.body.appendChild(bubble);
+
+        var actions = [
+            { format: 'bold', html: '<b>B</b>', label: '굵게' },
+            { format: 'italic', html: '<i>I</i>', label: '기울임' },
+            { format: 'strike', html: '<s>S</s>', label: '취소선' },
+            { format: 'link', html: '🔗', label: '링크' }
+        ];
+
+        var buttons = actions.map(function (action) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'rich-selection-toolbar-btn';
+            btn.innerHTML = action.html;
+            btn.title = action.label;
+            btn.setAttribute('aria-label', action.label);
+            // mousedown에서 막지 않으면 클릭 순간 에디터가 blur되며 선택 영역이 풀려서
+            // 정작 클릭 시점엔 서식을 적용할 대상이 없어진다.
+            btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+            btn.addEventListener('click', function () {
+                var range = quill.getSelection();
+                if (!range || range.length === 0) return;
+
+                if (action.format === 'link') {
+                    var current = quill.getFormat(range);
+                    if (current.link) {
+                        quill.format('link', false, 'user');
+                    } else {
+                        WebSchoolModal.prompt('연결할 링크 주소를 입력하세요.', { inputPlaceholder: 'https://...' }).then(function (url) {
+                            if (!url) return;
+                            quill.format('link', url, 'user');
+                        });
+                    }
+                    return;
+                }
+
+                var isActive = !!quill.getFormat(range)[action.format];
+                quill.format(action.format, !isActive, 'user');
+                updateActiveStates(range);
+            });
+            bubble.appendChild(btn);
+            return { el: btn, format: action.format };
+        });
+
+        function updateActiveStates(range) {
+            var formats = quill.getFormat(range);
+            buttons.forEach(function (b) {
+                b.el.classList.toggle('is-active', !!formats[b.format]);
+            });
+        }
+
+        function positionBubble(range) {
+            var bounds = quill.getBounds(range.index, range.length);
+            var editorRect = quill.root.getBoundingClientRect();
+            bubble.hidden = false; // 크기를 재려면 먼저 보여야 한다
+            var bubbleWidth = bubble.offsetWidth;
+            var top = editorRect.top + window.scrollY + bounds.top - bubble.offsetHeight - 8;
+            var left = editorRect.left + window.scrollX + bounds.left + bounds.width / 2 - bubbleWidth / 2;
+            // 에디터 왼쪽 경계 밖으로 나가지 않게 살짝 보정
+            left = Math.max(editorRect.left + window.scrollX, left);
+            bubble.style.top = top + 'px';
+            bubble.style.left = left + 'px';
+            updateActiveStates(range);
+        }
+
+        quill.on('selection-change', function (range, oldRange, source) {
+            if (range && range.length > 0) {
+                positionBubble(range);
+            } else {
+                bubble.hidden = true;
+            }
+        });
+
+        // 스크롤하면 좌표가 다 어긋나므로(재계산 대신) 간단히 숨긴다.
+        window.addEventListener('scroll', function () {
+            if (!bubble.hidden) bubble.hidden = true;
+        }, true);
+    }
+
+    // 마크다운을 몰라도 되게 화면에 따로 안내하진 않지만, 아는 사람은 타이핑만으로 서식을 바로
+    // 적용할 수 있게 한다(디스코드처럼) - **굵게**, *기울임*, ~~취소선~~, `코드`, "## "/"### "
+    // 제목, "> " 인용. 목록("- ", "1. ")은 Quill 기본 키보드 모듈에 이미 내장돼 있어 따로 구현할
+    // 필요가 없다.
+    function setupMarkdownShortcuts(quill) {
+        registerBlockShortcuts(quill);
+
+        // quill.getSelection()으로 "지금 커서 위치"를 물어보는 대신, 방금 들어온 delta 자체에서
+        // 삽입 위치를 직접 계산한다 - 실제 타이핑 중엔 브라우저가 네이티브 커서를 이미 옮겨둔
+        // 뒤라 getSelection()도 대개 맞지만, 그 타이밍에 100% 기대지 않는 편이 더 안전하다
+        // (delta는 이번 변경이 정확히 어디서 일어났는지 그 자체로 알려주는 유일한 근거다).
+        quill.on('text-change', function (delta, oldDelta, source) {
+            if (source !== 'user') return;
+            var ops = delta.ops || [];
+            var index = 0;
+            var insertedChar = null;
+            var insertedAt = -1;
+            ops.forEach(function (op) {
+                if (op.retain) {
+                    index += (typeof op.retain === 'number' ? op.retain : 1);
+                } else if (typeof op.insert === 'string') {
+                    if (op.insert.length === 1) {
+                        insertedChar = op.insert;
+                        insertedAt = index;
+                    }
+                    index += op.insert.length;
+                }
+            });
+            if (insertedChar === null || '*`~'.indexOf(insertedChar) === -1) return;
+            applyInlineMarkdown(quill, insertedChar, insertedAt + 1);
+        });
+    }
+
+    function registerBlockShortcuts(quill) {
+        // 제목 드롭다운이 2/3만 지원하므로(post.css 한글 라벨 참고) 여기서도 ##/###만 다룬다.
+        quill.keyboard.addBinding({ key: ' ', collapsed: true }, { prefix: /^#{2,3}$/ }, function (range, context) {
+            var level = context.prefix.length;
+            this.quill.deleteText(range.index - level, level, 'user');
+            this.quill.formatLine(range.index - level, 1, 'header', level, 'user');
+            this.quill.setSelection(range.index - level, 0, 'silent');
+            return false;
+        });
+        quill.keyboard.addBinding({ key: ' ', collapsed: true }, { prefix: /^>$/ }, function (range, context) {
+            this.quill.deleteText(range.index - 1, 1, 'user');
+            this.quill.formatLine(range.index - 1, 1, 'blockquote', true, 'user');
+            this.quill.setSelection(range.index - 1, 0, 'silent');
+            return false;
+        });
+    }
+
+    function applyInlineMarkdown(quill, triggerChar, cursor) {
+        var lineInfo = quill.getLine(cursor);
+        if (!lineInfo || !lineInfo[0]) return;
+        var lineStart = cursor - lineInfo[1];
+        var textBefore = quill.getText(lineStart, cursor - lineStart);
+
+        var rules = triggerChar === '`'
+            ? [{ regex: /`([^`]+)`$/, format: 'code' }]
+            : triggerChar === '~'
+                ? [{ regex: /~~([^~]+)~~$/, format: 'strike' }]
+                : [
+                    { regex: /\*\*([^*]+)\*\*$/, format: 'bold' },
+                    { regex: /(^|[^*])\*([^*]+)\*$/, format: 'italic', group: 2, prefixGroup: 1 }
+                ];
+
+        for (var i = 0; i < rules.length; i++) {
+            var rule = rules[i];
+            var m = rule.regex.exec(textBefore);
+            if (!m) continue;
+            var group = rule.group || 1;
+            var content = m[group];
+            if (!content) continue;
+
+            var prefixLen = rule.prefixGroup ? m[rule.prefixGroup].length : 0;
+            var matchStart = lineStart + m.index + prefixLen;
+            var matchLength = m[0].length - prefixLen;
+
+            quill.deleteText(matchStart, matchLength, 'user');
+            quill.insertText(matchStart, content, rule.format, true, 'user');
+            quill.setSelection(matchStart + content.length, 0, 'user');
+            // 커서가 방금 삽입한 서식 글자 바로 뒤에 있으면 그 서식이 "펜 끝에 묻어" 다음
+            // 타이핑까지 계속 이어진다(Quill의 일반적인 동작) - **중요** 뒤에 이어 쓴 일반
+            // 문장까지 전부 굵게 나오는 버그로 실제 확인됨. 커서가 여전히 collapsed일 때
+            // format(name, false)를 걸면 이미 삽입된 글자는 그대로 두고 "다음에 입력할 서식"만
+            // 끈다.
+            quill.format(rule.format, false, 'user');
+            return;
+        }
     }
 
     function triggerUpload(quill, accept) {

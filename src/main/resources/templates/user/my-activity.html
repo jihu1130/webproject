@@ -532,7 +532,7 @@
                     <span th:unless="${!b.userDeleted}" class="post-list-title" th:text="${b.nickname} + ' (탈퇴함)'">닉네임</span>
                     <span class="post-list-meta">
                         <span th:text="${b.permanent} ? '영구 차단' : (${b.expiresAt} + '까지')">기간</span>
-                        <span class="post-list-date" th:text="${b.createdAt} + ' 차단'">차단일</span>
+                        <span class="post-list-date" th:text="${b.createdAt}">차단일</span> 차단
                         <form th:action="@{'/users/blocks/' + ${b.id} + '/unblock'}" method="post" class="my-activity-delete-form"
                               data-confirm="차단을 해제할까요?">
                             <button type="submit" class="post-delete-btn">차단 해제</button>
@@ -547,5 +547,11 @@
 </div>
 
 <script th:src="@{/js/modal.js}"></script>
+<script th:src="@{/js/timeago.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        WebSchoolTimeago.applyAll('.post-list-date');
+    });
+</script>
 </body>
 </html>

@@ -95,6 +95,25 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 대표 이미지 드롭존 - input[type=file]이 드롭존 전체를 투명하게 덮고 있어서(post.css)
+    // 클릭은 브라우저가 알아서 파일 선택창을 열고, 드래그해서 놓는 것도 브라우저가 기본으로
+    // input.files를 채우고 change 이벤트를 쏴준다(별도 drop 처리 불필요) - 여기서는 드래그
+    // 중이라는 시각 피드백(.is-dragover)만 붙였다 뗀다.
+    var imageDropzone = document.getElementById('postImageDropzone');
+    if (imageDropzone) {
+        ['dragenter', 'dragover'].forEach(function (evt) {
+            imageDropzone.addEventListener(evt, function (e) {
+                e.preventDefault();
+                imageDropzone.classList.add('is-dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(function (evt) {
+            imageDropzone.addEventListener(evt, function () {
+                imageDropzone.classList.remove('is-dragover');
+            });
+        });
+    }
+
     // ---- 글쓰기 중 실수로 페이지 이탈 시 경고 ----
     // 제목 입력이나 리치 에디터(contenteditable) 안에서 타이핑이 감지되면 dirty로 표시하고,
     // 폼이 정상 제출되는 경우(submit 이벤트)에는 경고를 띄우지 않는다.
