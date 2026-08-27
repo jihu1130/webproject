@@ -51,12 +51,16 @@
                 </div>
 
                 <!-- 수정사항.md 지적 - 저장 전엔 실제 공개 프로필(/users/{id})에서 어떻게 보일지 알 방법이
-                     없었다. profile.html의 .profile-bio와 동일한 톤으로 그 자리에서 바로 보여준다. -->
+                     없었다. profile.html이 실제로 쓰는 .profile-card-bio-box와 동일한 클래스를 그대로
+                     써서 그 자리에서 바로 보여준다(예전엔 .profile-bio라는 별도 클래스를 썼는데, 공개
+                     프로필 쪽이 profile-card.css 컴포넌트로 바뀐 뒤에도 안 따라가서 미리보기가 실제
+                     모양과 달라져 있었다). -->
                 <div class="auth-field">
                     <label>미리보기 (실제 프로필에 이렇게 보여요)</label>
-                    <div class="profile-bio-preview">
-                        <p class="profile-bio" id="bioPreview" th:text="${bio}">소개글</p>
-                        <p class="profile-bio profile-bio-empty" id="bioPreviewEmpty" style="display:none;">아직 작성한 소개글이 없어요.</p>
+                    <div class="profile-card-bio-box">
+                        <div class="profile-card-bio-header">소개글</div>
+                        <p class="profile-card-bio-text" id="bioPreview" th:text="${bio}">소개글</p>
+                        <p class="profile-card-bio-text profile-card-bio-empty" id="bioPreviewEmpty" style="display:none;">아직 작성한 소개글이 없어요.</p>
                     </div>
                 </div>
 

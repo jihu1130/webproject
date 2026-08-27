@@ -206,8 +206,11 @@ a.admin-profile-stat:hover { filter: brightness(1.35); transform: translateY(-1p
 }
 .profile-card-audit-link:hover { text-decoration: underline; }
 
-/* 소개글 박스 - 마이페이지(.mypage-profile-box)와 같은 스타일을 공개 프로필에서도 쓴다.
-   공개 프로필은 읽기 전용이라 수정 아이콘 자리만 없다(마이페이지 헤더 구조를 그대로 재사용). */
+/* 소개글 박스 - 공개 프로필(/users/{id})에서 실제로 쓰고, 소개글 수정 화면
+   (/mypage/profile, profile-edit.html)의 "미리보기"도 실제 모양과 어긋나지 않도록
+   같은 클래스를 그대로 재사용한다. 마이페이지 본인 화면에는 이 박스를 안 둔다 -
+   내 정보(마이페이지)와 남에게 보이는 프로필(공개 프로필)을 구분해서, 소개글은
+   "남이 보는 것"으로만 취급하고 수정은 항상 /mypage/profile에서만 하게 한다. */
 .profile-card-bio-box {
     text-align: left;
     background: var(--surface-soft);
@@ -225,16 +228,6 @@ a.admin-profile-stat:hover { filter: brightness(1.35); transform: translateY(-1p
     color: var(--ink);
     margin-bottom: 8px;
 }
-
-/* 마이페이지 소개글 박스 전용 - 공개 프로필은 읽기 전용이라 이 아이콘 자리가 없다.
-   기존 .mypage-profile-edit-link(마이페이지의 다른 "수정" 링크들)와 톤을 맞춘다. */
-.profile-card-bio-edit {
-    color: var(--muted);
-    font-size: 0.82rem;
-    text-decoration: none;
-    padding: 2px 4px;
-}
-.profile-card-bio-edit:hover { color: var(--brand-1); }
 .profile-card-bio-text {
     margin: 0;
     font-size: 0.88rem;

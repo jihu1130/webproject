@@ -470,21 +470,6 @@ a.post-list-nickname:hover { text-decoration: underline; }
     word-break: break-word;
 }
 
-.profile-bio {
-    font-size: 0.92rem;
-    color: var(--ink);
-    /* 존재하지 않는 --surface-2 변수라 다크모드에서도 항상 밝은 회색 그대로였다 - 실제 정의된
-       --surface-soft로 교체(값도 원래 폴백과 거의 동일해서 라이트모드 외관은 그대로). */
-    background: var(--surface-soft);
-    border-radius: 10px;
-    padding: 10px 14px;
-    margin: -4px 0 12px;
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
-.profile-bio-empty { color: var(--muted); font-style: italic; }
-
 .post-detail-meta {
     display: flex;
     align-items: center;
