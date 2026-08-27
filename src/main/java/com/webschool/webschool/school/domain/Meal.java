@@ -3,6 +3,7 @@ package com.webschool.webschool.school.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "meals")
@@ -25,4 +26,6 @@ public class Meal {
 
     @Column(columnDefinition = "TEXT")
     private String menu;        // 급식 식단 내용
+
+    private LocalDateTime updatedAt; // NEIS에서 캐시해온 시각 - 24시간 TTL 판단 기준
 }

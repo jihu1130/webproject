@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -41,6 +42,9 @@ public class SchoolService {
     // "개학"은 "방학"과 겹치지 않는 별도 문자열이라 두 키워드를 따로 검색해야 한다.
     private static final String RESUME_KEYWORD = "개학";
     private static final int VACATION_SEARCH_WINDOW_DAYS = 200;
+    // 시간표/급식 DB 캐시가 한번 저장되면 영구 반환되던 문제 - updatedAt 기준
+    // 이 시간이 지나면 캐시를 버리고 NEIS를 다시 조회한다.
+    private static final long CACHE_TTL_HOURS = 24;
 
     @Transactional
     public SchoolCalendarDto getCalendarDetails(String atptCode, String schoolCode, String dateStr, Integer grade, String classNm) {
@@ -59,9 +63,14 @@ public class SchoolService {
                         .schoolName("우리 학교")
                         .build()));
 
-        // 2. DB에서 시간표 조회 (DB 캐싱)
+        // 2. DB에서 시간표 조회 (DB 캐싱, 24시간 TTL)
         List<Timetable> cachedTimetables = timetableRepository
                 .findBySchoolIdAndGradeAndClassNmAndClassDate(school.getId(), grade, classNm, date);
+
+        if (!cachedTimetables.isEmpty() && cachedTimetables.stream().anyMatch(t -> isCacheExpired(t.getUpdatedAt()))) {
+            timetableRepository.deleteAll(cachedTimetables);
+            cachedTimetables = List.of();
+        }
 
         List<TimetableDto> timetableDtos;
 
@@ -77,7 +86,7 @@ public class SchoolService {
             // 방학 기간이면 애초에 시간표가 없으므로 나이스 API 호출 자체를 건너뛴다
             timetableDtos = new ArrayList<>();
         } else {
-            // DB에 없으면 나이스 API 호출 후 DB에 저장
+            // DB에 없거나 만료됐으면 나이스 API 호출 후 DB에 저장
             timetableDtos = neisApiService.fetchTimetableFromNeis(atptCode, schoolCode, dateStr, grade, classNm, schoolKind);
             for (TimetableDto dto : timetableDtos) {
                 int periodInt = Integer.parseInt(dto.getPerio().replace("교시", "").trim());
@@ -88,12 +97,19 @@ public class SchoolService {
                         .classDate(date)
                         .period(periodInt)
                         .subject(dto.getSubject())
+                        .updatedAt(LocalDateTime.now())
                         .build());
             }
         }
 
-        // 3. DB에서 급식 조회 (DB 캐싱)
+        // 3. DB에서 급식 조회 (DB 캐싱, 24시간 TTL)
         List<Meal> cachedMeals = mealRepository.findBySchoolIdAndMealDate(school.getId(), date);
+
+        if (!cachedMeals.isEmpty() && isCacheExpired(cachedMeals.get(0).getUpdatedAt())) {
+            mealRepository.deleteAll(cachedMeals);
+            cachedMeals = List.of();
+        }
+
         String mealMenu;
 
         if (!cachedMeals.isEmpty()) {
@@ -106,6 +122,7 @@ public class SchoolService {
                         .mealDate(date)
                         .mealType("중식")
                         .menu(mealMenu)
+                        .updatedAt(LocalDateTime.now())
                         .build());
             }
         }
@@ -119,6 +136,11 @@ public class SchoolService {
                 .meal(mealMenu)
                 .eventName(eventName)
                 .build();
+    }
+
+    // updatedAt이 없거나(구버전 캐시 데이터) TTL을 넘겼으면 만료로 판단한다.
+    private boolean isCacheExpired(LocalDateTime updatedAt) {
+        return updatedAt == null || ChronoUnit.HOURS.between(updatedAt, LocalDateTime.now()) >= CACHE_TTL_HOURS;
     }
 
     private boolean isVacationDate(String atptCode, String schoolCode, String dateStr) {

@@ -3,6 +3,7 @@ package com.webschool.webschool.school.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "timetables", uniqueConstraints = @UniqueConstraint(
@@ -26,4 +27,6 @@ public class Timetable {
     private LocalDate classDate; // 수업 날짜 (LocalDate)
     private Integer period;      // 교시 (Integer)
     private String subject;      // 과목명
+
+    private LocalDateTime updatedAt; // NEIS에서 캐시해온 시각 - 24시간 TTL 판단 기준
 }
