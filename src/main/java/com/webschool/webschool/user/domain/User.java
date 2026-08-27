@@ -124,6 +124,12 @@ public class User {
     // (게시글 이미지와 동일한 "실제 파일은 app.upload.dir, DB엔 경로만" 패턴).
     private String profileImageUrl;
 
+    // 포인트 소비 상점(todo.md 요구사항) - 아직 상점 화면/구매 로직은 없는 스캐폴딩 단계(ShopItem
+    // 참고)라 이 두 필드도 지금은 항상 null이고 어디서도 세팅되지 않는다. 상점이 실제로 구현되면
+    // 구매한 ShopItem.value를 여기에 저장해 닉네임 옆 칭호/아바타 테두리 색상으로 렌더링할 예정.
+    private String equippedTitle;       // 현재 장착 중인 칭호 문구
+    private String equippedAvatarColor; // 현재 장착 중인 아바타 테두리/배지 색상 (CSS 색상값)
+
     public PointTier getTier() {
         return PointTier.forPoints(points);
     }

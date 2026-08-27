@@ -32,6 +32,7 @@ public class UserPenaltyService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final AdminActionLogService adminActionLogService;
+    private final UserPointService userPointService;
 
     public List<UserPenaltyDto> getHistory(Long targetId) {
         return userPenaltyRepository.findByTarget_IdOrderByIssuedAtDesc(targetId).stream()
@@ -71,10 +72,12 @@ public class UserPenaltyService {
         penalty.setExpiresAt(durationDays != null && durationDays > 0
                 ? LocalDateTime.now().plusDays(durationDays) : null);
         userPenaltyRepository.save(penalty);
+        userPointService.deductForPenalty(target, type.getPointPenalty(), "제재: " + type.getLabel());
 
         String periodText = penalty.getExpiresAt() != null ? durationDays + "일간" : "무기한";
         notificationService.notify(target, Notification.Type.ACCOUNT,
-                "[" + type.getLabel() + "] " + periodText + " 제재가 부여되었습니다. 사유: " + trimmedReason, null);
+                "[" + type.getLabel() + "] " + periodText + " 제재가 부여되었습니다. 포인트 "
+                        + type.getPointPenalty() + "점이 차감되었습니다. 사유: " + trimmedReason, null);
         adminActionLogService.log("USER", target.getId(), "PENALTY_ISSUE",
                 type.getLabel() + " " + periodText + " (" + truncate(trimmedReason) + ")");
     }

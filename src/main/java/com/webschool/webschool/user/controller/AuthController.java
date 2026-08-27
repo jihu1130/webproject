@@ -4,11 +4,13 @@ import com.webschool.webschool.user.dto.EmailSetupDto;
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
 import com.webschool.webschool.user.dto.RegisterDto;
 import com.webschool.webschool.user.dto.SchoolSetupDto;
+import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.user.domain.EmailToken;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.service.AttendanceService;
 import com.webschool.webschool.user.service.EmailTokenService;
 import com.webschool.webschool.user.service.MyActivityService;
+import com.webschool.webschool.user.service.UserPointService;
 import com.webschool.webschool.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,6 +45,7 @@ public class AuthController {
     private final MyActivityService myActivityService;
     private final EmailTokenService emailTokenService;
     private final AttendanceService attendanceService;
+    private final UserPointService userPointService;
     // 구글 OAuth 클라이언트 등록(client-id/secret)이 안 돼 있으면 이 빈 자체가 없다(SecurityConfig
     // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
@@ -80,6 +83,16 @@ public class AuthController {
         User user = userService.getByUsername(authentication.getName());
         boolean checkedIn = attendanceService.checkIn(user);
         return "redirect:/mypage?attendance=" + (checkedIn ? "success" : "already");
+    }
+
+    // 포인트 내역 화면(todo.md 요구사항) - 적립/소비 이력을 최신순으로 보여준다.
+    @GetMapping("/mypage/points")
+    public String pointHistory(@RequestParam(defaultValue = "0") int page,
+                                @RequestParam(required = false) Integer size,
+                                Authentication authentication, Model model) {
+        User user = userService.getByUsername(authentication.getName());
+        model.addAttribute("logs", userPointService.getHistory(user.getId(), page, PageUtils.normalizeSize(size)));
+        return "user/point-history";
     }
 
     @GetMapping("/mypage/edit")

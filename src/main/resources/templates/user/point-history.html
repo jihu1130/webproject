@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포인트 내역 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+
+<div class="post-page">
+    <div class="post-container">
+        <div class="page-heading post-page-heading">
+            <h1><i class="fa-solid fa-coins"></i> 포인트 내역</h1>
+            <p class="page-sub">적립·소비 내역을 확인할 수 있어요</p>
+        </div>
+
+        <div th:if="${logs.empty}" class="post-empty">아직 포인트 내역이 없어요.</div>
+
+        <ul class="post-list" th:unless="${logs.empty}">
+            <li class="post-list-item" th:each="log : ${logs}">
+                <span class="post-list-title" th:text="${log.reason}">사유</span>
+                <span class="post-list-meta">
+                    <span th:text="${(log.points >= 0 ? '+' : '') + log.points + 'P'}"
+                          th:style="${log.points >= 0} ? 'color:var(--brand-1);font-weight:700;' : 'color:#dc3545;font-weight:700;'">0P</span>
+                    <span class="post-list-date" th:text="${log.createdAt}">날짜</span>
+                </span>
+            </li>
+        </ul>
+
+        <div class="post-pagination" th:if="${logs.totalPages > 1}">
+            <a th:if="${logs.hasPrevious()}" th:href="@{/mypage/points(page=${logs.number - 1})}" class="post-page-link" aria-label="이전 페이지">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}"
+               th:href="@{/mypage/points(page=${i})}" th:text="${i + 1}"
+               th:classappend="${i == logs.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${logs.hasNext()}" th:href="@{/mypage/points(page=${logs.number + 1})}" class="post-page-link" aria-label="다음 페이지">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/timeago.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        WebSchoolTimeago.applyAll('.post-list-date');
+    });
+</script>
+</body>
+</html>

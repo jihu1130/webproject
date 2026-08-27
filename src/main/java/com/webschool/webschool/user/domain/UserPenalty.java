@@ -56,20 +56,29 @@ public class UserPenalty {
         return expiresAt == null || expiresAt.isAfter(LocalDateTime.now());
     }
 
+    // 티어 하락(todo.md 요구사항, 2026-08-26 확정) - 비활동 감점이 아니라 제재를 받으면 포인트가
+    // 깎이는 방식. 심각한 제재일수록 더 많이 차감(경고 < 작성정지 < 커뮤니티 차단 < 비활성화).
+    // PointTier.forPoints()가 매번 points로 등급을 계산하므로 이 차감만으로 등급도 자동으로 내려간다.
     public enum Type {
-        WARNING("경고"),
-        POST_SUSPENSION("게시글 작성정지"),
-        COMMUNITY_SUSPENSION("커뮤니티 임시차단"),
-        DEACTIVATION("계정 비활성화");
+        WARNING("경고", 5),
+        POST_SUSPENSION("게시글 작성정지", 10),
+        COMMUNITY_SUSPENSION("커뮤니티 임시차단", 20),
+        DEACTIVATION("계정 비활성화", 30);
 
         private final String label;
+        private final int pointPenalty;
 
-        Type(String label) {
+        Type(String label, int pointPenalty) {
             this.label = label;
+            this.pointPenalty = pointPenalty;
         }
 
         public String getLabel() {
             return label;
+        }
+
+        public int getPointPenalty() {
+            return pointPenalty;
         }
     }
 }

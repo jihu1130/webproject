@@ -1,14 +1,20 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.domain.UserPointLog;
+import com.webschool.webschool.user.dto.UserPointLogDto;
 import com.webschool.webschool.user.repository.UserPointLogRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 // 포인트/티어 시스템(todo.md 요구사항) - 활동에 따라 포인트를 적립하는 유일한 창구. 게시글/댓글
 // 서비스는 이 서비스의 award()만 호출하면 되고, 적립량/일일 한도 로직은 전부 여기 모아둔다.
@@ -27,6 +33,7 @@ public class UserPointService {
     public static final int ANSWER_ACCEPTED = 15;
 
     private static final int DAILY_CAP = 30;
+    private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("MM.dd HH:mm");
 
     private final UserRepository userRepository;
     private final UserPointLogRepository userPointLogRepository;
@@ -66,5 +73,60 @@ public class UserPointService {
         log.setPoints(points);
         log.setReason(reason);
         userPointLogRepository.save(log);
+    }
+
+    // 티어 하락(todo.md 요구사항) - 제재(UserPenaltyService.issue())를 받으면 그 유형만큼 포인트를
+    // 강제로 차감한다. award()의 일일 상한과는 무관한 별개 개념이라 관계없이 항상 적용되고, 이미
+    // 보유한 포인트보다 많이 깎일 수는 없으므로(0 밑으로 내려가지 않음) 실제 차감량은 min(요청량,
+    // 보유량)으로 잘라낸다 - 잔액 부족을 에러로 취급하지 않는다(제재는 사용자 선택이 아니므로).
+    @Transactional
+    public void deductForPenalty(User user, int points, String reason) {
+        int actual = Math.min(points, user.getPoints());
+        if (actual <= 0) {
+            return;
+        }
+        userRepository.addPoints(user.getId(), -actual);
+
+        UserPointLog log = new UserPointLog();
+        log.setUser(user);
+        log.setPoints(-actual);
+        log.setReason(reason);
+        userPointLogRepository.save(log);
+    }
+
+    // 포인트 소비(todo.md 요구사항, 상점 기능용) - 칭호/아바타 색상 등 실제 판매 아이템 카탈로그와
+    // 구매 화면은 아직 없고(스캐폴딩만 마련된 상태, ShopItem 참고), 이 메서드가 그 상점이 포인트를
+    // 실제로 차감할 때 쓸 진입점이다. deductForPenalty()와 달리 사용자가 스스로 하는 소비라 잔액이
+    // 부족하면 조용히 잘라주지 않고 예외로 실패시킨다.
+    @Transactional
+    public void spend(User user, int points, String reason) {
+        if (points > user.getPoints()) {
+            throw new IllegalArgumentException("포인트가 부족합니다.");
+        }
+        userRepository.addPoints(user.getId(), -points);
+
+        UserPointLog log = new UserPointLog();
+        log.setUser(user);
+        log.setPoints(-points);
+        log.setReason(reason);
+        userPointLogRepository.save(log);
+    }
+
+    // 포인트 내역 화면(todo.md 요구사항) - 적립/소비 내역을 함께 보여준다(UserPointLog가 이미
+    // 부호로 구분하고 있어 별도 필드 없이 그대로 노출). notice/list.html과 동일하게 메모리 필터링 +
+    // PageUtils.paginate 패턴(한 사용자의 로그 수는 적다고 가정).
+    public Page<UserPointLogDto> getHistory(Long userId, int page, int size) {
+        List<UserPointLogDto> all = userPointLogRepository.findByUser_IdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+        return PageUtils.paginate(all, page, size);
+    }
+
+    private UserPointLogDto toDto(UserPointLog log) {
+        return UserPointLogDto.builder()
+                .points(log.getPoints())
+                .reason(log.getReason())
+                .createdAt(log.getCreatedAt().format(DISPLAY_FORMAT))
+                .build();
     }
 }
