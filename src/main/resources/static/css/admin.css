@@ -44,7 +44,7 @@
 .admin-table-wrap {
     background: var(--surface);
     border-radius: 16px;
-    border: 1px solid #f0f1fa;
+    border: 1px solid var(--border);
     box-shadow: 0 14px 44px rgba(30, 27, 58, 0.08);
     overflow: hidden;
     overflow-x: auto;
@@ -64,7 +64,7 @@
 }
 
 .admin-table thead th {
-    background: #f8f9fc;
+    background: var(--surface-soft);
     color: var(--muted);
     font-weight: 700;
     font-size: 0.8rem;
@@ -149,7 +149,7 @@
     flex: 1 1 140px;
     padding: 9px 14px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.88rem;
     outline: none;
@@ -165,7 +165,7 @@
     flex: 1 1 120px;
     padding: 9px 12px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     background: var(--surface);
     color: var(--ink);
     font-family: inherit;
@@ -294,7 +294,7 @@
     background: var(--surface);
     border-radius: 18px;
     box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
-    border: 1px solid #f0f1fa;
+    border: 1px solid var(--border);
     padding: 32px;
     margin-top: 16px;
     margin-bottom: 20px;
@@ -312,7 +312,7 @@
     background: var(--surface);
     border-radius: 18px;
     box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
-    border: 1px solid #f0f1fa;
+    border: 1px solid var(--border);
     padding: 24px 28px 28px;
 }
 
@@ -356,7 +356,7 @@
     transition: color 0.15s ease;
 }
 
-.admin-comment-clear-form button:hover { color: #15803d; }
+.admin-comment-clear-form button:hover { color: var(--success); }
 
 .admin-report-reason {
     font-size: 0.9rem;
@@ -373,7 +373,7 @@
 .admin-permission-list {
     background: var(--surface);
     border-radius: 16px;
-    border: 1px solid #f0f1fa;
+    border: 1px solid var(--border);
     box-shadow: 0 14px 44px rgba(30, 27, 58, 0.08);
     margin-top: 16px;
     overflow: hidden;
@@ -508,7 +508,7 @@
 .admin-penalty-form input[type="number"] {
     padding: 9px 12px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.85rem;
 }
@@ -518,7 +518,7 @@
     min-height: 60px;
     padding: 9px 12px;
     border-radius: 9px;
-    border: 1.5px solid #dcdfef;
+    border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.85rem;
     resize: vertical;
@@ -528,50 +528,11 @@
 .admin-penalty-form input:focus,
 .admin-penalty-form textarea:focus { border-color: var(--brand-1); outline: none; }
 
-/* 수정사항.md 지적 - 다크모드 대응이 전혀 없었다. 나머지는 var(--surface)/var(--ink) 등을 이미
-   쓰고 있어 자동으로 맞춰지고, 하드코딩된 밝은 회색 테두리/배경과 파스텔 상태 배지만 손보면 된다. */
-@media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .admin-table-wrap,
-    html:not([data-theme="light"]) .admin-detail-card,
-    html:not([data-theme="light"]) .admin-report-section,
-    html:not([data-theme="light"]) .admin-permission-list {
-        border-color: var(--border);
-    }
-
-    html:not([data-theme="light"]) .admin-table thead th { background: var(--surface-soft); }
-
-    /* .admin-status-* 배지는 이제 --warn/--danger/--success/--muted 변수를 직접 쓰므로
-       (위 "상태 배지" 블록 참고), theme.css의 다크모드 재정의만으로 자동 반영된다 -
-       예전처럼 여기서 rgba를 다시 하드코딩할 필요 없음. */
-
-    html:not([data-theme="light"]) .admin-search-form input[type="text"],
-    html:not([data-theme="light"]) .admin-search-form select,
-    html:not([data-theme="light"]) .admin-search-form input[type="date"],
-    html:not([data-theme="light"]) .admin-penalty-form select,
-    html:not([data-theme="light"]) .admin-penalty-form input[type="number"],
-    html:not([data-theme="light"]) .admin-penalty-form textarea {
-        border-color: var(--border);
-    }
-}
-
-/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .admin-table-wrap,
-html[data-theme="dark"] .admin-detail-card,
-html[data-theme="dark"] .admin-report-section,
-html[data-theme="dark"] .admin-permission-list {
-    border-color: var(--border);
-}
-
-html[data-theme="dark"] .admin-table thead th { background: var(--surface-soft); }
-
-html[data-theme="dark"] .admin-search-form input[type="text"],
-html[data-theme="dark"] .admin-search-form select,
-html[data-theme="dark"] .admin-search-form input[type="date"],
-html[data-theme="dark"] .admin-penalty-form select,
-html[data-theme="dark"] .admin-penalty-form input[type="number"],
-html[data-theme="dark"] .admin-penalty-form textarea {
-    border-color: var(--border);
-}
+/* 예전엔 카드 테두리(#f0f1fa)·테이블 헤더 배경(#f8f9fc)·입력창 테두리(#dcdfef)가 전부
+   하드코딩이라 다크모드에서만 별도로 덮어써야 했다. 지금은 위 규칙들이 처음부터
+   var(--border)/var(--surface-soft)를 직접 쓰므로 theme.css의 다크 팔레트 재정의만으로
+   자동 대응되어 이 블록이 더 필요 없다(.admin-status-* 배지도 이미 --warn/--danger/
+   --success/--muted를 직접 쓰는 중이라 마찬가지). */
 
 /* 수정사항.md 지적 - 관리자 8단계 탭(admin/fragments/nav.html)이 사이트 상단 내비게이션과
    달리 모바일에서 안 접혀서, 매번 8줄짜리 목록이 화면 위쪽을 다 차지했다. 접이식 메뉴 대신
