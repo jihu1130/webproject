@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -78,3 +81,93 @@ jobs:
 
       - name: Build and test
         run: ./gradlew build --console=plain
+
+      # 이 잡이 빌드한 jar를 뒤이은 deploy 잡이 그대로 쓴다(같은 jar를 재빌드하지
+      # 않고 그대로 배포해 빌드-배포 산출물 불일치를 방지).
+      - name: Upload jar artifact
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: webschool-jar
+          path: build/libs/webschool-0.0.1-SNAPSHOT.jar
+          retention-days: 1
+
+  # 5단계(CD) - build 잡이 성공한 뒤 main 브랜치 푸시에서만 실행. AWS 인증은 장기
+  # 액세스 키를 GitHub Secrets에 저장하지 않고 OIDC로 임시 자격증명을 발급받는
+  # 방식(webschool-github-actions-deploy 역할, main 브랜치 푸시에서만 assume 가능
+  # 하도록 신뢰 정책에 고정 - AWS.md "5단계 체크리스트" 참고). 배포 절차 자체는
+  # 지금까지 수동으로 하던 것과 동일: jar를 S3에 올리고, SSM으로 서버가 그 jar를
+  # 받아 재시작하게 시킨다(SSH 없이 SSM만 쓰는 이 프로젝트 원칙과 일치).
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      INSTANCE_ID: i-0992a58038aca44da
+    steps:
+      - name: Download jar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: webschool-jar
+          path: build/libs
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::938436186735:role/webschool-github-actions-deploy
+          aws-region: ap-northeast-2
+
+      # 인스턴스가 정지 상태면(비용 절감을 위해 평소엔 꺼둠) SSM 명령이 실패하니,
+      # 매 푸시마다 CI가 빨갛게 뜨는 걸 막기 위해 여기서 건너뛴다 - 실패가 아니라
+      # "지금은 배포 안 함"으로 취급.
+      - name: Check instance is running
+        id: instance
+        run: |
+          STATE=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].State.Name" --output text)
+          echo "state=$STATE" >> "$GITHUB_OUTPUT"
+          echo "인스턴스 상태: $STATE"
+
+      - name: Upload jar to S3
+        if: steps.instance.outputs.state == 'running'
+        run: aws s3 cp build/libs/webschool-0.0.1-SNAPSHOT.jar s3://webschool-deploy-938436186735/webschool.jar
+
+      - name: Deploy via SSM
+        if: steps.instance.outputs.state == 'running'
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["sudo aws s3 cp s3://webschool-deploy-938436186735/webschool.jar /opt/webschool/webschool.jar","sudo systemctl restart webschool"]' \
+            --query "Command.CommandId" --output text)
+          echo "Command ID: $COMMAND_ID"
+
+          STATUS="Pending"
+          for i in $(seq 1 24); do
+            STATUS=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+              --query "Status" --output text 2>/dev/null || echo "Pending")
+            echo "status: $STATUS"
+            if [ "$STATUS" != "InProgress" ] && [ "$STATUS" != "Pending" ]; then break; fi
+            sleep 5
+          done
+
+          if [ "$STATUS" != "Success" ]; then
+            echo "배포 명령 실패 (status=$STATUS)"
+            aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"
+            exit 1
+          fi
+
+      - name: Health check
+        if: steps.instance.outputs.state == 'running'
+        run: |
+          for i in $(seq 1 12); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" https://webschool.kro.kr/actuator/health --max-time 5 || echo "000")
+            echo "health check attempt $i: $CODE"
+            if [ "$CODE" == "200" ]; then exit 0; fi
+            sleep 5
+          done
+          echo "배포 후 헬스체크 실패"
+          exit 1
