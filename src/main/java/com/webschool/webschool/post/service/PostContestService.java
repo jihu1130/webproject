@@ -18,6 +18,8 @@ import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserPointService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PostContestService {
 
+    private static final Logger log = LoggerFactory.getLogger(PostContestService.class);
     private static final int[] PRIZE_POINTS = {30, 20, 10}; // 인덱스 0=1위, 1=2위, 2=3위
 
     private final PostContestEntryRepository entryRepository;
@@ -195,6 +198,26 @@ public class PostContestService {
             result.setPrizePoints(prize);
             resultRepository.save(result);
         }
+    }
+
+    // 콘테스트 마감 임박 리마인더(todo.md "콘테스트/설문 후속" 항목) - 인앱 알림만(이메일 제외,
+    // 사용자 확정), 마이페이지에서 직접 이 알림을 켠 사용자에게만 보낸다(기본 꺼짐 - 옵트인,
+    // User.contestDeadlineAlertEnabled 참고). 실제 마감/시상은 여전히 tallyPreviousWeek()가 다음날
+    // (월요일) 자정에 처리하고, 이 메서드는 그 전날(일요일) 저녁에 예고만 한다 - "이번 주가 곧
+    // 끝난다"는 시점 안내라 특정 후보 신청자로 대상을 좁히지 않고, 이 알림을 원한다고 스스로 설정한
+    // 사용자 전체(탈퇴 계정 제외)에게 보낸다.
+    @Scheduled(cron = "0 0 20 * * SUN")
+    @Transactional
+    public void sendDeadlineReminder() {
+        List<User> optedIn = userRepository.findAllByOrderByIdAsc().stream()
+                .filter(u -> !u.isDeleted() && u.isContestDeadlineAlertEnabled())
+                .collect(Collectors.toList());
+        for (User user : optedIn) {
+            notificationService.notify(user, Notification.Type.CONTEST_DEADLINE_SOON,
+                    "이번 주 인기 게시글 콘테스트 마감이 얼마 남지 않았어요! 후보를 신청하거나 투표해보세요.",
+                    "/posts/contest");
+        }
+        log.info("콘테스트 마감 임박 알림 발송 완료 - {}명", optedIn.size());
     }
 
     // 콘테스트 과거 우승 이력(todo.md "콘테스트/설문 후속" 항목) - 회차(주)별로 묶어서 최신 순으로

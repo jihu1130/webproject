@@ -118,6 +118,13 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean canManagePolls;
 
+    // 콘테스트 마감 임박 알림(todo.md "설문 후속" 항목) 수신 여부 - 사용자가 마이페이지에서 직접
+    // 켜고 끄는 개인 알림 설정(관리자 위임 권한과는 성격이 다름). 기본값은 꺼짐(옵트인) - 사용자
+    // 확정 요구사항("알림 키고 끌 수 있게 해서 킨 사람만"). PostContestService.sendDeadlineReminder()
+    // 참고.
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean contestDeadlineAlertEnabled;
+
     // 포인트/티어 시스템(todo.md 요구사항) - 게시글/댓글 작성, 좋아요 받음, QnA 답변 채택 등
     // 활동에 따라 UserPointService가 적립한다(일일 획득 한도 있음, 어뷰징 방지). 소비형(화폐)
     // 개념으로 설계했지만 소비 기능은 아직 미구현(사용자 확정) - 지금은 오르기만 한다. 신규

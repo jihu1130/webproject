@@ -203,6 +203,22 @@ public class AuthController {
         return "redirect:/mypage/profile?updated=true";
     }
 
+    // 알림 설정 - "남에게 보이는 내 정보"(프로필/계정 정보)와는 성격이 다른 "내가 받을 알림"
+    // 설정이라 별도 화면으로 분리했다(위 /mypage/profile, /mypage/edit과 동일한 분리 관례).
+    @GetMapping("/mypage/notifications")
+    public String notificationSettingsForm(Authentication authentication, Model model) {
+        User user = userService.getByUsername(authentication.getName());
+        model.addAttribute("contestDeadlineAlertEnabled", user.isContestDeadlineAlertEnabled());
+        return "user/notification-settings";
+    }
+
+    @PostMapping("/mypage/notifications")
+    public String notificationSettingsSubmit(@RequestParam(defaultValue = "false") boolean contestDeadlineAlertEnabled,
+                                              Authentication authentication) {
+        userService.updateNotificationPreferences(authentication.getName(), contestDeadlineAlertEnabled);
+        return "redirect:/mypage/notifications?updated=true";
+    }
+
     // 구글 소셜 로그인 첫 가입 시 비어있는 학교/학년/반을 채우는 화면 - SchoolSetupInterceptor가
     // 이 정보가 없는 계정을 여기 외에는 접근하지 못하게 강제로 리다이렉트한다.
     @GetMapping("/school-setup")

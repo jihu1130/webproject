@@ -298,6 +298,15 @@ public class UserService {
                 bio == null || bio.isBlank() ? "(비움)" : truncate(bio.trim()));
     }
 
+    // 알림 설정 - "콘테스트 마감 임박 알림"을 사용자가 직접 켜고 끄는 개인 설정(관리자 위임 권한과는
+    // 성격이 다름, 계정 보안과 무관해 updateBio()와 동일하게 현재 비밀번호 재확인을 요구하지 않는다).
+    // 지금은 항목이 하나뿐이지만 나중에 알림 유형이 늘어나도 이 메서드/화면을 그대로 확장하면 된다.
+    @Transactional
+    public void updateNotificationPreferences(String username, boolean contestDeadlineAlertEnabled) {
+        User user = getByUsername(username);
+        user.setContestDeadlineAlertEnabled(contestDeadlineAlertEnabled);
+    }
+
     @Transactional
     public void updateProfileImage(String username, MultipartFile file) {
         User user = getByUsername(username);

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알림 설정 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+</head>
+<body class="auth-body">
+
+<div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+
+<div class="auth-shell">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h3 class="auth-title">알림 설정</h3>
+            <p class="auth-subtitle">받고 싶은 알림을 직접 켜고 끌 수 있어요 - 여기서 켠 알림만 인앱 알림으로 와요</p>
+
+            <div th:if="${param.updated}" class="auth-alert auth-alert-success">저장되었습니다.</div>
+
+            <form th:action="@{/mypage/notifications}" method="post">
+                <div class="auth-field" style="flex-direction: row; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="contestDeadlineAlertEnabled" name="contestDeadlineAlertEnabled"
+                           value="true" th:checked="${contestDeadlineAlertEnabled}" style="width: auto;">
+                    <label for="contestDeadlineAlertEnabled" style="margin: 0;">
+                        인기 게시글 콘테스트 마감 임박 알림
+                        <span class="auth-subtitle" style="display:block; font-size: 0.8rem;">
+                            매주 일요일 저녁, 이번 주 콘테스트 마감이 얼마 안 남았다고 알려드려요
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-brand auth-submit">저장하기</button>
+            </form>
+
+            <div class="auth-footer"><a href="/mypage">마이페이지로 돌아가기</a></div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
