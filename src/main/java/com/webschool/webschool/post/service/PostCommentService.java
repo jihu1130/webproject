@@ -237,6 +237,7 @@ public class PostCommentService {
         if (trimmedReason != null && trimmedReason.length() > 300) {
             trimmedReason = trimmedReason.substring(0, 300);
         }
+        BannedWordFilter.validate(trimmedReason);
 
         CommentReport report = new CommentReport();
         report.setComment(comment);

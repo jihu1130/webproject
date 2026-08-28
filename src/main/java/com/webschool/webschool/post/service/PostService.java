@@ -247,6 +247,7 @@ public class PostService {
         if (trimmedReason != null && trimmedReason.length() > 300) {
             trimmedReason = trimmedReason.substring(0, 300);
         }
+        BannedWordFilter.validate(trimmedReason);
 
         PostReport report = new PostReport();
         report.setPost(post);

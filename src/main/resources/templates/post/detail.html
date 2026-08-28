@@ -97,9 +97,11 @@
                         <button type="submit" class="post-delete-btn"><i class="fa-solid fa-trash"></i> 삭제</button>
                     </form>
                     <!-- 인기 게시글 주간 콘테스트 후보 신청(todo.md 4번 항목) - 본인 게시물만, 회차당
-                         인당 1개. 이미 신청했으면 서버가 flashError로 안내(PostContestController.
-                         nominate()) - 별도 조회 없이 항상 노출해서 PostService에 새 의존성을 안 만든다. -->
-                    <form th:action="@{/posts/contest/nominate}" method="post" class="post-contest-nominate-form">
+                         인당 1개. 이미 이번 주 후보(위 contest-post-widget에 쓰는 contestEntry)라면
+                         버튼 자체를 숨긴다 - 예전엔 항상 노출해서 다시 누르면 "이미 신청했습니다"
+                         flashError만 뜨는 뻔한 재시도가 있었는데, contestEntry는 이미 이 템플릿
+                         스코프에 있어 새 의존성 없이 바로 조건을 걸 수 있었다(2026-08-28 발견/수정). -->
+                    <form th:if="${contestEntry == null}" th:action="@{/posts/contest/nominate}" method="post" class="post-contest-nominate-form">
                         <input type="hidden" name="postUuid" th:value="${post.uuid}">
                         <button type="submit" class="btn btn-outline-brand">
                             <i class="fa-solid fa-trophy"></i> 이번 주 인기글 후보 신청

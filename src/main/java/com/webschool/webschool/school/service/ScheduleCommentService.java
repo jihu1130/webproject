@@ -168,6 +168,7 @@ public class ScheduleCommentService {
         if (trimmedReason != null && trimmedReason.length() > 300) {
             trimmedReason = trimmedReason.substring(0, 300);
         }
+        BannedWordFilter.validate(trimmedReason);
 
         ScheduleCommentReport report = new ScheduleCommentReport();
         report.setComment(comment);
