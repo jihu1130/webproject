@@ -45,6 +45,10 @@ spring:
   #           enable: true
 
 server:
+  # nginx 리버스 프록시 뒤(운영 서버)에서 X-Forwarded-* 헤더를 신뢰해 HTTPS 리디렉션 URI를
+  # 올바르게 만들도록 함 - 로컬 개발(프록시 없음)에서는 아무 영향 없음, 안 넣으면 구글 로그인
+  # redirect_uri가 http://로 만들어져서 Google Console에 등록한 https:// URI와 안 맞아 실패한다.
+  forward-headers-strategy: framework
   port: 8888
 
 logging:
