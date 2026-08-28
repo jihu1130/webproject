@@ -111,7 +111,7 @@ class TestDataSeeder {
         }
 
         scheduleCommentService.createComment(ATPT_CODE, SCHOOL_CODE, LocalDate.now(), GRADE, CLASS_NUM,
-                username, content);
+                username, content, false);
     }
 
     // admin 계정이 없으면 회원가입시키고, 있으면 기존 계정을 그대로 쓴다. UserService.register()는
@@ -173,6 +173,6 @@ class TestDataSeeder {
         form.setContent(category.getLabel() + " 카테고리 테스트 게시글 " + index + "번 내용입니다.");
         form.setCategory(category.name());
 
-        postService.createPost(authorUsername, form);
+        postService.createPost(authorUsername, form, false);
     }
 }
