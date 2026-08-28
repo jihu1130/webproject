@@ -43,6 +43,21 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 }
 
+// TestDataSeeder/SuperAdminSeeder는 진짜 테스트가 아니라 개발 DB에 데이터를 심는
+// 실행용 스크립트라(CLAUDE.md 참고), CI처럼 빈 DB에서 ./gradlew build/test를 그냥
+// 돌리면 실패한다(SuperAdminSeeder가 admin 계정이 없다고 죽음 - 실제로 CD 붙이면서
+// 겪음). 그렇다고 file 기반 exclude()를 쓰면 --tests로 콕 집어 실행하는 문서화된
+// 수동 시딩 방법(`./gradlew test --tests "...TestDataSeeder"`)까지 막혀버린다
+// (exclude는 --tests보다 항상 우선함 - Gradle 기본 동작). 그래서 "커맨드라인에 --tests가
+// 전혀 없을 때만" 제외하도록 doFirst에서 조건부로 건다 - configuration 단계에서
+// commandLineIncludePatterns를 확인하면 --tests 값이 아직 반영 전이라 항상 비어있는
+// 것으로 잘못 판단되므로 반드시 doFirst(실행 시점)에서 확인해야 한다.
 tasks.named('test') {
 	useJUnitPlatform()
+	doFirst {
+		if (filter.commandLineIncludePatterns.isEmpty()) {
+			filter.excludeTestsMatching('com.webschool.webschool.TestDataSeeder')
+			filter.excludeTestsMatching('com.webschool.webschool.SuperAdminSeeder')
+		}
+	}
 }
