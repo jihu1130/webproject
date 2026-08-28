@@ -1,27 +1,24 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.upload.FileStorageService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostImage;
 import com.webschool.webschool.post.dto.PostImageDto;
 import com.webschool.webschool.post.repository.PostImageRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-// 게시글 첨부 이미지 업로드/삭제. 파일은 프로젝트 외부(app.upload.dir)에 저장하고 DB에는 경로만 저장한다.
+// 게시글 첨부 이미지 업로드/삭제. 실제 파일 저장은 FileStorageService(로컬 디스크/S3)에 위임하고
+// DB에는 경로/URL만 저장한다.
 @Service
 @RequiredArgsConstructor
 public class PostImageService {
@@ -31,9 +28,7 @@ public class PostImageService {
 
     private final PostImageRepository postImageRepository;
     private final PostRepository postRepository;
-
-    @Value("${app.upload.dir}")
-    private String uploadDir;
+    private final FileStorageService fileStorageService;
 
     public List<PostImageDto> getImages(Long postId) {
         return postImageRepository.findByPost_IdOrderBySortOrderAsc(postId).stream()
@@ -67,7 +62,6 @@ public class PostImageService {
         }
 
         int nextOrder = postImageRepository.countByPost_Id(postId);
-        Path postDir = resolvePostDir(postId);
 
         for (MultipartFile file : files) {
             if (file == null || file.isEmpty()) {
@@ -76,18 +70,18 @@ public class PostImageService {
             validateOne(file);
 
             String ext = extensionOf(file.getOriginalFilename());
-            String storedFilename = UUID.randomUUID() + "." + ext;
+            String key = "posts/" + postId + "/" + UUID.randomUUID() + "." + ext;
 
+            String url;
             try {
-                Files.createDirectories(postDir);
-                Files.copy(file.getInputStream(), postDir.resolve(storedFilename), StandardCopyOption.REPLACE_EXISTING);
+                url = fileStorageService.store(file, key);
             } catch (IOException e) {
                 throw new IllegalArgumentException("이미지 저장에 실패했습니다.");
             }
 
             PostImage image = new PostImage();
             image.setPost(post);
-            image.setStoredPath("posts/" + postId + "/" + storedFilename);
+            image.setStoredPath(url);
             image.setOriginalFilename(file.getOriginalFilename());
             image.setSortOrder(nextOrder++);
             postImageRepository.save(image);
@@ -135,28 +129,28 @@ public class PostImageService {
         return filename.substring(dot + 1).toLowerCase();
     }
 
-    private Path resolvePostDir(Long postId) {
-        return baseDir().resolve("posts").resolve(String.valueOf(postId));
-    }
-
-    private Path baseDir() {
-        return Paths.get(uploadDir).toAbsolutePath().normalize();
-    }
-
     private void deletePhysicalFile(String storedPath) {
-        try {
-            Files.deleteIfExists(baseDir().resolve(storedPath));
-        } catch (IOException ignored) {
-            // 원본 파일이 이미 없어도 DB 정리는 계속 진행한다.
-        }
+        // storedPath는 이제 store()가 반환한 완전한 URL(로컬 "/uploads/..." 또는 S3 전체 URL)이지만,
+        // S3 전환 이전에 저장된 기존 행은 접두사 없는 상대경로("posts/123/uuid.jpg")다 -
+        // FileStorageService.delete()가 이해하지 못하는 형식이므로 그 경우만 "/uploads/"를 붙여준다.
+        String url = toServableUrl(storedPath);
+        fileStorageService.delete(url);
     }
 
     private PostImageDto toDto(PostImage image) {
         return PostImageDto.builder()
                 .id(image.getId())
-                .url("/uploads/" + image.getStoredPath())
+                .url(toServableUrl(image.getStoredPath()))
                 .originalFilename(image.getOriginalFilename())
                 .sortOrder(image.getSortOrder())
                 .build();
+    }
+
+    // S3 전환(2026-08-28) 이전 행은 DB에 상대경로만 있고, 이후 행은 store()가 반환한 완전한 URL이
+    // 그대로 들어있다 - 마이그레이션 스크립트 없이 두 형식을 한 번에 지원하기 위한 분기.
+    private String toServableUrl(String storedPath) {
+        return (storedPath.startsWith("http") || storedPath.startsWith("/"))
+                ? storedPath
+                : "/uploads/" + storedPath;
     }
 }

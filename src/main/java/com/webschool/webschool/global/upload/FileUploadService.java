@@ -1,14 +1,10 @@
 package com.webschool.webschool.global.upload;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -16,13 +12,16 @@ import java.util.Set;
 import java.util.UUID;
 
 // 리치 에디터(게시글/오늘의 한마디 본문 중간 삽입)에서 쓰는 범용 파일 업로드. PostImageService와
-// 동일한 저장 방식(프로젝트 밖 app.upload.dir에 실제 파일, UUID 파일명)을 그대로 따르되, 이미지
-// 확장자만 허용하던 그쪽과 달리 여기는 "위험한 실행/스크립트 파일만 차단하고 나머지는 전부 허용"
-// 방식이다(2026-08-19 사용자 확정) - 업로드된 파일은 항상 /uploads/**로 정적 서빙만 되고 서버에서
-// 실행되지 않으므로, 그래도 남아있는 위험은 "다른 사용자가 다운로드해서 자기 PC에서 직접 실행"하는
-// 경우뿐이라 확장자 차단 정도로 충분하다.
+// 동일한 저장 방식(FileStorageService에 위임, UUID 파일명)을 그대로 따르되, 이미지 확장자만
+// 허용하던 그쪽과 달리 여기는 "위험한 실행/스크립트 파일만 차단하고 나머지는 전부 허용" 방식이다
+// (2026-08-19 사용자 확정) - 업로드된 파일은 항상 정적 서빙만 되고 서버에서 실행되지 않으므로,
+// 그래도 남아있는 위험은 "다른 사용자가 다운로드해서 자기 PC에서 직접 실행"하는 경우뿐이라
+// 확장자 차단 정도로 충분하다.
 @Service
+@RequiredArgsConstructor
 public class FileUploadService {
+
+    private final FileStorageService fileStorageService;
 
     // 서버/클라이언트에서 직접 실행되거나 설치될 수 있는 확장자만 차단(화이트리스트가 아니라 블랙리스트).
     private static final Set<String> DANGEROUS_EXTENSIONS = Set.of(
@@ -42,9 +41,6 @@ public class FileUploadService {
     private static final long MAX_PROFILE_IMAGE_SIZE = 5L * 1024 * 1024; // 5MB - 프로필 사진은 에디터 첨부보다 작게 제한
 
     private static final DateTimeFormatter MONTH_BUCKET = DateTimeFormatter.ofPattern("yyyyMM");
-
-    @Value("${app.upload.dir}")
-    private String uploadDir;
 
     // 버그 리포트 첨부(사진/영상만 허용, 그 외 파일은 여기서 미리 걸러서 store() 자체를 안 태운다)처럼
     // "이미지/영상만" 제한이 필요한 다른 기능에서 재사용하는 공개 헬퍼.
@@ -79,18 +75,17 @@ public class FileUploadService {
         }
 
         String monthBucket = LocalDate.now().format(MONTH_BUCKET);
-        String storedFilename = UUID.randomUUID() + "." + ext;
-        Path dir = baseDir().resolve("editor").resolve(monthBucket);
+        String key = "editor/" + monthBucket + "/" + UUID.randomUUID() + "." + ext;
 
+        String url;
         try {
-            Files.createDirectories(dir);
-            Files.copy(file.getInputStream(), dir.resolve(storedFilename), StandardCopyOption.REPLACE_EXISTING);
+            url = fileStorageService.store(file, key);
         } catch (IOException e) {
             throw new IllegalArgumentException("파일 저장에 실패했습니다.");
         }
 
         return UploadedFileDto.builder()
-                .url("/uploads/editor/" + monthBucket + "/" + storedFilename)
+                .url(url)
                 .originalFilename(file.getOriginalFilename())
                 .kind(kind)
                 .build();
@@ -113,31 +108,28 @@ public class FileUploadService {
             throw new IllegalArgumentException("프로필 사진은 5MB 이하만 업로드할 수 있습니다.");
         }
 
-        String storedFilename = UUID.randomUUID() + "." + ext;
-        Path dir = baseDir().resolve("profile");
+        String key = "profile/" + UUID.randomUUID() + "." + ext;
 
+        String url;
         try {
-            Files.createDirectories(dir);
-            Files.copy(file.getInputStream(), dir.resolve(storedFilename), StandardCopyOption.REPLACE_EXISTING);
+            url = fileStorageService.store(file, key);
         } catch (IOException e) {
             throw new IllegalArgumentException("사진 저장에 실패했습니다.");
         }
 
         deleteProfileImage(previousUrl);
-        return "/uploads/profile/" + storedFilename;
+        return url;
     }
 
-    // 기본 이미지로 되돌리거나 새 사진으로 교체할 때 이전 파일을 지운다. 실패해도(이미 없거나
-    // 권한 문제 등) 업로드/되돌리기 자체를 막을 이유는 없어서 예외를 던지지 않고 조용히 넘어간다.
+    // 기본 이미지로 되돌리거나 새 사진으로 교체할 때 이전 파일을 지운다. previousUrl은 항상
+    // storeProfileImage()가 예전에 반환했던 값이거나 null(업로드한 적 없음)뿐이라 별도 검증 없이
+    // 그대로 FileStorageService에 위임해도 안전하다. 실패해도(이미 없거나 권한 문제 등) 업로드/
+    // 되돌리기 자체를 막을 이유는 없어서 예외를 던지지 않고 조용히 넘어간다(delete() 자체가 best-effort).
     public void deleteProfileImage(String url) {
-        if (url == null || !url.startsWith("/uploads/profile/")) {
+        if (url == null) {
             return;
         }
-        try {
-            Files.deleteIfExists(baseDir().resolve(url.substring("/uploads/".length())));
-        } catch (IOException ignored) {
-            // best-effort 정리 - 실패해도 무시
-        }
+        fileStorageService.delete(url);
     }
 
     private String extensionOf(String filename) {
@@ -149,9 +141,5 @@ public class FileUploadService {
             return "";
         }
         return filename.substring(dot + 1).toLowerCase(Locale.ROOT);
-    }
-
-    private Path baseDir() {
-        return Paths.get(uploadDir).toAbsolutePath().normalize();
     }
 }
