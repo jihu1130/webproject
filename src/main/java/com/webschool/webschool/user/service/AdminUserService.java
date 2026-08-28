@@ -151,6 +151,8 @@ public class AdminUserService {
             user.setCanManageUsers(false);
             user.setCanManageAdminPermissions(false);
             user.setCanViewAuditLog(false);
+            user.setCanManageShop(false);
+            user.setCanManagePolls(false);
             notificationService.notify(user, Notification.Type.ACCOUNT, "관리자 권한이 해제되었습니다.", "/mypage");
             adminActionLogService.log("USER", id, "DEMOTE", user.getUsername() + " -> ROLE_USER");
         } else if (role == User.Role.ROLE_ADMIN) {
@@ -170,7 +172,7 @@ public class AdminUserService {
                                    boolean canManageReports, boolean canManagePosts,
                                    boolean canManageScheduleComments, boolean canManageNotices,
                                    boolean canManageUsers, boolean canManageAdminPermissions,
-                                   boolean canViewAuditLog, boolean canManageShop) {
+                                   boolean canViewAuditLog, boolean canManageShop, boolean canManagePolls) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -190,11 +192,12 @@ public class AdminUserService {
         user.setCanManageAdminPermissions(canManageAdminPermissions);
         user.setCanViewAuditLog(canViewAuditLog);
         user.setCanManageShop(canManageShop);
+        user.setCanManagePolls(canManagePolls);
         adminActionLogService.log("USER", id, "PERMISSIONS", user.getUsername()
                 + " (신고:" + canManageReports + " 게시글:" + canManagePosts
                 + " 한마디:" + canManageScheduleComments + " 공지:" + canManageNotices
                 + " 계정관리:" + canManageUsers + " 권한부여:" + canManageAdminPermissions
-                + " 감사로그:" + canViewAuditLog + " 상점:" + canManageShop + ")");
+                + " 감사로그:" + canViewAuditLog + " 상점:" + canManageShop + " 설문:" + canManagePolls + ")");
     }
 
     // 수정사항.md #13 지적 - 총관리자가 잠기면(비밀번호 분실 등) 복구할 방법이 앱 안에 전혀 없었다.
@@ -313,6 +316,7 @@ public class AdminUserService {
                 .canManageAdminPermissions(user.isCanManageAdminPermissions())
                 .canViewAuditLog(user.isCanViewAuditLog())
                 .canManageShop(user.isCanManageShop())
+                .canManagePolls(user.isCanManagePolls())
                 .build();
     }
 

@@ -91,11 +91,12 @@ public class AdminUserController {
                                @RequestParam(defaultValue = "false") boolean canManageAdminPermissions,
                                @RequestParam(defaultValue = "false") boolean canViewAuditLog,
                                @RequestParam(defaultValue = "false") boolean canManageShop,
+                               @RequestParam(defaultValue = "false") boolean canManagePolls,
                                Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
             adminUserService.updatePermissions(id, authentication.getName(),
                     canManageReports, canManagePosts, canManageScheduleComments, canManageNotices,
-                    canManageUsers, canManageAdminPermissions, canViewAuditLog, canManageShop);
+                    canManageUsers, canManageAdminPermissions, canViewAuditLog, canManageShop, canManagePolls);
             redirectAttributes.addFlashAttribute("flashSuccess", "권한이 저장되었습니다.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("flashError", e.getMessage());

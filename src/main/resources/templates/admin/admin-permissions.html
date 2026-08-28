@@ -33,7 +33,7 @@
                     <!-- 수정사항.md 지적 - 권한을 전부 꺼둔 부관리자도 목록에서 다른 부관리자와 구분이
                          안 갔다. 7개 canManage* 전부 false면 "권한 없음" 배지를 따로 표시한다. -->
                     <span class="admin-status-badge admin-status-blind"
-                          th:if="${admin.role == 'ROLE_ADMIN' and !admin.canManageReports and !admin.canManagePosts and !admin.canManageScheduleComments and !admin.canManageNotices and !admin.canManageUsers and !admin.canManageAdminPermissions and !admin.canViewAuditLog and !admin.canManageShop}">권한 없음</span>
+                          th:if="${admin.role == 'ROLE_ADMIN' and !admin.canManageReports and !admin.canManagePosts and !admin.canManageScheduleComments and !admin.canManageNotices and !admin.canManageUsers and !admin.canManageAdminPermissions and !admin.canViewAuditLog and !admin.canManageShop and !admin.canManagePolls}">권한 없음</span>
                     <span class="admin-permission-row-name" th:text="${admin.nickname} + ' (' + ${admin.username} + ')'">닉네임 (아이디)</span>
                     <span th:if="${admin.role == 'ROLE_ADMIN' and loginUser != null and loginUser.username == admin.username}"
                           class="admin-user-self-label">(본인 계정 - 권한 변경 불가)</span>
@@ -81,6 +81,10 @@
                     <label class="admin-permission-toggle">
                         <input type="checkbox" name="canManageShop" value="true" th:checked="${admin.canManageShop}">
                         <span>상점 관리</span>
+                    </label>
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canManagePolls" value="true" th:checked="${admin.canManagePolls}">
+                        <span>설문 관리</span>
                     </label>
                 </form>
 

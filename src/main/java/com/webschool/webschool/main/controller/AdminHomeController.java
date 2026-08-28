@@ -44,6 +44,12 @@ public class AdminHomeController {
         if (user.isCanViewAuditLog()) {
             return "redirect:/admin/audit-log";
         }
+        if (user.isCanManageShop()) {
+            return "redirect:/admin/shop-items";
+        }
+        if (user.isCanManagePolls()) {
+            return "redirect:/admin/polls";
+        }
         return "redirect:/admin/access-denied";
     }
 

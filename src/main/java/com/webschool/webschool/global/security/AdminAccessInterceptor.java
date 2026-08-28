@@ -95,6 +95,9 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/admin/shop-items") && !user.isCanManageShop()) {
             throw new AccessDeniedException("상점 관리 권한이 없습니다.");
         }
+        if (uri.startsWith("/admin/polls") && !user.isCanManagePolls()) {
+            throw new AccessDeniedException("설문 관리 권한이 없습니다.");
+        }
         return true;
     }
 }

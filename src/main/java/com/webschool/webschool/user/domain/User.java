@@ -112,6 +112,12 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean canManageShop;
 
+    // 설문 결과 관리자 화면(todo.md "설문 후속" 항목) 열람 권한 - 게시글/한마디 관리 권한과 별개로
+    // 둔다(설문은 게시글/한마디 양쪽에 붙을 수 있어 어느 한쪽 권한에 종속시키지 않기로 판단, poll
+    // 패키지가 post/school 어느 쪽에도 속하지 않고 최상위로 분리된 것과 같은 이유).
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canManagePolls;
+
     // 포인트/티어 시스템(todo.md 요구사항) - 게시글/댓글 작성, 좋아요 받음, QnA 답변 채택 등
     // 활동에 따라 UserPointService가 적립한다(일일 획득 한도 있음, 어뷰징 방지). 소비형(화폐)
     // 개념으로 설계했지만 소비 기능은 아직 미구현(사용자 확정) - 지금은 오르기만 한다. 신규
@@ -166,7 +172,8 @@ public class User {
     public boolean hasAnyAdminAccess() {
         return isSuperAdmin()
                 || canManageReports || canManagePosts || canManageScheduleComments || canManageNotices
-                || canManageUsers || canManageAdminPermissions || canViewAuditLog || canManageShop;
+                || canManageUsers || canManageAdminPermissions || canViewAuditLog || canManageShop
+                || canManagePolls;
     }
 
     public enum Role {

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${poll.question + ' - 설문 관리 - WebSchool'}">설문 상세 - WebSchool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container admin-container-narrow">
+        <div th:replace="~{admin/fragments/breadcrumb :: crumb('설문 관리', '/admin/polls')}"></div>
+
+        <a th:href="@{/admin/polls(page=${listPage}, size=${listSize}, keyword=${listKeyword})}" class="post-list-back">
+            <i class="fa-solid fa-arrow-left"></i> 설문 관리로
+        </a>
+
+        <div class="admin-detail-card">
+            <div class="admin-report-item-header">
+                <span class="admin-status-badge" th:text="${poll.targetType}">대상</span>
+                <span class="post-comment-time" th:text="${poll.createdAt}">작성일</span>
+            </div>
+            <h1 style="margin: 10px 0 4px;" th:text="${poll.question}">질문</h1>
+            <p class="page-sub" style="margin: 0 0 6px;" th:text="${poll.targetLabel}">대상 라벨</p>
+            <p class="page-sub" style="margin: 0;">
+                작성자: <span th:text="${poll.creatorNickname}">작성자</span> ·
+                공개범위: <span th:text="${poll.visibilityScopeLabel}">공개범위</span> ·
+                <span th:text="${poll.allowMultiple} ? '복수선택 허용' : '단일선택'">선택방식</span> ·
+                <span th:text="${poll.allowCustomOption} ? '기타 옵션 허용' : '기타 옵션 불가'">기타옵션</span> ·
+                <span th:text="${poll.anonymous} ? '익명 투표' : '실명 투표'">익명여부</span>
+            </p>
+
+            <div class="poll-widget" style="margin-top: 18px; padding: 0; border: none; background: none;">
+                <div class="poll-widget-meta" th:text="${poll.totalVoters} + '명 참여 · 총 ' + ${poll.totalVotes} + '표'">참여 현황</div>
+
+                <div th:if="${#lists.isEmpty(poll.options)}" class="admin-empty">옵션이 없어요.</div>
+
+                <div class="poll-widget-options" th:unless="${#lists.isEmpty(poll.options)}">
+                    <div class="poll-widget-option" th:each="option : ${poll.options}" style="cursor: default;">
+                        <span class="poll-widget-option-label" th:text="${option.label}">옵션</span>
+                        <span class="poll-widget-option-bar"><span th:style="'width:' + ${option.percent} + '%'"></span></span>
+                        <span class="poll-widget-option-count" th:text="${option.voteCount} + '표 (' + ${option.percent} + '%)'">0표</span>
+                    </div>
+                </div>
+
+                <!-- 익명 설문이면 PollService가 이미 voterNicknames를 빈 리스트로 리댁션해서 넘겨준다 -
+                     관리자도 예외 없이 동일하게 못 본다(CLAUDE.md 익명성 보호 원칙). -->
+                <div th:unless="${poll.anonymous}" style="margin-top: 16px;">
+                    <h3 class="post-comment-heading"><i class="fa-solid fa-user-check"></i> 옵션별 투표자</h3>
+                    <div class="admin-report-list">
+                        <div class="admin-report-item" th:each="option : ${poll.options}">
+                            <div class="admin-report-item-header">
+                                <span th:text="${option.label}">옵션</span>
+                            </div>
+                            <div th:if="${#lists.isEmpty(option.voterNicknames)}" class="post-comment-empty">투표한 사람이 없어요.</div>
+                            <div th:unless="${#lists.isEmpty(option.voterNicknames)}"
+                                 th:text="${#strings.listJoin(option.voterNicknames, ', ')}">투표자 목록</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
