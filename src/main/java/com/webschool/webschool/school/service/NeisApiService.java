@@ -5,21 +5,39 @@ import tools.jackson.databind.ObjectMapper;
 import com.webschool.webschool.school.dto.CalendarEventDto;
 import com.webschool.webschool.school.dto.SchoolSearchResultDto;
 import com.webschool.webschool.school.dto.TimetableDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 @Service
 public class NeisApiService {
+
+    private static final Logger log = LoggerFactory.getLogger(NeisApiService.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    // HttpClient는 스레드 세이프하고 내부적으로 커넥션을 재사용하므로 요청마다 새로 만들지
+    // 않고 서비스 전체에서 하나만 공유한다 - 예전엔 메서드마다 HttpClient.newHttpClient()를
+    // 새로 호출해서 매 NEIS 요청마다 TCP 커넥션을 처음부터 다시 맺어야 했다.
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
+
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
+    private static final int MAX_ATTEMPTS = 3;
+    private static final long RETRY_BACKOFF_MILLIS = 400;
 
     @Value("${neis.api.key}")
     private String apiKey;
@@ -36,13 +54,13 @@ public class NeisApiService {
                 apiKey, URLEncoder.encode(keyword, StandardCharsets.UTF_8)
         );
 
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String body = send(url);
+        if (body == null) {
+            return results;
+        }
 
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.body());
+        try {
+            JsonNode root = MAPPER.readTree(body);
             JsonNode rows = root.path("schoolInfo").path(1).path("row");
 
             if (rows.isArray()) {
@@ -63,7 +81,7 @@ public class NeisApiService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("NEIS 학교 검색 응답 파싱 실패 (keyword={}): {}", keyword, e.toString());
         }
 
         return results;
@@ -86,25 +104,23 @@ public class NeisApiService {
             urlBuilder.append("&GRADE=").append(URLEncoder.encode(grade, StandardCharsets.UTF_8));
         }
 
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(urlBuilder.toString())).GET().build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String body = send(urlBuilder.toString());
+        if (body != null) {
+            try {
+                JsonNode root = MAPPER.readTree(body);
+                JsonNode rows = root.path("classInfo").path(1).path("row");
 
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.body());
-            JsonNode rows = root.path("classInfo").path(1).path("row");
-
-            if (rows.isArray()) {
-                for (JsonNode row : rows) {
-                    String classNm = row.path("CLASS_NM").asText("");
-                    if (!classNm.isBlank()) {
-                        distinctClasses.add(classNm);
+                if (rows.isArray()) {
+                    for (JsonNode row : rows) {
+                        String classNm = row.path("CLASS_NM").asText("");
+                        if (!classNm.isBlank()) {
+                            distinctClasses.add(classNm);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                log.warn("NEIS 학급 목록 응답 파싱 실패 (schoolCode={}): {}", schoolCode, e.toString());
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         List<String> result = new ArrayList<>(distinctClasses);
@@ -135,50 +151,43 @@ public class NeisApiService {
                 resolveTimetableEndpoint(schoolKind), apiKey, atptCode, schoolCode, date, grade, classNm
         );
 
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
-                    .build();
+        String json = send(url);
+        if (json != null) {
+            try {
+                // "row":[ ... ] 안의 데이터만 추출
+                if (json.contains("\"row\":[")) {
+                    int startIdx = json.indexOf("\"row\":[") + 7;
+                    int endIdx = json.indexOf("]", startIdx);
+                    if (endIdx > startIdx) {
+                        String rowArray = json.substring(startIdx, endIdx);
+                        // 개별 객체 단위로 분리
+                        String[] items = rowArray.split("\\},\\{");
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            String json = response.body();
+                        for (String item : items) {
+                            String perio = extractValue(item, "PERIO");
+                            String subject = extractValue(item, "ITRT_CNTNT");
 
-            // "row":[ ... ] 안의 데이터만 추출
-            if (json.contains("\"row\":[")) {
-                int startIdx = json.indexOf("\"row\":[") + 7;
-                int endIdx = json.indexOf("]", startIdx);
-                if (endIdx > startIdx) {
-                    String rowArray = json.substring(startIdx, endIdx);
-                    // 개별 객체 단위로 분리
-                    String[] items = rowArray.split("\\},\\{");
-
-                    for (String item : items) {
-                        String perio = extractValue(item, "PERIO");
-                        String subject = extractValue(item, "ITRT_CNTNT");
-
-                        if (!perio.isEmpty() && !subject.isEmpty()) {
-                            timetableList.add(TimetableDto.builder()
-                                    .perio(perio + "교시")
-                                    .subject(subject)
-                                    .build());
+                            if (!perio.isEmpty() && !subject.isEmpty()) {
+                                timetableList.add(TimetableDto.builder()
+                                        .perio(perio + "교시")
+                                        .subject(subject)
+                                        .build());
+                            }
                         }
                     }
                 }
+
+                // 교시 순서 정렬 (1교시 -> 2교시 -> ...)
+                timetableList.sort(Comparator.comparingInt(a -> {
+                    try {
+                        return Integer.parseInt(a.getPerio().replace("교시", "").trim());
+                    } catch (Exception e) {
+                        return 0;
+                    }
+                }));
+            } catch (Exception e) {
+                log.warn("NEIS 시간표 응답 파싱 실패 (schoolCode={}, date={}): {}", schoolCode, date, e.toString());
             }
-
-            // 교시 순서 정렬 (1교시 -> 2교시 -> ...)
-            timetableList.sort(Comparator.comparingInt(a -> {
-                try {
-                    return Integer.parseInt(a.getPerio().replace("교시", "").trim());
-                } catch (Exception e) {
-                    return 0;
-                }
-            }));
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         return timetableList;
@@ -231,13 +240,13 @@ public class NeisApiService {
                 apiKey, atptCode, schoolCode, date
         );
 
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String body = send(url);
+        if (body == null) {
+            return null;
+        }
 
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.body());
+        try {
+            JsonNode root = MAPPER.readTree(body);
             JsonNode rows = root.path("mealServiceDietInfo").path(1).path("row");
 
             if (rows.isArray()) {
@@ -255,7 +264,7 @@ public class NeisApiService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("NEIS 급식 응답 파싱 실패 (schoolCode={}, date={}): {}", schoolCode, date, e.toString());
         }
         return null;
     }
@@ -283,13 +292,13 @@ public class NeisApiService {
                 apiKey, atptCode, schoolCode, fromYmd, toYmd
         );
 
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String body = send(url);
+        if (body == null) {
+            return events;
+        }
 
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.body());
+        try {
+            JsonNode root = MAPPER.readTree(body);
             JsonNode rows = root.path("SchoolSchedule").path(1).path("row");
 
             if (rows.isArray()) {
@@ -304,7 +313,7 @@ public class NeisApiService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("NEIS 기간 학사일정 응답 파싱 실패 (schoolCode={}, {}~{}): {}", schoolCode, fromYmd, toYmd, e.toString());
         }
 
         return events;
@@ -321,13 +330,13 @@ public class NeisApiService {
                 apiKey, atptCode, schoolCode, date
         );
 
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String body = send(url);
+        if (body == null) {
+            return null;
+        }
 
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.body());
+        try {
+            JsonNode root = MAPPER.readTree(body);
             JsonNode rows = root.path("SchoolSchedule").path(1).path("row");
 
             if (rows.isArray()) {
@@ -343,8 +352,60 @@ public class NeisApiService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("NEIS 학사일정 응답 파싱 실패 (schoolCode={}, date={}): {}", schoolCode, date, e.toString());
         }
         return null;
+    }
+
+    // NEIS 호출 공용 헬퍼 - 메서드마다 반복되던 "HttpClient 생성 + 응답 수신 + 실패 시
+    // printStackTrace만 하고 조용히 넘어가는" 패턴을 한 곳으로 모았다. 일시적인 네트워크
+    // 오류(타임아웃/연결 끊김)는 최대 MAX_ATTEMPTS번까지 짧은 대기 후 재시도하고, 그래도
+    // 실패하면 예외를 던지지 않고 null을 반환해서 호출부가 기존처럼 "데이터 없음"으로
+    // 처리하게 한다 - NEIS 장애 한 번으로 캘린더 페이지 전체가 500 에러로 죽는 것보다,
+    // 그 정보 하나만 비어있는 채로 나머지는 정상 표시되는 게 낫다는 기존 설계 방향
+    // (fetchMealFromNeis의 null 반환 규칙)과 일관성을 맞춘 것.
+    private String send(String url) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(REQUEST_TIMEOUT)
+                .GET()
+                .build();
+
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            try {
+                HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() != 200) {
+                    log.warn("NEIS API가 비정상 응답을 반환했습니다 (status={}, url={})",
+                            response.statusCode(), maskApiKey(url));
+                    return null;
+                }
+                return response.body();
+            } catch (IOException | InterruptedException e) {
+                if (Thread.currentThread().isInterrupted()) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
+                boolean lastAttempt = attempt == MAX_ATTEMPTS;
+                log.warn("NEIS API 호출 실패 ({}/{}번째 시도{}, url={}): {}",
+                        attempt, MAX_ATTEMPTS, lastAttempt ? " - 포기" : " - 재시도",
+                        maskApiKey(url), e.toString());
+                if (lastAttempt) {
+                    return null;
+                }
+                try {
+                    Thread.sleep(RETRY_BACKOFF_MILLIS * attempt);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    // 로그에 API 키가 그대로 찍히지 않도록 마스킹 - AWS.md/CLAUDE.md의 "자격증명 값을
+    // 로그·문서에 남기지 않는다" 원칙과 동일선상.
+    private String maskApiKey(String url) {
+        return url.replaceAll("KEY=[^&]*", "KEY=***");
     }
 }
