@@ -3,6 +3,7 @@ package com.webschool.webschool.user.service;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.mail.MailService;
 import com.webschool.webschool.global.upload.FileUploadService;
+import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.EmailToken;
 import com.webschool.webschool.user.dto.EmailSetupDto;
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
@@ -78,6 +79,7 @@ public class UserService {
         if (nickname == null || nickname.isBlank()) {
             nickname = dto.getUsername();
         }
+        BannedWordFilter.validate(nickname);
 
         User user = new User();
         user.setUsername(dto.getUsername());
@@ -165,7 +167,9 @@ public class UserService {
         }
 
         String nickname = dto.getNickname();
-        user.setNickname((nickname == null || nickname.isBlank()) ? user.getUsername() : nickname.trim());
+        String resolvedNickname = (nickname == null || nickname.isBlank()) ? user.getUsername() : nickname.trim();
+        BannedWordFilter.validate(resolvedNickname);
+        user.setNickname(resolvedNickname);
 
         String newEmail = dto.getEmail() == null ? "" : dto.getEmail().trim();
         if (!EMAIL_PATTERN.matcher(newEmail).matches()) {

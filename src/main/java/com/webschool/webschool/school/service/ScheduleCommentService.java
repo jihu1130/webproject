@@ -15,6 +15,7 @@ import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.school.repository.SchoolRepository;
 import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.notification.domain.Notification;
+import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
@@ -316,6 +317,7 @@ public class ScheduleCommentService {
 
     // PostService.validateContent()와 동일한 정제 로직 - th:utext로 그대로 렌더링하므로 이 단계가
     // 유일한 XSS 방어선이다. pollAttached: 설문이 함께 첨부되면 내용이 비어도 통과(PostService와 동일 규칙).
+    // 금지어 검사(BannedWordFilter)가 빠져있던 걸 발견해서 PostService와 동일하게 추가함(2026-08-28).
     private String validateContent(String content, boolean pollAttached) {
         if (content == null || content.isBlank()) {
             if (pollAttached) {
@@ -334,6 +336,7 @@ public class ScheduleCommentService {
         if (sanitized.length() > MAX_CONTENT_LENGTH) {
             throw new IllegalArgumentException("댓글은 " + MAX_CONTENT_LENGTH + "자 이내로 입력해주세요.");
         }
+        BannedWordFilter.validate(plainText);
         return sanitized;
     }
 
