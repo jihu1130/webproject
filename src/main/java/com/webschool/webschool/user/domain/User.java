@@ -125,6 +125,20 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean contestDeadlineAlertEnabled;
 
+    // 댓글/좋아요/답글 알림 개별 on-off(todo.md "고도화 후보" 항목) - contestDeadlineAlertEnabled와
+    // 반대로 이 셋은 기존에 이미 항상 켜져 있던 알림을 사용자가 끌 수 있게 여는 것이라 기본값을
+    // true로 둔다(옵트아웃 - active 필드와 동일한 이유로 Java 필드 초기값을 직접 줘야 신규
+    // 가입 흐름에서도 true로 시작함, User.points 주석 참고). NotificationService.notify()에서
+    // Notification.Type별로 이 플래그들을 확인해서 꺼져 있으면 알림 자체를 생성하지 않는다.
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean commentAlertEnabled = true;
+
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean likeAlertEnabled = true;
+
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean replyAlertEnabled = true;
+
     // 포인트/티어 시스템(todo.md 요구사항) - 게시글/댓글 작성, 좋아요 받음, QnA 답변 채택 등
     // 활동에 따라 UserPointService가 적립한다(일일 획득 한도 있음, 어뷰징 방지). 소비형(화폐)
     // 개념으로 설계했지만 소비 기능은 아직 미구현(사용자 확정) - 지금은 오르기만 한다. 신규

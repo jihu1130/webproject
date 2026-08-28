@@ -18,11 +18,33 @@
     <div class="auth-wrapper">
         <div class="auth-card">
             <h3 class="auth-title">알림 설정</h3>
-            <p class="auth-subtitle">받고 싶은 알림을 직접 켜고 끌 수 있어요 - 여기서 켠 알림만 인앱 알림으로 와요</p>
+            <p class="auth-subtitle">받고 싶은 알림을 직접 켜고 끌 수 있어요</p>
 
             <div th:if="${param.updated}" class="auth-alert auth-alert-success">저장되었습니다.</div>
 
             <form th:action="@{/mypage/notifications}" method="post">
+                <p class="auth-subtitle" style="margin-bottom: 6px;">기본으로 켜져 있어요 - 원치 않으면 꺼주세요</p>
+
+                <div class="auth-field" style="flex-direction: row; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="commentAlertEnabled" name="commentAlertEnabled"
+                           value="true" th:checked="${commentAlertEnabled}" style="width: auto;">
+                    <label for="commentAlertEnabled" style="margin: 0;">댓글 알림</label>
+                </div>
+                <div class="auth-field" style="flex-direction: row; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="likeAlertEnabled" name="likeAlertEnabled"
+                           value="true" th:checked="${likeAlertEnabled}" style="width: auto;">
+                    <label for="likeAlertEnabled" style="margin: 0;">좋아요 알림</label>
+                </div>
+                <div class="auth-field" style="flex-direction: row; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="replyAlertEnabled" name="replyAlertEnabled"
+                           value="true" th:checked="${replyAlertEnabled}" style="width: auto;">
+                    <label for="replyAlertEnabled" style="margin: 0;">답글 알림</label>
+                </div>
+
+                <hr class="auth-section-divider">
+
+                <p class="auth-subtitle" style="margin-bottom: 6px;">기본으로 꺼져 있어요 - 원하면 켜주세요</p>
+
                 <div class="auth-field" style="flex-direction: row; align-items: center; gap: 10px;">
                     <input type="checkbox" id="contestDeadlineAlertEnabled" name="contestDeadlineAlertEnabled"
                            value="true" th:checked="${contestDeadlineAlertEnabled}" style="width: auto;">

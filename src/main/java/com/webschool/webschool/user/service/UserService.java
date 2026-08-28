@@ -302,13 +302,20 @@ public class UserService {
                 bio == null || bio.isBlank() ? "(비움)" : truncate(bio.trim()));
     }
 
-    // 알림 설정 - "콘테스트 마감 임박 알림"을 사용자가 직접 켜고 끄는 개인 설정(관리자 위임 권한과는
-    // 성격이 다름, 계정 보안과 무관해 updateBio()와 동일하게 현재 비밀번호 재확인을 요구하지 않는다).
-    // 지금은 항목이 하나뿐이지만 나중에 알림 유형이 늘어나도 이 메서드/화면을 그대로 확장하면 된다.
+    // 알림 설정 - 사용자가 직접 켜고 끄는 개인 알림 설정(관리자 위임 권한과는 성격이 다름, 계정
+    // 보안과 무관해 updateBio()와 동일하게 현재 비밀번호 재확인을 요구하지 않는다). 댓글/좋아요/
+    // 답글은 기존에 항상 켜져 있던 알림을 끄는 옵트아웃(NotificationService.isEnabled() 참고),
+    // 콘테스트 마감 임박은 반대로 기본 꺼짐인 옵트인 - 체크박스 미체크 시 폼에서 아예 파라미터가
+    // 안 넘어오므로 컨트롤러 쪽에서 각 필드를 defaultValue=false로 받아 그대로 전달한다.
     @Transactional
-    public void updateNotificationPreferences(String username, boolean contestDeadlineAlertEnabled) {
+    public void updateNotificationPreferences(String username, boolean contestDeadlineAlertEnabled,
+                                               boolean commentAlertEnabled, boolean likeAlertEnabled,
+                                               boolean replyAlertEnabled) {
         User user = getByUsername(username);
         user.setContestDeadlineAlertEnabled(contestDeadlineAlertEnabled);
+        user.setCommentAlertEnabled(commentAlertEnabled);
+        user.setLikeAlertEnabled(likeAlertEnabled);
+        user.setReplyAlertEnabled(replyAlertEnabled);
     }
 
     @Transactional

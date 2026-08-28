@@ -31,7 +31,7 @@ public class NotificationService {
 
     @Transactional
     public void notify(User recipient, Notification.Type type, String message, String link) {
-        if (recipient == null) {
+        if (recipient == null || !isEnabled(recipient, type)) {
             return;
         }
         Notification notification = new Notification();
@@ -123,6 +123,22 @@ public class NotificationService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
         notificationRepository.findByRecipient_IdAndReadFalse(user.getId())
                 .forEach(n -> n.setRead(true));
+    }
+
+    // 댓글/좋아요/답글은 사용자가 마이페이지(/mypage/notifications)에서 개별로 끌 수 있다
+    // (User.commentAlertEnabled 등, 기본값 true - 옵트아웃). notify()/notifyIfNotSelf()를
+    // 거치는 모든 호출부(게시글·댓글·한마디 좋아요, 댓글·답글 알림 등)가 각자 이 검사를
+    // 반복하지 않도록 여기 한 곳에서 막는다. 그 외 타입(계정/신고처리/공지/콘테스트 수상 등)은
+    // 끌 수 없는 알림이라 항상 true. CONTEST_DEADLINE_SOON은 이미 호출부(PostContestService.
+    // sendDeadlineReminder())에서 수신 대상 자체를 옵트인한 사용자로만 걸러서 넘기므로 여기서
+    // 또 검사할 필요가 없다.
+    private boolean isEnabled(User user, Notification.Type type) {
+        return switch (type) {
+            case COMMENT -> user.isCommentAlertEnabled();
+            case LIKE -> user.isLikeAlertEnabled();
+            case REPLY -> user.isReplyAlertEnabled();
+            default -> true;
+        };
     }
 
     private NotificationDto toDto(Notification n) {
