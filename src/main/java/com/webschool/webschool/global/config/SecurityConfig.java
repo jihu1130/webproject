@@ -1,5 +1,7 @@
 package com.webschool.webschool.global.config;
 
+import com.webschool.webschool.global.security.LoginFailureHandler;
+import com.webschool.webschool.global.security.LoginSuccessHandler;
 import com.webschool.webschool.user.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
@@ -23,6 +25,8 @@ public class SecurityConfig {
     // (ClientRegistration.Builder가 "clientId cannot be empty"로 즉시 예외를 던짐) - 구글 OAuth
     // 앱을 만들어 자격증명을 받기 전까지는 이 기능이 조용히 비활성 상태로 남아있어야 한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
+    private final LoginSuccessHandler loginSuccessHandler;
+    private final LoginFailureHandler loginFailureHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -61,9 +65,11 @@ public class SecurityConfig {
                 )
                 .formLogin(login -> login
                         .loginPage("/login")
-                        // alwaysUse=false: 로그인 페이지로 리다이렉트되기 전 원래 요청했던 URL(예: /school/calendar)이 있으면 그곳으로 되돌아간다
-                        .defaultSuccessUrl("/", false)
-                        .failureUrl("/login?error=true")
+                        // alwaysUse=false: 로그인 페이지로 리다이렉트되기 전 원래 요청했던 URL(예: /school/calendar)이 있으면 그곳으로 되돌아간다.
+                        // 로그인 시도 횟수 제한(todo.md "고도화 후보") - 성공 시 실패 카운터 리셋,
+                        // 실패 시 카운터 증가/잠금 판단은 각각 LoginSuccessHandler/LoginFailureHandler로 위임.
+                        .successHandler(loginSuccessHandler)
+                        .failureHandler(loginFailureHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout

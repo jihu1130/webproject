@@ -28,6 +28,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                 // 탈퇴했거나, 관리자가 즉시 비활성화했거나(User.active), 기간제 계정 비활성화조치
                 // (UserPenalty, DEACTIVATION)가 지금 시점 기준 유효하면 로그인 차단
                 .disabled(user.isDeleted() || !user.isActive() || userPenaltyService.isDeactivated(user.getId()))
+                // 로그인 연속 실패로 잠긴 계정 - LockedException을 던져 LoginFailureHandler가
+                // "비밀번호 오류"와 구분되는 잠금 안내 메시지로 리다이렉트할 수 있게 한다.
+                .accountLocked(user.isLocked())
                 .build();
     }
 }

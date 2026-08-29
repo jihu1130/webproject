@@ -23,6 +23,9 @@
             <div th:if="${param.error}" class="auth-alert auth-alert-danger">
                 아이디 또는 비밀번호가 올바르지 않습니다.
             </div>
+            <div th:if="${param.locked}" class="auth-alert auth-alert-danger">
+                비밀번호를 여러 번 잘못 입력해서 계정이 일시적으로 잠겼습니다. 15분 후 다시 시도해주세요.
+            </div>
             <div th:if="${param.registered}" class="auth-alert auth-alert-success">
                 회원가입이 완료되었습니다! 로그인해 주세요.
             </div>

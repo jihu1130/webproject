@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,4 +23,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.points = u.points + :delta WHERE u.id = :id")
     void addPoints(@Param("id") Long id, @Param("delta") int delta);
+
+    // 로그인 실패 횟수 - addPoints와 동일한 이유로 원자적 증가. LoginAttemptService에서만 호출한다.
+    @Modifying
+    @Query("UPDATE User u SET u.failedLoginAttempts = u.failedLoginAttempts + 1 WHERE u.username = :username")
+    void incrementFailedLoginAttempts(@Param("username") String username);
+
+    @Modifying
+    @Query("UPDATE User u SET u.lockedUntil = :lockedUntil WHERE u.username = :username")
+    void lockAccountUntil(@Param("username") String username, @Param("lockedUntil") LocalDateTime lockedUntil);
+
+    @Modifying
+    @Query("UPDATE User u SET u.failedLoginAttempts = 0, u.lockedUntil = null WHERE u.username = :username")
+    void resetFailedLoginAttempts(@Param("username") String username);
 }

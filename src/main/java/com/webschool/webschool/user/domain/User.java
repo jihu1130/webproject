@@ -139,6 +139,21 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean replyAlertEnabled = true;
 
+    // 로그인 브루트포스 방지(todo.md "고도화 후보" 항목) - UserPenalty와 달리 이력이 아니라
+    // 계정당 현재 상태 하나만 필요해서(감사 로그 목적이 아님) User.points처럼 단순 컬럼으로 둔다.
+    // LoginAttemptService.MAX_ATTEMPTS(5회) 연속 실패 시 LOCKOUT_MINUTES(15분) 동안 lockedUntil이
+    // 채워지고, 그 시각이 지나면 isLocked()가 자동으로 false를 반환한다(UserPenalty.isCurrentlyActive()/
+    // SchoolService.isCacheExpired()와 동일한 "만료 처리 없이 읽는 시점에 계산" 패턴 - 별도
+    // 잠금 해제 배치가 필요 없다).
+    @Column(nullable = false, columnDefinition = "int default 0")
+    private int failedLoginAttempts = 0;
+
+    private LocalDateTime lockedUntil; // null이면 잠기지 않은 상태
+
+    public boolean isLocked() {
+        return lockedUntil != null && lockedUntil.isAfter(LocalDateTime.now());
+    }
+
     // 포인트/티어 시스템(todo.md 요구사항) - 게시글/댓글 작성, 좋아요 받음, QnA 답변 채택 등
     // 활동에 따라 UserPointService가 적립한다(일일 획득 한도 있음, 어뷰징 방지). 소비형(화폐)
     // 개념으로 설계했지만 소비 기능은 아직 미구현(사용자 확정) - 지금은 오르기만 한다. 신규
