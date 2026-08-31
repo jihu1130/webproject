@@ -23,6 +23,10 @@
             <div class="page-heading post-page-heading">
                 <h1><i class="fa-solid fa-trophy"></i> 이번 주 인기 게시글</h1>
                 <p class="page-sub">본인 게시물을 후보로 신청하고, 마음에 드는 글에 투표해보세요 (월~일, 인당 신청 1개·투표 1표) — 매주 월요일 자정 득표 상위 3명에게 포인트 지급(30/20/10점)</p>
+                <p class="contest-countdown" id="contestCountdown"
+                   th:attr="data-deadline=${#temporals.format(weekDeadline, 'yyyy-MM-dd''T''HH:mm:ss')}">
+                    <i class="fa-regular fa-clock"></i> <span id="contestCountdownText">마감까지 남은 시간 계산 중...</span>
+                </p>
             </div>
             <div class="post-list-header-actions">
                 <a href="/posts/contest/history" class="btn btn-outline-brand"><i class="fa-solid fa-clock-rotate-left"></i> 지난 우승 이력</a>
@@ -53,6 +57,33 @@
 
 <script th:src="@{/js/csrf.js}"></script>
 <script>
+    (function () {
+        var el = document.getElementById('contestCountdown');
+        var textEl = document.getElementById('contestCountdownText');
+        if (!el || !textEl) return;
+        var deadline = new Date(el.getAttribute('data-deadline'));
+
+        function render() {
+            var diff = deadline.getTime() - Date.now();
+            if (diff <= 0) {
+                textEl.textContent = '마감 집계 중...';
+                return;
+            }
+            var totalSeconds = Math.floor(diff / 1000);
+            var days = Math.floor(totalSeconds / 86400);
+            var hours = Math.floor((totalSeconds % 86400) / 3600);
+            var minutes = Math.floor((totalSeconds % 3600) / 60);
+            var seconds = totalSeconds % 60;
+            var parts = [];
+            if (days > 0) parts.push(days + '일');
+            parts.push(hours + '시간', minutes + '분', seconds + '초');
+            textEl.textContent = '마감까지 ' + parts.join(' ') + ' 남음';
+        }
+
+        render();
+        setInterval(render, 1000);
+    })();
+
     document.querySelectorAll('.contest-vote-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var entryId = btn.getAttribute('data-entry-id');

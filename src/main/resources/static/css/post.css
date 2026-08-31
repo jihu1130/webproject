@@ -1658,6 +1658,16 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 .poll-widget-submit { margin-top: 12px; padding: 9px 20px; font-size: 0.85rem; }
 
 /* 인기 게시글 주간 콘테스트 - post/contest-list.html */
+.contest-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brand-1-dark);
+}
+
 .post-list-empty {
     padding: 40px 20px;
     text-align: center;

@@ -9,7 +9,7 @@ import com.webschool.webschool.post.domain.PostContestResult;
 import com.webschool.webschool.post.domain.PostContestVote;
 import com.webschool.webschool.post.dto.ContestWeekResultDto;
 import com.webschool.webschool.post.dto.PostContestEntryDto;
-import com.webschool.webschool.post.dto.PostContestResultDto;
+import com.webschool.webschool.post.dto .PostContestResultDto;
 import com.webschool.webschool.post.repository.PostContestEntryRepository;
 import com.webschool.webschool.post.repository.PostContestResultRepository;
 import com.webschool.webschool.post.repository.PostContestVoteRepository;
@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +56,12 @@ public class PostContestService {
     // 콘테스트 회차 단위 - 월요일 시작 주. 오늘이 월요일이면 오늘 자신을 반환.
     public LocalDate currentWeekStart() {
         return LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+    }
+
+    // 이번 주 콘테스트 마감 시각(카운트다운 표시용) - tallyPreviousWeek()가 실제로 도는 시점과
+    // 동일하게 다음 주 월요일 자정으로 계산한다.
+    public LocalDateTime currentWeekDeadline() {
+        return currentWeekStart().plusWeeks(1).atStartOfDay();
     }
 
     @Transactional

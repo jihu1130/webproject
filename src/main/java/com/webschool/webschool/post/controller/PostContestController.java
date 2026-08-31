@@ -26,6 +26,7 @@ public class PostContestController {
     public String list(Authentication authentication, Model model) {
         List<PostContestEntryDto> entries = postContestService.getCurrentWeekEntries(authentication.getName());
         model.addAttribute("entries", entries);
+        model.addAttribute("weekDeadline", postContestService.currentWeekDeadline());
         return "post/contest-list";
     }
 
