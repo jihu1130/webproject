@@ -8,12 +8,12 @@ package com.webschool.webschool.user.domain;
 // 등급 이름은 게임 랭크 시스템(아이언~마스터) 테마로 확정(사용자 지시, 2026-08-27).
 public enum PointTier {
     IRON(0, "아이언"),
-    BRONZE(50, "브론즈"),
-    SILVER(150, "실버"),
-    GOLD(400, "골드"),
-    PLATINUM(800, "플래티넘"),
-    DIAMOND(1500, "다이아"),
-    MASTER(3000, "마스터");
+    BRONZE(150, "브론즈"),
+    SILVER(450, "실버"),
+    GOLD(1200, "골드"),
+    PLATINUM(2400, "플래티넘"),
+    DIAMOND(4500, "다이아"),
+    MASTER(9000, "마스터");
 
     private final int minPoints;
     private final String label;

@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class AttendanceService {
 
-    public static final int ATTENDANCE_POINTS = 3;
+    public static final int ATTENDANCE_POINTS = 10;
 
     private final AttendanceLogRepository attendanceLogRepository;
     private final UserPointService userPointService;

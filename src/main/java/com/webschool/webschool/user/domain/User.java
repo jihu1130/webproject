@@ -164,14 +164,14 @@ public class User {
     // 포인트/티어 시스템(todo.md 요구사항) - 게시글/댓글 작성, 좋아요 받음, QnA 답변 채택 등
     // 활동에 따라 UserPointService가 적립한다(일일 획득 한도 있음, 어뷰징 방지). 소비형(화폐)
     // 개념으로 설계했지만 소비 기능은 아직 미구현(사용자 확정) - 지금은 오르기만 한다. 신규
-    // 가입 시 0점이 아니라 기본 10점에서 시작한다(사용자 요청 - "얼마나 성실한지"가 숫자로
+    // 가입 시 0점이 아니라 기본 30점에서 시작한다(사용자 요청 - "얼마나 성실한지"가 숫자로
     // 드러나야 하니 텅 빈 0보다 낮은 시작점을 주지 않기 위함). active 필드와 동일한 이유로
     // Java 필드 초기값을 직접 준다 - int 기본값(0)이 JPA INSERT에 그대로 실려서 컬럼의
     // DB 레벨 default는 신규 가입 흐름에서 적용되지 않는다(User는 UserService.register()/
     // CustomOAuth2UserService 등 여러 경로에서 생성되므로 매 생성 지점마다 값을 세팅하는 대신
     // 필드 초기값 하나로 전부 커버).
-    @Column(nullable = false, columnDefinition = "int default 10")
-    private int points = 10;
+    @Column(nullable = false, columnDefinition = "int default 30")
+    private int points = 30;
 
     // 프로필 사진 - 업로드한 적 없으면 null(화면에서 static/images/default-avatar.svg로 대체
     // 표시). FileUploadService.storeProfileImage()로 저장하며, 경로만 이 컬럼에 남긴다

@@ -61,6 +61,29 @@
                     <button type="submit" class="btn btn-outline-brand" style="color:#dc2626; border-color:#fca5a5;">삭제</button>
                 </form>
             </div>
+
+            <!-- 답변 스레드 - 문의 확장 작업 지시서 항목. 여러 번 답변 가능(라이엇 고객센터
+                 스타일 스레드로 채택, PostComment/알림 패턴 재사용 - AWS.md/todo.md 참고).
+                 로그인 제출자는 답변 등록 시 인앱 알림, 비로그인 제출자는 이메일로 안내되므로
+                 (BugReportService.addReply() 참고) 이 화면에서 별도 발송 처리는 필요 없다. -->
+            <div class="admin-inquiry-replies">
+                <h2 class="admin-inquiry-replies-title">답변 내역</h2>
+                <div th:if="${#lists.isEmpty(report.replies)}" class="admin-empty">아직 등록된 답변이 없어요.</div>
+                <ul class="admin-inquiry-reply-list" th:unless="${#lists.isEmpty(report.replies)}">
+                    <li class="admin-inquiry-reply-item" th:each="reply : ${report.replies}">
+                        <div class="admin-inquiry-reply-header">
+                            <span class="admin-inquiry-reply-author"><i class="fa-solid fa-user-shield"></i> <span th:text="${reply.adminUsername}">관리자</span></span>
+                            <span class="admin-inquiry-reply-time" th:text="${reply.createdAt}">날짜</span>
+                        </div>
+                        <p class="admin-inquiry-reply-content" th:text="${reply.content}">답변 내용</p>
+                    </li>
+                </ul>
+
+                <form th:action="@{'/admin/bug-reports/' + ${report.id} + '/reply'}" method="post" class="admin-inquiry-reply-form">
+                    <textarea name="content" placeholder="답변을 입력하세요" required maxlength="2000"></textarea>
+                    <button type="submit" class="btn btn-brand">답변 등록</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

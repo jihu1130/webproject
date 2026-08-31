@@ -184,7 +184,10 @@ html { scroll-behavior: smooth; }
 .bento-card-lg {
     grid-column: span 2;
     grid-row: span 2;
-    background: var(--brand-gradient-tint-2);
+    /* 원래 여기만 별도 브랜드 틴트 배경을 줘서 "강조 카드"로 두드러지게 하려고 했는데,
+       옅게 하든 진하게 하든 회색/이질적으로 보인다는 지적이 계속돼서 아예 포기 -
+       다른 카드들과 완전히 동일한 배경(흰색/--surface)을 쓰고 아이콘 색으로만
+       구분되게 통일(사용자 요청). */
     justify-content: flex-end;
 }
 .bento-card-lg h3 { font-size: 1.4rem; }
@@ -316,13 +319,15 @@ html { scroll-behavior: smooth; }
 }
 
 /* ══════════ CTA 밴드 ══════════ */
+/* 예전엔 이 섹션 전체가 --brand-fixed 단색 배경이라(흰 글자를 얹는 카드), 페이지의 다른
+   모든 섹션(흰/크림 배경 + 파란색은 아이콘·버튼 같은 포인트로만 사용)과 다르게 하단에
+   "혼자만 파란색 블록"으로 튀어 보였다(작업 지시서 항목) - 다른 섹션과 같은 배경/텍스트
+   색 규칙(var(--surface)/var(--ink)/var(--muted), 다크모드도 자동으로 따라감)으로 맞추고
+   버튼도 사이트 전역 .btn-brand/.btn-outline-brand와 동일한 배색으로 뒤집었다. */
 .cta-band {
     position: relative;
     overflow: hidden;
-    /* --brand-fixed(고정 남색) - 흰 글자를 얹는 밴드라 다크모드에서 밝은 하늘색으로 뒤집히면
-       안 된다(theme.css 상단 주석 참고, 예전엔 --brand-gradient-dark라 다크모드에서 대비
-       1.78:1까지 떨어졌었다) */
-    background: var(--brand-fixed);
+    background: var(--surface);
     padding: 80px 24px;
     text-align: center;
 }
@@ -333,12 +338,12 @@ html { scroll-behavior: smooth; }
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.14), transparent 70%);
+    background: radial-gradient(circle, var(--brand-gradient-tint-2), transparent 70%);
     pointer-events: none;
 }
 .cta-inner { position: relative; max-width: 620px; margin: 0 auto; }
-.cta-band h2 { color: #fff; font-size: 1.8rem; font-weight: 800; margin: 0 0 0.7rem; letter-spacing: -0.02em; }
-.cta-band p { color: rgba(255, 255, 255, 0.82); margin: 0 0 1.8rem; font-size: 1rem; }
+.cta-band h2 { color: var(--ink); font-size: 1.8rem; font-weight: 800; margin: 0 0 0.7rem; letter-spacing: -0.02em; }
+.cta-band p { color: var(--muted); margin: 0 0 1.8rem; font-size: 1rem; }
 
 .cta-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
 .cta-btn-primary,
@@ -352,11 +357,12 @@ html { scroll-behavior: smooth; }
     gap: 8px;
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
-/* --brand-fixed(고정 남색) - 흰 배경 위 글자, 다크모드에서도 대비 유지(theme.css 상단 주석) */
-.cta-btn-primary { background: #fff; color: var(--brand-fixed); }
-.cta-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0.6rem 1.4rem rgba(0, 0, 0, 0.25); }
-.cta-btn-secondary { border: 1.5px solid rgba(255, 255, 255, 0.5); color: #fff; }
-.cta-btn-secondary:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); }
+/* --brand-fixed(고정 남색) - .btn-brand와 동일한 배색(theme.css 상단 주석), 다크모드에서도
+   흰 글자 대비 유지 */
+.cta-btn-primary { background: var(--brand-fixed); color: #fff; }
+.cta-btn-primary:hover { filter: brightness(1.06); transform: translateY(-2px); box-shadow: 0 0.6rem 1.4rem rgba(30, 79, 163, 0.3); }
+.cta-btn-secondary { background: var(--surface); border: 1.5px solid var(--brand-1); color: var(--brand-1); }
+.cta-btn-secondary:hover { background: var(--brand-gradient-tint-1); transform: translateY(-2px); }
 
 /* ══════════ 푸터 ══════════ */
 .site-footer { background: var(--nav-bg); padding: 48px 24px 20px; }

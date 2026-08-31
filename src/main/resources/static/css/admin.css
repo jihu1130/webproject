@@ -496,6 +496,64 @@
     .admin-profile-stats { gap: 12px; }
 }
 
+/* 문의 답변 스레드 - .admin-penalty-form textarea와 동일한 배색/여백 컨벤션 재사용 */
+.admin-inquiry-replies {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.admin-inquiry-replies-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 12px;
+}
+
+.admin-inquiry-reply-list { margin: 0 0 14px; }
+
+.admin-inquiry-reply-item {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--surface-soft);
+}
+.admin-inquiry-reply-item + .admin-inquiry-reply-item { margin-top: 8px; }
+
+.admin-inquiry-reply-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.admin-inquiry-reply-author { font-weight: 700; color: var(--brand-1-dark); font-size: 0.85rem; }
+.admin-inquiry-reply-author i { margin-right: 4px; }
+.admin-inquiry-reply-time { color: var(--muted); font-size: 0.78rem; }
+
+.admin-inquiry-reply-content {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.admin-inquiry-reply-form { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.admin-inquiry-reply-form textarea {
+    flex: 1 1 100%;
+    min-height: 70px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: 1.5px solid var(--border);
+    font-family: inherit;
+    font-size: 0.88rem;
+    resize: vertical;
+}
+
+.admin-inquiry-reply-form textarea:focus { border-color: var(--brand-1); outline: none; }
+
 /* 계정 제재 부여 폼 */
 .admin-penalty-form {
     display: flex;
