@@ -8,8 +8,10 @@
 [![Hibernate](https://img.shields.io/badge/Hibernate-7.4.1-59666C?logo=hibernate&logoColor=white)](https://hibernate.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![Thymeleaf](https://img.shields.io/badge/Thymeleaf-Server%20Rendered-005F0F?logo=thymeleaf&logoColor=white)](https://www.thymeleaf.org/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-webschool.kro.kr-2ea44f?logo=googlechrome&logoColor=white)](https://webschool.kro.kr/)
 
 ---
+🔗 **바로가기**: [https://webschool.kro.kr/](https://webschool.kro.kr/)
 
 ## 📌 소개
 
@@ -92,6 +94,9 @@ cp src/main/resources/application.yml.example src/main/resources/application.yml
 - 익명 게시글은 서버 단에서 닉네임을 치환하고, 프로필/검색에서 제외해 익명성 보장
 - 탈퇴 계정은 일반 화면에서만 닉네임을 치환(관리자 화면은 실제 신원 유지)
 
+
 ---
+**서비스 주소**: [https://webschool.kro.kr/](https://webschool.kro.kr/)
+
 
 <p align="center">Made with ☕ by <a href="https://github.com/jihu1130">jihu1130</a></p>
