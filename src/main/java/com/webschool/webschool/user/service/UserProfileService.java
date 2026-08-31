@@ -29,6 +29,14 @@ public class UserProfileService {
     private final PostRepository postRepository;
     private final PostCommentRepository postCommentRepository;
 
+    // 공개 URL(/users/{uuid})의 uuid를 내부 Long id로 변환 - PostService.resolveIdByUuid()와
+    // 동일한 패턴(컨트롤러 레이어에서만 uuid를 다루고 서비스 내부는 계속 Long을 쓴다).
+    public Long resolveIdByUuid(String uuid) {
+        return userRepository.findByUuid(uuid)
+                .map(User::getId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
+
     public PublicUserProfileDto getProfile(Long userId, int page) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -47,6 +55,7 @@ public class UserProfileService {
 
         return PublicUserProfileDto.builder()
                 .id(user.getId())
+                .uuid(user.getUuid())
                 .nickname(user.getNickname())
                 .bio(user.getBio())
                 .profileImageUrl(user.getProfileImageUrl())
@@ -57,6 +66,7 @@ public class UserProfileService {
                 .tierLabel(user.getTier().getLabel())
                 .equippedTitle(user.getEquippedTitle())
                 .equippedAvatarColor(user.getEquippedAvatarColor())
+                .equippedEffect(user.getEquippedEffect())
                 .posts(posts)
                 .build();
     }

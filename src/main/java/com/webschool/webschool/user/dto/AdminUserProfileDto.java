@@ -33,4 +33,5 @@ public class AdminUserProfileDto {
     private List<UserPenaltyDto> penalties;
     private String equippedTitle;
     private String equippedAvatarColor;
+    private String equippedEffect;
 }

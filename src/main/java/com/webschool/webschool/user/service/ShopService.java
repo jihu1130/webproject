@@ -31,7 +31,17 @@ public class ShopService {
     // ----- 관리자 카탈로그 CRUD -----
 
     public List<ShopItemDto> getAllItems() {
+        return getAllItems(null, null, null);
+    }
+
+    // 관리자 상점 목록 검색 - 다른 관리자 화면과 동일한 메모리 필터링 컨벤션(AdminPostService.matches()
+    // 참고). keyword는 상품명(label) 대상, type/active는 정확히 일치하는 것만.
+    public List<ShopItemDto> getAllItems(String keyword, String type, Boolean active) {
         return shopItemRepository.findAll().stream()
+                .filter(item -> type == null || type.isBlank() || item.getType().name().equals(type))
+                .filter(item -> active == null || item.isActive() == active)
+                .filter(item -> keyword == null || keyword.isBlank()
+                        || item.getLabel().toLowerCase().contains(keyword.toLowerCase()))
                 .sorted((a, b) -> a.getType() == b.getType()
                         ? Integer.compare(a.getPrice(), b.getPrice())
                         : a.getType().compareTo(b.getType()))
@@ -40,7 +50,7 @@ public class ShopService {
     }
 
     @Transactional
-    public void createItem(ShopItem.Type type, String label, String value, int price) {
+    public void createItem(ShopItem.Type type, String label, String value, int price, ShopItem.Effect effect) {
         validate(label, value, price);
         ShopItem item = new ShopItem();
         item.setType(type);
@@ -48,17 +58,19 @@ public class ShopService {
         item.setValue(value.trim());
         item.setPrice(price);
         item.setActive(true);
+        item.setEffect(type == ShopItem.Type.AVATAR_COLOR && effect != null ? effect : ShopItem.Effect.NONE);
         shopItemRepository.save(item);
     }
 
     @Transactional
-    public void updateItem(Long id, String label, String value, int price) {
+    public void updateItem(Long id, String label, String value, int price, ShopItem.Effect effect) {
         validate(label, value, price);
         ShopItem item = shopItemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
         item.setLabel(label.trim());
         item.setValue(value.trim());
         item.setPrice(price);
+        item.setEffect(item.getType() == ShopItem.Type.AVATAR_COLOR && effect != null ? effect : ShopItem.Effect.NONE);
     }
 
     // 하드 삭제 없음(CLAUDE.md "알려진 함정" - 이미 구매한 사용자가 있으면 UserShopItem의 FK가
@@ -77,8 +89,8 @@ public class ShopService {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("적용값을 입력해주세요.");
         }
-        if (price <= 0) {
-            throw new IllegalArgumentException("가격은 1 이상이어야 합니다.");
+        if (price < 0) {
+            throw new IllegalArgumentException("가격은 0 이상이어야 합니다.");
         }
     }
 
@@ -142,6 +154,7 @@ public class ShopService {
             user.setEquippedTitle(null);
         } else {
             user.setEquippedAvatarColor(null);
+            user.setEquippedEffect(null);
         }
         userRepository.save(user);
     }
@@ -151,6 +164,7 @@ public class ShopService {
             user.setEquippedTitle(item.getValue());
         } else {
             user.setEquippedAvatarColor(item.getValue());
+            user.setEquippedEffect(item.getEffect() == ShopItem.Effect.NONE ? null : item.getEffect().name());
         }
     }
 
@@ -160,6 +174,7 @@ public class ShopService {
                 .type(item.getType().name())
                 .label(item.getLabel())
                 .value(item.getValue())
+                .effect(item.getEffect().name())
                 .price(item.getPrice())
                 .active(item.isActive())
                 .owned(owned)

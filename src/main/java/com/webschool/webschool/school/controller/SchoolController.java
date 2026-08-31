@@ -139,13 +139,15 @@ public class SchoolController {
     // 페이지가 없이 캘린더 날짜별 패널 안에서만 존재하므로, 그 한마디가 속한 학교/날짜/학년/반으로
     // 캘린더를 열어주는 리다이렉트만 제공한다(calendar.js가 highlightComment 파라미터를 읽어 해당
     // 한마디로 스크롤+하이라이트한다). 찾을 수 없으면 그냥 빈 캘린더로 보낸다.
-    @GetMapping("/comments/{id}")
-    public String openComment(@PathVariable Long id) {
+    @GetMapping("/comments/{uuid}")
+    public String openComment(@PathVariable String uuid) {
         try {
+            Long id = scheduleCommentService.resolveIdByUuid(uuid);
             var comment = scheduleCommentService.findForPermalink(id);
             var school = comment.getSchool();
             // calendar.js의 handleDayClick()이 기대하는 'YYYY-MM-DD' 형식 그대로 넘긴다(내부에서
-            // yyyyMMdd로 변환해 API를 호출하므로 여기서 미리 변환할 필요가 없다).
+            // yyyyMMdd로 변환해 API를 호출하므로 여기서 미리 변환할 필요가 없다). highlightComment는
+            // 캘린더가 /api/comments로 이미 받아온 목록의 Long id와 매칭하는 값이라 그대로 유지한다.
             String date = comment.getTargetDate().toString();
             return "redirect:" + buildCalendarUrl(school.getAtptOfcdcScCode(), school.getSdSchulCode(),
                     school.getSchoolName(), date, comment.getGrade(), comment.getClassNm(), id);
@@ -199,10 +201,11 @@ public class SchoolController {
                                      @RequestParam(value = "pollAnonymous", required = false, defaultValue = "false") boolean pollAnonymous,
                                      @RequestParam(value = "pollVisibilityScope", required = false) String pollVisibilityScope,
                                      @RequestParam(value = "pollSameSchoolOnly", required = false, defaultValue = "true") boolean pollSameSchoolOnly,
+                                     @RequestParam(value = "pollExpiresAt", required = false) String pollExpiresAt,
                                      Authentication authentication, Model model) {
         try {
             PollCreateRequest pollForm = buildPollRequest(pollQuestion, pollOptions, pollAllowMultiple,
-                    pollAllowCustomOption, pollAnonymous, pollVisibilityScope, pollSameSchoolOnly);
+                    pollAllowCustomOption, pollAnonymous, pollVisibilityScope, pollSameSchoolOnly, pollExpiresAt);
             // 설문 데이터가 잘못됐으면 한마디부터 저장하기 전에 여기서 먼저 걸러낸다(PostController.
             // create()와 동일한 이유 - 안 그러면 한마디는 이미 만들어진 채로 에러 화면이 뜨고, 다시
             // 제출하면 한마디가 중복 생성될 수 있다).
@@ -211,7 +214,7 @@ public class SchoolController {
             ScheduleCommentDto dto = scheduleCommentService.createComment(
                     atptCode, schoolCode, LocalDate.parse(date), grade, classNm, authentication.getName(), content, hasPoll);
             pollService.createPollForComment(dto.getId(), authentication.getName(), pollForm);
-            return "redirect:/school/comments/" + dto.getId();
+            return "redirect:/school/comments/" + dto.getUuid();
         } catch (IllegalArgumentException e) {
             model.addAttribute("mode", "create");
             model.addAttribute("atptCode", atptCode);
@@ -230,31 +233,38 @@ public class SchoolController {
 
     // 오늘의 한마디 수정 페이지 - PostController.editForm()/update()와 동일한 패턴(본인 작성 글만
     // 진입 가능, 검증 실패 시 같은 폼을 에러와 함께 다시 그림).
-    @GetMapping("/comments/{id}/edit")
-    public String editCommentForm(@PathVariable Long id, Authentication authentication, Model model) {
+    @GetMapping("/comments/{uuid}/edit")
+    public String editCommentForm(@PathVariable String uuid, Authentication authentication, Model model) {
         try {
+            Long id = scheduleCommentService.resolveIdByUuid(uuid);
             ScheduleComment comment = scheduleCommentService.getForEdit(id, authentication.getName());
-            populateEditModel(model, id, comment);
+            populateEditModel(model, uuid, comment);
             return "school/comment-form";
         } catch (IllegalArgumentException e) {
-            return "redirect:/school/comments/" + id;
+            return "redirect:/school/comments/" + uuid;
         }
     }
 
-    @PostMapping("/comments/{id}/edit")
-    public String updateCommentPage(@PathVariable Long id, @RequestParam String content,
+    @PostMapping("/comments/{uuid}/edit")
+    public String updateCommentPage(@PathVariable String uuid, @RequestParam String content,
+                                     @RequestParam(value = "removePoll", required = false, defaultValue = "false") boolean removePoll,
                                      Authentication authentication, Model model) {
         try {
+            Long id = scheduleCommentService.resolveIdByUuid(uuid);
             scheduleCommentService.updateComment(id, authentication.getName(), content);
-            return "redirect:/school/comments/" + id;
+            if (removePoll) {
+                pollService.deletePollForComment(id, authentication.getName());
+            }
+            return "redirect:/school/comments/" + uuid;
         } catch (IllegalArgumentException e) {
             try {
+                Long id = scheduleCommentService.resolveIdByUuid(uuid);
                 ScheduleComment comment = scheduleCommentService.getForEdit(id, authentication.getName());
-                populateEditModel(model, id, comment);
+                populateEditModel(model, uuid, comment);
             } catch (IllegalArgumentException lookupFailed) {
                 model.addAttribute("mode", "edit");
-                model.addAttribute("commentId", id);
-                model.addAttribute("cancelUrl", "/school/comments/" + id);
+                model.addAttribute("commentId", uuid);
+                model.addAttribute("cancelUrl", "/school/comments/" + uuid);
             }
             model.addAttribute("contentValue", content);
             model.addAttribute("errorMessage", e.getMessage());
@@ -262,15 +272,16 @@ public class SchoolController {
         }
     }
 
-    private void populateEditModel(Model model, Long id, ScheduleComment comment) {
+    private void populateEditModel(Model model, String uuid, ScheduleComment comment) {
         model.addAttribute("mode", "edit");
-        model.addAttribute("commentId", id);
+        model.addAttribute("commentId", uuid);
         model.addAttribute("schoolName", comment.getSchool().getSchoolName());
         model.addAttribute("dateLabel", comment.getTargetDate().format(DateTimeFormatter.ofPattern("yyyy년 M월 d일 (E)", Locale.KOREAN)));
         model.addAttribute("grade", comment.getGrade());
         model.addAttribute("classNm", comment.getClassNm());
         model.addAttribute("contentValue", comment.getContent());
-        model.addAttribute("cancelUrl", "/school/comments/" + id);
+        model.addAttribute("cancelUrl", "/school/comments/" + uuid);
+        model.addAttribute("existingPollQuestion", pollService.findQuestionForComment(comment.getId()).orElse(null));
     }
 
     private String formatDateLabel(String isoDate) {
@@ -371,7 +382,7 @@ public class SchoolController {
     // 작성/한마디 작성) 두 곳뿐이라 공용 유틸로 뽑지 않고 그대로 중복해 둔다.
     private PollCreateRequest buildPollRequest(String question, List<String> options, boolean allowMultiple,
                                                 boolean allowCustomOption, boolean anonymous,
-                                                String visibilityScope, boolean sameSchoolOnly) {
+                                                String visibilityScope, boolean sameSchoolOnly, String expiresAt) {
         PollCreateRequest req = new PollCreateRequest();
         req.setQuestion(question);
         req.setOptions(options);
@@ -380,6 +391,7 @@ public class SchoolController {
         req.setAnonymous(anonymous);
         req.setVisibilityScope(visibilityScope);
         req.setSameSchoolOnly(sameSchoolOnly);
+        req.setExpiresAt(expiresAt);
         return req;
     }
 

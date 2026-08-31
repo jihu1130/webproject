@@ -7,8 +7,10 @@ import lombok.Getter;
 @Builder
 public class ScheduleCommentDto {
     private Long id;
+    private String uuid; // 공개 URL(/school/comments/{uuid})용 - id는 /api/comments/** 내부 액션 호출에만 쓰인다
     private String nickname;
-    private Long authorId; // 프로필(/users/{id}) 링크용
+    private Long authorId; // 차단 액션 파라미터용 - URL에는 노출 안 함
+    private String authorUuid; // 프로필(/users/{uuid}) 링크용
     private boolean authorLinkable; // 작성자가 탈퇴한 경우 false
     private String content;
     private String createdAt;

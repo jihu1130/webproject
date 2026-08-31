@@ -100,11 +100,12 @@ public class PostController {
                           @RequestParam(value = "pollAnonymous", required = false, defaultValue = "false") boolean pollAnonymous,
                           @RequestParam(value = "pollVisibilityScope", required = false) String pollVisibilityScope,
                           @RequestParam(value = "pollSameSchoolOnly", required = false, defaultValue = "true") boolean pollSameSchoolOnly,
+                          @RequestParam(value = "pollExpiresAt", required = false) String pollExpiresAt,
                           Authentication authentication, Model model) {
         try {
             postImageService.validate(images);
             PollCreateRequest pollForm = buildPollRequest(pollQuestion, pollOptions, pollAllowMultiple,
-                    pollAllowCustomOption, pollAnonymous, pollVisibilityScope, pollSameSchoolOnly);
+                    pollAllowCustomOption, pollAnonymous, pollVisibilityScope, pollSameSchoolOnly, pollExpiresAt);
             // 설문 데이터가 잘못됐으면 게시글부터 저장하기 전에 여기서 먼저 걸러낸다 - 그렇지 않으면
             // 게시글은 이미 만들어진 채로 에러 화면이 뜨고, 사용자가 다시 제출하면 게시글이 중복
             // 생성될 수 있다.
@@ -124,7 +125,7 @@ public class PostController {
 
     private PollCreateRequest buildPollRequest(String question, List<String> options, boolean allowMultiple,
                                                 boolean allowCustomOption, boolean anonymous,
-                                                String visibilityScope, boolean sameSchoolOnly) {
+                                                String visibilityScope, boolean sameSchoolOnly, String expiresAt) {
         PollCreateRequest req = new PollCreateRequest();
         req.setQuestion(question);
         req.setOptions(options);
@@ -133,6 +134,7 @@ public class PostController {
         req.setAnonymous(anonymous);
         req.setVisibilityScope(visibilityScope);
         req.setSameSchoolOnly(sameSchoolOnly);
+        req.setExpiresAt(expiresAt);
         return req;
     }
 

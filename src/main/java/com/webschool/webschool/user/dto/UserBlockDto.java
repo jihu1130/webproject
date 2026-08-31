@@ -8,6 +8,7 @@ import lombok.Getter;
 public class UserBlockDto {
     private Long id;
     private Long userId;
+    private String userUuid; // 프로필(/users/{uuid}) 링크용
     private String nickname;
     private String createdAt;
     private String expiresAt; // null이면 영구

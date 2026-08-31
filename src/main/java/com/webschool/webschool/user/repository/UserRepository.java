@@ -12,6 +12,7 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
+    Optional<User> findByUuid(String uuid); // 공개 프로필 URL(/users/{uuid}) 조회용
     boolean existsByUsername(String username); // 아이디 중복 체크
     List<User> findAllByOrderByIdAsc(); // 관리자용 전체 계정 목록
     Optional<User> findByProviderAndProviderId(User.Provider provider, String providerId); // 소셜 로그인 계정 조회

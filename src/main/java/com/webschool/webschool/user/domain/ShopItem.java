@@ -31,13 +31,23 @@ public class ShopItem {
     private String value; // 실제 적용값 (칭호는 label과 동일, 색상은 CSS 색상값)
 
     @Column(nullable = false)
-    private int price;
+    private int price; // 0이면 무료 지급
 
     // 판매 중단된 아이템은 상점 목록에서만 숨긴다 - 이미 구매해서 장착 중인 사용자에게서 뺏지 않는다.
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean active = true;
 
+    // 아바타 색상 전용 장식 효과(반짝임/무지개 순환) - TITLE 종류에는 의미 없음(항상 NONE).
+    // CSS @keyframes만으로 구현(User.equippedEffect에 이름을 복사해두고 템플릿에서 클래스로 적용).
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'NONE'")
+    private Effect effect = Effect.NONE;
+
     public enum Type {
         TITLE, AVATAR_COLOR
+    }
+
+    public enum Effect {
+        NONE, SPARKLE, RAINBOW
     }
 }

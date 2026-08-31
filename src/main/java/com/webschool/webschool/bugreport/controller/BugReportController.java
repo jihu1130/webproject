@@ -26,7 +26,8 @@ public class BugReportController {
     }
 
     @PostMapping("/bug-reports/new")
-    public String submit(@RequestParam String title, @RequestParam String content,
+    public String submit(@RequestParam(required = false) String category,
+                          @RequestParam String title, @RequestParam String content,
                           @RequestParam(required = false) String reporterNickname,
                           @RequestParam(required = false) String contactEmail,
                           @RequestParam(required = false) List<MultipartFile> files,
@@ -34,11 +35,12 @@ public class BugReportController {
         boolean loggedIn = isAuthenticated(authentication);
         try {
             bugReportService.submitReport(loggedIn ? authentication.getName() : null,
-                    title, content, reporterNickname, contactEmail, files);
+                    category, title, content, reporterNickname, contactEmail, files);
             return "redirect:/bug-reports/new?submitted=true";
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
             model.addAttribute("isLoggedIn", loggedIn);
+            model.addAttribute("category", category);
             model.addAttribute("title", title);
             model.addAttribute("content", content);
             model.addAttribute("reporterNickname", reporterNickname);

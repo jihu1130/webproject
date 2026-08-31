@@ -19,9 +19,10 @@ public class UserProfileController {
 
     private final UserProfileService userProfileService;
 
-    @GetMapping("/{id}")
-    public String profile(@PathVariable Long id, @RequestParam(defaultValue = "0") int page, Model model) {
+    @GetMapping("/{uuid}")
+    public String profile(@PathVariable String uuid, @RequestParam(defaultValue = "0") int page, Model model) {
         try {
+            Long id = userProfileService.resolveIdByUuid(uuid);
             model.addAttribute("profile", userProfileService.getProfile(id, page));
             return "user/profile";
         } catch (IllegalArgumentException e) {

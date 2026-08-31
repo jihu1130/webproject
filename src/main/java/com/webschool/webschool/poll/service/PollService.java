@@ -19,6 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PollService {
 
+    private static final DateTimeFormatter EXPIRES_AT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private static final int MAX_QUESTION_LENGTH = 200;
     private static final int MIN_OPTIONS = 2;
     private static final int MAX_OPTIONS = 10;
@@ -56,6 +60,7 @@ public class PollService {
         validateQuestion(req.getQuestion());
         cleanOptions(req.getOptions());
         parseScope(req.getVisibilityScope());
+        parseExpiresAt(req.getExpiresAt());
     }
 
     @Transactional
@@ -95,17 +100,36 @@ public class PollService {
     }
 
     public Optional<PollResultDto> findResultByPost(Long postId, String viewerUsername) {
-        return pollRepository.findByPost_Id(postId).map(poll -> buildResult(poll, viewerUsername));
+        return pollRepository.findByPost_IdAndDeletedFalse(postId).map(poll -> buildResult(poll, viewerUsername));
     }
 
     public Optional<PollResultDto> findResultByComment(Long scheduleCommentId, String viewerUsername) {
-        return pollRepository.findByScheduleComment_Id(scheduleCommentId).map(poll -> buildResult(poll, viewerUsername));
+        return pollRepository.findByScheduleComment_IdAndDeletedFalse(scheduleCommentId).map(poll -> buildResult(poll, viewerUsername));
     }
 
     public PollResultDto getResult(Long pollId, String viewerUsername) {
         Poll poll = pollRepository.findById(pollId)
+                .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
         return buildResult(poll, viewerUsername);
+    }
+
+    // 한마디 수정 화면에서 기존 설문 질문을 보여주기 위한 가벼운 조회 - getForEdit()가 이미 본인
+    // 작성 한마디인지 확인한 뒤에만 호출되므로 여기서 별도 권한 검사를 하지 않는다.
+    public Optional<String> findQuestionForComment(Long scheduleCommentId) {
+        return pollRepository.findByScheduleComment_IdAndDeletedFalse(scheduleCommentId).map(Poll::getQuestion);
+    }
+
+    // 한마디 수정 화면의 "설문 삭제" 체크 처리 - 물리 삭제 대신 소프트 삭제(이 코드베이스의 삭제 전
+    // 규칙). 이미 없거나 이미 삭제된 설문이면 조용히 통과(멱등).
+    @Transactional
+    public void deletePollForComment(Long scheduleCommentId, String username) {
+        pollRepository.findByScheduleComment_IdAndDeletedFalse(scheduleCommentId).ifPresent(poll -> {
+            if (!poll.getCreator().getUsername().equals(username)) {
+                throw new IllegalArgumentException("본인이 작성한 설문만 삭제할 수 있습니다.");
+            }
+            poll.setDeleted(true);
+        });
     }
 
     // 단일선택/복수선택 모두 "새로 고른 것으로 교체" 방식 - 이 사용자의 기존 투표를 지우고 새로 저장한다
@@ -114,12 +138,16 @@ public class PollService {
     @Transactional
     public void vote(Long pollId, List<Long> optionIds, String customOptionText, String username) {
         Poll poll = pollRepository.findById(pollId)
+                .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
         User voter = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
 
         if (!canAccess(poll, voter)) {
             throw new IllegalArgumentException("이 설문에 참여할 수 없습니다.");
+        }
+        if (poll.isExpired()) {
+            throw new IllegalArgumentException("마감된 설문입니다.");
         }
 
         List<PollOption> options = new ArrayList<>(pollOptionRepository.findByPoll_IdOrderByIdAsc(pollId));
@@ -190,6 +218,7 @@ public class PollService {
         poll.setAnonymous(req.isAnonymous());
         poll.setVisibilityScope(parseScope(req.getVisibilityScope()));
         poll.setSameSchoolOnly(req.isSameSchoolOnly());
+        poll.setExpiresAt(parseExpiresAt(req.getExpiresAt()));
         return poll;
     }
 
@@ -236,6 +265,8 @@ public class PollService {
                 .allowCustomOption(poll.isAllowCustomOption())
                 .anonymous(poll.isAnonymous())
                 .visibilityScope(poll.getVisibilityScope().name())
+                .expiresAt(poll.getExpiresAt() != null ? poll.getExpiresAt().format(EXPIRES_AT_FORMAT) : null)
+                .expired(poll.isExpired())
                 .totalVoters((int) totalVoters)
                 .votedByMe(!myVotedOptionIds.isEmpty())
                 .mine(viewer != null && viewer.getId().equals(poll.getCreator().getId()))
@@ -261,7 +292,15 @@ public class PollService {
         return matchesScope(poll, viewer);
     }
 
+    // 게시글에 붙은 설문은 자체 공개범위를 따로 갖지 않고 게시글의 공개범위(Post.Visibility)를
+    // 그대로 따른다(사용자 요청) - PRIVATE면 작성자/관리자만(이미 canAccess()의 앞 두 분기에서
+    // 걸러짐), PUBLIC/UNLISTED면 이 학교 커뮤니티에 로그인한 누구나(= 게시글 상세를 열람할 수
+    // 있는 사람과 동일 조건). 한마디(ScheduleComment)는 대응되는 공개범위 개념이 없으므로
+    // Poll.VisibilityScope(같은반/같은학년/전체공개)를 그대로 유지한다.
     private boolean matchesScope(Poll poll, User viewer) {
+        if (poll.getPost() != null) {
+            return poll.getPost().getVisibility() != Post.Visibility.PRIVATE;
+        }
         User creator = poll.getCreator();
         return switch (poll.getVisibilityScope()) {
             case PUBLIC_LINK -> true;
@@ -307,6 +346,17 @@ public class PollService {
             throw new IllegalArgumentException("설문 옵션은 " + MAX_OPTIONS + "개 이하로 입력해주세요.");
         }
         return cleaned;
+    }
+
+    private LocalDateTime parseExpiresAt(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(value);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("올바르지 않은 마감 기한입니다.");
+        }
     }
 
     private Poll.VisibilityScope parseScope(String value) {

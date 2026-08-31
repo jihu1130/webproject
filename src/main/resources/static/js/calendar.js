@@ -772,11 +772,11 @@ document.addEventListener('DOMContentLoaded', function () {
             var editedBadge = c.edited ? ' <span class="comment-edited">(수정됨)</span>' : '';
             var blindBadge = c.blind ? ' <span class="comment-blind-badge">블라인드</span>' : '';
             var nicknameHtml = c.authorLinkable
-                ? '<a href="/users/' + c.authorId + '" class="comment-nickname">' + escapeHtml(c.nickname) + '</a>'
+                ? '<a href="/users/' + c.authorUuid + '" class="comment-nickname">' + escapeHtml(c.nickname) + '</a>'
                 : '<span class="comment-nickname">' + escapeHtml(c.nickname) + '</span>';
             // 버그수정 프롬포트 요청 - 아이콘 전용 버튼에 title만 있고 aria-label이 없었다.
             var actionsHtml = c.mine
-                ? `<a href="/school/comments/${c.id}/edit" class="comment-edit-btn" title="수정" aria-label="수정"><i class="fa-solid fa-pen"></i></a>
+                ? `<a href="/school/comments/${c.uuid}/edit" class="comment-edit-btn" title="수정" aria-label="수정"><i class="fa-solid fa-pen"></i></a>
                    <button type="button" class="comment-delete-btn" title="삭제" aria-label="삭제"><i class="fa-solid fa-xmark"></i></button>`
                 : (c.reportedByMe
                     ? '<button type="button" class="comment-report-btn" title="이미 신고했어요" aria-label="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
@@ -814,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var shareBtn = item.querySelector('.comment-share-btn');
             if (shareBtn) {
-                shareBtn.addEventListener('click', function () { shareComment(c.id, shareBtn); });
+                shareBtn.addEventListener('click', function () { shareComment(c.uuid, shareBtn); });
             }
 
             var delBtn = item.querySelector('.comment-delete-btn');

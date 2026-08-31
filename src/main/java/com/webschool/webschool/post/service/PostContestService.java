@@ -77,6 +77,12 @@ public class PostContestService {
         if (!post.getAuthor().getId().equals(nominator.getId())) {
             throw new IllegalArgumentException("본인이 작성한 게시물만 후보로 신청할 수 있습니다.");
         }
+        // 후보 목록/이력에는 작성자(신청자)의 실제 닉네임이 노출되는데(toDto()의 authorNickname
+        // 참고), 익명 게시글을 후보로 올리면 "이 닉네임이 이 익명 글을 썼다"는 게 공개돼 익명성이
+        // 깨진다. 그래서 익명 카테고리는 애초에 후보 신청 자체를 막는다.
+        if (post.getCategory() == Post.Category.ANONYMOUS) {
+            throw new IllegalArgumentException("익명 게시글은 추천 후보로 신청할 수 없습니다.");
+        }
 
         LocalDate weekStart = currentWeekStart();
         if (entryRepository.existsByNominator_IdAndWeekStart(nominator.getId(), weekStart)) {
@@ -190,9 +196,9 @@ public class PostContestService {
             int rank = i + 1;
             int prize = PRIZE_POINTS[i];
             User author = entry.getNominator();
-            userPointService.awardBonus(author, prize, "주간 인기 게시글 " + rank + "위");
+            userPointService.awardBonus(author, prize, "주간 추천 게시글 " + rank + "위");
             notificationService.notify(author, Notification.Type.CONTEST_WIN,
-                    "'" + truncate(entry.getPost().getTitle()) + "'이(가) 이번 주 인기 게시글 " + rank
+                    "'" + truncate(entry.getPost().getTitle()) + "'이(가) 이번 주 추천 게시글 " + rank
                             + "위(" + voteCount + "표)에 선정돼 " + prize + "포인트를 받았어요!",
                     "/posts/" + entry.getPost().getUuid());
 
@@ -221,7 +227,7 @@ public class PostContestService {
                 .collect(Collectors.toList());
         for (User user : optedIn) {
             notificationService.notify(user, Notification.Type.CONTEST_DEADLINE_SOON,
-                    "이번 주 인기 게시글 콘테스트 마감이 얼마 남지 않았어요! 후보를 신청하거나 투표해보세요.",
+                    "이번 주 추천 게시글 콘테스트 마감이 얼마 남지 않았어요! 후보를 신청하거나 투표해보세요.",
                     "/posts/contest");
         }
         log.info("콘테스트 마감 임박 알림 발송 완료 - {}명", optedIn.size());

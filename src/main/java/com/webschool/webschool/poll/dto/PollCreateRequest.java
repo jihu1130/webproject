@@ -14,6 +14,7 @@ public class PollCreateRequest {
     private boolean allowMultiple;
     private boolean allowCustomOption;
     private boolean anonymous;
-    private String visibilityScope; // Poll.VisibilityScope enum name (비어있으면 SAME_CLASS)
+    private String visibilityScope; // Poll.VisibilityScope enum name (비어있으면 SAME_CLASS) - 한마디 첨부 설문에만 쓰임
     private boolean sameSchoolOnly = true;
+    private String expiresAt; // datetime-local input 값(예: "2026-09-07T20:00") - 비어있으면 마감 없음
 }

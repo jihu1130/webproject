@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +54,7 @@ public class PostService {
     private final UserPenaltyService userPenaltyService;
     private final UserPointService userPointService;
     private final AdminActionLogService adminActionLogService;
+    private final PostImageService postImageService;
 
     // pageSize: 사용자가 "페이지당 N개 보기"로 고를 수 있는 페이지 크기 (PageUtils.normalizeSize()로
     // 컨트롤러 단에서 이미 5~100 사이로 정규화된 값이 넘어온다).
@@ -63,7 +65,9 @@ public class PostService {
         Pageable pageable = PageRequest.of(Math.max(page, 0), pageSize, resolveSort(sortOption));
         String normalizedScope = scope == null ? "" : scope;
         Page<Post> result = postRepository.search(category, keyword, normalizedScope, pageable);
-        return result.map(this::toListItemDto);
+        Map<Long, String> thumbnailsByPostId = postImageService.getThumbnailUrls(
+                result.getContent().stream().map(Post::getId).collect(Collectors.toList()));
+        return result.map(p -> toListItemDto(p, thumbnailsByPostId.get(p.getId())));
     }
 
     private Sort resolveSort(String sortOption) {
@@ -454,16 +458,18 @@ public class PostService {
         return p.getAuthor().isDeleted() ? "탈퇴한 사용자" : p.getAuthor().getNickname();
     }
 
-    private PostListItemDto toListItemDto(Post p) {
+    private PostListItemDto toListItemDto(Post p, String thumbnailUrl) {
         return PostListItemDto.builder()
                 .id(p.getId())
                 .uuid(p.getUuid())
                 .title(p.getTitle())
                 .nickname(displayNickname(p))
                 .authorId(p.getAuthor().getId())
+                .authorUuid(p.getAuthor().getUuid())
                 .authorLinkable(isAuthorLinkable(p))
                 .category(p.getCategory().name())
                 .categoryLabel(p.getCategory().getLabel())
+                .thumbnailUrl(thumbnailUrl)
                 .createdAt(p.getCreatedAt().format(DISPLAY_FORMAT))
                 .viewCount(p.getViewCount())
                 .likeCount(p.getLikeCount())
@@ -491,6 +497,7 @@ public class PostService {
                 .content(p.getContent())
                 .nickname(displayNickname(p))
                 .authorId(p.getAuthor().getId())
+                .authorUuid(p.getAuthor().getUuid())
                 .authorLinkable(isAuthorLinkable(p))
                 .category(p.getCategory().name())
                 .categoryLabel(p.getCategory().getLabel())

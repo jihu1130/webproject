@@ -24,6 +24,7 @@
         <div class="post-detail-card">
             <div class="profile-card-head profile-card-head-center">
                 <div class="profile-card-avatar profile-card-avatar-user"
+                     th:classappend="${profile.equippedEffect == 'SPARKLE'} ? 'avatar-effect-sparkle' : (${profile.equippedEffect == 'RAINBOW'} ? 'avatar-effect-rainbow' : '')"
                      th:style="${profile.equippedAvatarColor != null} ? 'border-color:' + ${profile.equippedAvatarColor}">
                     <img th:src="@{${profile.profileImageUrl != null} ? ${profile.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
                 </div>
@@ -62,8 +63,6 @@
                    th:unless="${profile.bio != null and !#strings.isEmpty(profile.bio)}">아직 작성한 소개글이 없어요.</p>
             </div>
 
-            <p class="page-sub" style="margin: 4px 0 0;">이 사람이 작성한 게시글이에요 (익명으로 쓴 글은 포함되지 않아요)</p>
-
             <!-- 버그수정 프롬포트 요청 - 예전엔 차단 버튼이 게시글/댓글 안에 인라인으로만 있어서
                  그 사람 글을 찾아 들어가야만 차단할 수 있었다. post-detail.js의 blockUser()와
                  동일한 요청/확인 패턴을 그대로 재사용한다(새 서비스 로직 불필요). 프로필_디자인.md
@@ -93,14 +92,14 @@
         </ul>
 
         <div class="post-pagination" th:if="${profile.posts.totalPages > 1}">
-            <a th:if="${profile.posts.hasPrevious()}" th:href="@{'/users/' + ${profile.id}(page=${profile.posts.number - 1})}" class="post-page-link" aria-label="이전 페이지">
+            <a th:if="${profile.posts.hasPrevious()}" th:href="@{'/users/' + ${profile.uuid}(page=${profile.posts.number - 1})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, profile.posts.totalPages - 1)}"
-               th:href="@{'/users/' + ${profile.id}(page=${i})}" th:text="${i + 1}"
+               th:href="@{'/users/' + ${profile.uuid}(page=${i})}" th:text="${i + 1}"
                th:classappend="${i == profile.posts.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${profile.posts.hasNext()}" th:href="@{'/users/' + ${profile.id}(page=${profile.posts.number + 1})}" class="post-page-link" aria-label="다음 페이지">
+            <a th:if="${profile.posts.hasNext()}" th:href="@{'/users/' + ${profile.uuid}(page=${profile.posts.number + 1})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>

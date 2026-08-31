@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var blindBadge = c.blind ? ' <span class="post-comment-blind-badge">블라인드</span>' : '';
         var acceptedBadge = c.accepted ? ' <span class="post-comment-accepted-badge"><i class="fa-solid fa-check"></i> 채택된 답변</span>' : '';
         var nicknameHtml = c.authorLinkable
-            ? '<a href="/users/' + c.authorId + '" class="post-comment-nickname">' + escapeHtml(c.nickname) + '</a>'
+            ? '<a href="/users/' + c.authorUuid + '" class="post-comment-nickname">' + escapeHtml(c.nickname) + '</a>'
             : '<span class="post-comment-nickname">' + escapeHtml(c.nickname) + '</span>';
         var canBlock = !c.mine && isLoggedIn && !isAnonymousPost && c.authorLinkable;
         // QNA 답변 채택 버튼 - 질문 작성자에게만, 블라인드/삭제 예정 댓글이 아닌 경우에 노출.

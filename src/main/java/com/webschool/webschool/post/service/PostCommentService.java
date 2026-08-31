@@ -451,6 +451,7 @@ public class PostCommentService {
                 .parentId(c.getParentComment() != null ? c.getParentComment().getId() : null)
                 .nickname(c.getAuthor().isDeleted() ? "탈퇴한 사용자" : c.getAuthor().getNickname())
                 .authorId(c.getAuthor().getId())
+                .authorUuid(c.getAuthor().getUuid())
                 .authorLinkable(!c.getAuthor().isDeleted())
                 .content(content)
                 .createdAt(c.getCreatedAt().format(DISPLAY_FORMAT))

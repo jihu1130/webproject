@@ -10,7 +10,8 @@ import org.springframework.data.domain.Page;
 @Getter
 @Builder
 public class PublicUserProfileDto {
-    private Long id;
+    private Long id; // 내부용(관리자 화면 등) - 공개 URL에는 uuid를 쓴다
+    private String uuid; // 공개 프로필 URL(/users/{uuid}) 자기 링크(페이지네이션)용
     private String nickname;
     private String bio;
     private String profileImageUrl;
@@ -21,5 +22,6 @@ public class PublicUserProfileDto {
     private String tierLabel;
     private String equippedTitle;       // 포인트 소비 상점(todo.md 요구사항)
     private String equippedAvatarColor;
+    private String equippedEffect;
     private Page<PublicUserProfilePostDto> posts;
 }

@@ -225,7 +225,7 @@ public class ScheduleCommentService {
             liked = true;
             notificationService.notifyIfNotSelf(comment.getUser(), username, Notification.Type.LIKE,
                     user.getNickname() + "님이 회원님의 오늘의 한마디를 좋아합니다.",
-                    "/school/comments/" + comment.getId());
+                    "/school/comments/" + comment.getUuid());
         }
         return Map.of("liked", liked, "likeCount", displayLikeCount);
     }
@@ -271,6 +271,14 @@ public class ScheduleCommentService {
             scheduleCommentLikeRepository.delete(like);
             scheduleCommentRepository.decrementLikeCount(id);
         });
+    }
+
+    // 공개 URL(/school/comments/{uuid})의 uuid를 내부 Long id로 변환 - PostService.resolveIdByUuid()와
+    // 동일한 패턴(컨트롤러 레이어에서만 uuid를 다루고, 그 아래 서비스/리포지토리는 계속 Long을 쓴다).
+    public Long resolveIdByUuid(String uuid) {
+        return scheduleCommentRepository.findByUuid(uuid)
+                .map(ScheduleComment::getId)
+                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
     }
 
     // 게시글 본문에 삽입된 "한마디로 바로가기" 임베드 카드가 가리키는 대상 조회용
@@ -363,8 +371,10 @@ public class ScheduleCommentService {
 
         return ScheduleCommentDto.builder()
                 .id(c.getId())
+                .uuid(c.getUuid())
                 .nickname(c.getUser().isDeleted() ? "탈퇴한 사용자" : c.getUser().getNickname())
                 .authorId(c.getUser().getId())
+                .authorUuid(c.getUser().getUuid())
                 .authorLinkable(!c.getUser().isDeleted())
                 .content(content)
                 .createdAt(c.getCreatedAt().format(DISPLAY_FORMAT))

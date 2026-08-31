@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 // @DynamicUpdate - Post.java/PostComment.java와 동일한 이유. points를 UserRepository
 // .addPoints()로 원자적 벌크 UPDATE하는데, 이 어노테이션이 없으면 같은 계정을 다루는 다른
@@ -21,7 +22,13 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // 내부 PK - FK/관리자 화면에서만 쓰고 공개 URL에는 노출하지 않음(Post.id와 동일 패턴)
+
+    // nullable인 이유는 Post.uuid와 동일 - 기존 행이 있는 테이블에 NOT NULL로 추가하면
+    // ddl-auto=update가 실패한다. 신규 가입자는 prePersist()가 채우고, 기존 계정은 배포 후
+    // 1회 SQL로 백필한다.
+    @Column(unique = true, length = 36)
+    private String uuid; // 공개 프로필 URL(/users/{uuid})에 쓰는 값 - 순번 id를 외부에 노출하지 않기 위함
 
     @Column(nullable = false, unique = true, length = 50)
     private String username; // 아이디
@@ -176,6 +183,12 @@ public class User {
     // 아바타 테두리 색으로 렌더링한다.
     private String equippedTitle;       // 현재 장착 중인 칭호 문구
     private String equippedAvatarColor; // 현재 장착 중인 아바타 테두리/배지 색상 (CSS 색상값)
+    private String equippedEffect;      // 현재 장착한 아바타 색상 상품의 장식 효과(ShopItem.Effect.name()) - NONE/null이면 효과 없음
+
+    @PrePersist
+    public void prePersist() {
+        this.uuid = UUID.randomUUID().toString();
+    }
 
     public PointTier getTier() {
         return PointTier.forPoints(points);

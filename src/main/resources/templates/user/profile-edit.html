@@ -20,7 +20,7 @@
     <div class="auth-wrapper">
         <div class="auth-card">
             <h3 class="auth-title">내 프로필 설정</h3>
-            <p class="auth-subtitle">다른 사람이 보는 내 프로필(<span th:text="'/users/' + ${loginUser?.id}"></span>)에 표시될 사진과 소개글이에요</p>
+            <p class="auth-subtitle">다른 사람이 보는 내 프로필(<span th:text="'/users/' + ${loginUser?.uuid}"></span>)에 표시될 사진과 소개글이에요</p>
 
             <div th:if="${errorMessage}" class="auth-alert auth-alert-danger" th:text="${errorMessage}"></div>
             <div th:if="${param.updated}" class="auth-alert auth-alert-success">저장되었습니다.</div>

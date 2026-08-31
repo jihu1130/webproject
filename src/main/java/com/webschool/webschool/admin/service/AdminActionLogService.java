@@ -6,6 +6,7 @@ import com.webschool.webschool.admin.repository.AdminActionLogRepository;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.post.repository.PostCommentRepository;
+import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -104,6 +105,7 @@ public class AdminActionLogService {
     private final AdminActionLogRepository adminActionLogRepository;
     private final UserRepository userRepository;
     private final PostCommentRepository postCommentRepository;
+    private final ScheduleCommentRepository scheduleCommentRepository;
 
     // 현재 요청을 처리 중인 관리자 계정을 SecurityContext에서 직접 읽는다 - 호출부(AdminPostService
     // 등의 블라인드/삭제 메서드)마다 관리자 username 파라미터를 새로 추가할 필요 없이 기존 메서드
@@ -197,7 +199,9 @@ public class AdminActionLogService {
         return switch (targetType) {
             case "POST" -> "/admin/posts/" + targetId;
             case "USER" -> "/admin/users/" + targetId + "/profile";
-            case "SCHEDULE_COMMENT" -> "/school/comments/" + targetId;
+            case "SCHEDULE_COMMENT" -> scheduleCommentRepository.findById(targetId)
+                    .map(c -> "/school/comments/" + c.getUuid())
+                    .orElse(null);
             case "NOTICE" -> "/notices/" + targetId;
             case "COMMENT" -> postCommentRepository.findById(targetId)
                     .map(c -> "/admin/posts/" + c.getPost().getId() + "#comment-" + targetId)

@@ -50,20 +50,34 @@ public class MailService {
                 "요청하신 WebSchool 계정의 아이디는 \"" + user.getUsername() + "\" 입니다.");
     }
 
+    // 문의(Inquiry) 답변 - 로그인 사용자는 인앱 알림(NotificationService)으로 충분하지만, 계정이 없는
+    // 비로그인 문의자는 알림을 받을 방법이 이메일뿐이다(contactEmail, BugReportService.addReply() 참고).
+    public void sendInquiryReply(String toEmail, String replyContent) {
+        sendRaw(toEmail, "[WebSchool] 문의하신 내용에 답변이 등록되었습니다",
+                "문의하신 내용에 아래와 같이 답변이 등록되었습니다:\n\n" + replyContent);
+    }
+
     private void send(User user, String subject, String text) {
         if (user.getEmail() == null || user.getEmail().isBlank()) {
             return;
         }
+        sendRaw(user.getEmail(), subject, text);
+    }
+
+    private void sendRaw(String toEmail, String subject, String text) {
+        if (toEmail == null || toEmail.isBlank()) {
+            return;
+        }
         JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
         if (mailSender == null) {
-            log.info("[MailService] SMTP 미설정 - 발송 스킵 (to={}, subject={})", user.getEmail(), subject);
+            log.info("[MailService] SMTP 미설정 - 발송 스킵 (to={}, subject={})", toEmail, subject);
             return;
         }
         SimpleMailMessage message = new SimpleMailMessage();
         if (fromAddress != null && !fromAddress.isBlank()) {
             message.setFrom(fromAddress);
         }
-        message.setTo(user.getEmail());
+        message.setTo(toEmail);
         message.setSubject(subject);
         message.setText(text);
         mailSender.send(message);

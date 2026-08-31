@@ -40,7 +40,7 @@
 
                 <div class="post-field">
                     <label>내용</label>
-                    <p class="post-content-guide">🖼/🎬/📎/🔗 버튼으로 본문 중간에 사진·동영상·파일·바로가기 카드를 삽입할 수 있어요 (사진 15MB, 동영상 300MB, 그 외 파일 50MB 이하)</p>
+                    <p class="post-content-guide">📎 버튼으로 사진·동영상·파일·링크 카드를 넣을 수 있어요</p>
                     <div id="commentFormEditor" class="rich-editor-container"></div>
                     <input type="hidden" id="commentFormHidden" name="content" th:value="${contentValue}">
                 </div>
@@ -83,6 +83,11 @@
                             </label>
                         </div>
 
+                        <div class="post-poll-deadline">
+                            <label for="pollExpiresAt">마감 기한 (선택)</label>
+                            <input type="datetime-local" name="pollExpiresAt" id="pollExpiresAt">
+                        </div>
+
                         <button type="button" id="pollAdvancedToggle" class="post-poll-advanced-toggle" aria-expanded="false" aria-controls="pollAdvancedFields">
                             <i class="fa-solid fa-chevron-down"></i> 세부 설정 (복수 선택 · 기타 옵션 · 익명)
                         </button>
@@ -98,6 +103,16 @@
                             </label>
                         </div>
                     </div>
+                </div>
+
+                <!-- 수정 화면에서 이미 첨부된 설문을 끌 수 있게(요청 사항) - 새 설문을 여기서 만들 수는
+                     없고(작성 화면 전용 UI를 그대로 유지), 기존 설문의 질문만 보여주고 삭제 여부만
+                     체크박스로 받는다. PollService.deletePollForComment()가 실제 소프트 삭제 처리. -->
+                <div class="post-field post-poll-field" th:if="${mode == 'edit'} and ${existingPollQuestion != null}">
+                    <label class="post-poll-toggle">
+                        <input type="checkbox" name="removePoll" value="true">
+                        <span>첨부된 설문 삭제하기 - "<span th:text="${existingPollQuestion}">질문</span>"</span>
+                    </label>
                 </div>
 
                 <div class="post-form-actions">
@@ -119,7 +134,17 @@
         editorId: 'commentFormEditor',
         hiddenId: 'commentFormHidden',
         placeholder: '이 날에 대한 의견을 남겨보세요',
-        required: true
+        required: true,
+        // 한마디는 짧은 글이라 글자 크기(px) 지정까지는 필요 없다는 판단으로 이 툴바에서만 제외
+        // (게시글 작성 화면은 기본 툴바를 그대로 써서 계속 지원 - rich-editor.js 기본 toolbar 배열과
+        // 동일하되 { size: ... } 항목만 뺀 것).
+        toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['blockquote', 'link'],
+            ['richfile-attach'],
+            ['clean']
+        ]
     });
 </script>
 </body>

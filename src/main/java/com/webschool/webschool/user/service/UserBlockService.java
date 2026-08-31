@@ -99,6 +99,7 @@ public class UserBlockService {
         return UserBlockDto.builder()
                 .id(b.getId())
                 .userId(b.getBlocked().getId())
+                .userUuid(b.getBlocked().getUuid())
                 .nickname(b.getBlocked().getNickname())
                 .createdAt(b.getCreatedAt().format(DISPLAY_FORMAT))
                 .expiresAt(b.getExpiresAt() != null ? b.getExpiresAt().format(DISPLAY_FORMAT) : null)

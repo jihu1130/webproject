@@ -21,6 +21,11 @@ public class BugReport {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 기존 "버그리포트"를 "문의"로 확장(todo.md 요구사항) - 기존 데이터 호환을 위해 기본값 BUG.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'BUG'")
+    private Category category = Category.BUG;
+
     @Column(nullable = false, length = 100)
     private String title;
 
@@ -48,5 +53,19 @@ public class BugReport {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public enum Category {
+        BUG("버그"), SUGGESTION("건의"), ACCOUNT("계정 문의"), OTHER("기타");
+
+        private final String label;
+
+        Category(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
     }
 }

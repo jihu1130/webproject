@@ -9,7 +9,8 @@ public class PostCommentDto {
     private Long id;
     private Long parentId; // null이면 최상위 댓글, 아니면 답글이 달린 부모 댓글 id(1depth만 허용)
     private String nickname;
-    private Long authorId; // 프로필(/users/{id}) 링크용
+    private Long authorId; // 차단(/users/blocks) 액션 파라미터용 - URL에는 노출 안 함
+    private String authorUuid; // 프로필(/users/{uuid}) 링크용
     private boolean authorLinkable; // 작성자가 탈퇴한 경우 false
     private String content;
     private String createdAt;

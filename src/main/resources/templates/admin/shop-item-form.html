@@ -21,7 +21,7 @@
         <div class="post-form-card">
             <h2 th:text="${mode == 'edit'} ? '상점 상품 수정' : '상점 상품 등록'">상점 상품 등록</h2>
             <p class="page-sub" style="margin: -0.6rem 0 1.2rem;">
-                칭호는 적용값을 이름과 똑같이 입력하고, 아바타 색상은 적용값에 실제 CSS 색상(예: #d4af37)을 입력하세요.
+                칭호는 적용될 문구를, 아바타 색상은 실제 색상을 입력하세요. 가격을 0으로 두면 무료로 지급돼요.
             </p>
 
             <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
@@ -29,7 +29,7 @@
             <form th:action="${mode == 'edit'} ? @{'/admin/shop-items/' + ${itemId}} : @{/admin/shop-items}" method="post">
                 <div class="post-field" th:if="${mode != 'edit'}">
                     <label>종류</label>
-                    <select name="type" required>
+                    <select name="type" id="typeSelect" required>
                         <option value="TITLE" th:selected="${type == 'TITLE'}">칭호</option>
                         <option value="AVATAR_COLOR" th:selected="${type == 'AVATAR_COLOR'}">아바타 색상</option>
                     </select>
@@ -39,16 +39,38 @@
                     <input type="text" th:value="${type == 'TITLE'} ? '칭호' : '아바타 색상'" disabled>
                 </div>
                 <div class="post-field">
-                    <label>이름</label>
-                    <input type="text" name="label" placeholder="예: 성실왕 / 골드" maxlength="50" th:value="${label}" required>
+                    <label>상품명 (상점 목록에 보이는 이름)</label>
+                    <input type="text" name="label" placeholder="예: 성실왕 / 골드 반짝이" maxlength="50" th:value="${label}" required>
                 </div>
-                <div class="post-field">
-                    <label>적용값</label>
-                    <input type="text" name="value" placeholder="칭호는 이름과 동일하게, 색상은 #d4af37 형식" maxlength="20" th:value="${value}" required>
+
+                <!-- 종류에 따라 적용값 입력 방식이 다르다 - 칭호는 문구를 직접 입력, 아바타 색상은
+                     색상 피커로 고른다(사용자 요청: hex 직접 입력보다 쉬운 방식). 실제 제출되는 필드는
+                     항상 하나(name="value")뿐이고, 컬러 피커는 그 값을 채워주는 보조 UI일 뿐이다. -->
+                <div class="post-field" id="valueTitleField">
+                    <label>적용될 칭호 문구</label>
+                    <input type="text" name="value" id="valueInput" maxlength="20" th:value="${value}"
+                           th:attr="required=${type == 'TITLE' or type == null}">
                 </div>
+                <div class="post-field" id="valueColorField" hidden>
+                    <label>아바타 색상</label>
+                    <div class="shop-color-picker-row">
+                        <input type="color" id="valueColorPicker" value="#1e4fa3">
+                        <span id="valueColorPreview" th:text="${value}">#1e4fa3</span>
+                    </div>
+                </div>
+
+                <div class="post-field" id="effectField" hidden>
+                    <label>효과</label>
+                    <select name="effect" id="effectSelect">
+                        <option value="NONE" th:selected="${effect == null or effect == 'NONE'}">없음</option>
+                        <option value="SPARKLE" th:selected="${effect == 'SPARKLE'}">반짝이는 효과</option>
+                        <option value="RAINBOW" th:selected="${effect == 'RAINBOW'}">무지개 순환 효과</option>
+                    </select>
+                </div>
+
                 <div class="post-field">
-                    <label>가격 (포인트)</label>
-                    <input type="number" name="price" min="1" th:value="${price}" required>
+                    <label>가격 (포인트, 0이면 무료)</label>
+                    <input type="number" name="price" min="0" th:value="${price}" required>
                 </div>
 
                 <div class="post-form-actions">
@@ -60,5 +82,44 @@
     </div>
 </div>
 
+<script th:inline="javascript">
+    (function () {
+        var typeSelect = document.getElementById('typeSelect');
+        var titleField = document.getElementById('valueTitleField');
+        var colorField = document.getElementById('valueColorField');
+        var effectField = document.getElementById('effectField');
+        var valueInput = document.getElementById('valueInput');
+        var colorPicker = document.getElementById('valueColorPicker');
+        var colorPreview = document.getElementById('valueColorPreview');
+        var serverType = /*[[${type}]]*/ 'TITLE';
+
+        function applyMode(type) {
+            var isColor = type === 'AVATAR_COLOR';
+            titleField.hidden = isColor;
+            colorField.hidden = !isColor;
+            effectField.hidden = !isColor;
+            valueInput.required = !isColor;
+            if (isColor && /^#[0-9a-fA-F]{6}$/.test(valueInput.value)) {
+                colorPicker.value = valueInput.value;
+                colorPreview.textContent = valueInput.value;
+            }
+        }
+
+        if (colorPicker) {
+            colorPicker.addEventListener('input', function () {
+                valueInput.value = colorPicker.value;
+                colorPreview.textContent = colorPicker.value;
+            });
+        }
+
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function () { applyMode(typeSelect.value); });
+            applyMode(typeSelect.value);
+        } else {
+            // 수정 화면은 종류가 고정(비활성 select 없음) - 서버가 내려준 값으로 한 번만 적용
+            applyMode(serverType);
+        }
+    })();
+</script>
 </body>
 </html>

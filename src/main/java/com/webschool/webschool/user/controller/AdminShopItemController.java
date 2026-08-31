@@ -18,8 +18,14 @@ public class AdminShopItemController {
     private final ShopService shopService;
 
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("items", shopService.getAllItems());
+    public String list(@RequestParam(required = false) String keyword,
+                        @RequestParam(required = false) String type,
+                        @RequestParam(required = false) Boolean active,
+                        Model model) {
+        model.addAttribute("items", shopService.getAllItems(keyword, type, active));
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedType", type);
+        model.addAttribute("selectedActive", active);
         return "admin/shop-item-list";
     }
 
@@ -31,9 +37,11 @@ public class AdminShopItemController {
 
     @PostMapping
     public String create(@RequestParam ShopItem.Type type, @RequestParam String label,
-                          @RequestParam String value, @RequestParam int price, Model model) {
+                          @RequestParam String value, @RequestParam int price,
+                          @RequestParam(required = false, defaultValue = "NONE") ShopItem.Effect effect,
+                          Model model) {
         try {
-            shopService.createItem(type, label, value, price);
+            shopService.createItem(type, label, value, price, effect);
             return "redirect:/admin/shop-items";
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
@@ -42,6 +50,7 @@ public class AdminShopItemController {
             model.addAttribute("label", label);
             model.addAttribute("value", value);
             model.addAttribute("price", price);
+            model.addAttribute("effect", effect.name());
             return "admin/shop-item-form";
         }
     }
@@ -61,14 +70,17 @@ public class AdminShopItemController {
         model.addAttribute("label", item.getLabel());
         model.addAttribute("value", item.getValue());
         model.addAttribute("price", item.getPrice());
+        model.addAttribute("effect", item.getEffect());
         return "admin/shop-item-form";
     }
 
     @PostMapping("/{id}")
     public String update(@PathVariable Long id, @RequestParam String label,
-                          @RequestParam String value, @RequestParam int price, Model model) {
+                          @RequestParam String value, @RequestParam int price,
+                          @RequestParam(required = false, defaultValue = "NONE") ShopItem.Effect effect,
+                          Model model) {
         try {
-            shopService.updateItem(id, label, value, price);
+            shopService.updateItem(id, label, value, price, effect);
             return "redirect:/admin/shop-items";
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
@@ -77,6 +89,7 @@ public class AdminShopItemController {
             model.addAttribute("label", label);
             model.addAttribute("value", value);
             model.addAttribute("price", price);
+            model.addAttribute("effect", effect.name());
             return "admin/shop-item-form";
         }
     }

@@ -66,12 +66,12 @@
 
 @media (prefers-color-scheme: dark) {
     html:not([data-theme="light"]) .school-search-results { background: var(--surface); }
-    html:not([data-theme="light"]) .school-search-item:hover { background: rgba(99, 102, 241, 0.16); }
+    html:not([data-theme="light"]) .school-search-item:hover { background: rgba(126, 166, 230, 0.16); }
 }
 
 /* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
 html[data-theme="dark"] .school-search-results { background: var(--surface); }
-html[data-theme="dark"] .school-search-item:hover { background: rgba(99, 102, 241, 0.16); }
+html[data-theme="dark"] .school-search-item:hover { background: rgba(126, 166, 230, 0.16); }
 
 /* 버그수정 프롬포트 요청 - 반응형 규칙이 아예 없었다(post.css 등의 560px 기준과 동일하게 맞춤).
    드롭다운 자체는 이미 부모 폭에 맞춰 늘어나므로(position:absolute, left/right:0) 높이만 좁혀서

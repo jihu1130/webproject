@@ -25,7 +25,7 @@
             </div>
             <div class="post-list-header-actions">
                 <a href="/posts/contest" class="post-contest-btn" sec:authorize="isAuthenticated()">
-                    <i class="fa-solid fa-trophy"></i> 이번 주 인기글
+                    <i class="fa-solid fa-trophy"></i> 이번 주 추천 게시글
                 </a>
                 <a href="/posts/new" class="btn-brand post-write-btn" sec:authorize="isAuthenticated()">
                     <i class="fa-solid fa-pen"></i> 글쓰기
@@ -83,11 +83,12 @@
         <ul class="post-list" th:unless="${posts.empty}">
             <li class="post-list-item reveal-on-scroll" th:each="post : ${posts}">
                 <a th:href="@{'/posts/' + ${post.uuid}}" class="post-list-link">
+                    <img th:if="${post.thumbnailUrl != null}" th:src="${post.thumbnailUrl}" class="post-list-thumbnail" alt="">
                     <span class="post-category-badge" th:classappend="'post-category-badge-' + ${post.category}" th:text="${post.categoryLabel}">자유</span>
                     <span class="post-list-title" th:text="${post.title}">제목</span>
                 </a>
                 <span class="post-list-meta">
-                    <a th:if="${post.authorLinkable}" th:href="@{'/users/' + ${post.authorId}}" class="post-list-nickname" th:text="${post.nickname}">작성자</a>
+                    <a th:if="${post.authorLinkable}" th:href="@{'/users/' + ${post.authorUuid}}" class="post-list-nickname" th:text="${post.nickname}">작성자</a>
                     <span th:unless="${post.authorLinkable}" class="post-list-nickname" th:text="${post.nickname}">작성자</span>
                     <span class="post-list-date" th:text="${post.createdAt}">날짜</span>
                     <span class="post-list-views"><i class="fa-solid fa-eye"></i> <span th:text="${post.viewCount}">0</span></span>

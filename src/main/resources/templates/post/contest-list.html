@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
-    <title>이번 주 인기 게시글 - WebSchool</title>
+    <title>이번 주 추천 게시글 - WebSchool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
     <link rel="stylesheet" th:href="@{/css/theme.css}">
@@ -21,8 +21,11 @@
     <div class="post-container post-container-narrow">
         <div class="post-list-header">
             <div class="page-heading post-page-heading">
-                <h1><i class="fa-solid fa-trophy"></i> 이번 주 인기 게시글</h1>
-                <p class="page-sub">본인 게시물을 후보로 신청하고, 마음에 드는 글에 투표해보세요 (월~일, 인당 신청 1개·투표 1표) — 매주 월요일 자정 득표 상위 3명에게 포인트 지급(30/20/10점)</p>
+                <h1><i class="fa-solid fa-trophy"></i> 이번 주 추천 게시글</h1>
+                <p class="page-sub">상위 후보 3명에게 포인트 지급
+                    <i class="fa-regular fa-circle-question contest-rule-hint"
+                       title="본인 게시물을 후보로 신청하고, 마음에 드는 글에 투표해보세요 (월~일, 인당 신청 1개·투표 1표) — 매주 월요일 자정 득표 상위 3명에게 포인트 지급(30/20/10점)"></i>
+                </p>
                 <p class="contest-countdown" id="contestCountdown"
                    th:attr="data-deadline=${#temporals.format(weekDeadline, 'yyyy-MM-dd''T''HH:mm:ss')}">
                     <i class="fa-regular fa-clock"></i> <span id="contestCountdownText">마감까지 남은 시간 계산 중...</span>
@@ -35,7 +38,7 @@
         </div>
 
         <div th:if="${entries.empty}" class="post-list-empty">
-            아직 이번 주 후보가 없어요. 게시물 상세 페이지에서 "이번 주 인기글 후보 신청" 버튼으로 신청해보세요!
+            아직 이번 주 후보가 없어요. 게시물 상세 페이지에서 "이번 주 추천 후보 신청" 버튼으로 신청해보세요!
         </div>
 
         <div class="contest-entry-list">

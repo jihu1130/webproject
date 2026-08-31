@@ -9,6 +9,7 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 // @DynamicUpdate - Post.java와 동일한 이유(likeCount/reportCount 원자적 벌크 UPDATE를 다른 필드
 // 변경이 덮어쓰지 않도록).
@@ -21,7 +22,13 @@ public class ScheduleComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // 내부 PK - FK/관리자 화면에서만 쓰고 공개 URL에는 노출하지 않음(Post.id와 동일 패턴)
+
+    // nullable인 이유는 Post.uuid와 동일 - 기존 행이 있는 테이블에 NOT NULL로 추가하면
+    // ddl-auto=update가 실패한다. 신규 한마디는 prePersist()가 채우고, 기존 행은 배포 후
+    // 1회 SQL로 백필한다.
+    @Column(unique = true, length = 36)
+    private String uuid; // 공개 URL(/school/comments/{uuid})에 쓰는 값
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id", nullable = false)
@@ -70,6 +77,7 @@ public class ScheduleComment {
 
     @PrePersist
     public void prePersist() {
+        this.uuid = UUID.randomUUID().toString();
         this.createdAt = LocalDateTime.now();
         this.deleted = false;
         this.reportCount = 0;

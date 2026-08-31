@@ -118,22 +118,11 @@
                         </div>
                         <button type="button" id="pollAddOptionBtn" class="btn btn-outline-brand post-poll-add-btn">+ 옵션 추가</button>
 
-                        <!-- 공개범위는 "누가 볼 수 있는지"를 정하는 중요한 선택이라 세부 설정 안에
-                             묻어두지 않고 항상 보이게 뺐다(사용자 요청 - 전체공개를 찾기 번거로웠음). -->
-                        <div class="post-poll-scope">
-                            <label>결과 공개 범위</label>
-                            <label class="post-poll-radio">
-                                <input type="radio" name="pollVisibilityScope" value="SAME_CLASS" checked> 같은 학교·학년·반
-                            </label>
-                            <label class="post-poll-radio">
-                                <input type="radio" name="pollVisibilityScope" value="SAME_GRADE"> 같은 학년
-                            </label>
-                            <label class="post-poll-same-school-only" id="pollSameSchoolOnlyWrap" hidden>
-                                <input type="checkbox" name="pollSameSchoolOnly" value="true" checked> 같은 학교 안에서만
-                            </label>
-                            <label class="post-poll-radio">
-                                <input type="radio" name="pollVisibilityScope" value="PUBLIC_LINK"> 전체 공개
-                            </label>
+                        <!-- 설문 공개범위는 별도로 설정하지 않는다 - 게시글의 공개범위(전체공개/링크공개/
+                             비공개)를 그대로 따라간다(PollService.matchesScope() 참고). -->
+                        <div class="post-poll-deadline">
+                            <label for="pollExpiresAt">마감 기한 (선택)</label>
+                            <input type="datetime-local" name="pollExpiresAt" id="pollExpiresAt">
                         </div>
 
                         <button type="button" id="pollAdvancedToggle" class="post-poll-advanced-toggle" aria-expanded="false" aria-controls="pollAdvancedFields">

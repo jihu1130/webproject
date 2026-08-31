@@ -112,6 +112,7 @@ public class AdminUserService {
                 .penalties(userPenaltyService.getHistory(id))
                 .equippedTitle(user.getEquippedTitle())
                 .equippedAvatarColor(user.getEquippedAvatarColor())
+                .equippedEffect(user.getEquippedEffect())
                 .build();
     }
 

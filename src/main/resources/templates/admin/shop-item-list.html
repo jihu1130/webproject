@@ -29,7 +29,24 @@
 
         <div th:replace="~{admin/fragments/nav :: tabs('shop-items')}"></div>
 
-        <div th:if="${#lists.isEmpty(items)}" class="admin-empty">등록된 상품이 없어요.</div>
+        <div class="list-toolbar">
+            <form th:action="@{/admin/shop-items}" method="get" class="admin-search-form">
+                <input type="text" name="keyword" placeholder="상품명 검색" th:value="${keyword}">
+                <select name="type" onchange="this.form.submit()">
+                    <option value="" th:selected="${selectedType == null or selectedType == ''}">전체 종류</option>
+                    <option value="TITLE" th:selected="${selectedType == 'TITLE'}">칭호</option>
+                    <option value="AVATAR_COLOR" th:selected="${selectedType == 'AVATAR_COLOR'}">아바타 색상</option>
+                </select>
+                <select name="active" onchange="this.form.submit()">
+                    <option value="" th:selected="${selectedActive == null}">전체 상태</option>
+                    <option value="true" th:selected="${selectedActive != null and selectedActive}">판매중</option>
+                    <option value="false" th:selected="${selectedActive != null and !selectedActive}">판매중지</option>
+                </select>
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+
+        <div th:if="${#lists.isEmpty(items)}" class="admin-empty">조건에 맞는 상품이 없어요.</div>
 
         <div class="admin-table-wrap" th:unless="${#lists.isEmpty(items)}">
             <table class="admin-table">
@@ -39,6 +56,7 @@
                     <th>종류</th>
                     <th>이름</th>
                     <th>적용값</th>
+                    <th>효과</th>
                     <th>가격</th>
                     <th>관리</th>
                 </tr>
@@ -52,7 +70,8 @@
                     <td th:text="${item.type == 'TITLE'} ? '칭호' : '아바타 색상'">종류</td>
                     <td th:text="${item.label}">이름</td>
                     <td th:text="${item.value}">값</td>
-                    <td th:text="${item.price} + 'P'">가격</td>
+                    <td th:text="${item.effect == 'SPARKLE'} ? '반짝임' : (${item.effect == 'RAINBOW'} ? '무지개' : '-')">효과</td>
+                    <td th:text="${item.price > 0} ? (${item.price} + 'P') : '무료'">가격</td>
                     <td>
                         <a th:href="@{'/admin/shop-items/' + ${item.id} + '/edit'}" class="btn btn-outline-brand" style="padding: 4px 10px; font-size: 0.82rem;">수정</a>
                         <form th:action="@{'/admin/shop-items/' + ${item.id} + '/active'}" method="post" style="display:inline;">

@@ -42,7 +42,7 @@ public class PostContestController {
                             RedirectAttributes redirectAttributes) {
         try {
             postContestService.nominate(postUuid, authentication.getName());
-            redirectAttributes.addFlashAttribute("flashSuccess", "이번 주 인기 게시글 후보로 신청했어요.");
+            redirectAttributes.addFlashAttribute("flashSuccess", "이번 주 추천 게시글 후보로 신청했어요.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("flashError", e.getMessage());
         }

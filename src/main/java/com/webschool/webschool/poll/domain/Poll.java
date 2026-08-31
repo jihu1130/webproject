@@ -61,12 +61,26 @@ public class Poll {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean sameSchoolOnly = true;
 
+    // 마감 기한(선택) - null이면 마감 없이 계속 투표 가능. 지나면 PollService.vote()가 거부한다.
+    private LocalDateTime expiresAt;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    public boolean isExpired() {
+        return expiresAt != null && expiresAt.isBefore(LocalDateTime.now());
+    }
+
+    // 소프트 딜리트(이 코드베이스의 삭제 전 규칙) - 한마디 수정 화면에서 작성자가 설문을 끌 때 씀
+    // (PollService.deletePollForComment()). 투표 기록(PollVote)은 그대로 남지만 조회/투표 경로에서
+    // 전부 이 플래그로 걸러진다.
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted;
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+        this.deleted = false;
     }
 
     public enum VisibilityScope {

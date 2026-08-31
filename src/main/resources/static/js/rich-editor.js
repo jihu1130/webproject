@@ -8,11 +8,21 @@
 (function (global) {
     var blotsRegistered = false;
 
+    // 글자 크기 - 예전엔 Quill 기본 header(제목2/제목3/본문) 포맷을 "글자 크기 설정"처럼
+    // 라벨만 바꿔 쓰고 있었는데(의미상 맞지 않음 - h2/h3는 제목 태그다), 실제 크기(px) 단위
+    // 선택으로 바꾼다. Quill의 style attributor는 선택值을 그대로 inline style="font-size:...px"로
+    // 써주므로 별도 렌더링 CSS가 필요 없다.
+    var SIZE_WHITELIST = ['14px', '18px', '24px', '32px'];
+
     function registerBlots() {
         if (blotsRegistered || typeof Quill === 'undefined') {
             return;
         }
         blotsRegistered = true;
+
+        var SizeStyle = Quill.import('attributors/style/size');
+        SizeStyle.whitelist = SIZE_WHITELIST;
+        Quill.register(SizeStyle, true);
 
         var BlockEmbed = Quill.import('blots/block/embed');
 
@@ -106,7 +116,7 @@
         // 구분 안 됐다(사용자 지적) - 이제 삽입은 "📎" 버튼 하나 + 팝오버로 묶는다.
         var toolbar = config.toolbar || [
             ['bold', 'italic', 'underline', 'strike'],
-            [{ header: [2, 3, false] }],
+            [{ size: [false].concat(SIZE_WHITELIST) }],
             [{ list: 'ordered' }, { list: 'bullet' }],
             ['blockquote', 'link'],
             ['richfile-attach'],
@@ -395,14 +405,8 @@
     }
 
     function registerBlockShortcuts(quill) {
-        // 제목 드롭다운이 2/3만 지원하므로(post.css 한글 라벨 참고) 여기서도 ##/###만 다룬다.
-        quill.keyboard.addBinding({ key: ' ', collapsed: true }, { prefix: /^#{2,3}$/ }, function (range, context) {
-            var level = context.prefix.length;
-            this.quill.deleteText(range.index - level, level, 'user');
-            this.quill.formatLine(range.index - level, 1, 'header', level, 'user');
-            this.quill.setSelection(range.index - level, 0, 'silent');
-            return false;
-        });
+        // 제목(header) 드롭다운을 글자 크기(px) 선택으로 교체하면서 ##/### 단축키도 함께
+        // 제거했다 - 툴바에 없는 서식을 단축키로만 남겨두면 발견 불가능한 숨은 기능이 된다.
         quill.keyboard.addBinding({ key: ' ', collapsed: true }, { prefix: /^>$/ }, function (range, context) {
             this.quill.deleteText(range.index - 1, 1, 'user');
             this.quill.formatLine(range.index - 1, 1, 'blockquote', true, 'user');
@@ -500,7 +504,7 @@
     async function insertEmbedCard(quill) {
         var url = await WebSchoolModal.prompt(
             '공유할 게시물 또는 오늘의 한마디 링크를 붙여넣으세요.',
-            { inputPlaceholder: '예) https://.../posts/xxxx-... 또는 /school/comments/123' }
+            { inputPlaceholder: '예) https://.../posts/xxxx-... 또는 /school/comments/xxxx-...' }
         );
         if (!url) return;
 

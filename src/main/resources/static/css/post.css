@@ -26,6 +26,18 @@
 }
 
 .post-list-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* theme.css의 .btn-brand/.btn-outline-brand는 padding/border-radius/font-size를 일부러 안
+   정해두고 각 화면에서 채우게 돼있는데(post.css:816-819 - .post-detail-actions-owner .btn과
+   동일한 기존 버그 패턴), /posts/contest 헤더의 "지난 우승 이력"/"커뮤니티로" 버튼도 이 사이징
+   규칙이 없어 테두리 없는 텍스트처럼 보였다. */
+.post-list-header-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+}
 
 .post-page-heading h1 {
     font-size: 1.4rem;
@@ -122,7 +134,7 @@
 }
 
 .post-category-badge-ANONYMOUS { background: rgba(107, 114, 128, 0.14); color: var(--muted); }
-.post-category-badge-QNA { background: rgba(30, 79, 163, 0.14); color: #0369a1; }
+.post-category-badge-QNA { background: rgba(30, 79, 163, 0.14); color: var(--brand-1-dark); }
 
 /* 검색 */
 .post-search-form {
@@ -351,6 +363,15 @@
     color: var(--ink);
 }
 
+.post-list-thumbnail {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--surface-soft);
+}
+
 .post-list-title {
     font-weight: 700;
     font-size: 1.05rem;
@@ -567,23 +588,32 @@ a.post-list-nickname:hover { text-decoration: underline; }
 .rich-editor-container .ql-container { border-radius: 0 0 9px 9px; font-size: 0.98rem; }
 .rich-editor-container .ql-editor { min-height: 220px; }
 
-/* 제목 드롭다운(Quill 기본 header 포맷) 한글 라벨 - Quill snow 테마는 라벨을
-   ::before의 content로만 그리므로(글자 자체가 마크업에 없음) CSS로만 교체 가능하다.
-   toolbar 설정이 header: [2, 3, false]라 값 없음(false)은 "본문"으로 표시한다.
+/* 글자 크기 드롭다운(Quill style/size attributor, px 화이트리스트 - rich-editor.js
+   SIZE_WHITELIST 참고) 라벨 - Quill snow 테마는 라벨을 ::before의 content로만 그리므로
+   (글자 자체가 마크업에 없음) CSS로만 교체 가능하다. 값 없음(false, 기본 크기로 리셋)은
+   "기본"으로 표시한다.
    주의: Quill은 툴바(.ql-toolbar)를 에디터 컨테이너(.rich-editor-container, 곧 .ql-container)의
    자식이 아니라 "형제"로 삽입한다 - 그래서 .rich-editor-container를 조상으로 잡는 선택자는
    툴바 안의 이 드롭다운에 닿지 않는다(둘 다 .post-field 밑에 나란히 있음). */
-.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label::before,
-.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-item::before {
-    content: '본문';
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item::before {
+    content: '기본';
 }
-.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="2"]::before,
-.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="2"]::before {
-    content: '제목 2';
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before {
+    content: '14px';
 }
-.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="3"]::before,
-.ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="3"]::before {
-    content: '제목 3';
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before {
+    content: '18px';
+}
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before {
+    content: '24px';
+}
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="32px"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before {
+    content: '32px';
 }
 
 /* 리치 에디터(Quill) 다크모드 - quill.snow.css(CDN)는 라이트 고정 테마라 대부분의 요소는
@@ -785,6 +815,12 @@ html[data-theme="dark"] .ql-editor.ql-blank::before {
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
     z-index: 30;
 }
+
+/* display:flex가 명시도가 같은 브라우저 기본 [hidden]{display:none}보다 우선 적용돼(작성자
+   스타일시트가 UA 기본보다 항상 이김) 선택 해제/스크롤 후에도 이 팝업이 마지막 위치에 계속
+   떠 있는 버그가 있었다(.post-poll-fields[hidden]과 동일 패턴 - hidden 속성이 있을 땐 이 규칙을
+   명시적으로 꺼준다). */
+.rich-selection-toolbar[hidden] { display: none; }
 
 .rich-selection-toolbar-btn {
     width: 28px;
@@ -1549,6 +1585,30 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 
 .post-poll-same-school-only { margin-left: 22px; color: var(--muted); }
 
+.shop-color-picker-row { display: flex; align-items: center; gap: 10px; }
+.shop-color-picker-row input[type="color"] {
+    width: 44px;
+    height: 36px;
+    padding: 2px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+}
+.shop-color-picker-row span { font-size: 0.88rem; color: var(--muted); font-family: monospace; }
+
+.post-poll-deadline { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.post-poll-deadline label { font-weight: 700; font-size: 0.85rem; color: var(--ink); }
+.post-poll-deadline input[type="datetime-local"] {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.88rem;
+    max-width: 240px;
+}
+
 /* 설문 관련 체크박스/라디오는 전부 네이티브 컨트롤을 그대로 쓰되(디자인 시스템 전체가
    체크박스를 커스텀 렌더링하지 않으므로 통일성 유지), 브랜드 색과 살짝 큰 크기만 입혀
    터치하기 편하게 한다. */
@@ -1658,6 +1718,13 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 .poll-widget-submit { margin-top: 12px; padding: 9px 20px; font-size: 0.85rem; }
 
 /* 인기 게시글 주간 콘테스트 - post/contest-list.html */
+.contest-rule-hint {
+    margin-left: 6px;
+    color: var(--muted);
+    cursor: help;
+    font-size: 0.85rem;
+}
+
 .contest-countdown {
     display: inline-flex;
     align-items: center;

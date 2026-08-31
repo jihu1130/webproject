@@ -8,6 +8,7 @@ import lombok.Getter;
 @Builder
 public class MyScheduleCommentSummaryDto {
     private Long id;
+    private String uuid; // 공개 URL(/school/comments/{uuid})용 - id는 삭제 폼 액션 등 내부 액션에만 쓰인다
     private String content;
     private String targetDate;
     private String createdAt;

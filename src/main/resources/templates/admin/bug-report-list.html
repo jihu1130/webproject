@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>관리자 - 버그 리포트 - WebSchool</title>
+    <title>관리자 - 문의 관리 - WebSchool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
     <link rel="stylesheet" th:href="@{/css/theme.css}">
@@ -18,14 +18,33 @@
 <div class="admin-page">
     <div class="admin-container">
         <div class="page-heading admin-page-heading">
-            <h1><i class="fa-solid fa-bug"></i> 버그 리포트</h1>
-            <p class="page-sub">사용자가 제출한 버그 리포트예요 - 비로그인 제출은 "익명"으로 표시돼요</p>
+            <h1><i class="fa-solid fa-comment-dots"></i> 문의 관리</h1>
+            <p class="page-sub">사용자가 제출한 문의예요 - 비로그인 제출은 "익명"으로 표시돼요</p>
         </div>
 
         <div th:replace="~{admin/fragments/nav :: tabs('bug-reports')}"></div>
 
+        <div class="list-toolbar">
+            <form th:action="@{/admin/bug-reports}" method="get" class="admin-search-form">
+                <input type="text" name="keyword" placeholder="작성자/이메일/제목 검색" th:value="${keyword}">
+                <select name="category" onchange="this.form.submit()">
+                    <option value="" th:selected="${selectedCategory == null or selectedCategory == ''}">전체 유형</option>
+                    <option value="BUG" th:selected="${selectedCategory == 'BUG'}">버그 제보</option>
+                    <option value="SUGGESTION" th:selected="${selectedCategory == 'SUGGESTION'}">건의</option>
+                    <option value="ACCOUNT" th:selected="${selectedCategory == 'ACCOUNT'}">계정 문의</option>
+                    <option value="OTHER" th:selected="${selectedCategory == 'OTHER'}">기타</option>
+                </select>
+                <select name="resolved" onchange="this.form.submit()">
+                    <option value="" th:selected="${selectedResolved == null}">전체 상태</option>
+                    <option value="false" th:selected="${selectedResolved != null and !selectedResolved}">처리중</option>
+                    <option value="true" th:selected="${selectedResolved != null and selectedResolved}">해결됨</option>
+                </select>
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+
         <div th:if="${reports.empty}" class="admin-empty">
-            접수된 버그 리포트가 없어요.
+            조건에 맞는 문의가 없어요.
         </div>
 
         <div class="admin-table-wrap" th:unless="${reports.empty}">
@@ -33,6 +52,7 @@
                 <thead>
                 <tr>
                     <th>상태</th>
+                    <th>유형</th>
                     <th>제목</th>
                     <th>내용</th>
                     <th>첨부</th>
@@ -48,6 +68,7 @@
                         <span class="admin-status-badge admin-status-cleared" th:if="${report.resolved}">해결됨</span>
                         <span class="admin-status-badge" th:unless="${report.resolved}">처리중</span>
                     </td>
+                    <td th:text="${report.categoryLabel}">유형</td>
                     <td>
                         <a th:href="@{'/admin/bug-reports/' + ${report.id}(page=${reports.number}, size=${reports.size})}"
                            class="admin-table-title" th:text="${report.title}">제목</a>
@@ -89,14 +110,14 @@
         </div>
 
         <div class="post-pagination" th:if="${reports.totalPages > 1}">
-            <a th:if="${reports.hasPrevious()}" th:href="@{/admin/bug-reports(page=${reports.number - 1}, size=${reports.size})}" class="post-page-link" aria-label="이전 페이지">
+            <a th:if="${reports.hasPrevious()}" th:href="@{/admin/bug-reports(page=${reports.number - 1}, size=${reports.size}, keyword=${keyword}, category=${selectedCategory}, resolved=${selectedResolved})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, reports.totalPages - 1)}"
-               th:href="@{/admin/bug-reports(page=${i}, size=${reports.size})}" th:text="${i + 1}"
+               th:href="@{/admin/bug-reports(page=${i}, size=${reports.size}, keyword=${keyword}, category=${selectedCategory}, resolved=${selectedResolved})}" th:text="${i + 1}"
                th:classappend="${i == reports.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${reports.hasNext()}" th:href="@{/admin/bug-reports(page=${reports.number + 1}, size=${reports.size})}" class="post-page-link" aria-label="다음 페이지">
+            <a th:if="${reports.hasNext()}" th:href="@{/admin/bug-reports(page=${reports.number + 1}, size=${reports.size}, keyword=${keyword}, category=${selectedCategory}, resolved=${selectedResolved})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>

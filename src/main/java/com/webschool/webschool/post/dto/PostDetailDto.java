@@ -11,7 +11,8 @@ public class PostDetailDto {
     private String title;
     private String content;
     private String nickname; // 익명 카테고리인 경우 "익명"으로 대체된 값
-    private Long authorId; // 프로필(/users/{id}) 링크용
+    private Long authorId; // 차단 액션 파라미터용 - URL에는 노출 안 함
+    private String authorUuid; // 프로필(/users/{uuid}) 링크용
     private boolean authorLinkable; // 익명 게시물이거나 작성자가 탈퇴한 경우 false - 이때는 링크를 걸지 않는다
     private String category;
     private String categoryLabel;

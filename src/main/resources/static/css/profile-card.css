@@ -52,6 +52,27 @@
 .profile-card-avatar-admin { border-color: var(--brand-1); }
 .profile-card-avatar-user { border-color: var(--border); }
 
+/* 상점 아바타 색상 상품의 장식 효과(ShopItem.Effect) - 별도 이미지/외부 리소스 없이 CSS
+   애니메이션만으로 구현. box-shadow(반짝임)/border-color(무지개)를 애니메이션하면 같은 속성에
+   대해 인라인 스타일(장착 색상, th:style="border-color:...")보다 항상 우선 적용된다(CSS 애니메이션은
+   해당 속성에 한해 인라인 스타일까지 이긴다) - 그래서 효과가 켜져 있으면 장착 색상 위에 자연스럽게 겹쳐 보인다. */
+@keyframes avatar-sparkle {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    50% { box-shadow: 0 0 14px 4px rgba(255, 215, 0, 0.55); }
+}
+.avatar-effect-sparkle { animation: avatar-sparkle 1.6s ease-in-out infinite; }
+
+@keyframes avatar-rainbow {
+    0% { border-color: #ff595e; }
+    16% { border-color: #ffca3a; }
+    33% { border-color: #8ac926; }
+    50% { border-color: #1982c4; }
+    66% { border-color: #6a4c93; }
+    83% { border-color: #ff595e; }
+    100% { border-color: #ff595e; }
+}
+.avatar-effect-rainbow { animation: avatar-rainbow 4s linear infinite; }
+
 .profile-card-avatar-google {
     position: absolute;
     right: -3px;

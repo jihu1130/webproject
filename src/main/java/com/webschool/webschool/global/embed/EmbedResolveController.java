@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class EmbedResolveController {
 
     private static final Pattern POST_PATTERN = Pattern.compile("/posts/([0-9a-fA-F-]{36})");
-    private static final Pattern SCHEDULE_PATTERN = Pattern.compile("/school/comments/(\\d+)");
+    private static final Pattern SCHEDULE_PATTERN = Pattern.compile("/school/comments/([0-9a-fA-F-]{36})");
     private static final int PREVIEW_LENGTH = 40;
 
     private final PostRepository postRepository;
@@ -45,7 +45,7 @@ public class EmbedResolveController {
 
         Matcher scheduleMatcher = SCHEDULE_PATTERN.matcher(url);
         if (scheduleMatcher.find()) {
-            return resolveScheduleComment(Long.parseLong(scheduleMatcher.group(1)));
+            return resolveScheduleComment(scheduleMatcher.group(1));
         }
 
         return ResponseEntity.badRequest().body(Map.of("error", "게시물 또는 오늘의 한마디 링크만 삽입할 수 있어요."));
@@ -72,8 +72,8 @@ public class EmbedResolveController {
         ));
     }
 
-    private ResponseEntity<?> resolveScheduleComment(Long id) {
-        ScheduleComment comment = scheduleCommentRepository.findById(id).orElse(null);
+    private ResponseEntity<?> resolveScheduleComment(String uuid) {
+        ScheduleComment comment = scheduleCommentRepository.findByUuid(uuid).orElse(null);
         if (comment == null || comment.isDeleted()) {
             return ResponseEntity.badRequest().body(Map.of("error", "한마디를 찾을 수 없어요."));
         }
@@ -86,7 +86,7 @@ public class EmbedResolveController {
         return ResponseEntity.ok(Map.of(
                 "type", "schedule",
                 "label", "오늘의 한마디",
-                "url", "/school/comments/" + id,
+                "url", "/school/comments/" + uuid,
                 "title", preview
         ));
     }

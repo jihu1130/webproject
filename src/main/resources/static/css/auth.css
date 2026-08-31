@@ -68,6 +68,15 @@ body.auth-body {
     resize: vertical;
 }
 
+/* 체크박스/라디오는 위 규칙의 width:100%/padding 등이 안 맞아 브라우저 기본 렌더링을 쓰는데,
+   accent-color를 안 정해주면 브라우저 기본 파란색(예: 크롬 #1a73e8)이 사이트 공식 색상과
+   따로 논다 - notification-settings.html 체크박스 4개가 대상. */
+.auth-field input[type="checkbox"],
+.auth-field input[type="radio"] {
+    width: auto;
+    accent-color: var(--brand-1);
+}
+
 .auth-field input:focus,
 .auth-field select:focus,
 .auth-field textarea:focus {

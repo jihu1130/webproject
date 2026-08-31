@@ -7,6 +7,15 @@ function initPollWidget(container, fetchUrl) {
         return;
     }
 
+    function formatDeadline(isoLike) {
+        var d = new Date(isoLike);
+        if (isNaN(d.getTime())) {
+            return isoLike;
+        }
+        var pad = function (n) { return String(n).padStart(2, '0'); };
+        return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+
     function escapeHtml(text) {
         var div = document.createElement('div');
         div.textContent = text == null ? '' : text;
@@ -29,6 +38,9 @@ function initPollWidget(container, fetchUrl) {
         if (poll.anonymous) {
             html += ' · 익명 투표';
         }
+        if (poll.expiresAt) {
+            html += ' · ' + (poll.expired ? '마감됨' : '마감 ' + formatDeadline(poll.expiresAt));
+        }
         html += '</div>';
 
         html += '<div class="poll-widget-options">';
@@ -49,8 +61,15 @@ function initPollWidget(container, fetchUrl) {
                 + '</div>';
         }
 
-        html += '<button type="button" class="poll-widget-submit btn btn-brand">투표하기</button>';
+        if (!poll.expired) {
+            html += '<button type="button" class="poll-widget-submit btn btn-brand">투표하기</button>';
+        }
         container.innerHTML = html;
+
+        if (poll.expired) {
+            container.querySelectorAll('input[name="pollOption"]').forEach(function (input) { input.disabled = true; });
+            return;
+        }
 
         container.querySelector('.poll-widget-submit').addEventListener('click', function () {
             var selected = Array.prototype.slice

@@ -20,8 +20,9 @@
         <div class="mypage-card">
             <div class="profile-card-head profile-card-head-center">
                 <div class="profile-card-avatar"
-                     th:classappend="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'} ? 'profile-card-avatar-super'
-                                     : (${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user')"
+                     th:classappend="(${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'} ? 'profile-card-avatar-super'
+                                     : (${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'} ? 'profile-card-avatar-admin' : 'profile-card-avatar-user'))
+                                     + (${loginUser != null and loginUser.equippedEffect == 'SPARKLE'} ? ' avatar-effect-sparkle' : (${loginUser != null and loginUser.equippedEffect == 'RAINBOW'} ? ' avatar-effect-rainbow' : ''))"
                      th:style="${loginUser != null and loginUser.equippedAvatarColor != null} ? 'border-color:' + ${loginUser.equippedAvatarColor}">
                     <img th:src="@{${loginUser != null and loginUser.profileImageUrl != null} ? ${loginUser.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
                     <i class="fa-brands fa-google profile-card-avatar-google" th:if="${loginUser != null and loginUser.provider.name() == 'GOOGLE'}"></i>

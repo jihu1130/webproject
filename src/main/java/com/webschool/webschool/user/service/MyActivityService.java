@@ -255,6 +255,7 @@ public class MyActivityService {
     private MyScheduleCommentSummaryDto toScheduleCommentDto(ScheduleComment c) {
         return MyScheduleCommentSummaryDto.builder()
                 .id(c.getId())
+                .uuid(c.getUuid())
                 // 한마디 본문이 리치 에디터 HTML이라(2026-08-19) 목록 미리보기에서는 태그를 걷어낸
                 // 순수 텍스트만 보여준다 - 이미지/동영상까지 그대로 렌더링하면 목록이 너무 무거워짐.
                 .content(HtmlSanitizer.toPlainText(c.getContent()))

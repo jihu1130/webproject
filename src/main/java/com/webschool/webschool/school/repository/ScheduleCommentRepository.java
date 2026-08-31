@@ -8,8 +8,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ScheduleCommentRepository extends JpaRepository<ScheduleComment, Long> {
+    Optional<ScheduleComment> findByUuid(String uuid); // 공개 URL(/school/comments/{uuid}) 조회용
+
     // PostRepository.incrementLikeCount()와 동일한 이유(lost update 방지) - 벌크 UPDATE로 원자적 증감.
     @Modifying
     @Query("UPDATE ScheduleComment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :id")

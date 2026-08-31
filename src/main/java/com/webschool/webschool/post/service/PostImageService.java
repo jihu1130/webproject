@@ -12,7 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -34,6 +37,21 @@ public class PostImageService {
         return postImageRepository.findByPost_IdOrderBySortOrderAsc(postId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    // 게시글 목록/검색 결과 카드에 쓰는 "대표 이미지" - 별도 필드 없이 게시글의 첫 번째(sortOrder
+    // 최소) 첨부 이미지를 그대로 대표 이미지로 쓴다(post/form.html의 "대표 이미지" 업로드 위젯이
+    // 저장하는 곳이 본문 삽입 이미지와 동일한 PostImage 목록이라, 별도 스키마 없이 이 규칙만으로
+    // "목록·검색 결과에 썸네일로 보여요"라는 기존 안내 문구를 실제로 만족시킬 수 있다).
+    public Map<Long, String> getThumbnailUrls(Collection<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, String> result = new LinkedHashMap<>();
+        for (PostImage image : postImageRepository.findByPost_IdInOrderByPost_IdAscSortOrderAsc(postIds)) {
+            result.putIfAbsent(image.getPost().getId(), toServableUrl(image.getStoredPath()));
+        }
+        return result;
     }
 
     // 실제 저장 전에 형식/용량을 먼저 검증해서, 검증 실패 시 게시물 생성/수정 자체가 일어나지 않도록 컨트롤러에서 먼저 호출한다.

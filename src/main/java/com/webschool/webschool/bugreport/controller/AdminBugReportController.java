@@ -20,10 +20,16 @@ public class AdminBugReportController {
     private final BugReportService bugReportService;
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "0") int page,
+    public String list(@RequestParam(required = false) String keyword,
+                        @RequestParam(required = false) String category,
+                        @RequestParam(required = false) Boolean resolved,
+                        @RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) Integer size, Model model) {
-        Page<BugReportDto> reports = bugReportService.getList(page, PageUtils.normalizeSize(size));
+        Page<BugReportDto> reports = bugReportService.getList(keyword, category, resolved, page, PageUtils.normalizeSize(size));
         model.addAttribute("reports", reports);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedCategory", category);
+        model.addAttribute("selectedResolved", resolved);
         return "admin/bug-report-list";
     }
 
@@ -39,6 +45,15 @@ public class AdminBugReportController {
         model.addAttribute("listPage", page);
         model.addAttribute("listSize", PageUtils.normalizeSize(size));
         return "admin/bug-report-detail";
+    }
+
+    @PostMapping("/{id}/reply")
+    public String reply(@PathVariable Long id, @RequestParam String content, Authentication authentication) {
+        try {
+            bugReportService.addReply(id, authentication.getName(), content);
+        } catch (IllegalArgumentException ignored) {
+        }
+        return "redirect:/admin/bug-reports/" + id;
     }
 
     @PostMapping("/{id}/resolve")
