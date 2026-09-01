@@ -10,6 +10,14 @@ body.auth-body {
     background: var(--brand-fixed-dark);
 }
 
+/* 이미 로그인한 사용자가 들어오는 마이페이지 계열 화면(프로필 설정/내 정보 수정/알림 설정)은
+   로그인/회원가입처럼 첫인상을 남길 필요가 없는 평범한 인앱 화면이라, 위 남색 풀페이지
+   배경 대신 나머지 사이트 화면과 동일한 기본 배경(var(--bg), 다크모드 자동 대응)을 쓴다.
+   auth.css의 카드/폼 스타일만 재사용하고 배경만 이 클래스로 되돌리는 용도. */
+body.auth-body.auth-body-plain {
+    background: var(--bg);
+}
+
 .auth-shell {
     flex: 1;
     display: flex;
