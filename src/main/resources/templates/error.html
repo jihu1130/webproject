@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${status} + '번 오류 - WebSchool'">오류 - WebSchool</title>
+    <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container admin-container-narrow">
+        <div class="admin-empty">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.6rem; margin-bottom: 10px; display: block;"></i>
+            <span th:if="${status == 404}">요청하신 페이지를 찾을 수 없어요.</span>
+            <span th:if="${status == 403}">이 페이지에 접근할 권한이 없어요.</span>
+            <span th:unless="${status == 404 or status == 403}">일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.</span>
+            <br>
+            <a href="/">홈으로 돌아가기</a>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>
