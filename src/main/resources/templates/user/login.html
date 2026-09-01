@@ -17,28 +17,28 @@
             <h3 class="auth-title">다시 오셨네요!</h3>
             <p class="auth-subtitle">로그인하고 우리 학교 소식을 확인하세요</p>
 
-            <div th:if="${param.error}" class="auth-alert auth-alert-danger">
+            <div th:if="${param.error}" class="alert alert-danger">
                 아이디 또는 비밀번호가 올바르지 않습니다.
             </div>
-            <div th:if="${param.locked}" class="auth-alert auth-alert-danger">
+            <div th:if="${param.locked}" class="alert alert-danger">
                 비밀번호를 여러 번 잘못 입력해서 계정이 일시적으로 잠겼습니다. 15분 후 다시 시도해주세요.
             </div>
-            <div th:if="${param.registered}" class="auth-alert auth-alert-success">
+            <div th:if="${param.registered}" class="alert alert-success">
                 회원가입이 완료되었습니다! 로그인해 주세요.
             </div>
-            <div th:if="${param.updated}" class="auth-alert auth-alert-success">
+            <div th:if="${param.updated}" class="alert alert-success">
                 아이디가 변경되었습니다. 새 아이디로 다시 로그인해 주세요.
             </div>
-            <div th:if="${param.accountDeleted}" class="auth-alert auth-alert-success">
+            <div th:if="${param.accountDeleted}" class="alert alert-success">
                 계정이 삭제되었습니다. 그동안 이용해주셔서 감사합니다.
             </div>
-            <div th:if="${param.reset}" class="auth-alert auth-alert-success">
+            <div th:if="${param.reset}" class="alert alert-success">
                 비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.
             </div>
-            <div th:if="${param.verified}" class="auth-alert auth-alert-success">
+            <div th:if="${param.verified}" class="alert alert-success">
                 이메일 인증이 완료되었습니다.
             </div>
-            <div th:if="${param.verifyError}" class="auth-alert auth-alert-danger">
+            <div th:if="${param.verifyError}" class="alert alert-danger">
                 인증 링크가 유효하지 않거나 만료되었습니다.
             </div>
 
@@ -49,14 +49,14 @@
 
             <form th:action="@{/login}" method="post">
                 <div class="auth-field">
-                    <label>아이디</label>
-                    <input type="text" name="username" placeholder="아이디 입력" required>
+                    <label class="form-label">아이디</label>
+                    <input type="text" name="username" class="form-control" placeholder="아이디 입력" required>
                 </div>
                 <div class="auth-field">
-                    <label>비밀번호</label>
-                    <input type="password" name="password" placeholder="비밀번호 입력" required>
+                    <label class="form-label">비밀번호</label>
+                    <input type="password" name="password" class="form-control" placeholder="비밀번호 입력" required>
                 </div>
-                <button type="submit" class="btn btn-brand auth-submit">로그인</button>
+                <button type="submit" class="btn btn-primary w-100">로그인</button>
             </form>
 
             <div class="auth-footer"><a href="/find-username">아이디 찾기</a> · <a href="/forgot-password">비밀번호 찾기</a></div>

@@ -59,28 +59,28 @@
                 <form th:if="${post.deleted}" th:action="@{'/admin/posts/' + ${post.id} + '/restore'}" method="post"
                       data-confirm="이 게시물을 복구할까요? 일반 사용자 화면에 다시 노출됩니다.">
                     <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
-                    <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-rotate-left"></i> 복구</button>
+                    <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-rotate-left"></i> 복구</button>
                 </form>
                 <th:block th:unless="${post.deleted}">
                     <form th:unless="${post.reportCleared}" th:action="@{'/admin/posts/' + ${post.id} + '/clear-report'}" method="post"
                           data-confirm="이 게시물을 검토 결과 '문제없음'으로 판결할까요? 게시물이 수정되기 전까지는 다시 신고해도 처리되지 않고 안내만 나갑니다.">
                         <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
-                        <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-circle-check"></i> 문제없음 처리</button>
+                        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-circle-check"></i> 문제없음 처리</button>
                     </form>
                     <form th:if="${post.reportCleared}" th:action="@{'/admin/posts/' + ${post.id} + '/unclear-report'}" method="post"
                           data-confirm="'문제없음' 판결을 철회할까요? 신고 상태가 다시 표시됩니다.">
                         <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
-                        <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-rotate-left"></i> 문제없음 철회</button>
+                        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-rotate-left"></i> 문제없음 철회</button>
                     </form>
                     <form th:if="${!post.blind}" th:action="@{'/admin/posts/' + ${post.id} + '/blind'}" method="post"
                           data-confirm="이 게시물을 블라인드 처리할까요?" data-confirm-danger="true">
                         <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
-                        <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-eye-slash"></i> 블라인드 처리</button>
+                        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-eye-slash"></i> 블라인드 처리</button>
                     </form>
                     <form th:if="${post.blind}" th:action="@{'/admin/posts/' + ${post.id} + '/unblind'}" method="post"
                           data-confirm="블라인드를 해제할까요?">
                         <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
-                        <button type="submit" class="btn btn-outline-brand"><i class="fa-solid fa-eye"></i> 블라인드 해제</button>
+                        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-eye"></i> 블라인드 해제</button>
                     </form>
                     <form th:action="@{'/admin/posts/' + ${post.id} + '/delete'}" method="post"
                           data-confirm="이 게시물을 삭제할까요? (소프트 삭제 - 관리자 페이지 삭제됨 탭에서 다시 복구할 수 있습니다)" data-confirm-danger="true">

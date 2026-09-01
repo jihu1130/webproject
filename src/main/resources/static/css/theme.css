@@ -116,9 +116,6 @@
 
     html:not([data-theme="light"]) body { background-color: var(--bg); color: var(--ink); }
 
-    html:not([data-theme="light"]) .btn-outline-brand { background: var(--surface); }
-    html:not([data-theme="light"]) .btn-outline-danger { background: var(--surface); }
-
     /* 폼 입력 요소는 대부분 배경색을 따로 안 정하고 브라우저 기본값(흰색)에 기대고 있어서, 다크
        모드에서 검은 카드 위에 하얀 입력창만 튀는 문제가 생긴다. theme.css가 항상 제일 먼저
        로드되므로(파일 상단 주석 참고), 각 화면 CSS가 배경을 따로 지정하지 않은 input/textarea/
@@ -178,9 +175,6 @@
 
 html[data-theme="dark"] body { background-color: var(--bg); color: var(--ink); }
 
-html[data-theme="dark"] .btn-outline-brand { background: var(--surface); }
-html[data-theme="dark"] .btn-outline-danger { background: var(--surface); }
-
 html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 html[data-theme="dark"] textarea,
 html[data-theme="dark"] select {
@@ -204,70 +198,13 @@ body {
     color: var(--ink);
 }
 
-/* 버그 수정: login.html 등 인증 화면 5곳이 이 버튼 클래스들의 기본 표시/정렬/커서 속성을
-   지금까지 Bootstrap CDN(bootstrap.min.css)에 암묵적으로 의존하고 있었다 - 사이트의 나머지
-   40여 개 템플릿은 이미 이 클래스만으로(Bootstrap 없이) 동작하고 있었으므로 실질적으로 안
-   쓰이는 죽은 의존성이었는데, 렌더 블로킹 외부 스타일시트로 남아있으면서 로드 완료 시점에
-   페이지가 미세하게 다시 배치되는 레이아웃 시프트를 유발했다(느린 네트워크에서 로그인
-   버튼을 클릭한 순간과 실제 버튼 위치가 어긋날 수 있는 원인). Bootstrap CDN 링크 자체를
-   해당 5개 템플릿에서 제거하고, 지금까지 Bootstrap의 `.btn` 리셋에 의존하던 최소한의
-   속성(정렬/커서/표시)을 여기 직접 명시해 완전히 독립적으로 만들었다. */
-.btn-brand, .btn-outline-brand, .btn-outline-danger {
-    display: inline-block;
-    text-align: center;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-/* 브랜드 그라데이션 버튼 (주요 액션) - 배경은 --brand-fixed(고정 남색, 위 주석 참고)를 써서
-   다크모드에서도 흰 글자 대비가 유지되게 한다. */
-.btn-brand {
-    background: var(--brand-fixed);
-    border: none;
-    color: #fff;
-    font-weight: 700;
-    transition: filter 0.15s ease, transform 0.15s ease;
-}
-.btn-brand:hover {
-    filter: brightness(1.06);
-    color: #fff;
-}
-.btn-brand:active { transform: translateY(1px); }
-
-/* 브랜드 컬러 아웃라인 버튼 (보조 액션 — 수정 등) */
-.btn-outline-brand {
-    background: #fff;
-    border: 1.5px solid var(--brand-1);
-    color: var(--brand-1);
-    font-weight: 700;
-    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-}
-.btn-outline-brand:hover:not(:disabled) {
-    background: rgba(30, 79, 163, 0.08);
-    color: var(--brand-1);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(30, 79, 163, 0.14);
-}
-.btn-outline-brand:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
-.btn-outline-brand:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* 위험(삭제) 아웃라인 버튼 — btn-outline-brand와 형태·움직임은 동일하게, 톤만 danger로 */
-.btn-outline-danger {
-    background: #fff;
-    border: 1.5px solid var(--danger-border);
-    color: var(--danger);
-    font-weight: 700;
-    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-}
-.btn-outline-danger:hover:not(:disabled) {
-    background: var(--danger-soft);
-    color: var(--danger-dark);
-    border-color: var(--danger);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.14);
-}
-.btn-outline-danger:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
-.btn-outline-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+/* 예전엔 여기서 .btn-brand/.btn-outline-brand/.btn-outline-danger를 직접 그려주는 커스텀
+   버튼 시스템이었지만, Bootstrap 5 도입 이후 전 템플릿이 실제 Bootstrap 버튼 클래스
+   (btn btn-primary / btn btn-outline-primary / btn btn-outline-danger)로 옮겨갔다. 그
+   버튼들의 실제 색상(브랜드 남색 등)은 static/css/bootstrap-theme.css가 .btn-primary 등의
+   컴포넌트 로컬 변수를 재정의하는 방식으로 담당한다 - Bootstrap 5.3의 컴파일된 CSS는 색을
+   컴포넌트 로컬 변수에 리터럴로 박아두므로 :root의 --bs-primary만 바꿔서는 반영되지 않는다
+   (bootstrap-theme.css 상단 주석 참고). */
 
 .text-brand { color: var(--brand-1); }
 

@@ -19,23 +19,23 @@
             <h3 class="auth-title">내 프로필 설정</h3>
             <p class="auth-subtitle">다른 사람이 보는 내 프로필(<span th:text="'/users/' + ${loginUser?.uuid}"></span>)에 표시될 사진과 소개글이에요</p>
 
-            <div th:if="${errorMessage}" class="auth-alert auth-alert-danger" th:text="${errorMessage}"></div>
-            <div th:if="${param.updated}" class="auth-alert auth-alert-success">저장되었습니다.</div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${param.updated}" class="alert alert-success">저장되었습니다.</div>
 
-            <div class="auth-field" style="text-align:center;">
-                <label>프로필 사진</label>
+            <div class="auth-field text-center">
+                <label class="form-label">프로필 사진</label>
                 <div class="profile-card-avatar profile-card-avatar-user" style="margin: 0 auto 12px;">
                     <img id="profileImagePreview"
                          th:src="@{${loginUser != null and loginUser.profileImageUrl != null} ? ${loginUser.profileImageUrl} : '/images/default-avatar.svg'}"
                          alt="프로필 사진">
                 </div>
-                <form th:action="@{/mypage/profile/image}" method="post" enctype="multipart/form-data" class="auth-field-inline" style="justify-content:center;">
-                    <input type="file" id="profileImageInput" name="profileImage" accept="image/*" required>
-                    <button type="submit" class="btn btn-outline-brand btn-usercheck">사진 올리기</button>
+                <form th:action="@{/mypage/profile/image}" method="post" enctype="multipart/form-data" class="auth-field-inline justify-content-center">
+                    <input type="file" id="profileImageInput" name="profileImage" class="form-control" accept="image/*" required>
+                    <button type="submit" class="btn btn-outline-primary btn-usercheck">사진 올리기</button>
                 </form>
                 <form th:if="${loginUser != null and loginUser.profileImageUrl != null}"
-                      th:action="@{/mypage/profile/image/reset}" method="post" style="margin-top:6px;">
-                    <button type="submit" class="mypage-profile-edit-link" style="background:none;border:none;cursor:pointer;">기본 이미지로 되돌리기</button>
+                      th:action="@{/mypage/profile/image/reset}" method="post" class="mt-1">
+                    <button type="submit" class="btn btn-link btn-sm p-0">기본 이미지로 되돌리기</button>
                 </form>
             </div>
 
@@ -43,8 +43,8 @@
 
             <form th:action="@{/mypage/profile}" method="post">
                 <div class="auth-field">
-                    <label>소개글</label>
-                    <textarea id="bioInput" name="bio" maxlength="150" rows="3" placeholder="짧은 한 줄 소개를 남겨보세요 (선택)" th:text="${bio}"></textarea>
+                    <label class="form-label">소개글</label>
+                    <textarea id="bioInput" name="bio" class="form-control" maxlength="150" rows="3" placeholder="짧은 한 줄 소개를 남겨보세요 (선택)" th:text="${bio}"></textarea>
                 </div>
 
                 <!-- 수정사항.md 지적 - 저장 전엔 실제 공개 프로필(/users/{id})에서 어떻게 보일지 알 방법이
@@ -53,7 +53,7 @@
                      프로필 쪽이 profile-card.css 컴포넌트로 바뀐 뒤에도 안 따라가서 미리보기가 실제
                      모양과 달라져 있었다). -->
                 <div class="auth-field">
-                    <label>미리보기 (실제 프로필에 이렇게 보여요)</label>
+                    <label class="form-label">미리보기 (실제 프로필에 이렇게 보여요)</label>
                     <div class="profile-card-bio-box">
                         <div class="profile-card-bio-header">소개글</div>
                         <p class="profile-card-bio-text" id="bioPreview" th:text="${bio}">소개글</p>
@@ -61,7 +61,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-brand auth-submit">저장하기</button>
+                <button type="submit" class="btn btn-primary w-100">저장하기</button>
             </form>
 
             <div class="auth-footer"><a href="/mypage">마이페이지로 돌아가기</a></div>

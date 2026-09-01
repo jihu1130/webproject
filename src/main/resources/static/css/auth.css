@@ -49,48 +49,11 @@ body.auth-body.auth-body-plain {
     font-size: 0.92rem;
 }
 
+/* 입력창/select/textarea/체크박스 자체는 Bootstrap의 .form-control/.form-select/
+   .form-check-input을 그대로 쓴다(테두리·포커스 링·라운드는 bootstrap-theme.css가 이미
+   브랜드 색으로 매핑해뒀음, accent-color도 Bootstrap이 --bs-primary 기준으로 자동 처리).
+   .auth-field는 label+input 한 묶음의 세로 간격(margin-bottom)만 담당하는 얕은 래퍼로 남긴다. */
 .auth-field { margin-bottom: 1rem; }
-
-.auth-field label {
-    display: block;
-    font-weight: 600;
-    font-size: 0.9rem;
-    /* var(--ink) - 원래 고정 회색(#374151)이라 다크모드 카드 배경 위에서 대비 1.57:1까지
-       떨어졌었다 */
-    color: var(--ink);
-    margin-bottom: 0.4rem;
-}
-
-.auth-field input,
-.auth-field select,
-.auth-field textarea {
-    width: 100%;
-    border-radius: 0.65rem;
-    padding: 0.7rem 1rem;
-    border: 1.5px solid var(--border);
-    font-size: 0.95rem;
-    font-family: inherit;
-    outline: none;
-    background: #fff;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    resize: vertical;
-}
-
-/* 체크박스/라디오는 위 규칙의 width:100%/padding 등이 안 맞아 브라우저 기본 렌더링을 쓰는데,
-   accent-color를 안 정해주면 브라우저 기본 파란색(예: 크롬 #1a73e8)이 사이트 공식 색상과
-   따로 논다 - notification-settings.html 체크박스 4개가 대상. */
-.auth-field input[type="checkbox"],
-.auth-field input[type="radio"] {
-    width: auto;
-    accent-color: var(--brand-1);
-}
-
-.auth-field input:focus,
-.auth-field select:focus,
-.auth-field textarea:focus {
-    border-color: var(--brand-1);
-    box-shadow: 0 0 0 0.2rem rgba(30, 79, 163, 0.15);
-}
 
 .auth-field-hint {
     font-weight: 400;
@@ -151,24 +114,6 @@ body.auth-body.auth-body-plain {
 .auth-password-strength.fair span:nth-child(-n+2) { background: #d97706; }
 .auth-password-strength.good span:nth-child(-n+3) { background: #ca8a04; }
 .auth-password-strength.strong span { background: #16a34a; }
-
-.auth-submit {
-    width: 100%;
-    border-radius: 0.65rem;
-    padding: 0.8rem;
-    font-size: 0.98rem;
-    margin-top: 0.5rem;
-}
-
-.auth-alert {
-    border-radius: 0.65rem;
-    padding: 0.65rem 1rem;
-    font-size: 0.88rem;
-    margin-bottom: 1rem;
-    font-weight: 500;
-}
-.auth-alert-danger { background: #fee2e2; color: #b91c1c; }
-.auth-alert-success { background: #dcfce7; color: #15803d; }
 
 .auth-section-label {
     font-weight: 700;
@@ -243,53 +188,14 @@ body.auth-body.auth-body-plain {
     margin: 0 0 14px;
 }
 
-.mypage-delete-btn {
-    width: 100%;
-    padding: 12px;
-    border-radius: 9px;
-    border: 1.5px solid #fca5a5;
-    background: #fff;
-    color: #dc2626;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-
-.mypage-delete-btn:hover { background: #fef2f2; }
-
 @media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .auth-field input,
-    html:not([data-theme="light"]) .auth-field select,
-    html:not([data-theme="light"]) .auth-field textarea {
-        background: var(--surface);
-        color: var(--ink);
-    }
     html:not([data-theme="light"]) .auth-google-btn { background: var(--surface); color: var(--ink); }
     html:not([data-theme="light"]) .auth-google-btn:hover { background: var(--surface-soft); }
-    html:not([data-theme="light"]) .mypage-delete-btn { background: var(--surface); }
-    html:not([data-theme="light"]) .mypage-delete-btn:hover { background: var(--danger-soft); }
-
-    /* 안내 배너(.auth-alert-*) - 원래 고정 파스텔 배경(#fee2e2/#dcfce7)이라 글자 자체는
-       읽혔지만, 다크 페이지 위에서 혼자 밝게 튀어서 다크모드를 켠 느낌이 안 났다. */
-    html:not([data-theme="light"]) .auth-alert-danger { background: var(--danger-soft); color: var(--danger); }
-    html:not([data-theme="light"]) .auth-alert-success { background: var(--success-soft); color: var(--success); }
 }
 
 /* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .auth-field input,
-html[data-theme="dark"] .auth-field select,
-html[data-theme="dark"] .auth-field textarea {
-    background: var(--surface);
-    color: var(--ink);
-}
 html[data-theme="dark"] .auth-google-btn { background: var(--surface); color: var(--ink); }
 html[data-theme="dark"] .auth-google-btn:hover { background: var(--surface-soft); }
-html[data-theme="dark"] .mypage-delete-btn { background: var(--surface); }
-html[data-theme="dark"] .mypage-delete-btn:hover { background: var(--danger-soft); }
-
-html[data-theme="dark"] .auth-alert-danger { background: var(--danger-soft); color: var(--danger); }
-html[data-theme="dark"] .auth-alert-success { background: var(--success-soft); color: var(--success); }
 
 /* 버그수정 프롬포트 요청 - 반응형 규칙이 아예 없었다(post.css 등의 560px 기준과 동일하게 맞춤). */
 @media (max-width: 560px) {

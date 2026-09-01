@@ -18,11 +18,11 @@
             <h3 class="auth-title"><i class="fa-solid fa-school"></i> 학교를 설정해주세요</h3>
             <p class="auth-subtitle">우리 학교 소식을 보려면 학교/학년/반 설정이 꼭 필요해요.<br>설정을 마치기 전까지는 다른 화면을 이용할 수 없어요.</p>
 
-            <div th:if="${errorMessage}" class="auth-alert auth-alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
             <form th:action="@{/school-setup}" th:object="${setupDto}" method="post" id="schoolSetupForm">
                 <div class="auth-field">
-                    <label>학교 이름</label>
+                    <label class="form-label">학교 이름</label>
                     <div class="school-search-box" id="setupSchoolSearchWrap">
                         <input type="text" id="setupSchoolSearchInput" placeholder="학교 이름을 검색하세요 (예: 모산중학교)" autocomplete="off" required>
                         <ul id="setupSchoolSearchResults" class="school-search-results"></ul>
@@ -35,22 +35,22 @@
                 </div>
                 <div class="auth-field-row">
                     <div class="auth-field">
-                        <label>학년</label>
-                        <select th:field="*{grade}" required>
+                        <label class="form-label">학년</label>
+                        <select th:field="*{grade}" class="form-select" required>
                             <option value="1">1학년</option>
                             <option value="2">2학년</option>
                             <option value="3">3학년</option>
                         </select>
                     </div>
                     <div class="auth-field">
-                        <label>반</label>
-                        <select th:field="*{classNum}" required disabled>
+                        <label class="form-label">반</label>
+                        <select th:field="*{classNum}" class="form-select" required disabled>
                             <option value="" selected>학교와 학년을 먼저 선택하세요</option>
                         </select>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-brand auth-submit">설정 완료</button>
+                <button type="submit" class="btn btn-primary w-100">설정 완료</button>
             </form>
         </div>
     </div>

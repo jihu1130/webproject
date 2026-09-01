@@ -20,7 +20,7 @@
             <p class="page-sub" style="margin: -0.6rem 0 1.2rem;" th:if="${mode != 'edit'}">작성하면 이전 활성 공지는 자동으로 보관되고, 전체 회원에게 알림이 발송돼요.</p>
             <p class="page-sub" style="margin: -0.6rem 0 1.2rem;" th:if="${mode == 'edit'}">단순 정정이라 수정해도 전체 알림은 다시 발송되지 않아요.</p>
 
-            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
             <form th:action="${mode == 'edit'} ? @{'/admin/notices/' + ${noticeId}} : @{/admin/notices}" method="post">
                 <div class="post-field">
@@ -33,8 +33,8 @@
                 </div>
 
                 <div class="post-form-actions">
-                    <a href="/admin/notices" class="btn btn-outline-brand">취소</a>
-                    <button type="submit" class="btn btn-brand" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
+                    <a href="/admin/notices" class="btn btn-outline-primary">취소</a>
+                    <button type="submit" class="btn btn-primary" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
                 </div>
             </form>
         </div>

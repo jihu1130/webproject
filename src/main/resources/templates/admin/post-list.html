@@ -56,7 +56,7 @@
 
         <div class="admin-bulk-toolbar" id="bulkToolbar-posts" th:unless="${posts.empty or viewMode == 'deleted'}">
             <span class="admin-bulk-count">0개 선택됨</span>
-            <button type="button" class="btn btn-outline-brand" data-bulk-action="/admin/posts/bulk-blind" data-bulk-label="블라인드 처리" disabled>선택 블라인드</button>
+            <button type="button" class="btn btn-outline-primary" data-bulk-action="/admin/posts/bulk-blind" data-bulk-label="블라인드 처리" disabled>선택 블라인드</button>
             <button type="button" class="post-delete-btn" data-bulk-action="/admin/posts/bulk-delete" data-bulk-label="삭제" data-bulk-danger="true" disabled>선택 삭제</button>
         </div>
 

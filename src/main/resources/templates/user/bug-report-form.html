@@ -17,10 +17,10 @@
             <h2><i class="fa-solid fa-comment-dots"></i> 문의하기</h2>
             <p class="page-sub" style="margin: -0.6rem 0 1.2rem;">버그 제보, 건의, 계정 문의 등 무엇이든 남겨주세요.</p>
 
-            <div th:if="${param.submitted}" class="post-alert post-alert-success">
+            <div th:if="${param.submitted}" class="alert alert-success">
                 문의가 접수됐습니다. 알려주셔서 감사합니다!
             </div>
-            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
             <form id="bugReportForm" th:action="@{/bug-reports/new}" method="post" enctype="multipart/form-data">
                 <div class="post-field">
@@ -58,8 +58,8 @@
                 </div>
 
                 <div class="post-form-actions">
-                    <a href="/" class="btn btn-outline-brand">취소</a>
-                    <button type="submit" class="btn btn-brand">제출하기</button>
+                    <a href="/" class="btn btn-outline-primary">취소</a>
+                    <button type="submit" class="btn btn-primary">제출하기</button>
                 </div>
             </form>
         </div>

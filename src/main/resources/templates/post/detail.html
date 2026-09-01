@@ -78,7 +78,7 @@
                 <span class="contest-post-widget-label"><i class="fa-solid fa-trophy"></i> 이번 주 추천 후보</span>
                 <span class="contest-entry-votes" th:text="${contestEntry.voteCount} + '표'">0표</span>
                 <span th:if="${contestEntry.mine}" class="contest-entry-mine-badge">내 후보</span>
-                <button type="button" id="contestVoteBtn" class="btn btn-brand contest-vote-btn" th:if="${!contestEntry.mine}"
+                <button type="button" id="contestVoteBtn" class="btn btn-primary contest-vote-btn" th:if="${!contestEntry.mine}"
                         sec:authorize="isAuthenticated()"
                         th:data-entry-id="${contestEntry.entryId}" th:disabled="${contestEntry.votedByMe}"
                         th:text="${contestEntry.votedByMe} ? '투표완료' : '투표하기'">투표하기</button>
@@ -86,7 +86,7 @@
 
             <div class="post-detail-actions">
                 <div class="post-detail-actions-owner" th:if="${post.mine}">
-                    <a th:href="@{'/posts/' + ${post.uuid} + '/edit'}" class="btn btn-outline-brand">
+                    <a th:href="@{'/posts/' + ${post.uuid} + '/edit'}" class="btn btn-outline-primary">
                         <i class="fa-solid fa-pen"></i> 수정
                     </a>
                     <form th:action="@{'/posts/' + ${post.uuid} + '/delete'}" method="post"
@@ -102,7 +102,7 @@
                          버튼 자체를 숨긴다(PostContestService.nominate()의 서버단 검증과 짝). -->
                     <form th:if="${contestEntry == null and post.category != 'ANONYMOUS'}" th:action="@{/posts/contest/nominate}" method="post" class="post-contest-nominate-form">
                         <input type="hidden" name="postUuid" th:value="${post.uuid}">
-                        <button type="submit" class="btn btn-outline-brand">
+                        <button type="submit" class="btn btn-outline-primary">
                             <i class="fa-solid fa-trophy"></i> 이번 주 추천 후보 신청
                         </button>
                     </form>

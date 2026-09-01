@@ -47,7 +47,7 @@
              comment-list.html 등과 동일하게 그대로 따른다. -->
         <div class="admin-bulk-toolbar" id="bulkToolbar-users" th:unless="${users.empty}">
             <span class="admin-bulk-count">0개 선택됨</span>
-            <button type="button" class="btn btn-outline-brand" data-bulk-action="/admin/users/bulk-deactivate" data-bulk-label="비활성화" disabled>선택 비활성화</button>
+            <button type="button" class="btn btn-outline-primary" data-bulk-action="/admin/users/bulk-deactivate" data-bulk-label="비활성화" disabled>선택 비활성화</button>
             <button type="button" class="post-delete-btn" data-bulk-action="/admin/users/bulk-delete" data-bulk-label="탈퇴 처리" data-bulk-danger="true" disabled>선택 탈퇴</button>
         </div>
 
@@ -96,23 +96,23 @@
                                 <form th:if="${!user.deleted and user.role == 'ROLE_USER'}" th:action="@{'/admin/users/' + ${user.id} + '/promote'}" method="post"
                                       data-confirm="이 계정을 부관리자로 승격할까요? 승격 직후에는 아무 권한도 없으니 '관리자 권한 관리'에서 권한을 켜주세요.">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-brand">관리자로 승격</button>
+                                    <button type="submit" class="btn btn-outline-primary">관리자로 승격</button>
                                 </form>
                                 <form th:if="${!user.deleted and user.role == 'ROLE_ADMIN'}" th:action="@{'/admin/users/' + ${user.id} + '/demote'}" method="post"
                                       data-confirm="이 계정의 관리자 권한을 해제할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-brand">권한 해제</button>
+                                    <button type="submit" class="btn btn-outline-primary">권한 해제</button>
                                 </form>
                             </th:block>
                             <form th:if="${!user.deleted and user.active}" th:action="@{'/admin/users/' + ${user.id} + '/deactivate'}" method="post"
                                   data-confirm="이 계정을 비활성화할까요? 계정과 작성 글은 그대로 남고 로그인만 즉시 차단됩니다." data-confirm-danger="true">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
-                                <button type="submit" class="btn btn-outline-brand">비활성화</button>
+                                <button type="submit" class="btn btn-outline-primary">비활성화</button>
                             </form>
                             <form th:if="${!user.deleted and !user.active}" th:action="@{'/admin/users/' + ${user.id} + '/activate'}" method="post"
                                   data-confirm="이 계정을 다시 활성화할까요? 즉시 로그인할 수 있게 됩니다.">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
-                                <button type="submit" class="btn btn-outline-brand">활성화</button>
+                                <button type="submit" class="btn btn-outline-primary">활성화</button>
                             </form>
                             <form th:unless="${user.deleted}" th:action="@{'/admin/users/' + ${user.id} + '/delete'}" method="post"
                                   data-confirm="이 계정을 탈퇴 처리할까요? 로그인이 즉시 차단됩니다." data-confirm-danger="true">
@@ -122,7 +122,7 @@
                             <form th:if="${user.deleted}" th:action="@{'/admin/users/' + ${user.id} + '/restore'}" method="post"
                                   data-confirm="이 계정을 복구할까요? 다시 로그인할 수 있게 됩니다.">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(null, ${keyword}, ${users.number}, ${users.size})}"></div>
-                                <button type="submit" class="btn btn-outline-brand">복구</button>
+                                <button type="submit" class="btn btn-outline-primary">복구</button>
                             </form>
                         </div>
                     </td>

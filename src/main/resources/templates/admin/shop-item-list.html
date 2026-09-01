@@ -19,7 +19,7 @@
                 <h1><i class="fa-solid fa-store"></i> 상점 관리</h1>
                 <p class="page-sub">포인트로 구매하는 칭호/아바타 색상 카탈로그예요 - 판매중지해도 이미 구매한 사용자의 장착 상태는 유지돼요</p>
             </div>
-            <a href="/admin/shop-items/new" class="btn-brand post-write-btn">
+            <a href="/admin/shop-items/new" class="btn btn-primary post-write-btn">
                 <i class="fa-solid fa-plus"></i> 새 상품 등록
             </a>
         </div>
@@ -70,10 +70,10 @@
                     <td th:text="${item.effect == 'SPARKLE'} ? '반짝임' : (${item.effect == 'RAINBOW'} ? '무지개' : '-')">효과</td>
                     <td th:text="${item.price > 0} ? (${item.price} + 'P') : '무료'">가격</td>
                     <td>
-                        <a th:href="@{'/admin/shop-items/' + ${item.id} + '/edit'}" class="btn btn-outline-brand" style="padding: 4px 10px; font-size: 0.82rem;">수정</a>
+                        <a th:href="@{'/admin/shop-items/' + ${item.id} + '/edit'}" class="btn btn-outline-primary" style="padding: 4px 10px; font-size: 0.82rem;">수정</a>
                         <form th:action="@{'/admin/shop-items/' + ${item.id} + '/active'}" method="post" style="display:inline;">
                             <input type="hidden" name="active" th:value="${!item.active}">
-                            <button type="submit" class="btn btn-outline-brand" style="padding: 4px 10px; font-size: 0.82rem;"
+                            <button type="submit" class="btn btn-outline-primary" style="padding: 4px 10px; font-size: 0.82rem;"
                                     th:text="${item.active} ? '판매중지' : '판매재개'">판매중지</button>
                         </form>
                     </td>

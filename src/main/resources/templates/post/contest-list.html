@@ -29,8 +29,8 @@
                 </p>
             </div>
             <div class="post-list-header-actions">
-                <a href="/posts/contest/history" class="btn btn-outline-brand"><i class="fa-solid fa-clock-rotate-left"></i> 지난 우승 이력</a>
-                <a href="/posts" class="btn btn-outline-brand"><i class="fa-solid fa-arrow-left"></i> 커뮤니티로</a>
+                <a href="/posts/contest/history" class="btn btn-outline-primary"><i class="fa-solid fa-clock-rotate-left"></i> 지난 우승 이력</a>
+                <a href="/posts" class="btn btn-outline-primary"><i class="fa-solid fa-arrow-left"></i> 커뮤니티로</a>
             </div>
         </div>
 
@@ -46,7 +46,7 @@
                     <span class="contest-entry-author" th:text="${entry.authorNickname}">작성자</span>
                 </div>
                 <span class="contest-entry-votes" th:text="${entry.voteCount} + '표'">0표</span>
-                <button type="button" class="btn btn-brand contest-vote-btn" th:if="${!entry.mine}"
+                <button type="button" class="btn btn-primary contest-vote-btn" th:if="${!entry.mine}"
                         th:data-entry-id="${entry.entryId}" th:disabled="${entry.votedByMe}"
                         th:text="${entry.votedByMe} ? '투표완료' : '투표하기'">투표하기</button>
                 <span th:if="${entry.mine}" class="contest-entry-mine-badge">내 후보</span>

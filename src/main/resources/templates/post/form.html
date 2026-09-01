@@ -19,7 +19,7 @@
         <div class="post-form-card">
             <h2 th:text="${mode == 'edit'} ? '게시물 수정' : '게시물 작성'">게시물 작성</h2>
 
-            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
             <form id="postForm" th:action="${mode == 'edit'} ? @{'/posts/' + ${postUuid} + '/edit'} : @{/posts}"
                   th:object="${postForm}" method="post" enctype="multipart/form-data">
@@ -113,7 +113,7 @@
                                 <input type="text" name="pollOptions" class="post-poll-option-input" maxlength="100" placeholder="옵션 2">
                             </div>
                         </div>
-                        <button type="button" id="pollAddOptionBtn" class="btn btn-outline-brand post-poll-add-btn">+ 옵션 추가</button>
+                        <button type="button" id="pollAddOptionBtn" class="btn btn-outline-primary post-poll-add-btn">+ 옵션 추가</button>
 
                         <!-- 설문 공개범위는 별도로 설정하지 않는다 - 게시글의 공개범위(전체공개/링크공개/
                              비공개)를 그대로 따라간다(PollService.matchesScope() 참고). -->
@@ -140,8 +140,8 @@
                 </div>
 
                 <div class="post-form-actions">
-                    <a th:href="${mode == 'edit'} ? @{'/posts/' + ${postUuid}} : @{/posts}" class="btn btn-outline-brand">취소</a>
-                    <button type="submit" class="btn btn-brand" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
+                    <a th:href="${mode == 'edit'} ? @{'/posts/' + ${postUuid}} : @{/posts}" class="btn btn-outline-primary">취소</a>
+                    <button type="submit" class="btn btn-primary" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
                 </div>
             </form>
         </div>

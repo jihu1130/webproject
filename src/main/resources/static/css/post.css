@@ -998,17 +998,6 @@ html[data-theme="dark"] .ql-editor.ql-blank::before {
     margin: 0 0 20px;
 }
 
-.post-alert {
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    margin-bottom: 16px;
-    font-weight: 600;
-}
-
-.post-alert-danger { background: var(--danger-soft); color: var(--danger); }
-.post-alert-success { background: var(--success-soft); color: var(--success); }
-
 .post-field { margin-bottom: 18px; }
 
 .post-field label {

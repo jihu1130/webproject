@@ -17,43 +17,43 @@
             <h3 class="auth-title">알림 설정</h3>
             <p class="auth-subtitle">받고 싶은 알림을 직접 켜고 끌 수 있어요</p>
 
-            <div th:if="${param.updated}" class="auth-alert auth-alert-success">저장되었습니다.</div>
+            <div th:if="${param.updated}" class="alert alert-success">저장되었습니다.</div>
 
             <form th:action="@{/mypage/notifications}" method="post">
                 <p class="auth-subtitle" style="margin-bottom: 6px;">기본으로 켜져 있어요 - 원치 않으면 꺼주세요</p>
 
-                <div class="auth-field" style="flex-direction: row; align-items: center; gap: 10px;">
-                    <input type="checkbox" id="commentAlertEnabled" name="commentAlertEnabled"
-                           value="true" th:checked="${commentAlertEnabled}" style="width: auto;">
-                    <label for="commentAlertEnabled" style="margin: 0;">댓글 알림</label>
+                <div class="form-check mb-2">
+                    <input type="checkbox" class="form-check-input" id="commentAlertEnabled" name="commentAlertEnabled"
+                           value="true" th:checked="${commentAlertEnabled}">
+                    <label class="form-check-label" for="commentAlertEnabled">댓글 알림</label>
                 </div>
-                <div class="auth-field" style="flex-direction: row; align-items: center; gap: 10px;">
-                    <input type="checkbox" id="likeAlertEnabled" name="likeAlertEnabled"
-                           value="true" th:checked="${likeAlertEnabled}" style="width: auto;">
-                    <label for="likeAlertEnabled" style="margin: 0;">좋아요 알림</label>
+                <div class="form-check mb-2">
+                    <input type="checkbox" class="form-check-input" id="likeAlertEnabled" name="likeAlertEnabled"
+                           value="true" th:checked="${likeAlertEnabled}">
+                    <label class="form-check-label" for="likeAlertEnabled">좋아요 알림</label>
                 </div>
-                <div class="auth-field" style="flex-direction: row; align-items: center; gap: 10px;">
-                    <input type="checkbox" id="replyAlertEnabled" name="replyAlertEnabled"
-                           value="true" th:checked="${replyAlertEnabled}" style="width: auto;">
-                    <label for="replyAlertEnabled" style="margin: 0;">답글 알림</label>
+                <div class="form-check mb-2">
+                    <input type="checkbox" class="form-check-input" id="replyAlertEnabled" name="replyAlertEnabled"
+                           value="true" th:checked="${replyAlertEnabled}">
+                    <label class="form-check-label" for="replyAlertEnabled">답글 알림</label>
                 </div>
 
                 <hr class="auth-section-divider">
 
                 <p class="auth-subtitle" style="margin-bottom: 6px;">기본으로 꺼져 있어요 - 원하면 켜주세요</p>
 
-                <div class="auth-field" style="flex-direction: row; align-items: center; gap: 10px;">
-                    <input type="checkbox" id="contestDeadlineAlertEnabled" name="contestDeadlineAlertEnabled"
-                           value="true" th:checked="${contestDeadlineAlertEnabled}" style="width: auto;">
-                    <label for="contestDeadlineAlertEnabled" style="margin: 0;">
+                <div class="form-check mb-2">
+                    <input type="checkbox" class="form-check-input" id="contestDeadlineAlertEnabled" name="contestDeadlineAlertEnabled"
+                           value="true" th:checked="${contestDeadlineAlertEnabled}">
+                    <label class="form-check-label" for="contestDeadlineAlertEnabled">
                         추천 게시글 콘테스트 마감 임박 알림
-                        <span class="auth-subtitle" style="display:block; font-size: 0.8rem;">
+                        <span class="d-block text-muted small">
                             매주 일요일 저녁, 이번 주 콘테스트 마감이 얼마 안 남았다고 알려드려요
                         </span>
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-brand auth-submit">저장하기</button>
+                <button type="submit" class="btn btn-primary w-100">저장하기</button>
             </form>
 
             <div class="auth-footer"><a href="/mypage">마이페이지로 돌아가기</a></div>

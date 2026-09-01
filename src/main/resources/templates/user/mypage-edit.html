@@ -18,24 +18,24 @@
             <h3 class="auth-title">내 정보 수정</h3>
             <p class="auth-subtitle">아이디 · 비밀번호 · 학교 정보를 변경할 수 있어요</p>
 
-            <div th:if="${errorMessage}" class="auth-alert auth-alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
             <form th:action="@{/mypage/edit}" th:object="${updateDto}" method="post" id="mypageEditForm">
                 <div class="auth-field">
-                    <label>아이디</label>
+                    <label class="form-label">아이디</label>
                     <div class="auth-field-inline">
-                        <input type="text" th:field="*{username}" placeholder="영문, 숫자만 입력" pattern="[A-Za-z0-9]+" required>
-                        <button type="button" id="checkUsernameBtn" class="btn btn-outline-brand btn-usercheck">중복확인</button>
+                        <input type="text" th:field="*{username}" class="form-control" placeholder="영문, 숫자만 입력" pattern="[A-Za-z0-9]+" required>
+                        <button type="button" id="checkUsernameBtn" class="btn btn-outline-primary btn-usercheck">중복확인</button>
                     </div>
                     <div id="usernameCheckMsg" class="auth-check-msg"></div>
                 </div>
                 <div class="auth-field">
-                    <label>별명</label>
-                    <input type="text" th:field="*{nickname}" placeholder="비워두면 아이디가 별명이 돼요">
+                    <label class="form-label">별명</label>
+                    <input type="text" th:field="*{nickname}" class="form-control" placeholder="비워두면 아이디가 별명이 돼요">
                 </div>
                 <div class="auth-field">
-                    <label>이메일</label>
-                    <input type="email" th:field="*{email}" placeholder="example@email.com" required>
+                    <label class="form-label">이메일</label>
+                    <input type="email" th:field="*{email}" class="form-control" placeholder="example@email.com" required>
                     <div class="auth-check-msg">이메일을 바꾸면 새 주소로 다시 인증해야 해요.</div>
                 </div>
 
@@ -43,12 +43,12 @@
                 <p class="auth-section-label"><i class="fa-solid fa-key"></i> 비밀번호 변경 (선택)</p>
 
                 <div class="auth-field">
-                    <label>새 비밀번호</label>
-                    <input type="password" th:field="*{newPassword}" placeholder="변경하지 않으려면 비워두세요">
+                    <label class="form-label">새 비밀번호</label>
+                    <input type="password" th:field="*{newPassword}" class="form-control" placeholder="변경하지 않으려면 비워두세요">
                 </div>
                 <div class="auth-field">
-                    <label>새 비밀번호 확인</label>
-                    <input type="password" th:field="*{confirmNewPassword}" placeholder="새 비밀번호 다시 입력">
+                    <label class="form-label">새 비밀번호 확인</label>
+                    <input type="password" th:field="*{confirmNewPassword}" class="form-control" placeholder="새 비밀번호 다시 입력">
                     <div id="passwordCheckMsg" class="auth-check-msg"></div>
                 </div>
 
@@ -56,7 +56,7 @@
                 <p class="auth-section-label"><i class="fa-solid fa-school"></i> 우리 학교 설정</p>
 
                 <div class="auth-field">
-                    <label>학교 이름</label>
+                    <label class="form-label">학교 이름</label>
                     <div class="school-search-box" id="editSchoolSearchWrap">
                         <input type="text" id="editSchoolSearchInput" placeholder="본인의 학교를 검색해보세요" autocomplete="off"
                                th:value="${updateDto.schoolName}" required>
@@ -69,8 +69,8 @@
                 </div>
                 <div class="auth-field-row">
                     <div class="auth-field">
-                        <label>학년</label>
-                        <select th:field="*{grade}" required>
+                        <label class="form-label">학년</label>
+                        <select th:field="*{grade}" class="form-select" required>
                             <option th:each="n : ${#numbers.sequence(1, 6)}"
                                     th:if="${updateDto.grade == n.toString()}"
                                     th:value="${n}" th:text="${n} + '학년'" selected></option>
@@ -79,8 +79,8 @@
                         </select>
                     </div>
                     <div class="auth-field">
-                        <label>반</label>
-                        <select th:field="*{classNum}" required>
+                        <label class="form-label">반</label>
+                        <select th:field="*{classNum}" class="form-select" required>
                             <option th:if="${updateDto.classNum != null and !#strings.isEmpty(updateDto.classNum)}"
                                     th:value="${updateDto.classNum}" th:text="${updateDto.classNum} + '반'" selected></option>
                             <option th:unless="${updateDto.classNum != null and !#strings.isEmpty(updateDto.classNum)}"
@@ -93,12 +93,12 @@
                     <hr class="auth-section-divider">
                     <p class="auth-section-label"><i class="fa-solid fa-lock"></i> 본인 확인</p>
                     <div class="auth-field">
-                        <label>현재 비밀번호</label>
-                        <input type="password" th:field="*{currentPassword}" placeholder="변경사항 저장을 위해 현재 비밀번호를 입력하세요" required>
+                        <label class="form-label">현재 비밀번호</label>
+                        <input type="password" th:field="*{currentPassword}" class="form-control" placeholder="변경사항 저장을 위해 현재 비밀번호를 입력하세요" required>
                     </div>
                 </th:block>
 
-                <button type="submit" class="btn btn-brand auth-submit">저장하기</button>
+                <button type="submit" class="btn btn-primary w-100">저장하기</button>
             </form>
 
             <div class="auth-footer"><a href="/mypage">마이페이지로 돌아가기</a></div>
@@ -112,10 +112,10 @@
             <form th:action="@{/mypage/delete}" method="post" id="deleteAccountForm"
                   data-confirm="정말 계정을 삭제하시겠어요? 이 작업은 되돌릴 수 없습니다." data-confirm-danger="true">
                 <div class="auth-field" th:if="${loginUser != null and loginUser.provider.name() == 'LOCAL'}">
-                    <label>비밀번호 확인</label>
-                    <input type="password" name="password" placeholder="계정 삭제를 위해 비밀번호를 입력하세요" required>
+                    <label class="form-label">비밀번호 확인</label>
+                    <input type="password" name="password" class="form-control" placeholder="계정 삭제를 위해 비밀번호를 입력하세요" required>
                 </div>
-                <button type="submit" class="mypage-delete-btn">계정 삭제</button>
+                <button type="submit" class="btn btn-outline-danger w-100">계정 삭제</button>
             </form>
         </div>
     </div>

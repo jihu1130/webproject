@@ -50,12 +50,12 @@
 
             <div class="post-form-actions" style="margin-top: 1.5rem;">
                 <form th:action="@{'/admin/bug-reports/' + ${report.id} + '/resolve'}" method="post">
-                    <button type="submit" class="btn btn-outline-brand"
+                    <button type="submit" class="btn btn-outline-primary"
                             th:text="${report.resolved} ? '처리중으로 되돌리기' : '해결됨으로 표시'">처리</button>
                 </form>
                 <form th:action="@{'/admin/bug-reports/' + ${report.id} + '/delete'}" method="post"
                       data-confirm="이 버그 리포트를 삭제할까요?" data-confirm-danger="true">
-                    <button type="submit" class="btn btn-outline-brand" style="color:#dc2626; border-color:#fca5a5;">삭제</button>
+                    <button type="submit" class="btn btn-outline-primary" style="color:#dc2626; border-color:#fca5a5;">삭제</button>
                 </form>
             </div>
 
@@ -78,7 +78,7 @@
 
                 <form th:action="@{'/admin/bug-reports/' + ${report.id} + '/reply'}" method="post" class="admin-inquiry-reply-form">
                     <textarea name="content" placeholder="답변을 입력하세요" required maxlength="2000"></textarea>
-                    <button type="submit" class="btn btn-brand">답변 등록</button>
+                    <button type="submit" class="btn btn-primary">답변 등록</button>
                 </form>
             </div>
         </div>

@@ -25,7 +25,7 @@
                 &nbsp;·&nbsp; <span th:text="${grade} + '학년 ' + ${classNm} + '반'">학년/반</span>
             </p>
 
-            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
             <form th:action="${mode == 'edit'} ? @{'/school/comments/' + ${commentId} + '/edit'} : @{/school/comments}" method="post">
                 <input th:if="${mode != 'edit'}" type="hidden" name="atptCode" th:value="${atptCode}">
@@ -60,7 +60,7 @@
                                 <input type="text" name="pollOptions" class="post-poll-option-input" maxlength="100" placeholder="옵션 2">
                             </div>
                         </div>
-                        <button type="button" id="pollAddOptionBtn" class="btn btn-outline-brand post-poll-add-btn">+ 옵션 추가</button>
+                        <button type="button" id="pollAddOptionBtn" class="btn btn-outline-primary post-poll-add-btn">+ 옵션 추가</button>
 
                         <!-- 공개범위는 "누가 볼 수 있는지"를 정하는 중요한 선택이라 세부 설정 안에
                              묻어두지 않고 항상 보이게 뺐다(사용자 요청 - 전체공개를 찾기 번거로웠음). -->
@@ -113,8 +113,8 @@
                 </div>
 
                 <div class="post-form-actions">
-                    <a th:href="${cancelUrl}" class="btn btn-outline-brand">취소</a>
-                    <button type="submit" class="btn btn-brand" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
+                    <a th:href="${cancelUrl}" class="btn btn-outline-primary">취소</a>
+                    <button type="submit" class="btn btn-primary" th:text="${mode == 'edit'} ? '수정 완료' : '작성 완료'">작성 완료</button>
                 </div>
             </form>
         </div>

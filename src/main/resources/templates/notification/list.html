@@ -20,7 +20,7 @@
                 <p class="page-sub">댓글/좋아요/관리자 조치/공지사항 소식을 모아봐요</p>
             </div>
             <form th:action="@{/notifications/read-all}" method="post" th:if="${!notifications.empty}">
-                <button type="submit" class="btn btn-outline-brand">모두 읽음 처리</button>
+                <button type="submit" class="btn btn-outline-primary">모두 읽음 처리</button>
             </form>
         </div>
 

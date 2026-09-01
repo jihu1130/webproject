@@ -18,7 +18,7 @@
     } catch (e) {}
 })();
 </script>
-<nav class="navbar navbar-expand-md navbar-dark site-nav sticky-top">
+<nav class="navbar navbar-expand-lg navbar-dark site-nav sticky-top">
     <div class="container-fluid site-nav-inner">
         <a href="/" class="navbar-brand"><i class="fa-solid fa-graduation-cap"></i> WebSchool</a>
 
@@ -28,7 +28,7 @@
         </button>
 
         <div class="collapse navbar-collapse" id="siteNavMenu">
-            <ul class="navbar-nav me-auto mb-2 mb-md-0">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
                     <a href="/" class="nav-link" th:classappend="${active == 'home'} ? ' active'"><i class="fa-solid fa-house me-1"></i>홈</a>
                 </li>
@@ -46,18 +46,18 @@
                 </li>
             </ul>
 
-            <form th:action="@{/search}" method="get" class="d-flex mb-2 mb-md-0 me-md-3" role="search">
+            <form th:action="@{/search}" method="get" class="d-flex mb-2 mb-lg-0 me-lg-3" role="search">
                 <input type="text" name="keyword" class="form-control form-control-sm" placeholder="통합검색" aria-label="통합검색">
                 <button type="submit" class="btn btn-sm btn-outline-light ms-1" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
-            <div class="d-flex align-items-center gap-2 mb-2 mb-md-0 me-md-3">
+            <div class="d-flex align-items-center gap-2 mb-2 mb-lg-0 me-lg-3">
                 <button type="button" id="themeToggle" class="btn btn-sm btn-outline-light" aria-label="다크모드로 전환" title="다크모드 전환">
                     <i class="fa-solid fa-moon"></i>
-                    <span id="themeToggleLabel" class="d-none d-md-inline">다크모드</span>
+                    <span id="themeToggleLabel" class="d-none d-lg-inline">다크모드</span>
                 </button>
                 <a href="/bug-reports/new" class="btn btn-sm btn-outline-light" title="문의하기">
-                    <i class="fa-solid fa-comment-dots"></i> <span class="d-none d-md-inline">문의하기</span>
+                    <i class="fa-solid fa-comment-dots"></i> <span class="d-none d-lg-inline">문의하기</span>
                 </a>
             </div>
 

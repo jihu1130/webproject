@@ -21,7 +21,7 @@
                 칭호는 적용될 문구를, 아바타 색상은 실제 색상을 입력하세요. 가격을 0으로 두면 무료로 지급돼요.
             </p>
 
-            <div th:if="${errorMessage}" class="post-alert post-alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
             <form th:action="${mode == 'edit'} ? @{'/admin/shop-items/' + ${itemId}} : @{/admin/shop-items}" method="post">
                 <div class="post-field" th:if="${mode != 'edit'}">
@@ -71,8 +71,8 @@
                 </div>
 
                 <div class="post-form-actions">
-                    <a href="/admin/shop-items" class="btn btn-outline-brand">취소</a>
-                    <button type="submit" class="btn btn-brand" th:text="${mode == 'edit'} ? '수정 완료' : '등록 완료'">등록 완료</button>
+                    <a href="/admin/shop-items" class="btn btn-outline-primary">취소</a>
+                    <button type="submit" class="btn btn-primary" th:text="${mode == 'edit'} ? '수정 완료' : '등록 완료'">등록 완료</button>
                 </div>
             </form>
         </div>

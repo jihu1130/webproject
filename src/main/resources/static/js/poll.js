@@ -62,7 +62,7 @@ function initPollWidget(container, fetchUrl) {
         }
 
         if (!poll.expired) {
-            html += '<button type="button" class="poll-widget-submit btn btn-brand">투표하기</button>';
+            html += '<button type="button" class="poll-widget-submit btn btn-primary">투표하기</button>';
         }
         container.innerHTML = html;
 

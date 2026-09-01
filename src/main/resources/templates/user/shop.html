@@ -30,13 +30,13 @@
                 <div class="shop-item-price" th:text="${item.price} + 'P'">0P</div>
 
                 <form th:if="${!item.owned}" th:action="@{'/shop/purchase/' + ${item.id}}" method="post">
-                    <button type="submit" class="btn btn-brand shop-item-btn">구매하기</button>
+                    <button type="submit" class="btn btn-primary shop-item-btn">구매하기</button>
                 </form>
                 <form th:if="${item.owned and !item.equipped}" th:action="@{'/shop/equip/' + ${item.id}}" method="post">
-                    <button type="submit" class="btn btn-outline-brand shop-item-btn">장착하기</button>
+                    <button type="submit" class="btn btn-outline-primary shop-item-btn">장착하기</button>
                 </form>
                 <form th:if="${item.equipped}" th:action="@{/shop/unequip/TITLE}" method="post">
-                    <button type="submit" class="btn btn-outline-brand shop-item-btn">장착 해제</button>
+                    <button type="submit" class="btn btn-outline-primary shop-item-btn">장착 해제</button>
                 </form>
             </div>
         </div>
@@ -51,13 +51,13 @@
                 <div class="shop-item-price" th:text="${item.price} + 'P'">0P</div>
 
                 <form th:if="${!item.owned}" th:action="@{'/shop/purchase/' + ${item.id}}" method="post">
-                    <button type="submit" class="btn btn-brand shop-item-btn">구매하기</button>
+                    <button type="submit" class="btn btn-primary shop-item-btn">구매하기</button>
                 </form>
                 <form th:if="${item.owned and !item.equipped}" th:action="@{'/shop/equip/' + ${item.id}}" method="post">
-                    <button type="submit" class="btn btn-outline-brand shop-item-btn">장착하기</button>
+                    <button type="submit" class="btn btn-outline-primary shop-item-btn">장착하기</button>
                 </form>
                 <form th:if="${item.equipped}" th:action="@{/shop/unequip/AVATAR_COLOR}" method="post">
-                    <button type="submit" class="btn btn-outline-brand shop-item-btn">장착 해제</button>
+                    <button type="submit" class="btn btn-outline-primary shop-item-btn">장착 해제</button>
                 </form>
             </div>
         </div>

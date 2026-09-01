@@ -56,7 +56,7 @@
 
         <div class="admin-bulk-toolbar" id="bulkToolbar-comments" th:unless="${comments.empty or viewMode == 'deleted'}">
             <span class="admin-bulk-count">0개 선택됨</span>
-            <button type="button" class="btn btn-outline-brand" data-bulk-action="/admin/comments/bulk-blind" data-bulk-label="블라인드 처리" disabled>선택 블라인드</button>
+            <button type="button" class="btn btn-outline-primary" data-bulk-action="/admin/comments/bulk-blind" data-bulk-label="블라인드 처리" disabled>선택 블라인드</button>
             <button type="button" class="post-delete-btn" data-bulk-action="/admin/comments/bulk-delete" data-bulk-label="삭제" data-bulk-danger="true" disabled>선택 삭제</button>
         </div>
 
@@ -101,28 +101,28 @@
                             <form th:if="${comment.deleted}" th:action="@{'/admin/comments/' + ${comment.id} + '/restore'}" method="post"
                                   data-confirm="이 댓글을 복구할까요?">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                <button type="submit" class="btn btn-outline-brand">복구</button>
+                                <button type="submit" class="btn btn-outline-primary">복구</button>
                             </form>
                             <th:block th:unless="${comment.deleted}">
                                 <form th:unless="${comment.reportCleared}" th:action="@{'/admin/comments/' + ${comment.id} + '/clear-report'}" method="post"
                                       data-confirm="이 댓글을 검토 결과 '문제없음'으로 판결할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-brand">문제없음 처리</button>
+                                    <button type="submit" class="btn btn-outline-primary">문제없음 처리</button>
                                 </form>
                                 <form th:if="${comment.reportCleared}" th:action="@{'/admin/comments/' + ${comment.id} + '/unclear-report'}" method="post"
                                       data-confirm="'문제없음' 판결을 철회할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-brand">문제없음 철회</button>
+                                    <button type="submit" class="btn btn-outline-primary">문제없음 철회</button>
                                 </form>
                                 <form th:if="${!comment.blind}" th:action="@{'/admin/comments/' + ${comment.id} + '/blind'}" method="post"
                                       data-confirm="이 댓글을 블라인드 처리할까요?" data-confirm-danger="true">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-brand">블라인드</button>
+                                    <button type="submit" class="btn btn-outline-primary">블라인드</button>
                                 </form>
                                 <form th:if="${comment.blind}" th:action="@{'/admin/comments/' + ${comment.id} + '/unblind'}" method="post"
                                       data-confirm="블라인드를 해제할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-brand">블라인드 해제</button>
+                                    <button type="submit" class="btn btn-outline-primary">블라인드 해제</button>
                                 </form>
                                 <form th:action="@{'/admin/comments/' + ${comment.id} + '/delete'}" method="post"
                                       data-confirm="이 댓글을 삭제할까요? (소프트 삭제 - 삭제됨 탭에서 다시 복구할 수 있습니다)" data-confirm-danger="true">
