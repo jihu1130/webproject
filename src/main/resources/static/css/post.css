@@ -41,7 +41,7 @@
 
 .post-page-heading h1 {
     font-size: 1.4rem;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--ink);
     margin: 0 0 4px;
 }
@@ -78,7 +78,7 @@
     border-radius: 10px;
     text-decoration: none;
     font-size: 0.9rem;
-    font-weight: 800;
+    font-weight: 700;
     background: linear-gradient(135deg, #fef3c7, #fde68a);
     border: 1.5px solid #f2c94c;
     color: #92400e;
@@ -128,7 +128,7 @@
     padding: 3px 10px;
     border-radius: 20px;
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     background: rgba(30, 79, 163, 0.1);
     color: var(--brand-1-dark);
 }
@@ -306,7 +306,7 @@
 .post-empty {
     background: var(--surface);
     border: 1px dashed var(--border);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     padding: 48px 20px;
     text-align: center;
     color: var(--muted);
@@ -328,9 +328,9 @@
     margin: 0 0 20px;
     padding: 0;
     background: var(--surface);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     border: 1px solid var(--border);
-    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.08);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
 }
 
@@ -467,8 +467,8 @@ a.post-list-nickname:hover { text-decoration: underline; }
 /* 상세 페이지 */
 .post-detail-card {
     background: var(--surface);
-    border-radius: 18px;
-    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card-lg);
     border: 1px solid var(--border);
     padding: 32px;
     position: relative;
@@ -485,7 +485,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
 
 .post-detail-title {
     font-size: 1.3rem;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--ink);
     margin: 4px 0 12px;
     word-break: break-word;
@@ -985,15 +985,15 @@ html[data-theme="dark"] .ql-editor.ql-blank::before {
 /* 작성/수정 폼 */
 .post-form-card {
     background: var(--surface);
-    border-radius: 18px;
-    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card-lg);
     border: 1px solid var(--border);
     padding: 32px;
 }
 
 .post-form-card h2 {
     font-size: 1.2rem;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--ink);
     margin: 0 0 20px;
 }
@@ -1289,15 +1289,15 @@ html[data-theme="dark"] .ql-editor.ql-blank::before {
 /* 게시물 댓글 */
 .post-comment-section {
     background: var(--surface);
-    border-radius: 18px;
-    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card-lg);
     border: 1px solid var(--border);
     padding: 24px 28px 28px;
 }
 
 .post-comment-heading {
     font-size: 1rem;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--ink);
     margin: 0 0 14px;
 }
@@ -1752,7 +1752,7 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     border-radius: 50%;
     background: var(--brand-gradient);
     color: white;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 0.85rem;
     display: flex;
     align-items: center;
@@ -1790,7 +1790,7 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     color: var(--muted);
     margin: 0 0 10px;
 }
-.contest-entry-prize { flex-shrink: 0; font-weight: 800; color: var(--brand-1); font-size: 0.9rem; }
+.contest-entry-prize { flex-shrink: 0; font-weight: 700; color: var(--brand-1); font-size: 0.9rem; }
 
 /* 게시글 상세에서 그 글이 이번 주 콘테스트 후보일 때 바로 투표할 수 있는 위젯(post/detail.html) -
    /posts/contest 목록까지 가지 않아도 글을 읽던 자리에서 바로 투표할 수 있게 한다. */

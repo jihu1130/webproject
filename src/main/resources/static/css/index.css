@@ -9,14 +9,14 @@ html { scroll-behavior: smooth; }
 .section-kicker {
     display: inline-block;
     font-size: 0.75rem;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.14em;
     color: var(--brand-1);
     margin-bottom: 0.6rem;
 }
 .section-title {
     font-size: 2rem;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--ink);
     margin: 0 0 0.6rem;
@@ -87,7 +87,7 @@ html { scroll-behavior: smooth; }
 .hero-title {
     font-size: 2.7rem;
     line-height: 1.25;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -0.03em;
     margin: 0 0 1.1rem;
     color: #fff;
@@ -207,7 +207,7 @@ html { scroll-behavior: smooth; }
 .bento-icon-sky { background: var(--accent); }
 .bento-icon-soon { background: var(--brand-gradient-soft); color: var(--brand-1); }
 
-.bento-card h3 { margin: 0; font-size: 1.08rem; font-weight: 800; color: var(--ink); }
+.bento-card h3 { margin: 0; font-size: 1.08rem; font-weight: 700; color: var(--ink); }
 .bento-card p { margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
 
 .bento-link {
@@ -289,7 +289,7 @@ html { scroll-behavior: smooth; }
     /* --brand-fixed(고정 남색) - 다크모드에서도 흰 숫자 대비 유지 */
     background: var(--brand-fixed);
     color: #fff;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 0.9rem;
     display: flex;
     align-items: center;
@@ -310,7 +310,7 @@ html { scroll-behavior: smooth; }
     font-size: 1.35rem;
 }
 
-.step-card h4 { margin: 0 0 0.4rem; font-weight: 800; color: var(--ink); }
+.step-card h4 { margin: 0 0 0.4rem; font-weight: 700; color: var(--ink); }
 .step-card p { margin: 0; font-size: 0.86rem; color: var(--muted); line-height: 1.5; }
 
 @media (max-width: 768px) {
@@ -342,7 +342,7 @@ html { scroll-behavior: smooth; }
     pointer-events: none;
 }
 .cta-inner { position: relative; max-width: 620px; margin: 0 auto; }
-.cta-band h2 { color: var(--ink); font-size: 1.8rem; font-weight: 800; margin: 0 0 0.7rem; letter-spacing: -0.02em; }
+.cta-band h2 { color: var(--ink); font-size: 1.8rem; font-weight: 700; margin: 0 0 0.7rem; letter-spacing: -0.02em; }
 .cta-band p { color: var(--muted); margin: 0 0 1.8rem; font-size: 1rem; }
 
 .cta-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
@@ -377,7 +377,7 @@ html { scroll-behavior: smooth; }
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .footer-brand { max-width: 340px; }
-.footer-logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.1rem; color: #fff; margin-bottom: 0.6rem; }
+.footer-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.1rem; color: #fff; margin-bottom: 0.6rem; }
 .footer-brand p { color: rgba(255, 255, 255, 0.55); font-size: 0.85rem; line-height: 1.6; margin: 0; }
 
 .footer-links { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }

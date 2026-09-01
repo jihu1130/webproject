@@ -1,28 +1,53 @@
-/* Bootstrap 5의 navbar/navbar-dark/navbar-collapse 컴포넌트를 그대로 쓴다(토글·접힘
-   애니메이션·반응형 브레이크포인트는 전부 Bootstrap JS/CSS가 처리). 여기서는 브랜드 배경색과
-   이 사이트에만 있는 요소(활성 링크 밑줄, 알림 벨, 인사말)만 얹는다. */
+/* 라이트 미니멀 네비바 - 흰 배경 + 밑줄 포인트. Bootstrap의 navbar/navbar-light/navbar-collapse
+   컴포넌트를 그대로 쓴다(토글·접힘 애니메이션·반응형 브레이크포인트는 Bootstrap JS/CSS가 처리).
+   여기서는 배경/구분선과 이 사이트에만 있는 요소(활성 링크 밑줄, 알림 벨, 인사말)만 얹는다. */
 
 .site-nav {
-    background: var(--nav-bg);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.site-nav-inner {
+    max-width: 1180px;
+    margin: 0 auto;
 }
 
 .site-nav .navbar-brand {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-weight: 800;
+    color: var(--brand-1);
+    font-weight: 700;
     letter-spacing: -0.02em;
 }
 
-.site-nav .navbar-brand i { color: var(--brand-2); }
+.site-nav .nav-link,
+.site-nav .btn {
+    white-space: nowrap;
+}
 
 .site-nav .nav-link {
-    font-weight: 500;
+    color: var(--muted);
+    font-weight: 600;
     border-bottom: 2px solid transparent;
 }
 
+.site-nav .nav-link:hover {
+    color: var(--ink);
+}
+
 .site-nav .nav-link.active {
-    border-bottom-color: var(--brand-2);
+    color: var(--ink);
+    border-bottom-color: var(--brand-1);
+}
+
+.site-nav-search-input {
+    background: var(--surface-soft);
+    border-color: transparent;
+}
+
+.site-nav-search-input:focus {
+    background: var(--surface);
 }
 
 .site-nav-bell {
@@ -33,15 +58,15 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--muted);
     font-size: 1rem;
     text-decoration: none;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
 .site-nav-bell:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
+    background: var(--surface-soft);
+    color: var(--ink);
 }
 
 .site-nav-bell-badge {
@@ -56,7 +81,7 @@
     background: var(--danger-fixed);
     color: #fff;
     font-size: 10px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 16px;
     text-align: center;
 }
@@ -64,7 +89,7 @@
 .site-nav-bell-badge.is-hidden { display: none; }
 
 .site-nav-greeting {
-    color: #fff;
+    color: var(--ink);
     font-weight: 600;
     font-size: 0.9rem;
     text-decoration: none;
@@ -75,5 +100,5 @@
 }
 
 .site-nav-greeting:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: var(--surface-soft);
 }

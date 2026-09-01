@@ -17,7 +17,7 @@
 
 .admin-page-heading h1 {
     font-size: 1.4rem;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--ink);
     margin: 0 0 4px;
 }
@@ -33,7 +33,7 @@
 .admin-empty {
     background: var(--surface);
     border: 1px dashed var(--border);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     padding: 48px 20px;
     text-align: center;
     color: var(--muted);
@@ -43,9 +43,9 @@
 /* 목록 테이블 */
 .admin-table-wrap {
     background: var(--surface);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     border: 1px solid var(--border);
-    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.08);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
     overflow-x: auto;
 }
@@ -277,7 +277,7 @@
     border-radius: 20px;
     border: 1.3px solid currentColor;
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.02em;
     margin-right: 6px;
 }
@@ -292,8 +292,8 @@
 /* 상세 화면 */
 .admin-detail-card {
     background: var(--surface);
-    border-radius: 18px;
-    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card-lg);
     border: 1px solid var(--border);
     padding: 32px;
     margin-top: 16px;
@@ -310,8 +310,8 @@
 
 .admin-report-section {
     background: var(--surface);
-    border-radius: 18px;
-    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.10);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card-lg);
     border: 1px solid var(--border);
     padding: 24px 28px 28px;
 }
@@ -372,9 +372,9 @@
 /* 관리자 권한 관리 (부관리자별 신고/게시글/한마디 관리 토글) */
 .admin-permission-list {
     background: var(--surface);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     border: 1px solid var(--border);
-    box-shadow: 0 14px 44px rgba(30, 27, 58, 0.08);
+    box-shadow: var(--shadow-card);
     margin-top: 16px;
     overflow: hidden;
 }
@@ -505,7 +505,7 @@
 
 .admin-inquiry-replies-title {
     font-size: 1.05rem;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--ink);
     margin: 0 0 12px;
 }
