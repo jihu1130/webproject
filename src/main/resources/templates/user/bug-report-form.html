@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>문의하기 - WebSchool</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" th:href="@{/css/theme.css}">
-    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/post.css}">
 </head>
 <body>
@@ -72,5 +69,6 @@
 <script th:src="@{/js/modal.js}"></script>
 <script th:src="@{/js/bug-report-form.js}"></script>
 
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
 </body>
 </html>

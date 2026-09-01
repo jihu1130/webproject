@@ -1,0 +1,140 @@
+/*
+ * Bootstrap 5.3(CDN, 컴파일된 배포판) 색/타이포/반경을 이 사이트의 브랜드
+ * 토큰(theme.css)에 맞춰 재매핑한다. bootstrap.min.css 다음, theme.css보다
+ * 먼저 로드할 것(fragments/head.html :: commonHead 순서 참고).
+ *
+ * 중요한 함정: Bootstrap의 "CSS 변수 기반 테마"는 :root의 --bs-primary 같은
+ * 최상위 변수를 하나만 바꾸면 전체가 따라가는 구조가 아니다. 컴파일된
+ * bootstrap.min.css는 .btn-primary, .form-control:focus, .badge 등 각
+ * 컴포넌트 안에 --bs-btn-bg: #0d6efd 같은 "컴포넌트 전용 변수"를 Sass
+ * 컴파일 시점에 이미 리터럴 hex로 박아놓는다(런타임에 --bs-primary를 참조하지
+ * 않음). 오직 유틸리티 클래스(.text-primary/.bg-primary/.border-primary/
+ * .link-primary)와 --bs-*-rgb를 쓰는 소수 컴포넌트(예: .pagination이
+ * var(--bs-link-color) 경유)만 루트 변수 재정의로 자동 반영된다.
+ * 그래서 아래는 두 단계로 나뉜다:
+ *   1) 루트 팔레트 재정의 — 유틸리티 클래스용, 공짜로 따라옴
+ *   2) 실제 쓰는 컴포넌트(.btn-*, 폼 포커스 등)의 로컬 변수를 직접 재정의
+ * 새 Bootstrap 컴포넌트(예: .dropdown, .toast)를 새로 쓰게 되면, 반드시
+ * 실제 배포 CSS에서 해당 규칙이 로컬 변수를 쓰는지 hex를 하드코딩했는지
+ * 먼저 확인하고 같은 패턴으로 추가할 것.
+ */
+
+:root {
+    /* ── 1) 루트 팔레트 — 유틸리티 클래스(.text-primary 등)가 자동으로 따라감 ── */
+    --bs-primary: var(--brand-fixed);
+    --bs-primary-rgb: 30, 79, 163;
+    --bs-danger: var(--danger-fixed);
+    --bs-danger-rgb: 181, 52, 42;
+    --bs-success: var(--success);
+    --bs-success-rgb: 47, 125, 79;
+    --bs-warning: var(--warn);
+    --bs-warning-rgb: 163, 98, 15;
+
+    /* alert/badge의 "subtle" 배경·테두리·강조 텍스트 색 — theme.css가 이미
+       설계해둔 톤(danger-soft/danger-border/danger-dark 등)을 그대로 재사용.
+       var() 간접 참조라 다크모드에서 theme.css의 다크 블록이 --danger-soft 등을
+       다시 정의하면 이쪽도 자동으로 같이 어두워진다(재정의 불필요). */
+    --bs-primary-bg-subtle: var(--brand-gradient-tint-2);
+    --bs-primary-border-subtle: var(--brand-gradient-soft);
+    --bs-primary-text-emphasis: var(--brand-1-dark);
+    --bs-danger-bg-subtle: var(--danger-soft);
+    --bs-danger-border-subtle: var(--danger-border);
+    --bs-danger-text-emphasis: var(--danger-dark);
+    --bs-success-bg-subtle: var(--success-soft);
+    --bs-success-text-emphasis: var(--success);
+    --bs-warning-bg-subtle: var(--warn-soft);
+    --bs-warning-text-emphasis: var(--warn);
+
+    --bs-body-bg: var(--bg);
+    --bs-body-color: var(--ink);
+    --bs-link-color: var(--brand-1);
+    --bs-link-color-rgb: 30, 79, 163;
+    --bs-link-hover-color: var(--brand-1-dark);
+    --bs-link-hover-color-rgb: 22, 58, 122;
+
+    --bs-border-color: var(--border);
+    --bs-border-radius: 0.625rem;   /* 10px, 기존 8/9/10px 혼재를 하나로 통일 */
+    --bs-border-radius-sm: 0.5rem;  /* 8px */
+    --bs-border-radius-lg: 0.75rem; /* 12px */
+
+    --bs-font-sans-serif: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+
+/* ── 2) 컴포넌트 로컬 변수 — 위 루트 재정의가 안 먹는 곳만 직접 지정 ── */
+
+/* 주요 액션 버튼: btn-brand와 동일하게 "다크모드에서도 안 바뀌는 고정 남색"
+   배경 + 흰 글자를 쓴다(--brand-fixed, theme.css 상단 주석 참고). */
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--brand-fixed);
+    --bs-btn-border-color: var(--brand-fixed);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--brand-fixed-dark);
+    --bs-btn-hover-border-color: var(--brand-fixed-dark);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--brand-fixed-dark);
+    --bs-btn-active-border-color: var(--brand-fixed-dark);
+    --bs-btn-disabled-bg: var(--brand-fixed);
+    --bs-btn-disabled-border-color: var(--brand-fixed);
+    --bs-btn-focus-shadow-rgb: 30, 79, 163;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--brand-1);
+    --bs-btn-border-color: var(--brand-1);
+    --bs-btn-hover-color: var(--brand-1);
+    --bs-btn-hover-bg: var(--brand-gradient-tint-1);
+    --bs-btn-hover-border-color: var(--brand-1);
+    --bs-btn-active-color: var(--brand-1);
+    --bs-btn-active-bg: var(--brand-gradient-tint-2);
+    --bs-btn-active-border-color: var(--brand-1);
+    --bs-btn-disabled-color: var(--brand-1);
+    --bs-btn-disabled-border-color: var(--brand-1);
+    --bs-btn-focus-shadow-rgb: 30, 79, 163;
+}
+
+.btn-danger {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--danger-fixed);
+    --bs-btn-border-color: var(--danger-fixed);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--danger-dark);
+    --bs-btn-hover-border-color: var(--danger-dark);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--danger-dark);
+    --bs-btn-active-border-color: var(--danger-dark);
+    --bs-btn-disabled-bg: var(--danger-fixed);
+    --bs-btn-disabled-border-color: var(--danger-fixed);
+    --bs-btn-focus-shadow-rgb: 181, 52, 42;
+}
+
+.btn-outline-danger {
+    --bs-btn-color: var(--danger);
+    --bs-btn-border-color: var(--danger-border);
+    --bs-btn-hover-color: var(--danger-dark);
+    --bs-btn-hover-bg: var(--danger-soft);
+    --bs-btn-hover-border-color: var(--danger);
+    --bs-btn-active-color: var(--danger-dark);
+    --bs-btn-active-bg: var(--danger-soft);
+    --bs-btn-active-border-color: var(--danger);
+    --bs-btn-disabled-color: var(--danger);
+    --bs-btn-disabled-border-color: var(--danger-border);
+    --bs-btn-focus-shadow-rgb: 181, 52, 42;
+}
+
+/* 폼 포커스 링/체크박스 — 기본 Bootstrap 파란색을 브랜드 색으로 */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--brand-1);
+    box-shadow: 0 0 0 0.25rem var(--brand-gradient-soft);
+}
+
+.form-check-input:checked {
+    background-color: var(--brand-fixed);
+    border-color: var(--brand-fixed);
+}
+
+.form-check-input:focus {
+    border-color: var(--brand-1);
+    box-shadow: 0 0 0 0.25rem var(--brand-gradient-soft);
+}

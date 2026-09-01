@@ -6,10 +6,7 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${profile.nickname + ' 님의 프로필 - WebSchool'}">프로필 - WebSchool</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" th:href="@{/css/theme.css}">
-    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/post.css}">
     <link rel="stylesheet" th:href="@{/css/profile-card.css}">
 </head>
@@ -153,5 +150,6 @@
         });
     });
 </script>
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
 </body>
 </html>

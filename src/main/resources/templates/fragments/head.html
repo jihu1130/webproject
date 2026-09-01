@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<!--/* 모든 페이지가 동일하게 불러오던 CDN/공용 CSS 블록을 여기 하나로 모았다.
+     페이지별 <head>는 charset/viewport/title/CSRF meta(필요한 페이지만)를 직접 쓰고,
+     그 다음 이 프래그먼트를 넣은 뒤, 마지막에 자기 페이지 전용 css(post.css 등)를
+     추가로 불러오면 된다. Bootstrap 5.3은 bootstrap-theme.css로 브랜드 색을
+     재매핑한 뒤 theme.css를 그 다음에 불러온다(theme.css 자체 주석 - "이 파일을
+     가장 먼저 불러온 뒤 각자의 css를 불러와야 한다"는 페이지별 css 기준이며,
+     Bootstrap 리셋/브릿지보다 뒤에 와도 무방하다). */-->
+<th:block th:fragment="commonHead">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/bootstrap-theme.css}">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+</th:block>
+
+<th:block th:fragment="commonScripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</th:block>
+</head>
+<body></body>
+</html>

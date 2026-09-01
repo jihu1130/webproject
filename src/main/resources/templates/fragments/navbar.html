@@ -18,68 +18,55 @@
     } catch (e) {}
 })();
 </script>
-<nav class="site-nav">
-    <div class="site-nav-inner">
-        <a href="/" class="site-nav-brand"><i class="fa-solid fa-graduation-cap"></i> WebSchool</a>
+<nav class="navbar navbar-expand-md navbar-dark site-nav sticky-top">
+    <div class="container-fluid site-nav-inner">
+        <a href="/" class="navbar-brand"><i class="fa-solid fa-graduation-cap"></i> WebSchool</a>
 
-        <!-- 모바일 전용 - 드로어를 안 열어도 알림/마이페이지는 바로 보이고 눌리게 상단바에
-             항상 떠 있게 한다(로그인 상태에서만, 데스크톱은 이미 메뉴 줄에 그대로 있어서 숨김). -->
-        <div class="site-nav-mobile-quick" sec:authorize="isAuthenticated()">
-            <a href="/notifications" class="site-nav-bell" title="알림">
-                <i class="fa-solid fa-bell"></i>
-                <span class="site-nav-bell-badge"
-                      th:classappend="${unreadNotificationCount == 0} ? ' is-hidden'"
-                      th:text="${unreadNotificationCount > 99} ? '99+' : ${unreadNotificationCount}">0</span>
-            </a>
-            <a href="/mypage" class="site-nav-mobile-profile" title="마이페이지">
-                <i class="fa-solid fa-circle-user"></i>
-            </a>
-        </div>
-
-        <button type="button" id="siteNavToggle" class="site-nav-toggle" aria-label="메뉴 열기" aria-expanded="false" aria-controls="siteNavMenu">
-            <i class="fa-solid fa-bars"></i>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavMenu"
+                aria-controls="siteNavMenu" aria-expanded="false" aria-label="메뉴 열기">
+            <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div id="siteNavBackdrop" class="site-nav-backdrop"></div>
+        <div class="collapse navbar-collapse" id="siteNavMenu">
+            <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                <li class="nav-item">
+                    <a href="/" class="nav-link" th:classappend="${active == 'home'} ? ' active'"><i class="fa-solid fa-house me-1"></i>홈</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/school/calendar" class="nav-link" title="학사 &amp; 급식 캘린더" th:classappend="${active == 'calendar'} ? ' active'"><i class="fa-solid fa-calendar-days me-1"></i>캘린더</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/posts" class="nav-link" th:classappend="${active == 'community'} ? ' active'"><i class="fa-solid fa-comments me-1"></i>커뮤니티</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/notices" class="nav-link" th:classappend="${active == 'notices'} ? ' active'"><i class="fa-solid fa-bullhorn me-1"></i>공지</a>
+                </li>
+                <li class="nav-item" th:if="${loginUser != null and loginUser.hasAnyAdminAccess()}">
+                    <a href="/admin" class="nav-link" th:classappend="${active == 'admin'} ? ' active'"><i class="fa-solid fa-user-shield me-1"></i>관리자</a>
+                </li>
+            </ul>
 
-        <div id="siteNavMenu" class="site-nav-menu">
-            <div class="site-nav-links">
-                <a href="/" class="site-nav-link" th:classappend="${active == 'home'} ? ' active' : ''"><i class="fa-solid fa-house site-nav-link-icon"></i><span>홈</span></a>
-                <a href="/school/calendar" class="site-nav-link" title="학사 & 급식 캘린더" th:classappend="${active == 'calendar'} ? ' active' : ''"><i class="fa-solid fa-calendar-days site-nav-link-icon"></i><span>캘린더</span></a>
-                <a href="/posts" class="site-nav-link" th:classappend="${active == 'community'} ? ' active' : ''"><i class="fa-solid fa-comments site-nav-link-icon"></i><span>커뮤니티</span></a>
-                <a href="/notices" class="site-nav-link" th:classappend="${active == 'notices'} ? ' active' : ''"><i class="fa-solid fa-bullhorn site-nav-link-icon"></i><span>공지</span></a>
-                <a href="/admin" class="site-nav-link" th:if="${loginUser != null and loginUser.hasAnyAdminAccess()}"
-                   th:classappend="${active == 'admin'} ? ' active' : ''"><i class="fa-solid fa-user-shield site-nav-link-icon"></i><span>관리자</span></a>
-            </div>
-
-            <form th:action="@{/search}" method="get" class="site-nav-search">
-                <input type="text" name="keyword" placeholder="통합검색" aria-label="통합검색">
-                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <form th:action="@{/search}" method="get" class="d-flex mb-2 mb-md-0 me-md-3" role="search">
+                <input type="text" name="keyword" class="form-control form-control-sm" placeholder="통합검색" aria-label="통합검색">
+                <button type="submit" class="btn btn-sm btn-outline-light ms-1" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
-            <span class="site-nav-divider" aria-hidden="true"></span>
-
-            <div class="site-nav-utility">
-                <button type="button" id="themeToggle" class="site-nav-theme-toggle" aria-label="다크모드로 전환" title="다크모드 전환">
+            <div class="d-flex align-items-center gap-2 mb-2 mb-md-0 me-md-3">
+                <button type="button" id="themeToggle" class="btn btn-sm btn-outline-light" aria-label="다크모드로 전환" title="다크모드 전환">
                     <i class="fa-solid fa-moon"></i>
-                    <span id="themeToggleLabel" class="site-nav-utility-label">다크모드</span>
+                    <span id="themeToggleLabel" class="d-none d-md-inline">다크모드</span>
                 </button>
-
-                <!-- 문의하기(옛 버그 리포트) - 비로그인 사용자도 제출 가능해서 로그인 여부와 무관하게 항상 노출(사용자 확정). -->
-                <a href="/bug-reports/new" class="site-nav-theme-toggle" aria-label="문의하기" title="문의하기">
-                    <i class="fa-solid fa-comment-dots"></i>
-                    <span class="site-nav-utility-label">문의하기</span>
+                <a href="/bug-reports/new" class="btn btn-sm btn-outline-light" title="문의하기">
+                    <i class="fa-solid fa-comment-dots"></i> <span class="d-none d-md-inline">문의하기</span>
                 </a>
             </div>
 
-            <span class="site-nav-divider" aria-hidden="true"></span>
-
-            <div class="site-nav-auth">
-                <div class="site-nav-guest" sec:authorize="!isAuthenticated()">
-                    <a href="/login" class="btn-nav btn-nav-ghost">로그인</a>
-                    <a href="/register" class="btn-nav btn-nav-accent">회원가입</a>
+            <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2" sec:authorize="!isAuthenticated()">
+                    <a href="/login" class="btn btn-sm btn-outline-light">로그인</a>
+                    <a href="/register" class="btn btn-sm btn-light">회원가입</a>
                 </div>
-                <div class="site-nav-user" sec:authorize="isAuthenticated()">
+                <div class="d-flex align-items-center gap-2" sec:authorize="isAuthenticated()">
                     <a href="/notifications" class="site-nav-bell" title="알림">
                         <i class="fa-solid fa-bell"></i>
                         <span class="site-nav-bell-badge"
@@ -89,15 +76,14 @@
                     <a href="/mypage" class="site-nav-greeting">
                         <span th:text="${loginUser != null ? loginUser.nickname : '회원'}">회원</span>님 안녕하세요
                     </a>
-                    <form th:action="@{/logout}" method="post" class="site-nav-logout-form">
-                        <button type="submit" class="btn-nav btn-nav-ghost">로그아웃</button>
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button type="submit" class="btn btn-sm btn-outline-light">로그아웃</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </nav>
-<script th:src="@{/js/navbar.js}"></script>
 <script th:src="@{/js/dark-mode.js}"></script>
 <script th:if="${loginUser != null}" th:src="@{/js/notification.js}"></script>
 </th:block>

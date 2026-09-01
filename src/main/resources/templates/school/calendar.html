@@ -7,11 +7,7 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>웹스쿨 - 학사 & 시간표 캘린더</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-
-    <link rel="stylesheet" th:href="@{/css/theme.css}">
-    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/school-search.css}">
     <link rel="stylesheet" th:href="@{/css/calendar.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
@@ -216,5 +212,6 @@
 <script th:src="@{/js/grade-select.js}"></script>
 <script th:src="@{/js/poll.js}"></script>
 <script th:src="@{/js/calendar.js}"></script>
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
 </body>
 </html>

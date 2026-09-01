@@ -6,10 +6,7 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${mode == 'edit'} ? '오늘의 한마디 수정 - WebSchool' : '오늘의 한마디 작성 - WebSchool'">오늘의 한마디 작성 - WebSchool</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" th:href="@{/css/theme.css}">
-    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/post.css}">
     <link rel="stylesheet" th:href="@{/css/calendar.css}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css">
@@ -147,5 +144,6 @@
         ]
     });
 </script>
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
 </body>
 </html>
