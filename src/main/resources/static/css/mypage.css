@@ -252,6 +252,21 @@
 }
 .mypage-back-link a:hover { text-decoration: underline; }
 
+/* 내 문의 화면(/mypage/inquiries) - 답변 스레드 표시는 admin-inquiry-reply-* 클래스를
+   그대로 재사용(관리자 상세 화면과 동일한 시각적 규칙). */
+.my-inquiry-item { flex-direction: column; align-items: stretch; gap: 8px; }
+.my-inquiry-header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.my-inquiry-header .post-list-date { margin-left: auto; }
+.my-inquiry-content {
+    margin: 0;
+    color: var(--ink);
+    font-size: 0.92rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.my-inquiry-replies { border-top: 1px dashed var(--border); padding-top: 10px; }
+.my-inquiry-no-reply { color: var(--muted); font-size: 0.85rem; }
+
 @media (max-width: 560px) {
     .mypage-page { padding: 24px 14px 40px; }
     .mypage-card { padding: 28px 20px 24px; }

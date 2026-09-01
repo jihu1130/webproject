@@ -212,7 +212,7 @@ public class BugReportService {
 
         if (report.getReporter() != null) {
             notificationService.notify(report.getReporter(), Notification.Type.INQUIRY_REPLY,
-                    "'" + truncate(report.getTitle()) + "' 문의에 답변이 등록되었습니다.", null);
+                    "'" + truncate(report.getTitle()) + "' 문의에 답변이 등록되었습니다.", "/mypage/inquiries");
         } else if (report.getContactEmail() != null) {
             mailService.sendInquiryReply(report.getContactEmail(), trimmed);
         }

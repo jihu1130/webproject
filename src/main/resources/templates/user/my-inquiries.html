@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 문의 - WebSchool</title>
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+
+<div class="mypage-page">
+    <div class="mypage-container mypage-container-wide">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-comment-dots"></i> 내 문의</h1>
+            <p class="page-sub">내가 남긴 문의와 관리자 답변을 확인할 수 있어요</p>
+        </div>
+
+        <div th:if="${inquiries.empty}" class="admin-empty">
+            아직 남긴 문의가 없어요. <a href="/bug-reports/new">문의하기</a>에서 남겨보세요.
+        </div>
+
+        <ul class="post-list my-inquiry-list" th:unless="${inquiries.empty}">
+            <li class="post-list-item my-inquiry-item" th:each="inquiry : ${inquiries}">
+                <div class="my-inquiry-header">
+                    <span class="admin-status-badge admin-status-cleared" th:if="${inquiry.resolved}">해결됨</span>
+                    <span class="admin-status-badge" th:unless="${inquiry.resolved}">처리중</span>
+                    <span class="post-category-badge" th:text="${inquiry.categoryLabel}">유형</span>
+                    <span class="post-list-title" th:text="${inquiry.title}">제목</span>
+                    <span class="post-list-date" th:text="${inquiry.createdAt}">날짜</span>
+                </div>
+                <p class="my-inquiry-content" th:text="${inquiry.content}">내용</p>
+
+                <div class="my-inquiry-replies">
+                    <div th:if="${#lists.isEmpty(inquiry.replies)}" class="my-inquiry-no-reply">
+                        아직 답변이 등록되지 않았어요.
+                    </div>
+                    <ul class="admin-inquiry-reply-list" th:unless="${#lists.isEmpty(inquiry.replies)}">
+                        <li class="admin-inquiry-reply-item" th:each="reply : ${inquiry.replies}">
+                            <div class="admin-inquiry-reply-header">
+                                <span class="admin-inquiry-reply-author"><i class="fa-solid fa-user-shield"></i> 관리자</span>
+                                <span class="admin-inquiry-reply-time" th:text="${reply.createdAt}">날짜</span>
+                            </div>
+                            <p class="admin-inquiry-reply-content" th:text="${reply.content}">답변 내용</p>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        </ul>
+
+        <div class="post-pagination" th:if="${inquiries.totalPages > 1}">
+            <a th:if="${inquiries.hasPrevious()}" th:href="@{/mypage/inquiries(page=${inquiries.number - 1})}" class="post-page-link" aria-label="이전 페이지">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, inquiries.totalPages - 1)}"
+               th:href="@{/mypage/inquiries(page=${i})}" th:text="${i + 1}"
+               th:classappend="${i == inquiries.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${inquiries.hasNext()}" th:href="@{/mypage/inquiries(page=${inquiries.number + 1})}" class="post-page-link" aria-label="다음 페이지">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+
+        <div class="mypage-back-link"><a href="/mypage">마이페이지로 돌아가기</a></div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>

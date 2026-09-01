@@ -1,6 +1,7 @@
 package com.webschool.webschool.bugreport.controller;
 
 import com.webschool.webschool.bugreport.service.BugReportService;
+import com.webschool.webschool.global.util.PageUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -47,6 +48,18 @@ public class BugReportController {
             model.addAttribute("contactEmail", contactEmail);
             return "user/bug-report-form";
         }
+    }
+
+    // "내 문의" 화면(todo.md 항목 - 문의 답변 스레드가 생겼는데 정작 로그인 사용자가 자기 문의에
+    // 달린 관리자 답변을 앱 안에서 볼 방법이 없던 걸 뒤늦게 발견해서 추가함) - BugReportService.
+    // getMyInquiries()는 이미 있었지만 이걸 호출하는 컨트롤러가 없었다.
+    @GetMapping("/mypage/inquiries")
+    public String myInquiries(@RequestParam(defaultValue = "0") int page,
+                               @RequestParam(required = false) Integer size,
+                               Authentication authentication, Model model) {
+        model.addAttribute("inquiries",
+                bugReportService.getMyInquiries(authentication.getName(), page, PageUtils.normalizeSize(size)));
+        return "user/my-inquiries";
     }
 
     private boolean isAuthenticated(Authentication authentication) {
