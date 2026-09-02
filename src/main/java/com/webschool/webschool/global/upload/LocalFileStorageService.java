@@ -31,6 +31,14 @@ public class LocalFileStorageService implements FileStorageService {
     }
 
     @Override
+    public String store(byte[] data, String contentType, String key) throws IOException {
+        Path target = baseDir().resolve(key);
+        Files.createDirectories(target.getParent());
+        Files.write(target, data);
+        return "/uploads/" + key;
+    }
+
+    @Override
     public void delete(String url) {
         if (url == null) {
             return;

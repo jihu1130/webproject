@@ -42,6 +42,17 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     @Override
+    public String store(byte[] data, String contentType, String key) {
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .contentType(contentType)
+                .build();
+        s3Client.putObject(request, RequestBody.fromBytes(data));
+        return baseUrl + "/" + key;
+    }
+
+    @Override
     public void delete(String url) {
         if (url == null || !url.startsWith(baseUrl + "/")) {
             return; // 이 저장소가 만든 URL이 아니면(예: 마이그레이션 전 로컬 경로) 손대지 않는다

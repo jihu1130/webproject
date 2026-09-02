@@ -80,9 +80,34 @@
                             </label>
                         </div>
 
+                        <!-- static/js/poll-editor.js의 initPollDeadlinePicker() 참고 - post/form.html과
+                             동일한 마크업(디스코드/카카오톡 스타일 팝오버, 실제 제출값은 #pollExpiresAt
+                             hidden input 하나). -->
                         <div class="post-poll-deadline">
-                            <label for="pollExpiresAt">마감 기한 (선택)</label>
-                            <input type="datetime-local" name="pollExpiresAt" id="pollExpiresAt">
+                            <label id="pollDeadlineLabel">마감 기한 (선택)</label>
+                            <div class="poll-deadline-picker">
+                                <button type="button" id="pollDeadlineTrigger" class="poll-deadline-trigger" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <span id="pollDeadlineTriggerText">설정 안 함</span>
+                                </button>
+                                <div id="pollDeadlinePanel" class="poll-deadline-panel" hidden>
+                                    <div class="poll-deadline-presets">
+                                        <button type="button" class="poll-deadline-preset" data-preset="1h">1시간 뒤</button>
+                                        <button type="button" class="poll-deadline-preset" data-preset="tonight">오늘 자정</button>
+                                        <button type="button" class="poll-deadline-preset" data-preset="tomorrow">내일 이 시간</button>
+                                        <button type="button" class="poll-deadline-preset" data-preset="1w">1주일 뒤</button>
+                                    </div>
+                                    <div class="poll-deadline-custom">
+                                        <input type="date" id="pollDeadlineDate" aria-label="마감 날짜">
+                                        <input type="time" id="pollDeadlineTime" aria-label="마감 시간">
+                                    </div>
+                                    <div class="poll-deadline-actions">
+                                        <button type="button" class="btn btn-outline-primary" id="pollDeadlineClear">설정 안 함</button>
+                                        <button type="button" class="btn btn-primary" id="pollDeadlineApply">적용</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="pollExpiresAt" id="pollExpiresAt">
                         </div>
 
                         <button type="button" id="pollAdvancedToggle" class="post-poll-advanced-toggle" aria-expanded="false" aria-controls="pollAdvancedFields">

@@ -218,6 +218,36 @@ public class BugReportService {
         }
     }
 
+    // 로그인한 제출자가 본인 문의에 재답장 - 비로그인(익명) 제출은 세션이 없어 애초에 "내 문의"
+    // 화면 자체에 진입할 방법이 없으므로(getMyInquiries가 계정 소유 문의만 조회) 여기서 별도로
+    // 익명 여부를 막을 필요가 없다. 다른 사람 문의에 답장을 못 달게만 소유권을 확인한다.
+    // 해결됨으로 표시된 문의는 대화가 끝난 것으로 보고 답장 자체를 막는다(사용자 요청) - 이전엔
+    // 재답장이 자동으로 "처리중"으로 되돌렸는데, 그 대신 명확하게 거부하고 화면에서도 답장
+    // 입력창을 아예 숨긴다(user/my-inquiries.html). 계속 이야기하고 싶으면 관리자가 먼저
+    // "처리중으로 되돌리기"를 눌러야 한다.
+    @Transactional
+    public void addUserReply(Long id, String username, String content) {
+        BugReport report = bugReportRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
+        if (report.getReporter() == null || !report.getReporter().getUsername().equals(username)) {
+            throw new IllegalArgumentException("본인이 제출한 문의에만 답장할 수 있습니다.");
+        }
+        if (report.isResolved()) {
+            throw new IllegalArgumentException("해결된 문의에는 답장을 남길 수 없습니다.");
+        }
+        String trimmed = content == null ? "" : content.trim();
+        if (trimmed.isBlank()) {
+            throw new IllegalArgumentException("답장 내용을 입력해주세요.");
+        }
+        BannedWordFilter.validate(trimmed);
+
+        InquiryReply reply = new InquiryReply();
+        reply.setBugReport(report);
+        reply.setUserUsername(username);
+        reply.setContent(trimmed);
+        inquiryReplyRepository.save(reply);
+    }
+
     @Transactional
     public void resolve(Long id, String actorUsername) {
         requireSuperAdmin(actorUsername);
@@ -301,12 +331,18 @@ public class BugReportService {
                 .collect(Collectors.toList());
         List<InquiryReplyDto> replies = inquiryReplyRepository
                 .findByBugReport_IdAndDeletedFalseOrderByCreatedAtAsc(r.getId()).stream()
-                .map(reply -> InquiryReplyDto.builder()
-                        .id(reply.getId())
-                        .adminUsername(reply.getAdminUsername())
-                        .content(reply.getContent())
-                        .createdAt(reply.getCreatedAt().format(DISPLAY_FORMAT))
-                        .build())
+                .map(reply -> {
+                    boolean fromAdmin = reply.getAdminUsername() != null;
+                    // userUsername이 채워진 답장은 addUserReply()가 소유권을 확인한 뒤에만 만들어지므로
+                    // 항상 r.getReporter() != null이다 - display(위에서 이미 계산한 제출자 닉네임)를 그대로 쓴다.
+                    return InquiryReplyDto.builder()
+                            .id(reply.getId())
+                            .fromAdmin(fromAdmin)
+                            .authorDisplay(fromAdmin ? "관리자" : display)
+                            .content(reply.getContent())
+                            .createdAt(reply.getCreatedAt().format(DISPLAY_FORMAT))
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         return BugReportDto.builder()

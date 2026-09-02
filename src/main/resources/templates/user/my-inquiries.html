@@ -12,6 +12,7 @@
 <body>
 
 <div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
 
 <div class="mypage-page">
     <div class="mypage-container mypage-container-wide">
@@ -40,14 +41,33 @@
                         아직 답변이 등록되지 않았어요.
                     </div>
                     <ul class="admin-inquiry-reply-list" th:unless="${#lists.isEmpty(inquiry.replies)}">
-                        <li class="admin-inquiry-reply-item" th:each="reply : ${inquiry.replies}">
+                        <li class="admin-inquiry-reply-item" th:each="reply : ${inquiry.replies}"
+                            th:classappend="${reply.fromAdmin} ? '' : ' my-inquiry-reply-mine'">
                             <div class="admin-inquiry-reply-header">
-                                <span class="admin-inquiry-reply-author"><i class="fa-solid fa-user-shield"></i> 관리자</span>
+                                <span class="admin-inquiry-reply-author">
+                                    <i class="fa-solid fa-user-shield" th:if="${reply.fromAdmin}"></i>
+                                    <i class="fa-solid fa-user" th:unless="${reply.fromAdmin}"></i>
+                                    <span th:text="${reply.fromAdmin} ? '관리자' : '나'"></span>
+                                </span>
                                 <span class="admin-inquiry-reply-time" th:text="${reply.createdAt}">날짜</span>
                             </div>
                             <p class="admin-inquiry-reply-content" th:text="${reply.content}">답변 내용</p>
                         </li>
                     </ul>
+
+                    <!-- 답변이 와도 다시 답장할 방법이 없던 문제(사용자 지적) - 로그인 제출자는
+                         본인 문의에 한해 몇 번이고 후속 답장을 남길 수 있다. 단, 해결됨으로
+                         표시되면 대화가 끝난 것으로 보고 답장 자체를 막는다(사용자 요청 -
+                         BugReportService.addUserReply()도 서버 단에서 동일하게 거부함). -->
+                    <p class="my-inquiry-resolved-notice" th:if="${inquiry.resolved}">
+                        <i class="fa-solid fa-circle-check"></i> 해결된 문의예요. 더 남길 말이 있다면 새로 문의해주세요.
+                    </p>
+                    <form th:unless="${inquiry.resolved}" th:action="@{'/mypage/inquiries/' + ${inquiry.id} + '/reply'}" method="post"
+                          class="admin-inquiry-reply-form my-inquiry-reply-form">
+                        <input type="hidden" name="page" th:value="${inquiries.number}">
+                        <textarea name="content" placeholder="답장을 입력하세요" required maxlength="2000"></textarea>
+                        <button type="submit" class="btn btn-primary">답장 보내기</button>
+                    </form>
                 </div>
             </li>
         </ul>

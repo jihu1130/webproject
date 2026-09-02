@@ -369,6 +369,10 @@
     height: 44px;
     border-radius: 8px;
     object-fit: cover;
+    /* 세로로 긴 사진(인물 사진 등)을 정중앙 기준으로 자르면 얼굴/머리 위쪽이 잘려나가기 쉬워서
+       위쪽에 살짝 더 가중치를 둔다(완전한 top은 아니고, 정중앙보다 위쪽으로 - 가로로 긴 사진은
+       이 정도 편차로는 거의 영향이 없다). */
+    object-position: center 30%;
     background: var(--surface-soft);
 }
 
@@ -587,6 +591,16 @@ a.post-list-nickname:hover { text-decoration: underline; }
 .rich-editor-container .ql-toolbar { border-radius: 9px 9px 0 0; }
 .rich-editor-container .ql-container { border-radius: 0 0 9px 9px; font-size: 0.98rem; }
 .rich-editor-container .ql-editor { min-height: 220px; }
+
+/* 본문에 사진/파일을 드래그해 놓는 동안의 시각 피드백(rich-editor.js setupDragDropUpload) -
+   대표 이미지 드롭존(.post-image-dropzone.is-dragover)과 같은 브랜드색 강조 패턴. Quill이
+   초기화되면 #postContentEditor(=.rich-editor-container)를 자기 .ql-container로 그대로
+   재사용하므로(툴바만 형제로 빠져나감 - 위 주석 참고), 클래스 두 개가 같은 엘리먼트에 붙는다. */
+.rich-editor-container.rich-editor-dragover {
+    outline: 2px dashed var(--brand-1);
+    outline-offset: -2px;
+    background: var(--surface-soft);
+}
 
 /* 글자 크기 드롭다운(Quill style/size attributor, px 화이트리스트 - rich-editor.js
    SIZE_WHITELIST 참고) 라벨 - Quill snow 테마는 라벨을 ::before의 content로만 그리므로
@@ -1018,7 +1032,8 @@ html[data-theme="dark"] .ql-editor.ql-blank::before {
    체크박스/라디오(.post-poll-checkbox 등)까지 100% 폭 + 테두리 박스로 늘려버려서, 네이티브
    체크박스가 200px 가까이 늘어나고 그 뒤 라벨 문구가 오른쪽 끝으로 밀려나는 버그가 있었다. */
 .post-field input:not([type="checkbox"]):not([type="radio"]),
-.post-field textarea {
+.post-field textarea,
+.post-field select {
     width: 100%;
     padding: 11px 14px;
     border-radius: 9px;
@@ -1032,7 +1047,23 @@ html[data-theme="dark"] .ql-editor.ql-blank::before {
 }
 
 .post-field input:not([type="checkbox"]):not([type="radio"]):focus,
-.post-field textarea:focus { border-color: var(--brand-1); }
+.post-field textarea:focus,
+.post-field select:focus { border-color: var(--brand-1); }
+
+/* select는 위 규칙만으로는 배경/화살표가 브라우저 기본값 그대로 남아 나머지 입력칸과
+   따로 놀아 보였다(사용자 지적 - "문의 유형" 드롭다운이 너무 구려 보임). 배경을 명시하고
+   기본 화살표를 지운 뒤 우리 테마 색(--muted)의 셰브런 아이콘을 직접 그려 넣는다 -
+   .post-search-sort처럼 화살표 없이 두는 기존 셀렉트도 있지만, 그건 목록 툴바의 작은
+   보조 컨트롤이고 이건 폼의 주요 입력 필드라 다른 입력칸과 톤을 맞추는 게 더 중요하다. */
+.post-field select {
+    appearance: none;
+    background-color: var(--surface);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
 
 /* 게시글 제한적 공개(링크 전용) 체크박스 - .post-field label의 block/굵게 스타일을 벗어나
    체크박스+문구가 한 줄에 나란히 오도록 별도 지정 */
@@ -1588,14 +1619,92 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 
 .post-poll-deadline { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
 .post-poll-deadline label { font-weight: 700; font-size: 0.85rem; color: var(--ink); }
-.post-poll-deadline input[type="datetime-local"] {
-    padding: 8px 10px;
+
+/* 디스코드/카카오톡 스타일 마감 기한 팝오버(poll-editor.js initPollDeadlinePicker) - 순정
+   datetime-local 입력칸을 대체. 트리거 버튼은 다른 입력칸과 톤을 맞추고, 패널은 자주 쓰는
+   기한을 칩 버튼으로 먼저 보여준 뒤 직접 지정은 그 아래로 내린다(대부분 프리셋으로 끝나는
+   흐름을 우선). */
+.poll-deadline-picker { position: relative; display: inline-block; }
+
+.poll-deadline-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
     border-radius: 8px;
     border: 1.5px solid var(--border);
     background: var(--surface);
     color: var(--ink);
     font-size: 0.88rem;
-    max-width: 240px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+.poll-deadline-trigger:hover { border-color: var(--brand-1); }
+.poll-deadline-trigger i { color: var(--muted); }
+
+.poll-deadline-panel {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 260px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.poll-deadline-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.poll-deadline-preset {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--surface-soft);
+    color: var(--ink);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.poll-deadline-preset:hover { border-color: var(--brand-1); color: var(--brand-1); }
+
+.poll-deadline-custom {
+    display: flex;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    margin-bottom: 10px;
+}
+
+.poll-deadline-custom input {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 8px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.82rem;
+    font-family: inherit;
+}
+.poll-deadline-custom input:focus { border-color: var(--brand-1); outline: none; }
+
+.poll-deadline-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+.poll-deadline-actions .btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
 }
 
 /* 설문 관련 체크박스/라디오는 전부 네이티브 컨트롤을 그대로 쓰되(디자인 시스템 전체가

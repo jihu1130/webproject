@@ -7,9 +7,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -60,6 +62,21 @@ public class BugReportController {
         model.addAttribute("inquiries",
                 bugReportService.getMyInquiries(authentication.getName(), page, PageUtils.normalizeSize(size)));
         return "user/my-inquiries";
+    }
+
+    // 로그인한 제출자가 본인 문의에 재답장 - 답변이 와도 다시 답장할 방법이 없던 문제(사용자 지적)로
+    // 추가. 비로그인 익명 제출은 애초에 이 화면(/mypage/inquiries)에 들어올 계정이 없어 해당 없음.
+    @PostMapping("/mypage/inquiries/{id}/reply")
+    public String reply(@PathVariable Long id, @RequestParam String content,
+                         @RequestParam(defaultValue = "0") int page,
+                         @RequestParam(required = false) Integer size,
+                         Authentication authentication, RedirectAttributes redirectAttributes) {
+        try {
+            bugReportService.addUserReply(id, authentication.getName(), content);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
+        }
+        return "redirect:/mypage/inquiries?page=" + page + "&size=" + PageUtils.normalizeSize(size);
     }
 
     private boolean isAuthenticated(Authentication authentication) {

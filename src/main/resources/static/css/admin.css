@@ -568,6 +568,20 @@
 
 .admin-inquiry-reply-form textarea:focus { border-color: var(--brand-1); outline: none; }
 
+/* "내 문의" 화면에서 제출자 본인이 단 재답장 - 관리자 답변(회색 배경)과 구분되게 브랜드 색
+   왼쪽 테두리만 얇게 얹는다(전체 배경을 바꾸면 화면 하나에 색이 너무 많아져서 절제). */
+.admin-inquiry-reply-item.my-inquiry-reply-mine {
+    border-left: 3px solid var(--brand-1);
+}
+.my-inquiry-reply-form { margin-top: 10px; }
+
+.my-inquiry-resolved-notice {
+    margin: 10px 0 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+.my-inquiry-resolved-notice i { color: var(--success); margin-right: 4px; }
+
 /* 계정 제재 부여 폼 */
 .admin-penalty-form {
     display: flex;
@@ -606,6 +620,25 @@
    자동 대응되어 이 블록이 더 필요 없다(.admin-status-* 배지도 이미 --warn/--danger/
    --success/--muted를 직접 쓰는 중이라 마찬가지). */
 
+/* 11개 탭을 성격별 3그룹(콘텐츠 관리/계정·권한/운영)으로 묶는 컨테이너 - admin/fragments/nav.html
+   참고. 그룹 안에서는 줄바꿈을 막아(flex-wrap: nowrap) 관련 탭끼리 항상 붙어 다니게 하고,
+   화면이 좁아 줄바꿈이 필요하면 부모(.admin-main-tabs)의 flex-wrap이 그룹 "경계"에서만
+   끊어준다 - 예전처럼 8+3으로 낱개 탭이 어중간하게 갈라지지 않는다. */
+.admin-tabs-group {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+}
+
+.admin-tabs-divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--border);
+    margin: 2px 2px;
+}
+
+.post-category-tab i { margin-right: 2px; }
+
 /* 수정사항.md 지적 - 관리자 8단계 탭(admin/fragments/nav.html)이 사이트 상단 내비게이션과
    달리 모바일에서 안 접혀서, 매번 8줄짜리 목록이 화면 위쪽을 다 차지했다. 접이식 메뉴 대신
    가로 스크롤 탭바로 바꾼다 - 새 토글 컴포넌트 없이 한 줄로 줄어들고, 현재 탭(.active)이 항상
@@ -630,5 +663,10 @@
     .admin-main-tabs .post-category-tab {
         flex-shrink: 0;
         white-space: nowrap;
+    }
+
+    .admin-main-tabs .admin-tabs-group,
+    .admin-main-tabs .admin-tabs-divider {
+        flex-shrink: 0;
     }
 }

@@ -25,29 +25,44 @@
      스크립트도 같이 실려 나가도록 th:block으로 둘을 함께 묶는다(예전엔 nav 밖에 있어서 스크립트가
      아예 렌더링되지 않는 채로 조용히 무시되고 있었다). -->
 <th:block th:fragment="tabs(active)">
+<!-- 수정사항.md/사용자 지적 - 11개 탭이 데스크톱에서도 flex-wrap으로 8+3처럼 어중간하게
+     줄바꿈돼서 스캔하기 불편했다. 순서(주석 상단 "이 순서 고정")는 그대로 두고, 성격이
+     비슷한 탭끼리 3개 그룹(콘텐츠 관리 / 계정·권한 / 운영)으로 묶어 그룹 사이에만 얇은
+     구분선을 넣는다 - 그룹을 각자 flex-wrap:nowrap 컨테이너로 감싸서, 화면이 좁아 줄바꿈이
+     일어나도 그룹 "중간"이 아니라 그룹 "경계"에서만 끊기게 한다(개별 탭이 낱개로 이 줄
+     저 줄 흩어지는 대신, 관련 탭끼리는 항상 붙어 다님). 아이콘을 붙여 각 탭을 더 빠르게
+     구분할 수 있게 했다. -->
 <nav class="post-category-tabs admin-main-tabs">
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageReports)}"
-       href="/admin/reports" class="post-category-tab" th:classappend="${active == 'reports'} ? ' active' : ''">1. 신고 관리</a>
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePosts)}"
-       href="/admin/posts" class="post-category-tab" th:classappend="${active == 'posts'} ? ' active' : ''">2. 게시글 관리</a>
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePosts)}"
-       href="/admin/comments" class="post-category-tab" th:classappend="${active == 'comments'} ? ' active' : ''">3. 댓글 관리</a>
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageScheduleComments)}"
-       href="/admin/schedule-comments" class="post-category-tab" th:classappend="${active == 'schedule-comments'} ? ' active' : ''">4. 한마디 관리</a>
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageNotices)}"
-       href="/admin/notices" class="post-category-tab" th:classappend="${active == 'notices'} ? ' active' : ''">5. 공지사항 관리</a>
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageUsers)}"
-       href="/admin/users" class="post-category-tab" th:classappend="${active == 'users'} ? ' active' : ''">6. 계정 관리</a>
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageAdminPermissions)}"
-       href="/admin/users/admins" class="post-category-tab" th:classappend="${active == 'admins'} ? ' active' : ''">7. 관리자 권한</a>
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewAuditLog)}"
-       href="/admin/audit-log" class="post-category-tab" th:classappend="${active == 'audit-log'} ? ' active' : ''">8. 감사 로그</a>
-    <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
-       href="/admin/bug-reports" class="post-category-tab" th:classappend="${active == 'bug-reports'} ? ' active' : ''">9. 문의 관리</a>
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageShop)}"
-       href="/admin/shop-items" class="post-category-tab" th:classappend="${active == 'shop-items'} ? ' active' : ''">10. 상점 관리</a>
-    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePolls)}"
-       href="/admin/polls" class="post-category-tab" th:classappend="${active == 'polls'} ? ' active' : ''">11. 설문 관리</a>
+    <span class="admin-tabs-group">
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageReports)}"
+           href="/admin/reports" class="post-category-tab" th:classappend="${active == 'reports'} ? ' active' : ''"><i class="fa-solid fa-flag"></i> 1. 신고 관리</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePosts)}"
+           href="/admin/posts" class="post-category-tab" th:classappend="${active == 'posts'} ? ' active' : ''"><i class="fa-solid fa-file-lines"></i> 2. 게시글 관리</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePosts)}"
+           href="/admin/comments" class="post-category-tab" th:classappend="${active == 'comments'} ? ' active' : ''"><i class="fa-solid fa-comment"></i> 3. 댓글 관리</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageScheduleComments)}"
+           href="/admin/schedule-comments" class="post-category-tab" th:classappend="${active == 'schedule-comments'} ? ' active' : ''"><i class="fa-solid fa-message"></i> 4. 한마디 관리</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageNotices)}"
+           href="/admin/notices" class="post-category-tab" th:classappend="${active == 'notices'} ? ' active' : ''"><i class="fa-solid fa-bullhorn"></i> 5. 공지사항 관리</a>
+    </span>
+    <span class="admin-tabs-divider" aria-hidden="true"></span>
+    <span class="admin-tabs-group">
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageUsers)}"
+           href="/admin/users" class="post-category-tab" th:classappend="${active == 'users'} ? ' active' : ''"><i class="fa-solid fa-users"></i> 6. 계정 관리</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageAdminPermissions)}"
+           href="/admin/users/admins" class="post-category-tab" th:classappend="${active == 'admins'} ? ' active' : ''"><i class="fa-solid fa-user-shield"></i> 7. 관리자 권한</a>
+    </span>
+    <span class="admin-tabs-divider" aria-hidden="true"></span>
+    <span class="admin-tabs-group">
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewAuditLog)}"
+           href="/admin/audit-log" class="post-category-tab" th:classappend="${active == 'audit-log'} ? ' active' : ''"><i class="fa-solid fa-clipboard-list"></i> 8. 감사 로그</a>
+        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+           href="/admin/bug-reports" class="post-category-tab" th:classappend="${active == 'bug-reports'} ? ' active' : ''"><i class="fa-solid fa-comment-dots"></i> 9. 문의 관리</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageShop)}"
+           href="/admin/shop-items" class="post-category-tab" th:classappend="${active == 'shop-items'} ? ' active' : ''"><i class="fa-solid fa-store"></i> 10. 상점 관리</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePolls)}"
+           href="/admin/polls" class="post-category-tab" th:classappend="${active == 'polls'} ? ' active' : ''"><i class="fa-solid fa-square-poll-vertical"></i> 11. 설문 관리</a>
+    </span>
 </nav>
 
 <script>

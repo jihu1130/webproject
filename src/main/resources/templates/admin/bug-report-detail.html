@@ -67,9 +67,14 @@
                 <h2 class="admin-inquiry-replies-title">답변 내역</h2>
                 <div th:if="${#lists.isEmpty(report.replies)}" class="admin-empty">아직 등록된 답변이 없어요.</div>
                 <ul class="admin-inquiry-reply-list" th:unless="${#lists.isEmpty(report.replies)}">
-                    <li class="admin-inquiry-reply-item" th:each="reply : ${report.replies}">
+                    <li class="admin-inquiry-reply-item" th:each="reply : ${report.replies}"
+                        th:classappend="${reply.fromAdmin} ? '' : ' my-inquiry-reply-mine'">
                         <div class="admin-inquiry-reply-header">
-                            <span class="admin-inquiry-reply-author"><i class="fa-solid fa-user-shield"></i> <span th:text="${reply.adminUsername}">관리자</span></span>
+                            <span class="admin-inquiry-reply-author">
+                                <i class="fa-solid fa-user-shield" th:if="${reply.fromAdmin}"></i>
+                                <i class="fa-solid fa-user" th:unless="${reply.fromAdmin}"></i>
+                                <span th:text="${reply.authorDisplay}">관리자</span>
+                            </span>
                             <span class="admin-inquiry-reply-time" th:text="${reply.createdAt}">날짜</span>
                         </div>
                         <p class="admin-inquiry-reply-content" th:text="${reply.content}">답변 내용</p>

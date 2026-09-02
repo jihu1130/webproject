@@ -139,6 +139,8 @@
         setupAttachPopover(quill);
         setupSelectionToolbar(quill);
         setupMarkdownShortcuts(quill);
+        setupPasteUpload(quill, container);
+        setupDragDropUpload(quill, container);
 
         if (hidden.value) {
             quill.root.innerHTML = hidden.value;
@@ -203,6 +205,87 @@
         }
 
         return quill;
+    }
+
+    // 클립보드에서 이미지를 붙여넣으면(스크린샷 복사 후 Ctrl+V 등) Quill 기본 clipboard 모듈이
+    // <img src="data:..."> 형태의 base64로 바로 삽입해버린다 - 편집 중엔 멀쩡히 보이지만, 저장
+    // 시점에 global.util.HtmlSanitizer(Jsoup)가 img의 src 프로토콜을 http/https만 허용해서
+    // data: URI를 통째로 잘라내 버린다(실제 재현 확인 - 붙여넣은 사진이 등록 후 감쪽같이
+    // 사라짐). 파일 첨부(📎 버튼)와 동일하게 항상 서버 업로드 후 반환된 URL을 쓰도록, paste
+    // 이벤트를 Quill의 clipboard 리스너보다 먼저 가로챈다. Quill의 리스너는 quill.root(대상
+    // 엘리먼트)에 직접 달려있으므로, 그 조상인 container에 캡처 단계로 리스너를 걸면 이벤트가
+    // quill.root에 도달하기 전에 우리가 먼저 처리할 수 있다(stopPropagation으로 Quill 쪽 처리
+    // 자체를 막음). 이미지가 아닌 일반 텍스트 붙여넣기는 그대로 Quill에 맡긴다.
+    function setupPasteUpload(quill, container) {
+        container.addEventListener('paste', function (e) {
+            var items = (e.clipboardData && e.clipboardData.items) || [];
+            var imageItem = null;
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].kind === 'file' && items[i].type.indexOf('image/') === 0) {
+                    imageItem = items[i];
+                    break;
+                }
+            }
+            if (!imageItem) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            var file = imageItem.getAsFile();
+            if (file) uploadAndInsert(quill, file);
+        }, true);
+    }
+
+    // 본문에 사진/파일을 드래그해 놓으면 업로드되게 - 예전엔 에디터 영역에 드롭 관련 처리가
+    // 전혀 없어서, 브라우저 기본 동작대로 그 파일이 새 탭에 열리거나 아무 반응이 없었다(사용자
+    // 요청으로 추가). 📎 버튼/붙여넣기와 동일하게 uploadAndInsert()로 합류시켜 로직을 하나로
+    // 유지한다. 드래그 중 시각 피드백(.rich-editor-dragover)은 post.css의 대표 이미지
+    // 드롭존(.post-image-dropzone.is-dragover)과 같은 패턴.
+    function setupDragDropUpload(quill, container) {
+        ['dragenter', 'dragover'].forEach(function (evt) {
+            container.addEventListener(evt, function (e) {
+                if (!e.dataTransfer || !Array.prototype.some.call(e.dataTransfer.types || [], function (t) { return t === 'Files'; })) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                container.classList.add('rich-editor-dragover');
+            });
+        });
+        container.addEventListener('dragleave', function () {
+            container.classList.remove('rich-editor-dragover');
+        });
+        // 아래 drop 핸들러가 캡처 단계에서 stopPropagation()을 부르면 같은 엘리먼트에 버블
+        // 단계로 등록된 다른 리스너는 실행되지 않는다(실제 확인됨 - 흔히 알려진 "같은
+        // 노드에서는 stopImmediatePropagation()만 막고 stopPropagation()은 안 막는다"는
+        // 통념과 달리, 캡처 리스너의 stopPropagation()이 뒤이은 버블 리스너까지 막아버렸다).
+        // 그래서 드래그오버 클래스 제거를 별도 버블 리스너로 안 두고 이 핸들러 안에서
+        // 파일 유무 체크보다 먼저 처리한다.
+        container.addEventListener('drop', function (e) {
+            container.classList.remove('rich-editor-dragover');
+
+            var files = e.dataTransfer && e.dataTransfer.files;
+            if (!files || files.length === 0) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            // 드롭 위치에 커서를 두어야 그 자리에 삽입된다(기본 클릭 커서 위치와 달리 드롭
+            // 지점은 별도 좌표 기반 API - Quill 자체엔 없어서 브라우저 표준 API로 구한다).
+            var startIndex = quill.getSelection(true) ? quill.getSelection(true).index : quill.getLength();
+            var range = document.caretRangeFromPoint ? document.caretRangeFromPoint(e.clientX, e.clientY) : null;
+            if (range) {
+                var blot = Quill.find(range.startContainer, true);
+                if (blot) {
+                    startIndex = quill.getIndex(blot) + range.startOffset;
+                }
+            }
+
+            // 여러 파일을 한 번에 드롭하면 업로드가 끝나는 순서가 뒤섞일 수 있으니, uploadAndInsert가
+            // 반환하는 Promise를 체이닝해서 한 번에 하나씩·순서대로 삽입한다(각 삽입마다 인덱스 +1).
+            Array.prototype.reduce.call(files, function (chain, file, i) {
+                return chain.then(function () { return uploadAndInsert(quill, file, startIndex + i); });
+            }, Promise.resolve());
+        }, true);
     }
 
     // "📎" 버튼 하나에 사진/동영상/파일/링크카드 4개를 모아두는 팝오버 - 예전엔 이 4개가 각자
@@ -472,12 +555,16 @@
         input.click();
     }
 
-    function uploadAndInsert(quill, file) {
-        var range = quill.getSelection(true) || { index: quill.getLength() };
+    // atIndex를 생략하면(📎 버튼/붙여넣기 - 파일 하나씩 바로 처리) 현재 커서 위치에 넣는다.
+    // 드롭으로 여러 파일을 한 번에 넘기면(setupDragDropUpload) 업로드가 끝나는 순서가 뒤섞일 수
+    // 있어 매번 "지금 커서 위치"에 넣으면 순서가 보장되지 않으므로, 호출부가 자기가 셈한
+    // 인덱스를 직접 넘기고 반환된 Promise를 체이닝해 순서대로 삽입하게 한다.
+    function uploadAndInsert(quill, file, atIndex) {
+        var range = typeof atIndex === 'number' ? { index: atIndex } : (quill.getSelection(true) || { index: quill.getLength() });
         var formData = new FormData();
         formData.append('file', file);
 
-        fetch('/api/uploads/editor', { method: 'POST', headers: WebSchoolCsrf.headers(), body: formData })
+        return fetch('/api/uploads/editor', { method: 'POST', headers: WebSchoolCsrf.headers(), body: formData })
             .then(function (res) {
                 return res.json().then(function (data) {
                     if (!res.ok) throw new Error(data.error || '업로드에 실패했습니다.');
