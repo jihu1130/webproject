@@ -39,18 +39,20 @@
                     <div class="auth-check-msg">이메일을 바꾸면 새 주소로 다시 인증해야 해요.</div>
                 </div>
 
-                <hr class="auth-section-divider">
-                <p class="auth-section-label"><i class="fa-solid fa-key"></i> 비밀번호 변경 (선택)</p>
+                <th:block th:if="${loginUser != null and loginUser.provider.name() == 'LOCAL'}">
+                    <hr class="auth-section-divider">
+                    <p class="auth-section-label"><i class="fa-solid fa-key"></i> 비밀번호 변경 (선택)</p>
 
-                <div class="auth-field">
-                    <label class="form-label">새 비밀번호</label>
-                    <input type="password" th:field="*{newPassword}" class="form-control" placeholder="변경하지 않으려면 비워두세요">
-                </div>
-                <div class="auth-field">
-                    <label class="form-label">새 비밀번호 확인</label>
-                    <input type="password" th:field="*{confirmNewPassword}" class="form-control" placeholder="새 비밀번호 다시 입력">
-                    <div id="passwordCheckMsg" class="auth-check-msg"></div>
-                </div>
+                    <div class="auth-field">
+                        <label class="form-label">새 비밀번호</label>
+                        <input type="password" th:field="*{newPassword}" class="form-control" placeholder="변경하지 않으려면 비워두세요">
+                    </div>
+                    <div class="auth-field">
+                        <label class="form-label">새 비밀번호 확인</label>
+                        <input type="password" th:field="*{confirmNewPassword}" class="form-control" placeholder="새 비밀번호 다시 입력">
+                        <div id="passwordCheckMsg" class="auth-check-msg"></div>
+                    </div>
+                </th:block>
 
                 <hr class="auth-section-divider">
                 <p class="auth-section-label"><i class="fa-solid fa-school"></i> 우리 학교 설정</p>

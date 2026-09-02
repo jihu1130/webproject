@@ -98,7 +98,13 @@ public class AuthController {
     @GetMapping("/mypage/edit")
     public String myPageEditForm(Authentication authentication, Model model) {
         User user = userService.getByUsername(authentication.getName());
+        model.addAttribute("updateDto", toUpdateDto(user));
+        return "user/mypage-edit";
+    }
 
+    // mypage-edit.html 재렌더링이 필요한 여러 실패 케이스(저장 실패/탈퇴 실패/구글 연동 해제
+    // 실패)가 전부 같은 DTO 채우기 코드를 반복하던 것을 모아둔 헬퍼.
+    private MyPageUpdateDto toUpdateDto(User user) {
         MyPageUpdateDto dto = new MyPageUpdateDto();
         dto.setUsername(user.getUsername());
         dto.setNickname(user.getNickname());
@@ -109,9 +115,7 @@ public class AuthController {
         dto.setSchoolKind(user.getSchoolKind());
         dto.setGrade(user.getGrade());
         dto.setClassNum(user.getClassNum());
-
-        model.addAttribute("updateDto", dto);
-        return "user/mypage-edit";
+        return dto;
     }
 
     @PostMapping("/mypage/edit")
@@ -143,18 +147,7 @@ public class AuthController {
             return "redirect:/login?accountDeleted=true";
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
-            User user = userService.getByUsername(authentication.getName());
-            MyPageUpdateDto dto = new MyPageUpdateDto();
-            dto.setUsername(user.getUsername());
-            dto.setNickname(user.getNickname());
-            dto.setEmail(user.getEmail());
-            dto.setSchoolName(user.getSchoolName());
-            dto.setSchoolCode(user.getSchoolCode());
-            dto.setAtptCode(user.getAtptCode());
-            dto.setSchoolKind(user.getSchoolKind());
-            dto.setGrade(user.getGrade());
-            dto.setClassNum(user.getClassNum());
-            model.addAttribute("updateDto", dto);
+            model.addAttribute("updateDto", toUpdateDto(userService.getByUsername(authentication.getName())));
             return "user/mypage-edit";
         }
     }

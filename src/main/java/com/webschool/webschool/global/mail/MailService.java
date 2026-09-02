@@ -45,6 +45,17 @@ public class MailService {
                         + "로그인 화면에서 \"구글 계정으로 로그인\"을 이용해주세요.");
     }
 
+    // 탈퇴(소프트 삭제)했던 구글 계정이 같은 구글 계정으로 재로그인해서 자동 복구됐을 때(보안
+    // 고도화 - CustomOAuth2UserService 참고) 계정 진짜 주인이 알아챌 수 있도록 보내는 알림. 본인이
+    // 직접 한 행동이면 무시하면 되고, 본인도 모르는 재로그인이라면(예: 탈퇴 당시와 다른 사람이 같은
+    // 구글 계정에 접근하게 된 경우) 이 메일이 유일한 단서가 된다.
+    public void sendAccountReactivatedNotice(User user) {
+        send(user, "[WebSchool] 탈퇴했던 계정이 다시 활성화되었습니다",
+                user.getNickname() + "님, 탈퇴 처리됐던 WebSchool 계정이 구글 로그인으로 다시 "
+                        + "활성화되었습니다. 본인이 한 행동이 아니라면 즉시 구글 계정 보안 설정을 "
+                        + "확인해주세요.");
+    }
+
     public void sendUsernameReminder(User user) {
         send(user, "[WebSchool] 아이디 안내",
                 "요청하신 WebSchool 계정의 아이디는 \"" + user.getUsername() + "\" 입니다.");

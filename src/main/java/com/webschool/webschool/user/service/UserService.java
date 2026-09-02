@@ -157,7 +157,10 @@ public class UserService {
             adminActionLogService.log("USER", user.getId(), "USERNAME_CHANGE", oldUsername + " -> " + newUsername);
         }
 
-        if (dto.getNewPassword() != null && !dto.getNewPassword().isBlank()) {
+        // 비밀번호 변경은 LOCAL 계정 전용(mypage-edit.html도 LOCAL에만 이 섹션을 보여준다) - 구글
+        // 계정은 폼 로그인을 쓰지 않으므로 비밀번호 개념 자체가 없다(User.password 필드 주석 참고).
+        if (user.getProvider() == User.Provider.LOCAL
+                && dto.getNewPassword() != null && !dto.getNewPassword().isBlank()) {
             if (!dto.getNewPassword().equals(dto.getConfirmNewPassword())) {
                 throw new IllegalArgumentException("새 비밀번호가 일치하지 않습니다.");
             }

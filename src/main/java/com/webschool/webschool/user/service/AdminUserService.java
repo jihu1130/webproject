@@ -252,6 +252,9 @@ public class AdminUserService {
 
         user.setDeleted(true);
         user.setDeletedAt(LocalDateTime.now());
+        // 본인 탈퇴와 구분(User.deletedByAdmin 주석 참고) - 구글 재로그인 자동 복구가 이 계정까지
+        // 되살리지 못하게 막는 유일한 표식이다.
+        user.setDeletedByAdmin(true);
         adminActionLogService.log("USER", id, "DELETE", user.getUsername());
     }
 
@@ -261,6 +264,7 @@ public class AdminUserService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         user.setDeleted(false);
         user.setDeletedAt(null);
+        user.setDeletedByAdmin(false);
         adminActionLogService.log("USER", id, "RESTORE", user.getUsername());
     }
 

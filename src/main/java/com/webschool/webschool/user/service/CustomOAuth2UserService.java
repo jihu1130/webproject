@@ -1,6 +1,7 @@
 package com.webschool.webschool.user.service;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
+import com.webschool.webschool.global.mail.MailService;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserPenaltyService userPenaltyService;
     private final AdminActionLogService adminActionLogService;
+    private final MailService mailService;
 
     @Override
     @Transactional
@@ -59,12 +61,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 두 번 다시 가입/로그인할 방법이 없어진다(실사용자 신고로 발견 - "탈퇴 후 같은 구글
         // 계정/이메일로 다시 가입이 안 됨"). 총관리자가 정지시킨 계정(active=false)이나 제재
         // 적용 중인 계정까지 이 자동 복구 대상으로 삼으면 정지/제재를 무력화시키므로, 본인이
-        // 스스로 탈퇴한 경우(deleted=true)에만 적용한다.
-        if (user.isDeleted()) {
+        // 스스로 탈퇴한 경우에만 적용한다 - deletedByAdmin(관리자 강제 탈퇴)이면 절대 자동 복구하지
+        // 않는다(실사용자 지적으로 발견한 버그: 처음엔 deleted 하나만 보고 판단해서 관리자가 강제
+        // 탈퇴시킨 계정도 재로그인 한 번으로 되살아났었다 - User.deletedByAdmin 주석 참고).
+        if (shouldAutoReactivate(user)) {
             user.setDeleted(false);
             user.setDeletedAt(null);
             adminActionLogService.log("USER", user.getId(), "RESTORE",
                     "구글 재로그인으로 탈퇴 계정 복구", user.getUsername());
+            // 진짜 계정 주인이 알아챌 수 있도록 알림(보안 고도화, todo.md 참고) - 본인이 한 행동이면
+            // 무시하면 되고, 탈퇴 당시와 다른 사람이 같은 구글 계정에 접근하게 된 경우라면 이 메일이
+            // 유일한 단서가 된다. 이메일이 없는 계정(needsEmailSetup())은 MailService.send()가
+            // 조용히 스킵한다.
+            mailService.sendAccountReactivatedNotice(user);
         }
 
         // 이메일 필드가 생기기 전에 가입한 기존 구글 계정 백필 - 구글이 이미 이 이메일의 소유권을
@@ -77,11 +86,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // 폼 로그인(CustomUserDetailsService)과 동일한 로그인 차단 조건 - 여기서 빠뜨리면 총관리자가
-        // 계정을 정지 처리해도 구글 로그인으로는 그대로 들어와지는 구멍이 생긴다. deleted는 위에서
-        // 이미 처리했으므로(자진 탈퇴는 재로그인으로 복구) 여기서는 관리자 정지/제재만 확인한다 -
-        // 탈퇴 이전에 이미 정지/제재가 걸려있던 계정이라면 탈퇴 복구는 하되(탈퇴 자체는 본인
-        // 의사였으므로) 정지/제재 조건은 그대로 로그인을 막는다.
-        if (!user.isActive() || userPenaltyService.isDeactivated(user.getId())) {
+        // 계정을 정지/강제 탈퇴 처리해도 구글 로그인으로는 그대로 들어와지는 구멍이 생긴다. deleted를
+        // 여기서 다시 확인하는 이유: 위에서 자진 탈퇴는 이미 복구했지만, deletedByAdmin이라 복구되지
+        // 않고 그대로 남은 admin 강제 탈퇴 계정은 이 조건에 걸려 로그인이 거부돼야 한다.
+        if (user.isDeleted() || !user.isActive() || userPenaltyService.isDeactivated(user.getId())) {
             throw new OAuth2AuthenticationException("이 계정은 로그인할 수 없습니다.");
         }
 
@@ -93,6 +101,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 attributes,
                 "username"
         );
+    }
+
+    // deleted 하나만으로 판단하면 관리자 강제 탈퇴(deletedByAdmin)까지 되살려버리는 버그가
+    // 있었다(실사용자 지적, User.deletedByAdmin 주석 참고) - 자진 탈퇴만 자동 복구 대상이다.
+    // super.loadUser()가 실제 구글 서버로 HTTP 요청을 보내서 loadUser() 전체를 단위 테스트하기
+    // 어려우므로, 이 판단 로직만 따로 빼서 CustomOAuth2UserServiceTest가 직접 검증한다.
+    boolean shouldAutoReactivate(User user) {
+        return user.isDeleted() && !user.isDeletedByAdmin();
     }
 
     private User createGoogleUser(String providerId, String email, String name) {

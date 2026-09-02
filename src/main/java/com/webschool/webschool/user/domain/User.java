@@ -79,6 +79,15 @@ public class User {
 
     private LocalDateTime deletedAt; // 탈퇴한 경우에만 값이 채워짐
 
+    // 이 삭제가 본인 탈퇴(UserService.deleteAccount())가 아니라 관리자 강제 탈퇴
+    // (AdminUserService.deleteUser())인지 구분하는 플래그(2026-09-02 추가). deleted 하나만으로는
+    // 둘을 구분할 수 없어서, CustomOAuth2UserService의 "탈퇴했던 구글 계정 재로그인 시 자동 복구"
+    // 기능이 본인 탈퇴와 관리자 강제 탈퇴를 구분하지 못하고 관리자가 강제 탈퇴시킨 계정까지
+    // 재로그인 한 번으로 되살려버리는 문제가 있었다(실사용자 지적) - 관리자가 직접 복구
+    // (AdminUserService.restoreUser())하기 전까지는 이 값이 true인 동안 자동 복구 대상에서 제외된다.
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deletedByAdmin;
+
     // 관리자 계정 정지(비활성화) - 탈퇴(deleted)와는 별개 개념. 탈퇴는 본인/관리자가 계정을 완전히
     // 정리하는 것(닉네임이 "탈퇴한 사용자"로 치환됨)이고, 비활성화는 총관리자가 계정을 그대로 둔 채
     // 로그인만 일시적으로 막는 정지 조치다. 둘 다 로그인 차단 효과는 있지만 별도 플래그로 관리한다.
