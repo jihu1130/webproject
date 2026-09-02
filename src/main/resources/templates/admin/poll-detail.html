@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${poll.question + ' - 설문 관리 - WebSchool'}">설문 상세 - WebSchool</title>
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/post.css}">
@@ -16,12 +18,18 @@
     <div class="admin-container admin-container-narrow">
         <div th:replace="~{admin/fragments/breadcrumb :: crumb('설문 관리', '/admin/polls')}"></div>
 
-        <a th:href="@{/admin/polls(page=${listPage}, size=${listSize}, keyword=${listKeyword})}" class="post-list-back">
+        <a th:href="@{/admin/polls(status=${listStatus}, page=${listPage}, size=${listSize}, keyword=${listKeyword})}" class="post-list-back">
             <i class="fa-solid fa-arrow-left"></i> 설문 관리로
         </a>
 
+        <div class="post-blind-banner" th:if="${poll.deleted}">
+            <i class="fa-solid fa-trash-can"></i>
+            <span th:text="${poll.deletedAt}">-</span>에 삭제된 설문입니다. 일반 사용자 화면(게시글/한마디)에는 노출되지 않아요.
+        </div>
+
         <div class="admin-detail-card">
             <div class="admin-report-item-header">
+                <span class="admin-status-badge admin-status-blind" th:if="${poll.deleted}">삭제됨</span>
                 <span class="admin-status-badge" th:text="${poll.targetType}">대상</span>
                 <span class="post-comment-time" th:text="${poll.createdAt}">작성일</span>
             </div>
@@ -64,10 +72,25 @@
                     </div>
                 </div>
             </div>
+
+            <div class="admin-actions">
+                <form th:if="${poll.deleted}" th:action="@{'/admin/polls/' + ${poll.id} + '/restore'}" method="post"
+                      data-confirm="이 설문을 복구할까요? 일반 사용자 화면에 다시 노출됩니다.">
+                    <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                    <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-rotate-left"></i> 복구</button>
+                </form>
+                <form th:unless="${poll.deleted}" th:action="@{'/admin/polls/' + ${poll.id} + '/delete'}" method="post"
+                      data-confirm="이 설문을 삭제할까요? (소프트 삭제 - 관리자 페이지 삭제됨 탭에서 다시 복구할 수 있습니다)" data-confirm-danger="true">
+                    <div th:replace="~{admin/fragments/list-state :: hidden(${listStatus}, ${listKeyword}, ${listPage}, ${listSize})}"></div>
+                    <button type="submit" class="post-delete-btn"><i class="fa-solid fa-trash"></i> 삭제</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
+<script th:src="@{/js/csrf.js}"></script>
+<script th:src="@{/js/modal.js}"></script>
 <th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
 </body>
 </html>

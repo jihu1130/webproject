@@ -114,6 +114,15 @@ public class PollService {
         return buildResult(poll, viewerUsername);
     }
 
+    // 관리자 설문 관리 화면 전용 - getResult()의 "삭제 안 됨" 필터를 걷어낸 버전. 삭제된 설문도
+    // 관리자가 상세를 열람할 수 있어야 삭제/복구 여부를 판단할 수 있다. canAccess()의 관리자 예외는
+    // 그대로 적용되므로 실제 관리자가 아니면 여전히 접근이 막힌다.
+    public PollResultDto getResultForAdmin(Long pollId, String adminUsername) {
+        Poll poll = pollRepository.findById(pollId)
+                .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
+        return buildResult(poll, adminUsername);
+    }
+
     // 한마디 수정 화면에서 기존 설문 질문을 보여주기 위한 가벼운 조회 - getForEdit()가 이미 본인
     // 작성 한마디인지 확인한 뒤에만 호출되므로 여기서 별도 권한 검사를 하지 않는다.
     public Optional<String> findQuestionForComment(Long scheduleCommentId) {
@@ -129,6 +138,7 @@ public class PollService {
                 throw new IllegalArgumentException("본인이 작성한 설문만 삭제할 수 있습니다.");
             }
             poll.setDeleted(true);
+            poll.setDeletedAt(LocalDateTime.now());
         });
     }
 

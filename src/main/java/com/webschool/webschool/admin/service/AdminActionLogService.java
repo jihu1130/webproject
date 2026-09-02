@@ -40,7 +40,8 @@ public class AdminActionLogService {
             "COMMENT", "댓글",
             "SCHEDULE_COMMENT", "한마디",
             "USER", "계정",
-            "NOTICE", "공지사항"
+            "NOTICE", "공지사항",
+            "POLL", "설문"
     );
 
     // 원래 관리자 조치(블라인드/삭제/승격/정지 등)만 남기던 로그를, 사용자 요청으로 일반 사용자
@@ -203,6 +204,7 @@ public class AdminActionLogService {
                     .map(c -> "/school/comments/" + c.getUuid())
                     .orElse(null);
             case "NOTICE" -> "/notices/" + targetId;
+            case "POLL" -> "/admin/polls/" + targetId;
             case "COMMENT" -> postCommentRepository.findById(targetId)
                     .map(c -> "/admin/posts/" + c.getPost().getId() + "#comment-" + targetId)
                     .orElse(null);

@@ -16,4 +16,6 @@ public class PollAdminSummaryDto {
     private int optionCount;
     private long totalVoters;
     private String createdAt;
+    private boolean deleted;
+    private String deletedAt; // 삭제되지 않았으면 null ("삭제됨" 탭에서만 값이 있음)
 }

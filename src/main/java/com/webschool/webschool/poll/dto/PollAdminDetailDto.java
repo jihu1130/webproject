@@ -20,4 +20,6 @@ public class PollAdminDetailDto {
     private long totalVoters;
     private int totalVotes;
     private List<PollAdminOptionDto> options;
+    private boolean deleted;
+    private String deletedAt; // 삭제되지 않았으면 null
 }

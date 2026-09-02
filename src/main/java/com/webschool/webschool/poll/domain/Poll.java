@@ -71,11 +71,15 @@ public class Poll {
         return expiresAt != null && expiresAt.isBefore(LocalDateTime.now());
     }
 
-    // 소프트 딜리트(이 코드베이스의 삭제 전 규칙) - 한마디 수정 화면에서 작성자가 설문을 끌 때 씀
-    // (PollService.deletePollForComment()). 투표 기록(PollVote)은 그대로 남지만 조회/투표 경로에서
-    // 전부 이 플래그로 걸러진다.
+    // 소프트 딜리트(이 코드베이스의 삭제 전 규칙) - 한마디 수정 화면에서 작성자가 설문을 끌 때
+    // (PollService.deletePollForComment()) 및 관리자가 스팸/악성 설문을 처리할 때
+    // (AdminPollService.deletePoll()) 쓰인다. 투표 기록(PollVote)은 그대로 남지만 조회/투표
+    // 경로에서 전부 이 플래그로 걸러진다.
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean deleted;
+
+    // 삭제되지 않았으면 null - Post/PostComment와 동일하게 관리자 "삭제됨" 탭 정렬 및 표시에 사용.
+    private LocalDateTime deletedAt;
 
     @PrePersist
     public void prePersist() {
