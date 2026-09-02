@@ -12,6 +12,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -72,6 +76,9 @@ public class SecurityConfig {
                         .failureHandler(loginFailureHandler)
                         .permitAll()
                 )
+                // 아래 requestCache() 참고 - 네비바 알림 배지 폴링 요청이 로그인 후 리다이렉트
+                // 대상으로 잘못 저장되는 버그(todo.md #15) 수정.
+                .requestCache(cache -> cache.requestCache(requestCache()))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
@@ -103,5 +110,21 @@ public class SecurityConfig {
         }
 
         return http.build();
+    }
+
+    // 네비바 종 배지가 20초마다 폴링하는 /notifications/unread-count(notification.js)는
+    // fetch()로 호출되는데 X-Requested-With 헤더를 안 붙인다 - Spring Security 기본
+    // RequestCache(HttpSessionRequestCache)는 이런 요청을 일반 페이지 이동과 구분하지 못하고,
+    // 세션이 만료된 시점에 마침 이 폴링이 나가면 "로그인 성공 후 되돌아갈 곳"으로 그 요청을
+    // 저장해버린다. 그 결과 로그인에 성공해도 홈이 아니라 이 API의 JSON 응답
+    // ({"count":0})만 그대로 보이는 버그가 있었다(실사용자 신고, 2026-09-02, todo.md #15).
+    // 이 경로만 저장 대상에서 제외해서 항상 원래 의도대로(홈 또는 실제로 요청했던 페이지로)
+    // 리다이렉트되게 한다.
+    @Bean
+    public RequestCache requestCache() {
+        HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
+        requestCache.setRequestMatcher(new NegatedRequestMatcher(
+                PathPatternRequestMatcher.pathPattern("/notifications/unread-count")));
+        return requestCache;
     }
 }
