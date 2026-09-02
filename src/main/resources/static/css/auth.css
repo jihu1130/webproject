@@ -77,6 +77,29 @@ body.auth-body.auth-body-plain {
     min-width: 0;
 }
 
+/* 프로필 사진 업로드 줄 - 커스텀 파일 버튼(label) + 짧은 파일명 표시(span) + 업로드 버튼.
+   네이티브 <input type=file>를 그대로 두면 브라우저가 그리는 "선택된 파일 없음" 문구가
+   좁은 폭에서 잘려 보였던 문제(사용자 지적)를 이 구조로 피한다 - 파일명은 profile-edit.html의
+   JS가 change 이벤트에서 이 span에 직접 채운다. */
+.profile-image-upload-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.profile-image-choose-btn { cursor: pointer; }
+
+.profile-image-filename {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
 .btn-usercheck {
     border-radius: 0.65rem;
     white-space: nowrap;

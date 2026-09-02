@@ -29,9 +29,20 @@
                          th:src="@{${loginUser != null and loginUser.profileImageUrl != null} ? ${loginUser.profileImageUrl} : '/images/default-avatar.svg'}"
                          alt="프로필 사진">
                 </div>
-                <form th:action="@{/mypage/profile/image}" method="post" enctype="multipart/form-data" class="auth-field-inline justify-content-center">
-                    <input type="file" id="profileImageInput" name="profileImage" class="form-control" accept="image/*" required>
-                    <button type="submit" class="btn btn-outline-primary btn-usercheck">사진 올리기</button>
+                <!-- 네이티브 <input type=file>를 그대로 .form-control에 넣으면 브라우저가 "파일
+                     선택" 버튼 + "선택된 파일 없음" 문구를 한 덩어리로 그리는데, 이 줄에 "사진
+                     올리기" 버튼까지 같이 넣으려고 좁게 잡아둔 폭 안에서 그 문구가
+                     "선택된...일 없음"처럼 잘려 보였다(사용자 지적 - 브라우저가 그리는 내부
+                     텍스트라 CSS로 직접 손볼 수 없음). input은 숨기고 label로 감싸 커스텀
+                     버튼처럼 쓰고, 파일명은 우리가 만든 짧은 span에 JS로 직접 채워서 항상
+                     온전히 보이게 한다(길면 이 span 안에서만 ...으로 줄임). -->
+                <form th:action="@{/mypage/profile/image}" method="post" enctype="multipart/form-data" class="profile-image-upload-row">
+                    <label class="btn btn-outline-primary btn-usercheck profile-image-choose-btn">
+                        파일 선택
+                        <input type="file" id="profileImageInput" name="profileImage" accept="image/*" required hidden>
+                    </label>
+                    <span id="profileImageFileName" class="profile-image-filename">선택한 파일 없음</span>
+                    <button type="submit" class="btn btn-primary btn-usercheck">사진 올리기</button>
                 </form>
                 <form th:if="${loginUser != null and loginUser.profileImageUrl != null}"
                       th:action="@{/mypage/profile/image/reset}" method="post" class="mt-1">
@@ -74,6 +85,7 @@
                 (function () {
                     var fileInput = document.getElementById('profileImageInput');
                     var avatarImg = document.getElementById('profileImagePreview');
+                    var fileNameLabel = document.getElementById('profileImageFileName');
                     var originalSrc = avatarImg.src;
                     var objectUrl = null;
 
@@ -85,10 +97,12 @@
                         var file = fileInput.files && fileInput.files[0];
                         if (!file) {
                             avatarImg.src = originalSrc;
+                            fileNameLabel.textContent = '선택한 파일 없음';
                             return;
                         }
                         objectUrl = URL.createObjectURL(file);
                         avatarImg.src = objectUrl;
+                        fileNameLabel.textContent = file.name;
                     });
                 })();
 

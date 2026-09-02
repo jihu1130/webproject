@@ -439,6 +439,20 @@
     cursor: pointer;
 }
 
+/* 체크박스를 원하는 만큼 바꿔두고 한 번에 반영하는 저장/취소 버튼 - 토글 목록 끝에 항상
+   붙지만(margin-left: auto) 화면이 좁아 줄바꿈되면 자체적으로 새 줄에서도 오른쪽 정렬 유지. */
+.admin-permission-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.admin-permission-row-actions .btn {
+    font-size: 0.8rem;
+    padding: 6px 14px;
+}
+
 /* 계정 프로필 */
 .admin-profile-grid {
     display: grid;

@@ -40,13 +40,23 @@
                     <span class="admin-user-self-label">모든 권한 보유 (변경 불가)</span>
                 </div>
 
-                <!-- 버그 수정: 체크박스 하나 잘못 눌러도 확인 없이 바로 반영됐다(부관리자 권한처럼
-                     민감한 설정인데도). 확인 후에만 제출한다 - 취소하면 체크 상태를 원래대로 되돌려야
-                     하므로 change 이벤트에서 바로 판단한다. 본인 계정 행은 서버에서도 거부되지만(수정사항.md
-                     #12의 권한 상승 우려), 여기서부터 아예 폼을 안 보여줘서 헷갈리지 않게 한다. -->
+                <!-- 체크박스 하나하나마다 확인창을 띄우던 방식(매번 즉시 제출)이 여러 권한을 한 번에
+                     바꾸려 할 때 번거롭다는 지적으로, 원하는 만큼 자유롭게 체크/해제해두고 "저장"을
+                     눌러야 한 번에 반영되도록 바꿨다 - "취소"는 폼을 마지막 저장 상태(=페이지 렌더 시
+                     th:checked 값)로 되돌리는 표준 reset 버튼이라 별도 JS가 필요 없다. 본인 계정 행은
+                     서버에서도 거부되지만(수정사항.md #12의 권한 상승 우려), 여기서부터 아예 폼을 안
+                     보여줘서 헷갈리지 않게 한다.
+                     버튼(취소/저장/총관리자로 승격)은 이 폼 안에 안 두고 행 끝의 공용
+                     .admin-permission-row-actions로 뺐다 - 승격 버튼은 완전히 다른 폼(아래
+                     admin-permission-row-promote)에 속하는데, 체크박스 폼 뒤에 별도 블록으로
+                     붙이면 체크박스가 줄바꿈될 때 승격 버튼만 항상 다음 줄로 밀려났다(사용자 지적).
+                     버튼에 form="..." 속성을 달면 자신을 감싼 <form>이 아니라 그 id를 가진 다른
+                     폼에 제출/리셋을 위임할 수 있어서(HTML5 표준 기능), 서로 다른 폼에 속한 버튼
+                     3개를 한 줄에 나란히 둘 수 있다. -->
                 <form th:if="${admin.role == 'ROLE_ADMIN' and (loginUser == null or loginUser.username != admin.username)}"
+                      th:id="'permForm' + ${admin.id}"
                       th:action="@{'/admin/users/' + ${admin.id} + '/permissions'}"
-                      method="post" class="admin-permission-row-toggles" onchange="return handlePermissionToggle(event, this);">
+                      method="post" class="admin-permission-row-toggles">
                     <label class="admin-permission-toggle">
                         <input type="checkbox" name="canManageReports" value="true" th:checked="${admin.canManageReports}">
                         <span>신고 관리</span>
@@ -86,14 +96,27 @@
                 </form>
 
                 <!-- 수정사항.md #13 - 총관리자 단일 장애점 완화. 총관리자 본인만 볼 수 있고(다른
-                     화면과 동일하게 loginUser.role로 판단), 이미 부관리자인 계정만 대상으로 한다. -->
+                     화면과 동일하게 loginUser.role로 판단), 이미 부관리자인 계정만 대상으로 한다.
+                     버튼은 아래 공용 액션 영역에 있으므로 여기엔 숨겨진 필드(CSRF)만 남는다. -->
                 <form th:if="${admin.role == 'ROLE_ADMIN' and loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+                      th:id="'promoteForm' + ${admin.id}"
                       th:action="@{'/admin/users/' + ${admin.id} + '/promote-super'}" method="post"
-                      class="admin-permission-row-promote"
+                      hidden
                       data-confirm="이 계정을 총관리자로 승격할까요? 총관리자는 모든 권한을 항상 갖고, 이 화면에서 다시 강등시킬 방법이 없습니다."
                       data-confirm-danger="true">
-                    <button type="submit" class="btn btn-outline-primary">총관리자로 승격</button>
                 </form>
+
+                <div class="admin-permission-row-actions"
+                     th:if="${admin.role == 'ROLE_ADMIN' and ((loginUser == null or loginUser.username != admin.username) or (loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'))}"
+                     th:with="canEditPerms=${loginUser == null or loginUser.username != admin.username},
+                              canPromote=${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}">
+                    <th:block th:if="${canEditPerms}">
+                        <button type="reset" th:form="'permForm' + ${admin.id}" class="btn btn-outline-primary">취소</button>
+                        <button type="submit" th:form="'permForm' + ${admin.id}" class="btn btn-primary">저장</button>
+                    </th:block>
+                    <button type="submit" th:if="${canPromote}"
+                            th:form="'promoteForm' + ${admin.id}" class="btn btn-outline-primary">총관리자로 승격</button>
+                </div>
             </div>
         </div>
 
@@ -104,19 +127,6 @@
 </div>
 
 <script th:src="@{/js/modal.js}"></script>
-<script>
-    function handlePermissionToggle(event, form) {
-        var checkbox = event.target;
-        WebSchoolModal.confirm('권한 설정을 변경할까요?').then(function (ok) {
-            if (!ok) {
-                checkbox.checked = !checkbox.checked; // 취소하면 체크 상태를 되돌린다
-                return;
-            }
-            form.submit();
-        });
-        return false;
-    }
-</script>
 <th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
 </body>
 </html>

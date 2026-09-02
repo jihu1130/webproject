@@ -147,7 +147,6 @@ public class PostController {
             String username = extractUsername(authentication);
             PostDetailDto post = postService.getDetail(id, username, countView);
             model.addAttribute("post", post);
-            model.addAttribute("images", postImageService.getImages(id));
             model.addAttribute("contestEntry", postContestService.findEntryForPost(id, username).orElse(null));
             return "post/detail";
         } catch (IllegalArgumentException e) {

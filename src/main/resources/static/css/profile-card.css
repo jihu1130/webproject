@@ -36,14 +36,19 @@
     align-items: center;
     justify-content: center;
     border: 3px solid var(--border);
-    overflow: hidden;
 }
 
 /* 업로드한 프로필 사진 또는 기본 아바타(static/images/default-avatar.svg) - 원형 틀에 꽉 채워
-   보여준다. 기본 아바타 SVG 자체가 이미 회색 원+실루엣이라 별도 배경/글자 폴백이 필요 없다. */
+   보여준다. 기본 아바타 SVG 자체가 이미 회색 원+실루엣이라 별도 배경/글자 폴백이 필요 없다.
+   원형 클리핑은 부모(.profile-card-avatar)가 아니라 여기 img에 직접 건다 - 구글 배지
+   (.profile-card-avatar-google)가 부모 박스 밖으로 살짝 튀어나오게(right/bottom: -3px)
+   배치되는데, 부모에 overflow: hidden이 있으면 그 배지까지 통째로 잘려서 안 보였다(실제
+   확인된 버그 - "구글 로그인 배지가 안 보인다"). img만 잘라내면 배지는 부모 박스 밖으로
+   정상적으로 삐져나와 보인다. */
 .profile-card-avatar img {
     width: 100%;
     height: 100%;
+    border-radius: 50%;
     object-fit: cover;
 }
 
