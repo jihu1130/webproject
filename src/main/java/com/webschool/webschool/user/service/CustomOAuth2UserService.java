@@ -1,5 +1,6 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserPenaltyService userPenaltyService;
+    private final AdminActionLogService adminActionLogService;
 
     @Override
     @Transactional
@@ -51,6 +53,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User user = userRepository.findByProviderAndProviderId(User.Provider.GOOGLE, providerId)
                 .orElseGet(() -> createGoogleUser(providerId, email, name));
 
+        // 본인이 예전에 탈퇴(소프트 삭제)했던 구글 계정으로 다시 로그인을 시도하면 그 계정을
+        // 복구한다. provider+providerId 조합이 DB 유니크 제약이라(User.java 테이블 정의 참고)
+        // 같은 구글 계정으로는 새 행을 만들 수 없어서, 이 복구 없이는 그 구글 계정으로 이 사이트에
+        // 두 번 다시 가입/로그인할 방법이 없어진다(실사용자 신고로 발견 - "탈퇴 후 같은 구글
+        // 계정/이메일로 다시 가입이 안 됨"). 총관리자가 정지시킨 계정(active=false)이나 제재
+        // 적용 중인 계정까지 이 자동 복구 대상으로 삼으면 정지/제재를 무력화시키므로, 본인이
+        // 스스로 탈퇴한 경우(deleted=true)에만 적용한다.
+        if (user.isDeleted()) {
+            user.setDeleted(false);
+            user.setDeletedAt(null);
+            adminActionLogService.log("USER", user.getId(), "RESTORE",
+                    "구글 재로그인으로 탈퇴 계정 복구", user.getUsername());
+        }
+
         // 이메일 필드가 생기기 전에 가입한 기존 구글 계정 백필 - 구글이 이미 이 이메일의 소유권을
         // 검증했으므로 별도 인증 메일 없이 바로 인증됨으로 채운다. 다른 계정이 그 사이 같은 이메일을
         // 선점했으면(극히 드문 경우) 조용히 건너뛰고, EmailSetupInterceptor가 다음 요청에서 안내한다.
@@ -61,8 +77,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // 폼 로그인(CustomUserDetailsService)과 동일한 로그인 차단 조건 - 여기서 빠뜨리면 총관리자가
-        // 계정을 정지/탈퇴 처리해도 구글 로그인으로는 그대로 들어와지는 구멍이 생긴다.
-        if (user.isDeleted() || !user.isActive() || userPenaltyService.isDeactivated(user.getId())) {
+        // 계정을 정지 처리해도 구글 로그인으로는 그대로 들어와지는 구멍이 생긴다. deleted는 위에서
+        // 이미 처리했으므로(자진 탈퇴는 재로그인으로 복구) 여기서는 관리자 정지/제재만 확인한다 -
+        // 탈퇴 이전에 이미 정지/제재가 걸려있던 계정이라면 탈퇴 복구는 하되(탈퇴 자체는 본인
+        // 의사였으므로) 정지/제재 조건은 그대로 로그인을 막는다.
+        if (!user.isActive() || userPenaltyService.isDeactivated(user.getId())) {
             throw new OAuth2AuthenticationException("이 계정은 로그인할 수 없습니다.");
         }
 

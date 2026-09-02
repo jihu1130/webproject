@@ -345,6 +345,7 @@ public class AdminPostService {
 
     private AdminReportItemDto toReportItemDto(PostReport report) {
         return AdminReportItemDto.builder()
+                .reporterId(report.getReporter().getId())
                 .reporterNickname(report.getReporter().getNickname())
                 .reporterUsername(report.getReporter().getUsername())
                 .reason(report.getReason())

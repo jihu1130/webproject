@@ -24,15 +24,23 @@ public class FileUploadService {
     private final FileStorageService fileStorageService;
 
     // 서버/클라이언트에서 직접 실행되거나 설치될 수 있는 확장자만 차단(화이트리스트가 아니라 블랙리스트).
+    // svg는 실행 파일은 아니지만 <script>를 담을 수 있어 여기 포함시켰다 - 브라우저로 파일 URL을
+    // 직접 열면(에디터 이미지를 "새 탭에서 열기" 등) 업로드한 오리진에서 그대로 실행되는 저장형
+    // XSS가 된다(2026-09-02, 보안 점검 중 발견). "image" 카테고리에서만 빼면 이미지도 영상도
+    // 아닌 "file"로 분류돼 그대로 업로드가 허용되므로, 아예 이 블랙리스트에 넣어 어떤 경로로도
+    // 업로드 자체를 막는다. 로컬 저장소 모드(/uploads/**, 같은 오리진)에서 특히 위험하고, S3
+    // 모드(별도 오리진)에서도 피싱 등에 악용될 수 있다. 앱 자체가 쓰는
+    // static/images/default-avatar.svg처럼 개발자가 직접 배치하는 정적 리소스는 이 업로드
+    // 경로를 타지 않으므로 영향 없다.
     private static final Set<String> DANGEROUS_EXTENSIONS = Set.of(
             "exe", "bat", "cmd", "com", "msi", "msp", "scr", "pif", "gadget",
             "sh", "bash", "run", "app", "pkg", "deb", "rpm", "apk", "ipa",
             "jar", "js", "jse", "vbs", "vbe", "wsf", "wsh", "ps1", "psm1",
             "jsp", "jspx", "php", "php3", "php4", "php5", "phtml", "asp", "aspx",
-            "cgi", "dll", "so", "action", "reg", "hta"
+            "cgi", "dll", "so", "action", "reg", "hta", "svg"
     );
 
-    private static final Set<String> IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "avif");
+    private static final Set<String> IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp", "bmp", "avif");
     private static final Set<String> VIDEO_EXTENSIONS = Set.of("mp4", "webm", "ogg", "mov", "m4v");
 
     private static final long MAX_IMAGE_SIZE = 15L * 1024 * 1024;   // 15MB
@@ -59,7 +67,7 @@ public class FileUploadService {
             throw new IllegalArgumentException("확장자가 없는 파일은 업로드할 수 없습니다.");
         }
         if (DANGEROUS_EXTENSIONS.contains(ext)) {
-            throw new IllegalArgumentException("실행/스크립트 파일(." + ext + ")은 업로드할 수 없습니다.");
+            throw new IllegalArgumentException("보안상 허용되지 않는 파일 형식(." + ext + ")입니다.");
         }
 
         String kind = IMAGE_EXTENSIONS.contains(ext) ? "image" : VIDEO_EXTENSIONS.contains(ext) ? "video" : "file";

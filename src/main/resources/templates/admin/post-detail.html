@@ -99,7 +99,7 @@
             <div class="admin-report-list" th:unless="${post.reports.empty}">
                 <div class="admin-report-item" th:each="report : ${post.reports}">
                     <div class="admin-report-item-header">
-                        <span class="post-comment-nickname" th:text="${report.reporterNickname}">신고자</span>
+                        <a th:href="@{'/admin/profiles/' + ${report.reporterId}}" class="post-comment-nickname" th:text="${report.reporterNickname}">신고자</a>
                         <span class="post-comment-time" th:text="${report.createdAt}">날짜</span>
                     </div>
                     <div class="admin-report-reason" th:text="${report.reason != null ? report.reason : '사유 미입력'}">사유</div>
