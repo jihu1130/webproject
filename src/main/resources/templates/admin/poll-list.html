@@ -22,7 +22,8 @@
                th:text="${viewMode == 'deleted'} ? '관리자가 삭제한 설문을 확인하고 복구할 수 있어요' : '게시글/한마디에 첨부된 설문 결과를 모아보고, 스팸/악성 설문은 삭제할 수 있어요'">설명</p>
         </div>
 
-        <div th:replace="~{admin/fragments/nav :: tabs('polls')}"></div>
+        <div th:replace="~{admin/fragments/nav :: tabs('posts')}"></div>
+        <div th:replace="~{admin/fragments/nav :: contentSubTabs('polls')}"></div>
 
         <div class="post-category-tabs admin-status-tabs">
             <a th:href="@{/admin/polls}" class="post-category-tab" th:classappend="${viewMode == 'all'} ? ' active' : ''">전체</a>

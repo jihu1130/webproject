@@ -23,6 +23,7 @@
         </div>
 
         <div th:replace="~{admin/fragments/nav :: tabs('posts')}"></div>
+        <div th:replace="~{admin/fragments/nav :: contentSubTabs('posts')}"></div>
 
         <div class="post-category-tabs admin-status-tabs">
             <a th:href="@{/admin/posts}" class="post-category-tab" th:classappend="${viewMode == 'all'} ? ' active' : ''">전체 게시글</a>
