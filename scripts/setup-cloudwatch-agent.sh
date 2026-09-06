@@ -1,15 +1,22 @@
 #!/usr/bin/env bash
-# webschool 애플리케이션/nginx 로그를 CloudWatch Logs로 전송하는 CloudWatch Agent
-# 설치/설정 스크립트 (EC2, Amazon Linux 2023 운영 서버 전용). SSM Session
-# Manager로 서버에 접속해서(`aws ssm start-session --target <인스턴스ID>`) 이
-# 스크립트 내용을 그대로 붙여넣어 실행한다 - 설치 배경/IAM 준비 절차는
-# AWS.md "6단계" 참고.
+# webschool 애플리케이션/nginx 로그 + 메모리/디스크/스왑 메트릭을 CloudWatch로
+# 전송하는 CloudWatch Agent 설치/설정 스크립트 (EC2, Amazon Linux 2023 운영
+# 서버 전용). SSM Session Manager로 서버에 접속해서(`aws ssm start-session
+# --target <인스턴스ID>`) 이 스크립트 내용을 그대로 붙여넣어 실행한다 - 설치
+# 배경/IAM 준비 절차는 AWS.md "6단계"(로그)/"7단계"(모니터링) 참고.
 #
-# 사전 준비: webschool-ec2-ssm-role에 CloudWatch Logs 쓰기 권한
-# (webschool-cloudwatch-logs-write 정책)이 먼저 연결돼 있어야 한다 - 없으면
-# 에이전트는 정상적으로 뜨지만 로그 전송만 조용히 실패한다(AccessDenied가
+# 사전 준비: webschool-ec2-ssm-role에 아래 두 정책이 먼저 연결돼 있어야 한다 -
+# 없으면 에이전트는 정상적으로 뜨지만 전송만 조용히 실패한다(AccessDenied가
 # 에이전트 자체 로그 /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log
 # 에만 남고 서비스 상태는 계속 active로 보여서 눈에 띄기 어렵다).
+# - webschool-cloudwatch-logs-write (로그 전송용)
+# - webschool-cloudwatch-metrics-write (메모리/디스크/스왑 메트릭 전송용,
+#   PutMetricData는 리소스 단위 ARN 제한을 지원하지 않아 네임스페이스
+#   CWAgent로만 조건을 좁힘)
+#
+# EC2 기본 지표(CPUUtilization 등)와 달리 메모리/디스크 사용률은 에이전트가
+# 직접 수집해서 보내야 CloudWatch에 존재한다(이 프로젝트가 t3.micro OOM 사고를
+# 겪었던 이력이 있어 메모리 모니터링이 특히 중요 - AWS.md 1단계 체크리스트 참고).
 #
 # 여러 번 실행해도 안전(idempotent, TestDataSeeder류 스크립트와 동일 원칙) -
 # 이미 설치돼 있으면 설정 파일만 최신 내용으로 덮어쓰고 에이전트를 재시작한다.
@@ -51,6 +58,24 @@ sudo tee "$CONFIG_PATH" > /dev/null <<'EOF'
             "retention_in_days": 14
           }
         ]
+      }
+    }
+  },
+  "metrics": {
+    "namespace": "CWAgent",
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}"
+    },
+    "metrics_collected": {
+      "mem": {
+        "measurement": ["mem_used_percent"]
+      },
+      "swap": {
+        "measurement": ["swap_used_percent"]
+      },
+      "disk": {
+        "measurement": ["used_percent"],
+        "resources": ["/"]
       }
     }
   }
