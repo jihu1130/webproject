@@ -134,7 +134,7 @@ public class PollService {
     @Transactional
     public void deletePollForComment(Long scheduleCommentId, String username) {
         pollRepository.findByScheduleComment_IdAndDeletedFalse(scheduleCommentId).ifPresent(poll -> {
-            if (!poll.getCreator().getUsername().equals(username)) {
+            if (poll.getCreator() == null || !poll.getCreator().getUsername().equals(username)) {
                 throw new IllegalArgumentException("본인이 작성한 설문만 삭제할 수 있습니다.");
             }
             poll.setDeleted(true);
@@ -279,7 +279,7 @@ public class PollService {
                 .expired(poll.isExpired())
                 .totalVoters((int) totalVoters)
                 .votedByMe(!myVotedOptionIds.isEmpty())
-                .mine(viewer != null && viewer.getId().equals(poll.getCreator().getId()))
+                .mine(viewer != null && poll.getCreator() != null && viewer.getId().equals(poll.getCreator().getId()))
                 .options(optionDtos)
                 .build();
     }
@@ -293,7 +293,7 @@ public class PollService {
         if (viewer == null) {
             return false;
         }
-        if (Objects.equals(viewer.getId(), poll.getCreator().getId())) {
+        if (poll.getCreator() != null && Objects.equals(viewer.getId(), poll.getCreator().getId())) {
             return true;
         }
         if (viewer.isAdmin()) {
@@ -312,6 +312,12 @@ public class PollService {
             return poll.getPost().getVisibility() != Post.Visibility.PRIVATE;
         }
         User creator = poll.getCreator();
+        // creator가 null(작성자 하드 삭제, AccountHardDeleteService 참고)이면 같은 반/같은 학년
+        // 여부를 더 이상 판단할 수 없으니 안전하게 접근을 막는다(PUBLIC_LINK는 creator가 필요 없어
+        // 영향 없음).
+        if (creator == null) {
+            return poll.getVisibilityScope() == Poll.VisibilityScope.PUBLIC_LINK;
+        }
         return switch (poll.getVisibilityScope()) {
             case PUBLIC_LINK -> true;
             case SAME_GRADE -> {

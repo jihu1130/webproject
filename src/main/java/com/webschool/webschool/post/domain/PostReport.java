@@ -22,8 +22,10 @@ public class PostReport {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
+    // nullable - 신고자가 탈퇴 1주일 후 하드 삭제되면 null(AccountHardDeleteService 참고).
+    // 신고 기록 자체는 남겨서 관리자가 "왜 블라인드됐는지" 계속 확인할 수 있게 한다.
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reporter_id", nullable = false)
+    @JoinColumn(name = "reporter_id")
     private User reporter;
 
     @Column(length = 300)

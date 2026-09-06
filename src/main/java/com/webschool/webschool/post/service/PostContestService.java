@@ -74,7 +74,7 @@ public class PostContestService {
         if (post.isDeleted() || post.isBlind()) {
             throw new IllegalArgumentException("이 게시물은 후보로 신청할 수 없습니다.");
         }
-        if (!post.getAuthor().getId().equals(nominator.getId())) {
+        if (post.getAuthor() == null || !post.getAuthor().getId().equals(nominator.getId())) {
             throw new IllegalArgumentException("본인이 작성한 게시물만 후보로 신청할 수 있습니다.");
         }
         // 후보 목록/이력에는 작성자(신청자)의 실제 닉네임이 노출되는데(toDto()의 authorNickname
@@ -264,7 +264,7 @@ public class PostContestService {
                 .rank(result.getRank())
                 .postUuid(result.getPost().getUuid())
                 .postTitle(result.getPost().getTitle())
-                .authorNickname(result.getAuthor().isDeleted() ? "탈퇴한 사용자" : result.getAuthor().getNickname())
+                .authorNickname(result.getAuthor() == null || result.getAuthor().isDeleted() ? "탈퇴한 사용자" : result.getAuthor().getNickname())
                 .voteCount(result.getVoteCount())
                 .prizePoints(result.getPrizePoints())
                 .build();

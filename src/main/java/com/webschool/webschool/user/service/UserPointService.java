@@ -43,6 +43,11 @@ public class UserPointService {
     // 한도에 걸쳐 있으면(예: 오늘 28점 적립 + 이번 활동 5점) 남은 만큼만(2점) 잘라서 준다.
     @Transactional
     public void award(User user, int points, String reason) {
+        // 하드 삭제된 작성자(좋아요를 받은 글의 작성자 등)에게는 줄 대상 자체가 없다 - NotificationService.notify()의
+        // recipient null 가드와 동일한 이유(AccountHardDeleteService 참고).
+        if (user == null) {
+            return;
+        }
         LocalDate today = LocalDate.now();
         int earnedToday = userPointLogRepository.sumPointsSince(user.getId(), today.atStartOfDay());
         int remaining = DAILY_CAP - earnedToday;

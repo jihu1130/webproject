@@ -63,7 +63,7 @@ public class ScheduleCommentService {
         return scheduleCommentRepository
                 .findBySchool_IdAndTargetDateAndGradeAndClassNmAndDeletedFalseOrderByCreatedAtAsc(school.getId(), date, grade, classNm)
                 .stream()
-                .filter(c -> !blockedUserIds.contains(c.getUser().getId()))
+                .filter(c -> c.getUser() == null || !blockedUserIds.contains(c.getUser().getId()))
                 .map(c -> toDto(c, currentUsername))
                 .collect(Collectors.toList());
     }
@@ -104,7 +104,7 @@ public class ScheduleCommentService {
             throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
         }
 
-        if (!comment.getUser().getUsername().equals(username)) {
+        if (comment.getUser() == null || !comment.getUser().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 댓글만 수정할 수 있습니다.");
         }
 
@@ -130,7 +130,7 @@ public class ScheduleCommentService {
             throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
         }
 
-        if (!comment.getUser().getUsername().equals(username)) {
+        if (comment.getUser() == null || !comment.getUser().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 댓글만 삭제할 수 있습니다.");
         }
 
@@ -153,7 +153,7 @@ public class ScheduleCommentService {
             throw new IllegalArgumentException("이미 검토되어 문제없다고 판정된 한마디입니다.");
         }
 
-        if (comment.getUser().getUsername().equals(username)) {
+        if (comment.getUser() != null && comment.getUser().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 댓글은 신고할 수 없습니다.");
         }
 
@@ -301,7 +301,7 @@ public class ScheduleCommentService {
         if (comment.isDeleted()) {
             throw new IllegalArgumentException("한마디를 찾을 수 없습니다.");
         }
-        if (!comment.getUser().getUsername().equals(username)) {
+        if (comment.getUser() == null || !comment.getUser().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 한마디만 수정할 수 있습니다.");
         }
         return comment;
@@ -359,7 +359,7 @@ public class ScheduleCommentService {
     }
 
     private ScheduleCommentDto toDto(ScheduleComment c, String currentUsername) {
-        boolean mine = currentUsername != null && c.getUser().getUsername().equals(currentUsername);
+        boolean mine = currentUsername != null && c.getUser() != null && c.getUser().getUsername().equals(currentUsername);
         // 블라인드된 한마디는 작성자 본인/관리자에게만 원본 내용을 보여준다 (PostCommentService와 동일 패턴)
         String content = c.isBlind() && !mine && !isAdmin(currentUsername) ? BLIND_PLACEHOLDER : c.getContent();
         boolean reportedByMe = !mine && currentUsername != null
@@ -372,10 +372,10 @@ public class ScheduleCommentService {
         return ScheduleCommentDto.builder()
                 .id(c.getId())
                 .uuid(c.getUuid())
-                .nickname(c.getUser().isDeleted() ? "탈퇴한 사용자" : c.getUser().getNickname())
-                .authorId(c.getUser().getId())
-                .authorUuid(c.getUser().getUuid())
-                .authorLinkable(!c.getUser().isDeleted())
+                .nickname(c.getUser() == null || c.getUser().isDeleted() ? "탈퇴한 사용자" : c.getUser().getNickname())
+                .authorId(c.getUser() != null ? c.getUser().getId() : null)
+                .authorUuid(c.getUser() != null ? c.getUser().getUuid() : null)
+                .authorLinkable(c.getUser() != null && !c.getUser().isDeleted())
                 .content(content)
                 .createdAt(c.getCreatedAt().format(DISPLAY_FORMAT))
                 .edited(c.getUpdatedAt() != null)

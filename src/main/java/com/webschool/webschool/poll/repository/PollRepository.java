@@ -2,6 +2,9 @@ package com.webschool.webschool.poll.repository;
 
 import com.webschool.webschool.poll.domain.Poll;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,4 +18,9 @@ public interface PollRepository extends JpaRepository<Poll, Long> {
     // 관리자 설문 관리 화면의 "전체"/"삭제됨" 탭 (AdminPostService.getAllPosts()/getDeletedPosts()와 동일 패턴)
     List<Poll> findAllByDeletedFalseOrderByCreatedAtDesc();
     List<Poll> findAllByDeletedTrueOrderByDeletedAtDesc();
+
+    // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 설문은 남기고 작성자 참조만 끊는다.
+    @Modifying
+    @Query("UPDATE Poll p SET p.creator = null WHERE p.creator.id = :userId")
+    void detachCreator(@Param("userId") Long userId);
 }

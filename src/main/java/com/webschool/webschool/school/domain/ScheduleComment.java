@@ -43,8 +43,9 @@ public class ScheduleComment {
     @Column(nullable = false)
     private String classNm; // 같은 반끼리만 공유
 
+    // nullable - Post.author와 동일 이유(작성자 하드 삭제 시 null, AccountHardDeleteService 참고).
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     // 리치 에디터(Quill) 산출물 - 저장 전 ScheduleCommentService가 HtmlSanitizer로 정제한 안전한

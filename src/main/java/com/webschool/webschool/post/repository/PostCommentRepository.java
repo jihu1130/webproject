@@ -73,4 +73,9 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
     // QnA 답변 채택(네이버 지식인 스타일) - 게시글당 채택된 답변은 항상 최대 1개라
     // 새로 채택하기 전에 기존 채택을 먼저 찾아 해제해야 한다.
     Optional<PostComment> findByPost_IdAndAcceptedTrue(Long postId);
+
+    // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 댓글은 남기고 작성자 참조만 끊는다.
+    @Modifying
+    @Query("UPDATE PostComment c SET c.author = null WHERE c.author.id = :userId")
+    void detachAuthor(@Param("userId") Long userId);
 }

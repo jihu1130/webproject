@@ -47,4 +47,9 @@ public interface ScheduleCommentRepository extends JpaRepository<ScheduleComment
 
     // 마이페이지("내 활동내역")용 - 본인이 작성한 한마디 목록 (검색어 필터링은 메모리에서 처리)
     List<ScheduleComment> findByUser_IdAndDeletedFalseOrderByCreatedAtDesc(Long userId);
+
+    // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 한마디는 남기고 작성자 참조만 끊는다.
+    @Modifying
+    @Query("UPDATE ScheduleComment c SET c.user = null WHERE c.user.id = :userId")
+    void detachUser(@Param("userId") Long userId);
 }

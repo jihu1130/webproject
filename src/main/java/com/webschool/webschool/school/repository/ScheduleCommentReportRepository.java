@@ -2,6 +2,9 @@ package com.webschool.webschool.school.repository;
 
 import com.webschool.webschool.school.domain.ScheduleCommentReport;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,4 +17,9 @@ public interface ScheduleCommentReportRepository extends JpaRepository<ScheduleC
 
     // 신고 취소용 - PostReportRepository.findByPost_IdAndReporter_Username()와 동일 패턴.
     Optional<ScheduleCommentReport> findByComment_IdAndReporter_Username(Long commentId, String username);
+
+    // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 신고 기록은 남기고 신고자 참조만 끊는다.
+    @Modifying
+    @Query("UPDATE ScheduleCommentReport r SET r.reporter = null WHERE r.reporter.id = :userId")
+    void detachReporter(@Param("userId") Long userId);
 }

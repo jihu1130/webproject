@@ -30,8 +30,9 @@ public class Notice {
     @Column(nullable = false, length = 4000)
     private String content;
 
+    // nullable - 작성자(관리자 계정)가 탈퇴 1주일 후 하드 삭제되면 null(AccountHardDeleteService 참고).
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "author_id")
     private User author;
 
     @Column(nullable = false, columnDefinition = "boolean default false")

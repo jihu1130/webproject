@@ -2,6 +2,7 @@ package com.webschool.webschool.post.repository;
 
 import com.webschool.webschool.post.domain.CommentLike;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,4 +23,9 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> 
     // 한 번에 배치 조회하도록 교체.
     @Query("SELECT l.comment.id FROM CommentLike l WHERE l.comment.id IN :commentIds AND l.user.username = :username")
     List<Long> findLikedCommentIds(@Param("commentIds") List<Long> commentIds, @Param("username") String username);
+
+    // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 좋아요는 개인 활동 흔적이라 함께 지운다.
+    @Modifying
+    @Query("DELETE FROM CommentLike l WHERE l.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

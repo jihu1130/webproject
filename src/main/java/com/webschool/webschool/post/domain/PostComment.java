@@ -26,8 +26,9 @@ public class PostComment {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
+    // nullable - Post.author와 동일 이유(작성자 하드 삭제 시 null, AccountHardDeleteService 참고).
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "author_id")
     private User author;
 
     // 대댓글(1depth 답글, 2026-08-25 추가) - null이면 최상위 댓글, 아니면 답글이다. 답글에는

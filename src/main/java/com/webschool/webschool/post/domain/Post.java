@@ -41,8 +41,10 @@ public class Post {
     @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String content;
 
+    // nullable - 작성자 계정이 탈퇴 1주일 후 하드 삭제되면 이 참조가 null이 된다(게시글 자체는
+    // 남기고 작성자만 "탈퇴한 사용자"로 표시하는 정책, AccountHardDeleteService 참고).
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "author_id")
     private User author;
 
     @Enumerated(EnumType.STRING)

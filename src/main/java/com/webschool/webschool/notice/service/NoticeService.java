@@ -172,7 +172,7 @@ public class NoticeService {
                 .id(n.getId())
                 .title(n.getTitle())
                 .content(n.getContent())
-                .authorNickname(n.getAuthor().getNickname())
+                .authorNickname(n.getAuthor() != null ? n.getAuthor().getNickname() : "탈퇴한 관리자")
                 .active(n.isActive())
                 .createdAt(n.getCreatedAt().format(DISPLAY_FORMAT))
                 .build();

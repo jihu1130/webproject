@@ -2,7 +2,9 @@ package com.webschool.webschool.poll.repository;
 
 import com.webschool.webschool.poll.domain.PollVote;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -18,4 +20,10 @@ public interface PollVoteRepository extends JpaRepository<PollVote, Long> {
     // totalVoters와 동일한 정의 - 옵션별 투표수 합이 아니라 "투표한 사람 수"이므로 distinct).
     @Query("select count(distinct v.voter.id) from PollVote v where v.option.poll.id = :pollId")
     long countDistinctVotersByPollId(Long pollId);
+
+    // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 투표는 개인 활동 흔적이라 함께 지운다
+    // (참여자 수/득표 총합이 그만큼 줄어드는 건 좋아요 수와 동일한 트레이드오프로 감수).
+    @Modifying
+    @Query("DELETE FROM PollVote v WHERE v.voter.id = :userId")
+    void deleteAllByVoterId(@Param("userId") Long userId);
 }

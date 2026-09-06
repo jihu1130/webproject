@@ -61,7 +61,8 @@ public class EmbedResolveController {
         // 대신 여기로 제목만 빼갈 수 있다. 카드가 본문에 스냅샷으로 박히면 그 글을 읽는 제3자에게도
         // 제목이 그대로 노출되므로 작성자 본인 확인이 필요하다.
         if (post.getVisibility() == Post.Visibility.PRIVATE
-                && (authentication == null || !post.getAuthor().getUsername().equals(authentication.getName()))) {
+                && (authentication == null || post.getAuthor() == null
+                        || !post.getAuthor().getUsername().equals(authentication.getName()))) {
             return ResponseEntity.badRequest().body(Map.of("error", "게시물을 찾을 수 없어요."));
         }
         return ResponseEntity.ok(Map.of(

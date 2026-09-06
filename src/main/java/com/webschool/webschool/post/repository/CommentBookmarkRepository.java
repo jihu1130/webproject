@@ -2,6 +2,7 @@ package com.webschool.webschool.post.repository;
 
 import com.webschool.webschool.post.domain.CommentBookmark;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -20,4 +21,9 @@ public interface CommentBookmarkRepository extends JpaRepository<CommentBookmark
     // 버그 수정(N+1) - CommentLikeRepository.findLikedCommentIds()와 동일한 이유/패턴.
     @Query("SELECT b.comment.id FROM CommentBookmark b WHERE b.comment.id IN :commentIds AND b.user.username = :username")
     List<Long> findBookmarkedCommentIds(@Param("commentIds") List<Long> commentIds, @Param("username") String username);
+
+    // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 북마크는 개인 활동 흔적이라 함께 지운다.
+    @Modifying
+    @Query("DELETE FROM CommentBookmark b WHERE b.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

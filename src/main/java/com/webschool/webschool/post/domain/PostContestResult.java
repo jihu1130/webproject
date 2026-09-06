@@ -35,8 +35,10 @@ public class PostContestResult {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
+    // nullable - post/author는 소프트 삭제만 하는 컨벤션이었지만, 2026-09 하드 삭제 도입 후
+    // 작성자가 탈퇴 1주일 후 실제로 삭제되면 null이 된다(AccountHardDeleteService 참고).
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "author_id")
     private User author;
 
     @Column(nullable = false)

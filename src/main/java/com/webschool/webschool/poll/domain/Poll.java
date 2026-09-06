@@ -32,8 +32,9 @@ public class Poll {
     @JoinColumn(name = "schedule_comment_id")
     private ScheduleComment scheduleComment;
 
+    // nullable - 작성자가 탈퇴 1주일 후 하드 삭제되면 null(AccountHardDeleteService 참고).
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creator_id", nullable = false)
+    @JoinColumn(name = "creator_id")
     private User creator;
 
     @Column(nullable = false, length = 200)

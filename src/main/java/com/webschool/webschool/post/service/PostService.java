@@ -98,7 +98,8 @@ public class PostService {
             throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
         }
 
-        boolean mine = currentUsername != null && post.getAuthor().getUsername().equals(currentUsername);
+        boolean mine = currentUsername != null && post.getAuthor() != null
+                && post.getAuthor().getUsername().equals(currentUsername);
 
         // 블라인드 처리된 게시물은 작성자 본인과 관리자만 열람 가능 (그 외에는 존재하지 않는 것처럼 처리)
         if (post.isBlind() && !mine && !isAdmin(currentUsername)) {
@@ -161,7 +162,7 @@ public class PostService {
             throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
         }
 
-        if (!post.getAuthor().getUsername().equals(username)) {
+        if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물만 수정할 수 있습니다.");
         }
 
@@ -186,7 +187,7 @@ public class PostService {
             throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
         }
 
-        if (!post.getAuthor().getUsername().equals(username)) {
+        if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물만 수정할 수 있습니다.");
         }
 
@@ -216,7 +217,7 @@ public class PostService {
             throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
         }
 
-        if (!post.getAuthor().getUsername().equals(username)) {
+        if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물만 삭제할 수 있습니다.");
         }
 
@@ -236,7 +237,7 @@ public class PostService {
             throw new IllegalArgumentException("이미 검토되어 문제없다고 판정된 게시물입니다.");
         }
 
-        if (post.getAuthor().getUsername().equals(username)) {
+        if (post.getAuthor() != null && post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물은 신고할 수 없습니다.");
         }
 
@@ -451,11 +452,13 @@ public class PostService {
         return sanitized;
     }
 
+    // author가 null인 경우(하드 삭제, AccountHardDeleteService 참고)도 isDeleted()와 동일하게
+    // "탈퇴한 사용자"로 취급한다 - 계정이 진짜로 사라진 것도 소프트 삭제된 것과 화면상 구분할 이유가 없다.
     private String displayNickname(Post p) {
         if (p.getCategory() == Post.Category.ANONYMOUS) {
             return "익명";
         }
-        return p.getAuthor().isDeleted() ? "탈퇴한 사용자" : p.getAuthor().getNickname();
+        return p.getAuthor() == null || p.getAuthor().isDeleted() ? "탈퇴한 사용자" : p.getAuthor().getNickname();
     }
 
     private PostListItemDto toListItemDto(Post p, String thumbnailUrl) {
@@ -464,8 +467,8 @@ public class PostService {
                 .uuid(p.getUuid())
                 .title(p.getTitle())
                 .nickname(displayNickname(p))
-                .authorId(p.getAuthor().getId())
-                .authorUuid(p.getAuthor().getUuid())
+                .authorId(p.getAuthor() != null ? p.getAuthor().getId() : null)
+                .authorUuid(p.getAuthor() != null ? p.getAuthor().getUuid() : null)
                 .authorLinkable(isAuthorLinkable(p))
                 .category(p.getCategory().name())
                 .categoryLabel(p.getCategory().getLabel())
@@ -479,7 +482,7 @@ public class PostService {
     // 익명 게시물이면 프로필로 연결하면 안 되고(작성자가 누구인지 드러남), 작성자가 탈퇴했으면
     // 애초에 볼 수 있는 프로필이 없다(UserProfileService.getProfile()이 탈퇴 계정을 막음).
     private boolean isAuthorLinkable(Post p) {
-        return p.getCategory() != Post.Category.ANONYMOUS && !p.getAuthor().isDeleted();
+        return p.getCategory() != Post.Category.ANONYMOUS && p.getAuthor() != null && !p.getAuthor().isDeleted();
     }
 
     private PostDetailDto toDetailDto(Post p, String currentUsername, boolean mine, int displayViewCount) {
@@ -496,8 +499,8 @@ public class PostService {
                 .title(p.getTitle())
                 .content(p.getContent())
                 .nickname(displayNickname(p))
-                .authorId(p.getAuthor().getId())
-                .authorUuid(p.getAuthor().getUuid())
+                .authorId(p.getAuthor() != null ? p.getAuthor().getId() : null)
+                .authorUuid(p.getAuthor() != null ? p.getAuthor().getUuid() : null)
                 .authorLinkable(isAuthorLinkable(p))
                 .category(p.getCategory().name())
                 .categoryLabel(p.getCategory().getLabel())

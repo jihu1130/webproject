@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -95,7 +96,7 @@ public class PostCommentService {
         // 비공개(PRIVATE) 게시물은 작성자 본인 외에는 상세 페이지 자체가 안 열리므로(PostService.
         // getDetail()) 댓글 폼을 볼 수도 없지만, 이 엔드포인트를 직접 호출하는 경로까지 막아둔다.
         if (post.getVisibility() == Post.Visibility.PRIVATE
-                && !post.getAuthor().getUsername().equals(username)) {
+                && (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username))) {
             throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
         }
         User author = userRepository.findByUsername(username)
@@ -104,8 +105,9 @@ public class PostCommentService {
         userPenaltyService.assertCanComment(author);
 
         // 차단은 익명 게시물에는 적용하지 않는다(작성자 식별 자체가 가려져 있어서 차단이라는
-        // 개념이 성립하지 않음 - UserBlockService 클래스 주석 참고)
-        if (post.getCategory() != Post.Category.ANONYMOUS) {
+        // 개념이 성립하지 않음 - UserBlockService 클래스 주석 참고). 게시글 작성자가 하드 삭제로
+        // 사라졌으면(post.getAuthor() == null) 차단을 확인할 상대가 없으므로 건너뛴다.
+        if (post.getCategory() != Post.Category.ANONYMOUS && post.getAuthor() != null) {
             userBlockService.assertNotBlocked(author, post.getAuthor());
         }
 
@@ -141,7 +143,10 @@ public class PostCommentService {
                     author.getNickname() + "님이 회원님의 " + label + "에 답글을 남겼어요: " + truncate(post.getTitle()),
                     "/posts/" + post.getUuid());
             // 게시글 작성자에게도 알림(중복 방지: 답글 대상이 곧 게시글 작성자면 위에서 이미 알림을 보냈다)
-            if (!post.getAuthor().getId().equals(parentComment.getAuthor().getId())) {
+            // - 둘 중 하나가 하드 삭제로 null일 수 있어 Objects.equals로 비교(notify 자체는 null-safe).
+            Long postAuthorId = post.getAuthor() != null ? post.getAuthor().getId() : null;
+            Long parentAuthorId = parentComment.getAuthor() != null ? parentComment.getAuthor().getId() : null;
+            if (!Objects.equals(postAuthorId, parentAuthorId)) {
                 notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.COMMENT,
                         author.getNickname() + "님이 회원님의 글에 답글을 남겼어요: " + truncate(post.getTitle()),
                         "/posts/" + post.getUuid());
@@ -167,7 +172,7 @@ public class PostCommentService {
             throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
         }
 
-        if (!comment.getAuthor().getUsername().equals(username)) {
+        if (comment.getAuthor() == null || !comment.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 댓글만 수정할 수 있습니다.");
         }
 
@@ -191,7 +196,7 @@ public class PostCommentService {
             throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
         }
 
-        if (!comment.getAuthor().getUsername().equals(username)) {
+        if (comment.getAuthor() == null || !comment.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 댓글만 삭제할 수 있습니다.");
         }
 
@@ -222,7 +227,7 @@ public class PostCommentService {
             throw new IllegalArgumentException("이미 검토되어 문제없다고 판정된 댓글입니다.");
         }
 
-        if (comment.getAuthor().getUsername().equals(username)) {
+        if (comment.getAuthor() != null && comment.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 댓글은 신고할 수 없습니다.");
         }
 
@@ -341,12 +346,12 @@ public class PostCommentService {
         if (post.getCategory() != Post.Category.QNA) {
             throw new IllegalArgumentException("질의응답 게시글에서만 답변을 채택할 수 있습니다.");
         }
-        if (!post.getAuthor().getUsername().equals(username)) {
+        if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("질문 작성자만 답변을 채택할 수 있습니다.");
         }
         // 수정사항.md 지적 - 질문자가 자기 자신의 댓글을 채택할 수 있어서 "다른 사람이 도와준
         // 답을 표시"한다는 채택 기능의 취지가 무의미해졌다.
-        if (comment.getAuthor().getUsername().equals(username)) {
+        if (comment.getAuthor() != null && comment.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 답변은 채택할 수 없습니다.");
         }
 
@@ -420,7 +425,7 @@ public class PostCommentService {
     // 댓글 하나만 변환할 때(작성/수정 직후 응답용) - 이 경로는 애초에 댓글 하나뿐이라 개별 existsBy
     // 쿼리 3번이 N+1 문제가 되지 않는다. 목록 전체를 변환할 때는 아래 배치 버전(getComments() 참고)을 쓴다.
     private PostCommentDto toDto(PostComment c, String currentUsername) {
-        boolean mine = currentUsername != null && c.getAuthor().getUsername().equals(currentUsername);
+        boolean mine = currentUsername != null && c.getAuthor() != null && c.getAuthor().getUsername().equals(currentUsername);
         boolean reportedByMe = !mine && currentUsername != null
                 && commentReportRepository.existsByComment_IdAndReporter_Username(c.getId(), currentUsername);
         boolean likedByMe = currentUsername != null
@@ -434,7 +439,7 @@ public class PostCommentService {
     // 개별 쿼리를 날리지 않는다(버그 수정: N+1).
     private PostCommentDto toDto(PostComment c, String currentUsername,
                                   Set<Long> reportedIds, Set<Long> likedIds, Set<Long> bookmarkedIds) {
-        boolean mine = currentUsername != null && c.getAuthor().getUsername().equals(currentUsername);
+        boolean mine = currentUsername != null && c.getAuthor() != null && c.getAuthor().getUsername().equals(currentUsername);
         boolean reportedByMe = !mine && reportedIds.contains(c.getId());
         boolean likedByMe = likedIds.contains(c.getId());
         boolean bookmarkedByMe = bookmarkedIds.contains(c.getId());
@@ -449,10 +454,10 @@ public class PostCommentService {
         return PostCommentDto.builder()
                 .id(c.getId())
                 .parentId(c.getParentComment() != null ? c.getParentComment().getId() : null)
-                .nickname(c.getAuthor().isDeleted() ? "탈퇴한 사용자" : c.getAuthor().getNickname())
-                .authorId(c.getAuthor().getId())
-                .authorUuid(c.getAuthor().getUuid())
-                .authorLinkable(!c.getAuthor().isDeleted())
+                .nickname(c.getAuthor() == null || c.getAuthor().isDeleted() ? "탈퇴한 사용자" : c.getAuthor().getNickname())
+                .authorId(c.getAuthor() != null ? c.getAuthor().getId() : null)
+                .authorUuid(c.getAuthor() != null ? c.getAuthor().getUuid() : null)
+                .authorLinkable(c.getAuthor() != null && !c.getAuthor().isDeleted())
                 .content(content)
                 .createdAt(c.getCreatedAt().format(DISPLAY_FORMAT))
                 .edited(c.getUpdatedAt() != null)

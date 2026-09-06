@@ -37,4 +37,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.failedLoginAttempts = 0, u.lockedUntil = null WHERE u.username = :username")
     void resetFailedLoginAttempts(@Param("username") String username);
+
+    // 탈퇴 계정 하드 삭제 배치(AccountHardDeleteService)용 - 본인 탈퇴(deletedByAdmin=false)만 대상.
+    // 관리자 강제 탈퇴 계정은 제재/신고 이력 때문에 보관 기간을 더 길게 가져갈 가능성이 있어 이번
+    // 범위에서 제외한다(todo.md #20 참고).
+    List<User> findAllByDeletedTrueAndDeletedByAdminFalseAndDeletedAtBefore(LocalDateTime cutoff);
 }

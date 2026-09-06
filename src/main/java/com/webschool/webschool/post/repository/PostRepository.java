@@ -105,4 +105,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 검색어 필터링은 관리자 목록 화면들과 동일하게 메모리에서 처리하므로(MyActivityService.matches()
     // 참고, 본인 글만 대상이라 규모가 작다고 가정) Pageable 없는 List 버전으로 전체를 가져온다.
     List<Post> findByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(Long authorId);
+
+    // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 게시글은 남기고 작성자 참조만 끊는다.
+    @Modifying
+    @Query("UPDATE Post p SET p.author = null WHERE p.author.id = :userId")
+    void detachAuthor(@Param("userId") Long userId);
 }

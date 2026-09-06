@@ -90,6 +90,10 @@ public class UserPenaltyService {
         if (penalty.isRevoked()) {
             throw new IllegalArgumentException("이미 해제된 제재입니다.");
         }
+        // 대상 계정이 이미 하드 삭제됐으면(AccountHardDeleteService 참고) 해제할 대상 자체가 없다.
+        if (penalty.getTarget() == null) {
+            throw new IllegalArgumentException("대상 계정이 이미 삭제되어 해제할 수 없습니다.");
+        }
 
         penalty.setRevoked(true);
         penalty.setRevokedAt(LocalDateTime.now());
@@ -134,7 +138,7 @@ public class UserPenaltyService {
                 .type(p.getType().name())
                 .typeLabel(p.getType().getLabel())
                 .reason(p.getReason())
-                .issuedByNickname(p.getIssuedBy().getNickname())
+                .issuedByNickname(p.getIssuedBy() != null ? p.getIssuedBy().getNickname() : "탈퇴한 관리자")
                 .issuedAt(p.getIssuedAt().format(DISPLAY_FORMAT))
                 .expiresAt(p.getExpiresAt() != null ? p.getExpiresAt().format(DISPLAY_FORMAT) : null)
                 .revoked(p.isRevoked())

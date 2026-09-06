@@ -17,12 +17,14 @@ public class UserPenalty {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // nullable - 대상/부여자 계정이 탈퇴 1주일 후 하드 삭제되면 null(AccountHardDeleteService 참고).
+    // 제재 이력 자체(사유/유형/기간)는 남긴다.
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_id", nullable = false)
+    @JoinColumn(name = "target_id")
     private User target;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "issued_by_id", nullable = false)
+    @JoinColumn(name = "issued_by_id")
     private User issuedBy;
 
     @Enumerated(EnumType.STRING)

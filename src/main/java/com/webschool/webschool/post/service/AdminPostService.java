@@ -134,9 +134,9 @@ public class AdminPostService {
                 .uuid(post.getUuid())
                 .title(post.getTitle())
                 .content(post.getContent())
-                .authorNickname(post.getAuthor().getNickname())
-                .authorId(post.getAuthor().getId())
-                .authorUsername(post.getAuthor().getUsername())
+                .authorNickname(post.getAuthor() != null ? post.getAuthor().getNickname() : "탈퇴한 사용자")
+                .authorId(post.getAuthor() != null ? post.getAuthor().getId() : null)
+                .authorUsername(post.getAuthor() != null ? post.getAuthor().getUsername() : null)
                 .category(post.getCategory().name())
                 .categoryLabel(post.getCategory().getLabel())
                 .viewCount(post.getViewCount())
@@ -299,8 +299,8 @@ public class AdminPostService {
                 .title(post.getTitle())
                 .category(post.getCategory().name())
                 .categoryLabel(post.getCategory().getLabel())
-                .authorNickname(post.getAuthor().getNickname())
-                .authorId(post.getAuthor().getId())
+                .authorNickname(post.getAuthor() != null ? post.getAuthor().getNickname() : "탈퇴한 사용자")
+                .authorId(post.getAuthor() != null ? post.getAuthor().getId() : null)
                 .reportCount(post.getReportCount())
                 .blind(post.isBlind())
                 .reportCleared(post.isReportCleared())
@@ -318,8 +318,8 @@ public class AdminPostService {
                 .postId(comment.getPost().getId())
                 .postTitle(comment.getPost().getTitle())
                 .content(comment.getContent())
-                .authorNickname(comment.getAuthor().getNickname())
-                .authorId(comment.getAuthor().getId())
+                .authorNickname(comment.getAuthor() != null ? comment.getAuthor().getNickname() : "탈퇴한 사용자")
+                .authorId(comment.getAuthor() != null ? comment.getAuthor().getId() : null)
                 .reportCount(comment.getReportCount())
                 .blind(comment.isBlind())
                 .reportCleared(comment.isReportCleared())
@@ -332,8 +332,8 @@ public class AdminPostService {
     private AdminCommentItemDto toCommentItemDto(PostComment comment) {
         return AdminCommentItemDto.builder()
                 .id(comment.getId())
-                .authorNickname(comment.getAuthor().getNickname())
-                .authorId(comment.getAuthor().getId())
+                .authorNickname(comment.getAuthor() != null ? comment.getAuthor().getNickname() : "탈퇴한 사용자")
+                .authorId(comment.getAuthor() != null ? comment.getAuthor().getId() : null)
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt().format(DISPLAY_FORMAT))
                 .deleted(comment.isDeleted())
@@ -343,11 +343,13 @@ public class AdminPostService {
                 .build();
     }
 
+    // 신고자가 탈퇴 1주일 후 하드 삭제되면 reporter가 null이 된다(AccountHardDeleteService 참고) -
+    // BugReportService.toDto()의 reporter null 처리와 동일 패턴(비로그인 제출 대응 코드를 그대로 재사용).
     private AdminReportItemDto toReportItemDto(PostReport report) {
         return AdminReportItemDto.builder()
-                .reporterId(report.getReporter().getId())
-                .reporterNickname(report.getReporter().getNickname())
-                .reporterUsername(report.getReporter().getUsername())
+                .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
+                .reporterNickname(report.getReporter() != null ? report.getReporter().getNickname() : "탈퇴한 사용자")
+                .reporterUsername(report.getReporter() != null ? report.getReporter().getUsername() : null)
                 .reason(report.getReason())
                 .createdAt(report.getCreatedAt().format(DISPLAY_FORMAT))
                 .build();

@@ -158,8 +158,8 @@ public class AdminScheduleCommentService {
                 // 관리자 목록 화면은 여러 건을 한 테이블에 나열하므로 리치 에디터 태그를 걷어낸
                 // 순수 텍스트만 보여준다(2026-08-19, PostComment 관리자 목록과 동일 정책).
                 .content(HtmlSanitizer.toPlainText(c.getContent()))
-                .authorNickname(c.getUser().getNickname())
-                .authorId(c.getUser().getId())
+                .authorNickname(c.getUser() != null ? c.getUser().getNickname() : "탈퇴한 사용자")
+                .authorId(c.getUser() != null ? c.getUser().getId() : null)
                 .reportCount(c.getReportCount())
                 .blind(c.isBlind())
                 .reportCleared(c.isReportCleared())

@@ -2,6 +2,7 @@ package com.webschool.webschool.user.repository;
 
 import com.webschool.webschool.user.domain.UserBlock;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -36,4 +37,14 @@ public interface UserBlockRepository extends JpaRepository<UserBlock, Long> {
     @Query("SELECT b.blocked.id FROM UserBlock b WHERE b.blocker.id = :blockerId " +
            "AND (b.expiresAt IS NULL OR b.expiresAt > :now)")
     List<Long> findActiveBlockedUserIds(@Param("blockerId") Long blockerId, @Param("now") LocalDateTime now);
+
+    // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 차단 관계는 개인 활동 흔적이라 함께 지운다.
+    // 이 사람이 차단했든(blocker) 이 사람이 차단당했든(blocked) 양방향 모두 처리해야 한다.
+    @Modifying
+    @Query("DELETE FROM UserBlock b WHERE b.blocker.id = :userId")
+    void deleteAllByBlockerId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM UserBlock b WHERE b.blocked.id = :userId")
+    void deleteAllByBlockedId(@Param("userId") Long userId);
 }

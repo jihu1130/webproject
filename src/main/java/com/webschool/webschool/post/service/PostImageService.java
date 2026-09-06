@@ -91,7 +91,7 @@ public class PostImageService {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
-        if (!post.getAuthor().getUsername().equals(username)) {
+        if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물에만 이미지를 추가할 수 있습니다.");
         }
 
@@ -131,7 +131,7 @@ public class PostImageService {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
-        if (!post.getAuthor().getUsername().equals(username)) {
+        if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물의 이미지만 삭제할 수 있습니다.");
         }
 

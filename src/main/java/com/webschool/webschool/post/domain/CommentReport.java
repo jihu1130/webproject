@@ -23,8 +23,9 @@ public class CommentReport {
     @JoinColumn(name = "comment_id", nullable = false)
     private PostComment comment;
 
+    // nullable - PostReport.reporter와 동일 이유(AccountHardDeleteService 참고).
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reporter_id", nullable = false)
+    @JoinColumn(name = "reporter_id")
     private User reporter;
 
     @Column(length = 300)
