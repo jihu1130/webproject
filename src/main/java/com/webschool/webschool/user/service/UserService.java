@@ -7,6 +7,7 @@ import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.EmailToken;
 import com.webschool.webschool.user.dto.EmailSetupDto;
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
+import com.webschool.webschool.user.dto.PasswordSetupDto;
 import com.webschool.webschool.user.dto.RegisterDto;
 import com.webschool.webschool.user.dto.SchoolSetupDto;
 import com.webschool.webschool.user.domain.User;
@@ -243,6 +244,26 @@ public class UserService {
         user.setEmailVerified(false);
         adminActionLogService.log("USER", user.getId(), "EMAIL_SETUP", email);
         sendVerification(user);
+    }
+
+    // 구글 소셜 로그인 첫 가입 시 본인도 모르는 임의 비밀번호로 시작하는 계정에 실제 비밀번호를
+    // 설정하는 화면(todo.md #19) - PasswordSetupInterceptor가 needsPasswordSetup()인 계정을 여기
+    // 외에는 접근하지 못하게 막아두므로, 이 메서드가 성공해야 그 게이트가 풀린다. 설정 후에도
+    // provider는 GOOGLE 그대로 유지 - 로그인 방식은 여전히 구글이고, 이 비밀번호는 마이페이지에서
+    // 나중에 바꿀 수 있는 로컬 비밀번호가 하나 더 생기는 것뿐이다(로그인 자체를 로컬로 전환하지 않음).
+    @Transactional
+    public void setupPassword(String username, PasswordSetupDto dto) {
+        User user = getByUsername(username);
+
+        if (dto.getNewPassword() == null || dto.getNewPassword().isBlank()
+                || !dto.getNewPassword().equals(dto.getConfirmNewPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        user.setPasswordSet(true);
+        // 값 자체는 남기지 않는다 - updateProfile()의 PASSWORD_CHANGE와 동일한 이유.
+        adminActionLogService.log("USER", user.getId(), "PASSWORD_SETUP", null);
     }
 
     @Transactional

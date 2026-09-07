@@ -2,6 +2,7 @@ package com.webschool.webschool.user.controller;
 
 import com.webschool.webschool.user.dto.EmailSetupDto;
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
+import com.webschool.webschool.user.dto.PasswordSetupDto;
 import com.webschool.webschool.user.dto.RegisterDto;
 import com.webschool.webschool.user.dto.SchoolSetupDto;
 import com.webschool.webschool.global.util.PageUtils;
@@ -266,6 +267,27 @@ public class AuthController {
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
             return "user/email-setup";
+        }
+    }
+
+    // 구글 소셜 로그인 첫 가입 시 본인도 모르는 임의 비밀번호로 시작하는 계정에 실제 비밀번호를
+    // 설정하는 화면(todo.md #19) - PasswordSetupInterceptor가 이 설정을 마치지 못한 구글 계정을
+    // 여기 외에는 접근하지 못하게 강제로 리다이렉트한다.
+    @GetMapping("/password-setup")
+    public String passwordSetupForm(Model model) {
+        model.addAttribute("setupDto", new PasswordSetupDto());
+        return "user/password-setup";
+    }
+
+    @PostMapping("/password-setup")
+    public String passwordSetupSubmit(@ModelAttribute("setupDto") PasswordSetupDto dto,
+                                       Authentication authentication, Model model) {
+        try {
+            userService.setupPassword(authentication.getName(), dto);
+            return "redirect:/";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "user/password-setup";
         }
     }
 

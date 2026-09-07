@@ -2,6 +2,7 @@ package com.webschool.webschool.global.config;
 
 import com.webschool.webschool.global.security.AdminAccessInterceptor;
 import com.webschool.webschool.global.security.EmailSetupInterceptor;
+import com.webschool.webschool.global.security.PasswordSetupInterceptor;
 import com.webschool.webschool.global.security.SchoolSetupInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,7 @@ public class WebConfig implements WebMvcConfigurer {
     private final AdminAccessInterceptor adminAccessInterceptor;
     private final SchoolSetupInterceptor schoolSetupInterceptor;
     private final EmailSetupInterceptor emailSetupInterceptor;
+    private final PasswordSetupInterceptor passwordSetupInterceptor;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -43,6 +45,13 @@ public class WebConfig implements WebMvcConfigurer {
         // 이메일 입력 강제 게이트 - 학교 설정을 아직 못 마친 사용자는 위 인터셉터가 먼저 /school-setup
         // 으로 돌려보내고, 그걸 마친 다음 요청부터 이 게이트가 이어서 걸린다(순차 진행).
         registry.addInterceptor(emailSetupInterceptor).addPathPatterns("/**")
+                .excludePathPatterns("/css/**", "/js/**", "/images/**", "/uploads/**",
+                        "/oauth2/**", "/login/oauth2/**",
+                        "/school/api/search", "/school/api/classes");
+        // 구글 계정 비밀번호 설정 강제 게이트(todo.md #19) - 위 두 게이트를 마친 다음 요청부터
+        // 이어서 걸린다. 로컬 계정/이미 설정을 마친 구글 계정은 needsPasswordSetup()이 항상 false라
+        // 아무 영향 없음.
+        registry.addInterceptor(passwordSetupInterceptor).addPathPatterns("/**")
                 .excludePathPatterns("/css/**", "/js/**", "/images/**", "/uploads/**",
                         "/oauth2/**", "/login/oauth2/**",
                         "/school/api/search", "/school/api/classes");

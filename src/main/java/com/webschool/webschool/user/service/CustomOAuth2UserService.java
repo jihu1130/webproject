@@ -117,8 +117,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         User user = new User();
         user.setUsername(username);
-        // 본인도 모르는 임의 비밀번호 - 구글 계정은 폼 로그인을 쓰지 않는다(User.password 필드 주석 참고)
+        // 본인도 모르는 임의 비밀번호 - 실제 비밀번호는 PasswordSetupInterceptor가 강제하는
+        // /password-setup에서 설정한다(User.passwordSet 필드 주석 참고).
         user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        user.setPasswordSet(false);
         user.setNickname(name != null && !name.isBlank() ? truncate(name, MAX_NICKNAME_LENGTH) : username);
         user.setProvider(User.Provider.GOOGLE);
         user.setProviderId(providerId);

@@ -12,19 +12,20 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Set;
 
-// 이메일 필드가 생기기 전에 만들어진 기존 계정(admin, user1~5 등)은 email이 비어있다 - 다음 로그인
-// 시 이메일 입력을 강제한다(사용자 확정 정책, SchoolSetupInterceptor와 동일한 패턴). 이메일 인증
-// 자체는 강제하지 않지만(마이페이지 배지로만 안내), "이메일이 아예 등록조차 안 된" 상태는 비밀번호
-// 찾기가 원천적으로 불가능해지므로 이것만은 게이트로 막는다. 신규 가입/구글 로그인은 가입 시점에
-// 이메일이 항상 채워지므로(UserService.register(), CustomOAuth2UserService) 이 게이트에 걸리지 않는다.
+// 구글 소셜 로그인으로 처음 가입하면 본인도 모르는 임의 비밀번호로 계정이 만들어진다
+// (CustomOAuth2UserService.createGoogleUser() 참고, 로컬 회원가입은 가입 시 항상 실제 비밀번호를
+// 받으므로 이 상태가 나오지 않는다). todo.md #19 - 가입 시점에 실제 비밀번호를 설정하도록 강제하기로
+// 확정해서, 이 설정을 마치기 전까지는 /password-setup 화면 외에는 접근하지 못하게 막는다
+// (SchoolSetupInterceptor/EmailSetupInterceptor와 동일한 패턴, 로그아웃은 예외).
 @Component
 @RequiredArgsConstructor
-public class EmailSetupInterceptor implements HandlerInterceptor {
+public class PasswordSetupInterceptor implements HandlerInterceptor {
 
-    // /school-setup, /password-setup: 다른 온보딩 게이트의 화면도 함께 허용 - SchoolSetupInterceptor의
-    // 동일 주석 참고(무한 리다이렉트 방지, 온보딩 화면 3개는 서로를 막지 않음).
+    // /school-setup, /email-setup: 다른 온보딩 게이트의 화면도 함께 허용 - SchoolSetupInterceptor의
+    // 동일 주석 참고(무한 리다이렉트 방지, 온보딩 화면 3개는 서로를 막지 않음). 이게 없으면 학교
+    // 설정도 같이 필요한 신규 구글 가입자가 /school-setup ↔ /password-setup 사이를 무한 리다이렉트한다.
     private static final Set<String> ALLOWED_PATHS = Set.of(
-            "/email-setup", "/school-setup", "/password-setup",
+            "/password-setup", "/school-setup", "/email-setup",
             "/logout", "/notifications/unread-count"
     );
 
@@ -38,7 +39,7 @@ public class EmailSetupInterceptor implements HandlerInterceptor {
         }
 
         User user = userRepository.findByUsername(authentication.getName()).orElse(null);
-        if (user == null || !user.needsEmailSetup()) {
+        if (user == null || !user.needsPasswordSetup()) {
             return true;
         }
 
@@ -46,7 +47,7 @@ public class EmailSetupInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        response.sendRedirect("/email-setup");
+        response.sendRedirect("/password-setup");
         return false;
     }
 }

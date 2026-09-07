@@ -34,10 +34,18 @@ public class User {
     private String username; // 아이디
 
     @Column(nullable = false)
-    private String password; // 암호화된 비밀번호 - 소셜 로그인(GOOGLE) 계정은 본인도 모르는 임의 값(랜덤 UUID를
-    // BCrypt 인코딩)이 들어간다. NOT NULL 제약을 유지하면서 폼 로그인으로는 사실상 뚫을 수 없게 하기 위함
-    // (컬럼 자체를 nullable로 바꾸는 대신 이 방식을 택함 - CustomUserDetailsService가 항상 password를
-    // 그대로 읽어 UserDetails를 만들기 때문에 null이면 다른 예외 처리가 더 필요해짐).
+    private String password; // 암호화된 비밀번호 - 가입 직후(passwordSet=false)의 구글 계정은 본인도 모르는
+    // 임의 값(랜덤 UUID를 BCrypt 인코딩)이 들어간다. NOT NULL 제약을 유지하면서 폼 로그인으로는 사실상
+    // 뚫을 수 없게 하기 위함(컬럼 자체를 nullable로 바꾸는 대신 이 방식을 택함 - CustomUserDetailsService가
+    // 항상 password를 그대로 읽어 UserDetails를 만들기 때문에 null이면 다른 예외 처리가 더 필요해짐).
+
+    // 본인이 실제로 아는 비밀번호를 설정했는지 여부(todo.md #19, 사용자 확정 - "가입 시점에 강제
+    // 설정"). LOCAL 계정은 가입 시 항상 실제 비밀번호를 받으므로 true로 시작(필드 초기값 방식 -
+    // User.active와 동일한 이유, DB 레벨 default는 신규 INSERT 흐름에 안 실리므로). 구글 계정은
+    // CustomOAuth2UserService.createGoogleUser()가 false로 시작시키고, PasswordSetupInterceptor가
+    // 이 값이 false인 동안 /password-setup 화면 외 접근을 막는다 - true가 된 뒤로는 되돌리지 않는다.
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean passwordSet = true;
 
     @Column(nullable = false, length = 50)
     private String nickname; // 사이트 내 활동 별명 (미입력 시 아이디로 대체)
@@ -214,6 +222,12 @@ public class User {
 
     public boolean needsEmailSetup() {
         return email == null || email.isBlank();
+    }
+
+    // 구글 계정이 아직 본인이 아는 실제 비밀번호를 설정하지 않은 상태 - PasswordSetupInterceptor가
+    // 이 값을 보고 /password-setup 강제 이동 여부를 판단한다(SchoolSetupInterceptor와 동일 패턴).
+    public boolean needsPasswordSetup() {
+        return provider == Provider.GOOGLE && !passwordSet;
     }
 
     public boolean isSuperAdmin() {
