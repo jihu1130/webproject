@@ -3,16 +3,20 @@ package com.webschool.webschool.user.service;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.domain.UserPointLog;
+import com.webschool.webschool.user.dto.RankingItemDto;
 import com.webschool.webschool.user.dto.UserPointLogDto;
 import com.webschool.webschool.user.repository.UserPointLogRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -125,6 +129,34 @@ public class UserPointService {
                 .map(this::toDto)
                 .collect(Collectors.toList());
         return PageUtils.paginate(all, page, size);
+    }
+
+    // 포인트/티어 랭킹 페이지(todo.md 요구사항) - 포인트 내림차순, 탈퇴 계정만 제외
+    // (UserRepository.findAllByDeletedFalseOrderByPointsDesc() 참고). rank는 페이지 offset +
+    // 목록 내 순번으로 계산(전체 순위표에서 이 페이지가 몇 등부터 시작하는지).
+    public Page<RankingItemDto> getRanking(int page, int size) {
+        Page<User> result = userRepository.findAllByDeletedFalseOrderByPointsDesc(PageRequest.of(page, size));
+        int startRank = page * size + 1;
+        List<RankingItemDto> items = new ArrayList<>();
+        List<User> content = result.getContent();
+        for (int i = 0; i < content.size(); i++) {
+            items.add(toRankingDto(content.get(i), startRank + i));
+        }
+        return new PageImpl<>(items, result.getPageable(), result.getTotalElements());
+    }
+
+    private RankingItemDto toRankingDto(User user, int rank) {
+        return RankingItemDto.builder()
+                .rank(rank)
+                .uuid(user.getUuid())
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfileImageUrl())
+                .points(user.getPoints())
+                .tierLabel(user.getTier().getLabel())
+                .equippedTitle(user.getEquippedTitle())
+                .equippedAvatarColor(user.getEquippedAvatarColor())
+                .equippedEffect(user.getEquippedEffect())
+                .build();
     }
 
     private UserPointLogDto toDto(UserPointLog log) {

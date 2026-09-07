@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포인트 랭킹 - WebSchool</title>
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/profile-card.css}">
+    <link rel="stylesheet" th:href="@{/css/ranking.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+
+<div class="post-page">
+    <div class="post-container post-container-narrow">
+        <div class="page-heading post-page-heading">
+            <h1><i class="fa-solid fa-ranking-star"></i> 포인트 랭킹</h1>
+            <p class="page-sub">출석·활동으로 쌓은 포인트 순위예요 - <a href="/mypage/points">내 포인트 내역 보기</a></p>
+        </div>
+
+        <div th:if="${ranking.empty}" class="post-empty">아직 랭킹에 표시할 사용자가 없어요.</div>
+
+        <div class="ranking-list" th:unless="${ranking.empty}">
+            <div class="ranking-row" th:each="item : ${ranking.content}"
+                 th:classappend="${loginUser != null and loginUser.uuid == item.uuid} ? ' ranking-row-me'">
+                <div class="ranking-rank"
+                     th:classappend="${item.rank == 1} ? ' ranking-rank-1' : (${item.rank == 2} ? ' ranking-rank-2' : (${item.rank == 3} ? ' ranking-rank-3' : ''))"
+                     th:text="${item.rank}">0</div>
+
+                <div class="profile-card-avatar profile-card-avatar-user ranking-avatar"
+                     th:classappend="${item.equippedEffect == 'SPARKLE'} ? ' avatar-effect-sparkle' : (${item.equippedEffect == 'RAINBOW'} ? ' avatar-effect-rainbow' : '')"
+                     th:style="${item.equippedAvatarColor != null} ? 'border-color:' + ${item.equippedAvatarColor}">
+                    <img th:src="@{${item.profileImageUrl != null} ? ${item.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
+                </div>
+
+                <div class="ranking-identity">
+                    <div class="ranking-nickname-row">
+                        <a th:href="@{'/users/' + ${item.uuid}}" class="ranking-nickname" th:text="${item.nickname}">닉네임</a>
+                        <span class="profile-card-stamp profile-card-stamp-tier" th:text="${item.tierLabel}">티어</span>
+                        <span class="profile-card-stamp profile-card-stamp-title" th:if="${item.equippedTitle != null}"
+                              th:text="${item.equippedTitle}">칭호</span>
+                    </div>
+                </div>
+
+                <div class="ranking-points"><span th:text="${item.points}">0</span><span class="ranking-points-unit">P</span></div>
+            </div>
+        </div>
+
+        <div class="post-pagination" th:if="${ranking.totalPages > 1}">
+            <a th:if="${ranking.hasPrevious()}" th:href="@{/ranking(page=${ranking.number - 1})}" class="post-page-link" aria-label="이전 페이지">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, ranking.totalPages - 1)}"
+               th:href="@{/ranking(page=${i})}" th:text="${i + 1}"
+               th:classappend="${i == ranking.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${ranking.hasNext()}" th:href="@{/ranking(page=${ranking.number + 1})}" class="post-page-link" aria-label="다음 페이지">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>

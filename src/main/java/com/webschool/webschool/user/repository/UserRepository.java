@@ -1,6 +1,8 @@
 package com.webschool.webschool.user.repository;
 
 import com.webschool.webschool.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -42,4 +44,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 관리자 강제 탈퇴 계정은 제재/신고 이력 때문에 보관 기간을 더 길게 가져갈 가능성이 있어 이번
     // 범위에서 제외한다(todo.md #20 참고).
     List<User> findAllByDeletedTrueAndDeletedByAdminFalseAndDeletedAtBefore(LocalDateTime cutoff);
+
+    // 포인트/티어 랭킹 페이지(todo.md 요구사항) - 탈퇴 계정만 제외(공개 프로필/users/{uuid}가 이미
+    // 포인트·티어를 permitAll로 보여주고 있어 이 목록도 같은 공개 수준). 정지(active=false) 계정은
+    // 굳이 더 걸러내지 않는다 - 정지는 로그인만 막을 뿐 이미 쌓은 포인트/순위 자체를 숨길 이유는 아님.
+    Page<User> findAllByDeletedFalseOrderByPointsDesc(Pageable pageable);
 }

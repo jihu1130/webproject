@@ -66,6 +66,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/search").permitAll()
                         // 커뮤니티 공개 프로필(작성자 이름 클릭) - 게시글 조회와 동일하게 로그인 없이도 열람 가능
                         .requestMatchers(HttpMethod.GET, "/users/*").permitAll()
+                        // 포인트/티어 랭킹 - 공개 프로필이 이미 포인트·티어를 permitAll로 보여주고
+                        // 있어 같은 공개 수준으로 로그인 없이도 열람 가능
+                        .requestMatchers(HttpMethod.GET, "/ranking").permitAll()
                         // 캘린더(학사/급식 조회)는 로그인한 사용자만 이용 가능
                         .requestMatchers("/school/**").authenticated()
                         // 관리자 전용 화면은 ROLE_ADMIN(부관리자)/ROLE_SUPER_ADMIN(총관리자) 둘 다 접근 가능.
