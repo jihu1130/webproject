@@ -19,14 +19,20 @@
     <div class="auth-wrapper">
         <div class="auth-card">
             <h3 class="auth-title">내 프로필 설정</h3>
-            <p class="auth-subtitle">다른 사람이 보는 내 프로필(<span th:text="'/users/' + ${loginUser?.uuid}"></span>)에 표시될 사진과 소개글이에요</p>
+            <p class="auth-subtitle">다른 사람이 보는 내 프로필에 표시될 사진과 소개글이에요</p>
 
             <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
             <div th:if="${param.updated}" class="alert alert-success">저장되었습니다.</div>
 
             <div class="auth-field text-center">
                 <label class="form-label">프로필 사진</label>
-                <div class="profile-card-avatar profile-card-avatar-user" style="margin: 0 auto 12px;">
+                <!-- 아래 "치장품 장착"에서 장식(색상/효과)을 바꿔도 이 위쪽 사진 미리보기엔 전혀
+                     반영이 안 됐다(사용자 지적) - mypage.html 등 다른 화면이 이미 쓰는 것과 동일한
+                     패턴(border-color + 효과 클래스)을 여기도 그대로 적용해서, 장착 폼 제출 후
+                     페이지가 새로고침되면 바뀐 색/효과가 바로 이 아바타에 보이게 한다. -->
+                <div class="profile-card-avatar profile-card-avatar-user"
+                     th:classappend="${loginUser != null and loginUser.equippedEffect == 'SPARKLE'} ? ' avatar-effect-sparkle' : (${loginUser != null and loginUser.equippedEffect == 'RAINBOW'} ? ' avatar-effect-rainbow' : '')"
+                     th:style="'margin:0 auto 12px;' + (${loginUser != null and loginUser.equippedAvatarColor != null} ? 'border-color:' + ${loginUser.equippedAvatarColor} : '')">
                     <img id="profileImagePreview"
                          th:src="@{${loginUser != null and loginUser.profileImageUrl != null} ? ${loginUser.profileImageUrl} : '/images/default-avatar.svg'}"
                          alt="프로필 사진">
@@ -90,40 +96,39 @@
                 <div th:if="${#lists.isEmpty(catalog.titles.?[owned])}" class="post-empty">
                     아직 보유한 칭호가 없어요. <a th:href="@{/shop}">상점 구경하기</a>
                 </div>
-                <div class="shop-grid" th:unless="${#lists.isEmpty(catalog.titles.?[owned])}">
-                    <div class="shop-item-card" th:each="item : ${catalog.titles}" th:if="${item.owned}">
-                        <span class="shop-item-badge" th:text="${item.equipped} ? '장착중' : ''"></span>
-                        <div class="shop-item-preview shop-item-preview-title" th:text="${item.value}">칭호</div>
-                        <div class="shop-item-name" th:text="${item.label}">이름</div>
-                        <form th:if="${!item.equipped}" th:action="@{'/shop/equip/' + ${item.id}}" method="post">
-                            <input type="hidden" name="from" value="profile">
-                            <button type="submit" class="btn btn-outline-primary shop-item-btn">장착하기</button>
-                        </form>
-                        <form th:if="${item.equipped}" th:action="@{/shop/unequip/TITLE}" method="post">
-                            <input type="hidden" name="from" value="profile">
-                            <button type="submit" class="btn btn-outline-primary shop-item-btn">장착 해제</button>
-                        </form>
-                    </div>
+                <!-- 칭호가 늘어날수록 카드형은 세로로 한없이 길어져서(사용자 지적) 알약 모양
+                     칩으로 바꾸고, 장착 여부는 별도 배지 문구 대신 칩 강조색+체크 아이콘으로만
+                     표시해 공간을 아낀다. 클릭 = 그 칩 자체가 제출 버튼(폼 하나당 아이템 하나). -->
+                <div class="equip-chip-row" th:unless="${#lists.isEmpty(catalog.titles.?[owned])}">
+                    <form th:each="item : ${catalog.titles}" th:if="${item.owned}" class="equip-chip-form"
+                          th:action="@{${item.equipped} ? '/shop/unequip/TITLE' : '/shop/equip/' + ${item.id}}" method="post">
+                        <input type="hidden" name="from" value="profile">
+                        <button type="submit" class="equip-chip" th:classappend="${item.equipped} ? ' equip-chip-active'"
+                                th:title="${item.label} + (${item.equipped} ? ' (장착 해제)' : ' (장착하기)')">
+                            <i class="fa-solid fa-check equip-chip-check" th:if="${item.equipped}"></i>
+                            <span th:text="${item.value}">칭호</span>
+                        </button>
+                    </form>
                 </div>
 
                 <h3 class="shop-section-title"><i class="fa-solid fa-palette"></i> 장식</h3>
                 <div th:if="${#lists.isEmpty(catalog.colors.?[owned])}" class="post-empty">
                     아직 보유한 장식이 없어요. <a th:href="@{/shop}">상점 구경하기</a>
                 </div>
-                <div class="shop-grid" th:unless="${#lists.isEmpty(catalog.colors.?[owned])}">
-                    <div class="shop-item-card" th:each="item : ${catalog.colors}" th:if="${item.owned}">
-                        <span class="shop-item-badge" th:text="${item.equipped} ? '장착중' : ''"></span>
-                        <div class="shop-item-preview shop-item-preview-color" th:style="'background:' + ${item.value}"></div>
-                        <div class="shop-item-name" th:text="${item.label}">이름</div>
-                        <form th:if="${!item.equipped}" th:action="@{'/shop/equip/' + ${item.id}}" method="post">
-                            <input type="hidden" name="from" value="profile">
-                            <button type="submit" class="btn btn-outline-primary shop-item-btn">장착하기</button>
-                        </form>
-                        <form th:if="${item.equipped}" th:action="@{/shop/unequip/AVATAR_COLOR}" method="post">
-                            <input type="hidden" name="from" value="profile">
-                            <button type="submit" class="btn btn-outline-primary shop-item-btn">장착 해제</button>
-                        </form>
-                    </div>
+                <div class="equip-chip-row" th:unless="${#lists.isEmpty(catalog.colors.?[owned])}">
+                    <form th:each="item : ${catalog.colors}" th:if="${item.owned}" class="equip-chip-form"
+                          th:action="@{${item.equipped} ? '/shop/unequip/AVATAR_COLOR' : '/shop/equip/' + ${item.id}}" method="post">
+                        <input type="hidden" name="from" value="profile">
+                        <button type="submit" class="equip-chip equip-chip-swatch" th:classappend="${item.equipped} ? ' equip-chip-active'"
+                                th:style="'background:' + ${item.value}"
+                                th:title="${item.label} + (${item.equipped} ? ' (장착 해제)' : ' (장착하기)')">
+                            <i class="fa-solid fa-check equip-chip-check" th:if="${item.equipped}"></i>
+                            <!-- 반짝임/무지개 효과가 붙은 장식은 원 색상만 봐서는 둘 중 뭔지 구분이 안 돼서
+                                 (사용자 지적) 효과별 아이콘 배지를 원 모서리에 작게 얹는다. -->
+                            <i class="equip-chip-effect-badge fa-solid fa-star" th:if="${item.effect == 'SPARKLE'}"></i>
+                            <i class="equip-chip-effect-badge fa-solid fa-rainbow" th:if="${item.effect == 'RAINBOW'}"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
 

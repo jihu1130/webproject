@@ -108,7 +108,7 @@ public class ShopService {
                 .collect(Collectors.toList());
         List<ShopItemDto> colors = active.stream()
                 .filter(i -> i.getType() == ShopItem.Type.AVATAR_COLOR)
-                .map(i -> toDto(i, ownedItemIds.contains(i.getId()), i.getValue().equals(user.getEquippedAvatarColor())))
+                .map(i -> toDto(i, ownedItemIds.contains(i.getId()), i.getId().equals(user.getEquippedAvatarColorItemId())))
                 .collect(Collectors.toList());
 
         return ShopCatalogDto.builder().titles(titles).colors(colors).build();
@@ -155,6 +155,7 @@ public class ShopService {
         } else {
             user.setEquippedAvatarColor(null);
             user.setEquippedEffect(null);
+            user.setEquippedAvatarColorItemId(null);
         }
         userRepository.save(user);
     }
@@ -165,6 +166,7 @@ public class ShopService {
         } else {
             user.setEquippedAvatarColor(item.getValue());
             user.setEquippedEffect(item.getEffect() == ShopItem.Effect.NONE ? null : item.getEffect().name());
+            user.setEquippedAvatarColorItemId(item.getId());
         }
     }
 

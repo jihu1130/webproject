@@ -92,12 +92,25 @@
         <div id="eventSearchStatus" class="event-search-status" style="display:none;"></div>
 
         <div class="cal-navbar">
+            <!-- 화살표 4개(이전 해/달, 다음 달/해)를 한 그룹으로 묶고, 연/월 선택을 별도 그룹으로,
+                 "오늘" 버튼은 .cal-navbar의 직계 자식으로 뺐다(사용자 요청 - "화살표끼리 날짜설정끼리").
+                 예전엔 오늘 버튼이 화살표 그룹 안에 중첩돼있어서, 모바일 전용 규칙(.cal-nav-today-btn
+                 { flex:1 1 100%; order:10 })이 flex 아이템이 아닌 자식에 적용돼 아무 효과가 없었다 -
+                 그래서 좁은 화면에서 [이전해/이전달][연도/월] 한 줄, [다음달/다음해/오늘] 한 줄로
+                 어중간하게 줄바꿈되던 게 실제 버그였다(사용자 스크린샷으로 확인). 직계 자식으로
+                 옮기면서 그 모바일 규칙이 의도대로 오늘 버튼만 자기 줄을 차지하게 동작한다. -->
             <div class="cal-nav-group">
                 <button type="button" id="quickPrevYear" class="cal-nav-btn" aria-label="이전 해">
                     <i class="fa-solid fa-angles-left"></i>
                 </button>
                 <button type="button" id="quickPrevMonth" class="cal-nav-btn" aria-label="이전 달">
                     <i class="fa-solid fa-angle-left"></i>
+                </button>
+                <button type="button" id="quickNextMonth" class="cal-nav-btn" aria-label="다음 달">
+                    <i class="fa-solid fa-angle-right"></i>
+                </button>
+                <button type="button" id="quickNextYear" class="cal-nav-btn" aria-label="다음 해">
+                    <i class="fa-solid fa-angles-right"></i>
                 </button>
             </div>
 
@@ -106,17 +119,9 @@
                 <select id="quickMonthSelect" aria-label="월 선택"></select>
             </div>
 
-            <div class="cal-nav-group">
-                <button type="button" id="quickNextMonth" class="cal-nav-btn" aria-label="다음 달">
-                    <i class="fa-solid fa-angle-right"></i>
-                </button>
-                <button type="button" id="quickNextYear" class="cal-nav-btn" aria-label="다음 해">
-                    <i class="fa-solid fa-angles-right"></i>
-                </button>
-                <button type="button" id="quickTodayBtn" class="cal-nav-today-btn">
-                    <i class="fa-regular fa-calendar"></i> 오늘
-                </button>
-            </div>
+            <button type="button" id="quickTodayBtn" class="cal-nav-today-btn">
+                <i class="fa-regular fa-calendar"></i> 오늘
+            </button>
         </div>
 
         <div class="cal-grid-main" id="calGridMain">

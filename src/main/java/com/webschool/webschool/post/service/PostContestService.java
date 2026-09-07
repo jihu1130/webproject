@@ -83,6 +83,13 @@ public class PostContestService {
         if (post.getCategory() == Post.Category.ANONYMOUS) {
             throw new IllegalArgumentException("익명 게시글은 추천 후보로 신청할 수 없습니다.");
         }
+        // 후보 목록(/posts/contest)은 전체 공개라 비공개/링크 한정 공개 글을 올리면 그 글을 볼 수
+        // 없는 사람에게까지 노출되거나(비공개) 의도한 "링크를 아는 사람만" 범위를 벗어나 목록에서
+        // 누구나 클릭해 들어올 수 있게 된다(링크 한정 공개) - 공개범위 설정 자체가 무력화되므로
+        // PUBLIC 글만 후보 신청을 허용한다(사용자 지적).
+        if (post.getVisibility() != Post.Visibility.PUBLIC) {
+            throw new IllegalArgumentException("전체 공개 게시글만 추천 후보로 신청할 수 있습니다.");
+        }
 
         LocalDate weekStart = currentWeekStart();
         if (entryRepository.existsByNominator_IdAndWeekStart(nominator.getId(), weekStart)) {

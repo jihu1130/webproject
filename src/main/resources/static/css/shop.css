@@ -77,3 +77,83 @@
     padding: 8px;
     font-size: 0.85rem;
 }
+
+/* 프로필 설정(/mypage/profile)의 치장품 장착 섹션 전용 - 보유 아이템이 늘어날수록 위
+   .shop-item-card(세로 카드)를 그대로 쓰면 한없이 길어져서(사용자 지적, 2026-09-07),
+   여기서는 알약/원형 칩으로 여러 개를 한 줄에 나란히 배치하고 넘치면 다음 줄로 wrap한다.
+   장착 여부는 별도 배지 문구 대신 칩 자체 강조색 + 체크 아이콘으로만 표시(공간 절약).
+   칩 자체가 폼의 submit 버튼이라 클릭 한 번으로 장착/해제가 토글된다. */
+.equip-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.equip-chip-form {
+    margin: 0;
+}
+
+.equip-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+
+.equip-chip:hover {
+    border-color: var(--brand-1);
+}
+
+.equip-chip-active {
+    border-color: var(--brand-1);
+    background: var(--brand-gradient-soft);
+    color: var(--brand-1);
+}
+
+.equip-chip-check {
+    font-size: 0.75rem;
+}
+
+/* 장식(아바타 색상) 칩은 이름 대신 색상 원 자체가 미리보기라 정사각형 원형으로 */
+.equip-chip-swatch {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    justify-content: center;
+}
+
+.equip-chip-swatch .equip-chip-check {
+    color: #fff;
+    text-shadow: 0 0 2px rgba(0, 0, 0, .6);
+}
+
+/* 반짝임/무지개 효과 표시 배지 - 원 색상만으로는 어떤 효과인지 구분이 안 돼서(사용자 지적,
+   2026-09-07) 모서리에 작은 아이콘을 얹는다. 흰 배경 고정이라 원 색상이 뭐든(검정/노랑 등)
+   아이콘이 항상 또렷하게 보인다. */
+.equip-chip-effect-badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: var(--muted);
+}

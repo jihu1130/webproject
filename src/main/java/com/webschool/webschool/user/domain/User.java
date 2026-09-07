@@ -202,6 +202,13 @@ public class User {
     private String equippedAvatarColor; // 현재 장착 중인 아바타 테두리/배지 색상 (CSS 색상값)
     private String equippedEffect;      // 현재 장착한 아바타 색상 상품의 장식 효과(ShopItem.Effect.name()) - NONE/null이면 효과 없음
 
+    // 장착한 장식 상품의 ShopItem.id - 서로 다른 상품이 같은 색상값(hex)을 쓸 수 있어서(예: 효과만
+    // 다르고 색은 같은 두 상품) equippedAvatarColor 문자열 비교만으로는 "정확히 어느 상품을
+    // 장착했는지" 구분이 안 됐다(색상 코드가 같은 두 상품이 화면에서 동시에 "장착중"으로 잘못 표시되던
+    // 버그, 사용자 지적으로 발견 2026-09-07). 이 필드가 실제 장착 여부 판정의 기준이고,
+    // equippedAvatarColor/equippedEffect는 그 상품의 렌더링 값을 그대로 복사해둔 캐시일 뿐이다.
+    private Long equippedAvatarColorItemId;
+
     @PrePersist
     public void prePersist() {
         this.uuid = UUID.randomUUID().toString();

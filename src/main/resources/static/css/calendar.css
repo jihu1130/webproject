@@ -408,7 +408,12 @@
 
 .cal-grid-body {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    /* 1fr 트랙의 자동 최소 크기는 기본적으로 "auto"(내용의 min-content)라, 긴 학사일정 이름이
+       white-space:nowrap으로 안 줄바꿈되면 그 요일 칸의 min-content가 커져서 해당 열만 넓어지고
+       나머지 요일 칸들은 좁아지는 문제가 있었다(사용자 스크린샷으로 확인 - 요일 칸 폭이 제각각).
+       minmax(0, 1fr)로 트랙 자체의 최소 크기를 0으로 강제하면 내용 길이와 무관하게 7칸이 항상
+       균등해진다(.cal-day-event-bar의 overflow:hidden+text-overflow:ellipsis는 그대로 유지). */
+    grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .cal-day {
