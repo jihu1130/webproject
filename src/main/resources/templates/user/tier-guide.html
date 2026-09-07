@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>티어 안내 - WebSchool</title>
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/profile-card.css}">
+    <link rel="stylesheet" th:href="@{/css/ranking.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+
+<div class="post-page">
+    <div class="post-container post-container-narrow">
+        <div class="page-heading post-page-heading">
+            <h1><i class="fa-solid fa-medal"></i> 티어 안내</h1>
+            <p class="page-sub">
+                출석·활동으로 쌓은 포인트에 따라 등급이 자동으로 정해져요 -
+                <a href="/ranking">포인트 랭킹 보기</a>
+            </p>
+        </div>
+
+        <div class="tier-guide-list">
+            <div class="tier-guide-row" th:each="tier : ${tierGuide}"
+                 th:classappend="${loginUser != null and loginUser.tier.label == tier.label} ? ' tier-guide-row-mine'">
+                <span class="profile-card-stamp profile-card-stamp-tier" th:text="${tier.label}">티어</span>
+                <span class="tier-guide-range"
+                      th:text="${tier.maxPoints != null} ? (${tier.minPoints} + 'P ~ ' + ${tier.maxPoints} + 'P') : (${tier.minPoints} + 'P 이상')">구간</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>

@@ -1,15 +1,16 @@
 package com.webschool.webschool.user.service;
 
 import com.webschool.webschool.global.util.PageUtils;
+import com.webschool.webschool.user.domain.PointTier;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.domain.UserPointLog;
 import com.webschool.webschool.user.dto.RankingItemDto;
+import com.webschool.webschool.user.dto.TierRangeDto;
 import com.webschool.webschool.user.dto.UserPointLogDto;
 import com.webschool.webschool.user.repository.UserPointLogRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -131,18 +132,48 @@ public class UserPointService {
         return PageUtils.paginate(all, page, size);
     }
 
-    // 포인트/티어 랭킹 페이지(todo.md 요구사항) - 포인트 내림차순, 탈퇴 계정만 제외
-    // (UserRepository.findAllByDeletedFalseOrderByPointsDesc() 참고). rank는 페이지 offset +
-    // 목록 내 순번으로 계산(전체 순위표에서 이 페이지가 몇 등부터 시작하는지).
-    public Page<RankingItemDto> getRanking(int page, int size) {
-        Page<User> result = userRepository.findAllByDeletedFalseOrderByPointsDesc(PageRequest.of(page, size));
-        int startRank = page * size + 1;
+    // 포인트/티어 랭킹 페이지(todo.md 요구사항, 사용자 요청으로 "상위 N명만" 방식으로 확정) -
+    // 페이지네이션 없이 상위 limit명만 고정 노출. rank는 목록 내 순번(1부터).
+    public List<RankingItemDto> getTopRanking(int limit) {
+        Page<User> result = userRepository.findAllByDeletedFalseOrderByPointsDesc(PageRequest.of(0, limit));
         List<RankingItemDto> items = new ArrayList<>();
         List<User> content = result.getContent();
         for (int i = 0; i < content.size(); i++) {
-            items.add(toRankingDto(content.get(i), startRank + i));
+            items.add(toRankingDto(content.get(i), i + 1));
         }
-        return new PageImpl<>(items, result.getPageable(), result.getTotalElements());
+        return items;
+    }
+
+    // 로그인 사용자의 실제 순위 계산("나보다 포인트 많은 탈퇴 안 한 사용자 수 + 1") - 동점자가
+    // 있으면 getTopRanking()의 "목록 내 순번"(DB 정렬 순서 그대로 1,2,3...)과 이 카운트 기반 순위가
+    // 어긋날 수 있다(예: 3등까지 자르는데 3등이 동점자 2명이면 그중 한 명만 목록에 실제로 남고
+    // 나머지는 밀려난다 - 그 밀려난 사람의 카운트 기반 순위는 여전히 "3등"으로 나와서 "이미 top3
+    // 안에 있다"고 잘못 판단하기 쉽다, 실제로 겪은 버그). 그래서 "top N 밖인지"는 이 값과 topLimit을
+    // 비교하는 방식이 아니라, 호출하는 쪽(RankingController)이 getTopRanking() 결과 목록에 내 uuid가
+    // 실제로 들어있는지 직접 확인하는 방식으로 판단한다 - 이 메서드는 순위 숫자만 책임진다.
+    public RankingItemDto getMyRanking(User user) {
+        if (user == null) {
+            return null;
+        }
+        long higherCount = userRepository.countByDeletedFalseAndPointsGreaterThan(user.getPoints());
+        return toRankingDto(user, (int) higherCount + 1);
+    }
+
+    // 티어 안내 페이지(사용자 요청) - PointTier enum 선언 순서(포인트 임계값 오름차순)를 그대로
+    // 따라가며, 다음 등급 임계값 바로 아래까지를 이 등급의 상한으로 계산한다. 마지막 등급(MASTER)은
+    // 상한이 없으므로 null(템플릿에서 "이상"으로 표시).
+    public List<TierRangeDto> getTierGuide() {
+        PointTier[] tiers = PointTier.values();
+        List<TierRangeDto> result = new ArrayList<>();
+        for (int i = 0; i < tiers.length; i++) {
+            Integer maxPoints = (i + 1 < tiers.length) ? tiers[i + 1].getMinPoints() - 1 : null;
+            result.add(TierRangeDto.builder()
+                    .label(tiers[i].getLabel())
+                    .minPoints(tiers[i].getMinPoints())
+                    .maxPoints(maxPoints)
+                    .build());
+        }
+        return result;
     }
 
     private RankingItemDto toRankingDto(User user, int rank) {

@@ -49,4 +49,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 포인트·티어를 permitAll로 보여주고 있어 이 목록도 같은 공개 수준). 정지(active=false) 계정은
     // 굳이 더 걸러내지 않는다 - 정지는 로그인만 막을 뿐 이미 쌓은 포인트/순위 자체를 숨길 이유는 아님.
     Page<User> findAllByDeletedFalseOrderByPointsDesc(Pageable pageable);
+
+    // 로그인 사용자가 상위 랭킹 밖에 있을 때 자기 순위를 계산하는 용도
+    // (UserPointService.getMyRankingIfOutsideTop() 참고) - "나보다 포인트 많은 사용자 수 + 1".
+    long countByDeletedFalseAndPointsGreaterThan(int points);
 }

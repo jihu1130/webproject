@@ -17,13 +17,42 @@
     <div class="post-container post-container-narrow">
         <div class="page-heading post-page-heading">
             <h1><i class="fa-solid fa-ranking-star"></i> 포인트 랭킹</h1>
-            <p class="page-sub">출석·활동으로 쌓은 포인트 순위예요 - <a href="/mypage/points">내 포인트 내역 보기</a></p>
+            <p class="page-sub">
+                출석·활동으로 쌓은 포인트 상위 10명이에요 -
+                <a href="/ranking/tiers">티어 안내 보기</a> ·
+                <a href="/mypage/points">내 포인트 내역 보기</a>
+            </p>
         </div>
 
-        <div th:if="${ranking.empty}" class="post-empty">아직 랭킹에 표시할 사용자가 없어요.</div>
+        <!-- 사용자 요청 - 로그인한 내가 상위 10명 밖에 있으면 내 순위를 목록 맨 위에 별도 카드로
+             고정 표시(10등 이내면 아래 목록에서 ranking-row-me로 이미 강조되므로 여기 안 뜬다,
+             RankingController.ranking() 참고). -->
+        <div th:if="${myRanking != null}" class="ranking-my-rank">
+            <p class="ranking-my-rank-label">내 순위</p>
+            <div class="ranking-row ranking-row-me">
+                <div class="ranking-rank" th:text="${myRanking.rank}">0</div>
+                <div class="profile-card-avatar profile-card-avatar-user ranking-avatar"
+                     th:classappend="${myRanking.equippedEffect == 'SPARKLE'} ? ' avatar-effect-sparkle' : (${myRanking.equippedEffect == 'RAINBOW'} ? ' avatar-effect-rainbow' : '')"
+                     th:style="${myRanking.equippedAvatarColor != null} ? 'border-color:' + ${myRanking.equippedAvatarColor}">
+                    <img th:src="@{${myRanking.profileImageUrl != null} ? ${myRanking.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
+                </div>
+                <div class="ranking-identity">
+                    <div class="ranking-nickname-row">
+                        <a th:href="@{'/users/' + ${myRanking.uuid}}" class="ranking-nickname" th:text="${myRanking.nickname}">닉네임</a>
+                        <span class="profile-card-stamp profile-card-stamp-tier" th:text="${myRanking.tierLabel}">티어</span>
+                        <span class="profile-card-stamp profile-card-stamp-title" th:if="${myRanking.equippedTitle != null}"
+                              th:text="${myRanking.equippedTitle}">칭호</span>
+                    </div>
+                </div>
+                <div class="ranking-points"><span th:text="${myRanking.points}">0</span><span class="ranking-points-unit">P</span></div>
+            </div>
+            <hr class="ranking-my-rank-divider">
+        </div>
 
-        <div class="ranking-list" th:unless="${ranking.empty}">
-            <div class="ranking-row" th:each="item : ${ranking.content}"
+        <div th:if="${#lists.isEmpty(topRanking)}" class="post-empty">아직 랭킹에 표시할 사용자가 없어요.</div>
+
+        <div class="ranking-list" th:unless="${#lists.isEmpty(topRanking)}">
+            <div class="ranking-row" th:each="item : ${topRanking}"
                  th:classappend="${loginUser != null and loginUser.uuid == item.uuid} ? ' ranking-row-me'">
                 <div class="ranking-rank"
                      th:classappend="${item.rank == 1} ? ' ranking-rank-1' : (${item.rank == 2} ? ' ranking-rank-2' : (${item.rank == 3} ? ' ranking-rank-3' : ''))"
@@ -46,19 +75,6 @@
 
                 <div class="ranking-points"><span th:text="${item.points}">0</span><span class="ranking-points-unit">P</span></div>
             </div>
-        </div>
-
-        <div class="post-pagination" th:if="${ranking.totalPages > 1}">
-            <a th:if="${ranking.hasPrevious()}" th:href="@{/ranking(page=${ranking.number - 1})}" class="post-page-link" aria-label="이전 페이지">
-                <i class="fa-solid fa-chevron-left"></i>
-            </a>
-            <a th:each="i : ${#numbers.sequence(0, ranking.totalPages - 1)}"
-               th:href="@{/ranking(page=${i})}" th:text="${i + 1}"
-               th:classappend="${i == ranking.number} ? ' active' : ''"
-               class="post-page-link"></a>
-            <a th:if="${ranking.hasNext()}" th:href="@{/ranking(page=${ranking.number + 1})}" class="post-page-link" aria-label="다음 페이지">
-                <i class="fa-solid fa-chevron-right"></i>
-            </a>
         </div>
     </div>
 </div>

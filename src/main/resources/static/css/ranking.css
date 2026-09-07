@@ -84,6 +84,51 @@
     margin-left: 2px;
 }
 
+/* 상위 10명 밖에 있는 로그인 사용자의 순위 고정 카드(사용자 요청) - 목록과 시각적으로
+   분리되도록 라벨 + 점선 구분선을 둔다. */
+.ranking-my-rank-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin: 0 0 8px;
+}
+
+.ranking-my-rank-divider {
+    border: none;
+    border-top: 1.5px dashed var(--border);
+    margin: 18px 0;
+}
+
+/* 티어 안내 페이지(/ranking/tiers) - 등급별 포인트 구간을 세로로 나열 */
+.tier-guide-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tier-guide-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 18px;
+}
+
+.tier-guide-row-mine {
+    border-color: var(--brand-1);
+    background: var(--brand-gradient-soft);
+}
+
+.tier-guide-range {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
 @media (max-width: 480px) {
     .ranking-row { padding: 10px 12px; gap: 10px; }
     .ranking-avatar { width: 36px; height: 36px; }
