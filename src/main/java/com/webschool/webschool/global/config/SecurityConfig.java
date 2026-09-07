@@ -40,8 +40,15 @@ public class SecurityConfig {
                 // 토큰을 같이 보내도록 손봤고, 나머지 th:action 폼은
                 // thymeleaf-extras-springsecurity6가 자동으로 hidden 토큰을 넣어준다.
                 .authorizeHttpRequests(auth -> auth
+                        // "/error"가 permitAll이 아니면, 핸들러가 없는 요청(존재하지 않는 정적 파일 등 -
+                        // 예: /favicon.ico)이 Spring Boot 기본 에러 처리로 "/error"에 내부 포워드될 때
+                        // 그 포워드 자체가 다시 보안 필터를 타면서 anyRequest().authenticated()에 걸려
+                        // 비로그인 사용자를 /login으로 튕겨버린다(실제 에러 페이지 대신). 직접 재현해서
+                        // 확인함(2026-09-07) - /favicon.ico permitAll만 추가해선 안 고쳐지고 "/error"도
+                        // 같이 permitAll이어야 함(오류 페이지 자체는 누구나 볼 수 있어야 하는 게 맞기도
+                        // 하다 - BasicErrorController가 렌더링하는 templates/error.html 참고).
                         .requestMatchers("/", "/register", "/login", "/oauth2/**", "/login/oauth2/**",
-                                "/css/**", "/js/**", "/images/**", "/uploads/**",
+                                "/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico", "/error",
                                 "/api/users/check-username", "/school/api/search", "/school/api/classes",
                                 "/actuator/health",
                                 "/find-username", "/forgot-password", "/reset-password", "/verify-email")
