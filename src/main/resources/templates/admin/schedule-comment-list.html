@@ -61,7 +61,7 @@
         </div>
 
         <div class="admin-table-wrap" th:unless="${comments.empty}">
-            <table class="admin-table" th:attr="data-bulk-table=${viewMode == 'deleted'} ? null : 'bulkToolbar-schedule'">
+            <table class="admin-table admin-table--comments" th:attr="data-bulk-table=${viewMode == 'deleted'} ? null : 'bulkToolbar-schedule'">
                 <thead>
                 <tr>
                     <th class="admin-bulk-check-col" th:unless="${viewMode == 'deleted'}">
@@ -88,7 +88,12 @@
                               th:classappend="${comment.blind} ? ' admin-status-blind' : (${comment.reportCount >= 3} ? ' admin-status-pending' : ' admin-status-cleared')"
                               th:text="${comment.blind} ? '블라인드' : (${comment.reportCount >= 3} ? '신고누적' : '정상')">상태</span>
                     </td>
-                    <td class="admin-comment-content-cell" th:text="${comment.content}">내용</td>
+                    <td class="admin-comment-content-cell">
+                        <details class="admin-content-toggle">
+                            <summary th:text="${comment.content}">내용</summary>
+                            <div class="admin-content-full" th:text="${comment.content}">전체 내용</div>
+                        </details>
+                    </td>
                     <td><a th:href="@{'/admin/profiles/' + ${comment.authorId}}" class="admin-table-title" th:text="${comment.authorNickname}">작성자</a></td>
                     <td th:text="${comment.schoolName} + ' ' + ${comment.grade} + '학년 ' + ${comment.classNm} + '반'">학교/학년/반</td>
                     <td th:unless="${viewMode == 'deleted'}" th:text="${comment.reportCount}">0</td>
@@ -100,33 +105,33 @@
                             <form th:if="${comment.deleted}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/restore'}" method="post"
                                   data-confirm="이 한마디를 복구할까요?">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                <button type="submit" class="btn btn-outline-primary">복구</button>
+                                <button type="submit" class="btn btn-outline-primary" title="복구" aria-label="복구"><i class="fa-solid fa-clock-rotate-left"></i></button>
                             </form>
                             <th:block th:unless="${comment.deleted}">
                                 <form th:unless="${comment.reportCleared}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/clear-report'}" method="post"
                                       data-confirm="이 한마디를 검토 결과 '문제없음'으로 판결할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-primary">문제없음 처리</button>
+                                    <button type="submit" class="btn btn-outline-primary" title="문제없음 처리" aria-label="문제없음 처리"><i class="fa-solid fa-check"></i></button>
                                 </form>
                                 <form th:if="${comment.reportCleared}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/unclear-report'}" method="post"
                                       data-confirm="'문제없음' 판결을 철회할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-primary">문제없음 철회</button>
+                                    <button type="submit" class="btn btn-outline-primary" title="문제없음 철회" aria-label="문제없음 철회"><i class="fa-solid fa-rotate-left"></i></button>
                                 </form>
                                 <form th:if="${!comment.blind}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/blind'}" method="post"
                                       data-confirm="이 한마디를 블라인드 처리할까요?" data-confirm-danger="true">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-primary">블라인드</button>
+                                    <button type="submit" class="btn btn-outline-primary" title="블라인드" aria-label="블라인드"><i class="fa-solid fa-eye-slash"></i></button>
                                 </form>
                                 <form th:if="${comment.blind}" th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/unblind'}" method="post"
                                       data-confirm="블라인드를 해제할까요?">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                    <button type="submit" class="btn btn-outline-primary">블라인드 해제</button>
+                                    <button type="submit" class="btn btn-outline-primary" title="블라인드 해제" aria-label="블라인드 해제"><i class="fa-solid fa-eye"></i></button>
                                 </form>
                                 <form th:action="@{'/admin/schedule-comments/' + ${comment.id} + '/delete'}" method="post"
                                       data-confirm="이 한마디를 삭제할까요? (소프트 삭제 - 삭제됨 탭에서 다시 복구할 수 있습니다)" data-confirm-danger="true">
                                     <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
-                                    <button type="submit" class="post-delete-btn">삭제</button>
+                                    <button type="submit" class="post-delete-btn" title="삭제" aria-label="삭제"><i class="fa-solid fa-trash"></i></button>
                                 </form>
                             </th:block>
                         </div>
