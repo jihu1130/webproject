@@ -111,3 +111,21 @@
 .site-nav-greeting:hover {
     background: var(--surface-soft);
 }
+
+/* 다크모드(모바일 폭)에서 햄버거 메뉴(.navbar-toggler-icon) 3줄이 안 보이던 버그(사용자 신고,
+   2026-09-07) - .site-nav가 .navbar-light를 그대로 쓰면서 배경만 var(--surface)로 바꿨는데
+   (위 .site-nav 참고), Bootstrap의 .navbar-light .navbar-toggler-icon은 어두운 stroke(rgba(0,0,0,0.55))
+   고정 SVG라서 라이트모드 흰 배경 위에서는 보이지만, 다크모드에서 --surface가 어두운 색으로
+   바뀌면 어두운 아이콘이 어두운 배경 위에 놓여 거의 안 보인다. .navbar-dark로 통째로 바꾸면
+   토글 버튼 테두리/포커스 링 등 다른 Bootstrap 로컬 변수까지 같이 바뀌어 버리므로, 이 아이콘의
+   배경 이미지(SVG)만 밝은 stroke로 다크모드 전용 override(theme.css와 동일한 이중 가드
+   패턴 - @media는 시스템 다크+미선택, [data-theme="dark"]는 사용자가 명시적으로 고른 경우). */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) .site-nav .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(238, 236, 226, 0.85)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+}
+
+html[data-theme="dark"] .site-nav .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(238, 236, 226, 0.85)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
