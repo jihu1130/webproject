@@ -1,0 +1,347 @@
+package com.webschool.webschool.user.admin.service;
+import com.webschool.webschool.user.service.UserPenaltyService;
+
+import com.webschool.webschool.admin.service.AdminActionLogService;
+import com.webschool.webschool.notification.domain.Notification;
+import com.webschool.webschool.notification.service.NotificationService;
+import com.webschool.webschool.post.repository.PostCommentRepository;
+import com.webschool.webschool.post.repository.PostRepository;
+import com.webschool.webschool.post.domain.Post;
+import com.webschool.webschool.post.domain.PostComment;
+import com.webschool.webschool.user.admin.dto.AdminUserProfileCommentDto;
+import com.webschool.webschool.user.admin.dto.AdminUserProfileDto;
+import com.webschool.webschool.user.admin.dto.AdminUserProfilePostDto;
+import com.webschool.webschool.user.admin.dto.AdminUserSummaryDto;
+import com.webschool.webschool.user.domain.User;
+import com.webschool.webschool.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
+
+// 관리자(ROLE_ADMIN/ROLE_SUPER_ADMIN) 전용 계정 관리 로직. 기존 UserService(회원가입/마이페이지 플로우)는
+// 건드리지 않고 분리했다. 이 서비스가 다루는 액션(권한 승격/해제, 권한 토글, 비활성화 등)은 전부
+// AdminAccessInterceptor가 이미 "/admin/users/**"를 총관리자(ROLE_SUPER_ADMIN) 전용으로 막아두지만,
+// 컨트롤러 하나만 믿지 않고 서비스 단에서도 한 번 더 방어적으로 검증한다(기존 코드 스타일과 동일).
+@Service
+@RequiredArgsConstructor
+public class AdminUserService {
+
+    private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("MM.dd HH:mm");
+
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final PostCommentRepository postCommentRepository;
+    private final NotificationService notificationService;
+    private final UserPenaltyService userPenaltyService;
+    private final AdminActionLogService adminActionLogService;
+
+    // keyword: 아이디/닉네임/학교명 검색 - 다른 관리자 목록(AdminPostService 등)과 동일하게 DB 쿼리가
+    // 아니라 메모리에서 필터링한다(계정 수가 적을 걸 가정). **버그 수정**: user-list.html엔 검색창이
+    // 이미 있었는데 컨트롤러가 keyword 파라미터 자체를 안 받아서 항상 전체 목록만 보였다.
+    public List<AdminUserSummaryDto> getAllUsers(String keyword) {
+        return userRepository.findAllByOrderByIdAsc().stream()
+                .map(this::toSummaryDto)
+                .filter(dto -> matches(keyword, dto.getUsername(), dto.getNickname(), dto.getSchoolName()))
+                .collect(Collectors.toList());
+    }
+
+    private boolean matches(String keyword, String... fields) {
+        if (keyword == null || keyword.isBlank()) {
+            return true;
+        }
+        String lower = keyword.toLowerCase();
+        for (String field : fields) {
+            if (field != null && field.toLowerCase().contains(lower)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 총관리자 전용 "관리자 권한 관리" 페이지 - 관리자 계정(총관리자 포함)만 추려서 보여준다.
+    // 수정사항.md 지적 - 탈퇴한 계정(로그인 자체가 불가능)도 이 화면에 여전히 권한 토글 대상으로
+    // 나타나서 "이 계정도 권한을 만질 수 있네?"라는 혼란을 줬다.
+    public List<AdminUserSummaryDto> getAllAdmins() {
+        return userRepository.findAllByOrderByIdAsc().stream()
+                .filter(User::isAdmin)
+                .filter(u -> !u.isDeleted())
+                .map(this::toSummaryDto)
+                .collect(Collectors.toList());
+    }
+
+    public AdminUserProfileDto getUserProfile(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        List<AdminUserProfilePostDto> recentPosts = postRepository
+                .findTop5ByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(id).stream()
+                .map(this::toProfilePostDto)
+                .collect(Collectors.toList());
+
+        List<AdminUserProfileCommentDto> recentComments = postCommentRepository
+                .findTop5ByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(id).stream()
+                .map(this::toProfileCommentDto)
+                .collect(Collectors.toList());
+
+        return AdminUserProfileDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfileImageUrl())
+                .role(user.getRole().name())
+                .schoolName(user.getSchoolName())
+                .schoolKind(user.getSchoolKind())
+                .grade(user.getGrade())
+                .classNum(user.getClassNum())
+                .deleted(user.isDeleted())
+                .deletedAt(user.getDeletedAt() != null ? user.getDeletedAt().format(DISPLAY_FORMAT) : null)
+                .active(user.isActive())
+                .canManageReports(user.isCanManageReports())
+                .canManagePosts(user.isCanManagePosts())
+                .canManageScheduleComments(user.isCanManageScheduleComments())
+                .canManageNotices(user.isCanManageNotices())
+                .canManageShop(user.isCanManageShop())
+                .postCount(postRepository.countByAuthor_IdAndDeletedFalse(id))
+                .commentCount(postCommentRepository.countByAuthor_IdAndDeletedFalse(id))
+                .recentPosts(recentPosts)
+                .recentComments(recentComments)
+                .penalties(userPenaltyService.getHistory(id))
+                .equippedTitle(user.getEquippedTitle())
+                .equippedAvatarColor(user.getEquippedAvatarColor())
+                .equippedEffect(user.getEquippedEffect())
+                .build();
+    }
+
+    @Transactional
+    public void setRole(Long id, User.Role role, String actingAdminUsername) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getUsername().equals(actingAdminUsername)) {
+            throw new IllegalArgumentException("본인의 권한은 관리자 페이지에서 변경할 수 없습니다.");
+        }
+
+        // 총관리자 계정은 이 화면에서 권한을 뺏거나 다른 계정을 총관리자로 만들 수 없다 - admin 계정 하나로 고정
+        if (user.isSuperAdmin()) {
+            throw new IllegalArgumentException("총관리자 권한은 변경할 수 없습니다.");
+        }
+
+        // 탈퇴한 계정은 로그인 자체가 안 되므로 권한을 바꿔도 의미가 없다 - 혼란 방지를 위해 아예 막는다
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("탈퇴한 계정은 권한을 변경할 수 없습니다.");
+        }
+
+        // (구) "마지막 남은 관리자는 강등 불가" 가드는 ROLE_ADMIN이 유일한 관리자 역할이던 시절의
+        // 방어 로직이었다. 지금은 총관리자(admin, ROLE_SUPER_ADMIN)가 부관리자 수와 무관하게 항상
+        // 별도로 존재하므로, 마지막 부관리자를 강등해도 시스템에 관리자가 하나도 안 남는 일은 생기지
+        // 않는다 - 이 가드를 유지하면 총관리자가 유일한 부관리자를 해제하지 못하는 버그가 된다.
+
+        user.setRole(role);
+
+        // 부관리자에서 학생으로 강등되면 예전에 켜둔 권한이 그대로 남아있다가, 나중에 아무 확인 없이
+        // 다시 승격됐을 때 부활하면 안 되므로 강등 시점에 전부 꺼둔다
+        if (role == User.Role.ROLE_USER) {
+            user.setCanManageReports(false);
+            user.setCanManagePosts(false);
+            user.setCanManageScheduleComments(false);
+            user.setCanManageNotices(false);
+            user.setCanManageUsers(false);
+            user.setCanManageAdminPermissions(false);
+            user.setCanViewAuditLog(false);
+            user.setCanManageShop(false);
+            user.setCanManagePolls(false);
+            notificationService.notify(user, Notification.Type.ACCOUNT, "관리자 권한이 해제되었습니다.", "/mypage");
+            adminActionLogService.log("USER", id, "DEMOTE", user.getUsername() + " -> ROLE_USER");
+        } else if (role == User.Role.ROLE_ADMIN) {
+            notificationService.notify(user, Notification.Type.ACCOUNT,
+                    "부관리자로 승격되었습니다. 총관리자가 켜준 권한만 사용할 수 있어요.", "/mypage");
+            adminActionLogService.log("USER", id, "PROMOTE", user.getUsername() + " -> ROLE_ADMIN");
+        }
+    }
+
+    // 부관리자 권한(신고/게시글/한마디/공지사항/계정 관리/관리자 권한 부여/감사 로그) 토글 - 총관리자
+    // 또는 canManageAdminPermissions를 부여받은 부관리자가 호출 가능(컨트롤러/인터셉터에서 이미 보장).
+    // 수정사항.md #12가 우려한 권한 상승 경로(부관리자가 자기 자신에게 권한을 추가로 켜는 것)를
+    // 막기 위해 본인 대상 호출은 서비스 단에서 한 번 더 차단한다 - setRole()/deleteUser()/
+    // deactivateUser()가 이미 쓰는 것과 동일한 자기 자신 체크 패턴.
+    @Transactional
+    public void updatePermissions(Long id, String actingAdminUsername,
+                                   boolean canManageReports, boolean canManagePosts,
+                                   boolean canManageScheduleComments, boolean canManageNotices,
+                                   boolean canManageUsers, boolean canManageAdminPermissions,
+                                   boolean canViewAuditLog, boolean canManageShop, boolean canManagePolls) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getUsername().equals(actingAdminUsername)) {
+            throw new IllegalArgumentException("본인의 권한은 스스로 변경할 수 없습니다.");
+        }
+
+        if (user.getRole() != User.Role.ROLE_ADMIN) {
+            throw new IllegalArgumentException("부관리자 계정에만 권한을 지정할 수 있습니다.");
+        }
+
+        user.setCanManageReports(canManageReports);
+        user.setCanManagePosts(canManagePosts);
+        user.setCanManageScheduleComments(canManageScheduleComments);
+        user.setCanManageNotices(canManageNotices);
+        user.setCanManageUsers(canManageUsers);
+        user.setCanManageAdminPermissions(canManageAdminPermissions);
+        user.setCanViewAuditLog(canViewAuditLog);
+        user.setCanManageShop(canManageShop);
+        user.setCanManagePolls(canManagePolls);
+        adminActionLogService.log("USER", id, "PERMISSIONS", user.getUsername()
+                + " (신고:" + canManageReports + " 게시글:" + canManagePosts
+                + " 한마디:" + canManageScheduleComments + " 공지:" + canManageNotices
+                + " 계정관리:" + canManageUsers + " 권한부여:" + canManageAdminPermissions
+                + " 감사로그:" + canViewAuditLog + " 상점:" + canManageShop + " 설문:" + canManagePolls + ")");
+    }
+
+    // 수정사항.md #13 지적 - 총관리자가 잠기면(비밀번호 분실 등) 복구할 방법이 앱 안에 전혀 없었다.
+    // 기존 총관리자만 호출 가능(인터셉터는 canManageAdminPermissions 플래그로도 /admin/users/admins
+    // 접근을 허용하므로, "새 총관리자를 만드는" 이 액션만큼은 서비스 단에서 별도로 isSuperAdmin()을
+    // 확인한다 - 권한 부여 화면에 들어올 수 있다고 해서 총관리자를 늘릴 수 있는 건 아니어야 함).
+    // ROLE_SUPER_ADMIN은 여러 명 존재해도 되도록 설계를 바꿨다(단일 계정 고정은 그 자체로
+    // 단일 장애점이었다는 게 문서의 핵심 지적) - 대상은 이미 신뢰된 부관리자(ROLE_ADMIN)로 제한한다.
+    @Transactional
+    public void promoteToSuperAdmin(Long id, String actingAdminUsername) {
+        User actingAdmin = userRepository.findByUsername(actingAdminUsername)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        if (!actingAdmin.isSuperAdmin()) {
+            throw new IllegalArgumentException("총관리자만 다른 계정을 총관리자로 승격할 수 있습니다.");
+        }
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getUsername().equals(actingAdminUsername)) {
+            throw new IllegalArgumentException("본인은 이미 총관리자입니다.");
+        }
+        if (user.getRole() != User.Role.ROLE_ADMIN) {
+            throw new IllegalArgumentException("부관리자 계정만 총관리자로 승격할 수 있습니다.");
+        }
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("탈퇴한 계정은 승격할 수 없습니다.");
+        }
+
+        user.setRole(User.Role.ROLE_SUPER_ADMIN);
+        notificationService.notify(user, Notification.Type.ACCOUNT, "총관리자로 승격되었습니다.", "/mypage");
+        adminActionLogService.log("USER", id, "PROMOTE_SUPER_ADMIN", user.getUsername() + " -> ROLE_SUPER_ADMIN");
+    }
+
+    // 관리자 강제 탈퇴 처리 - 본인 확인(비밀번호) 없이 소프트 삭제한다는 점만 UserService.deleteAccount()와 다름
+    @Transactional
+    public void deleteUser(Long id, String actingAdminUsername) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getUsername().equals(actingAdminUsername)) {
+            throw new IllegalArgumentException("본인 계정은 관리자 페이지에서 삭제할 수 없습니다. 마이페이지를 이용하세요.");
+        }
+
+        if (user.isSuperAdmin()) {
+            throw new IllegalArgumentException("총관리자 계정은 탈퇴 처리할 수 없습니다.");
+        }
+
+        // setRole()과 동일한 이유로 "마지막 관리자 보호" 가드는 두지 않는다 - 총관리자가 항상 별도로
+        // 존재하므로 마지막 부관리자를 탈퇴 처리해도 시스템에 관리자가 하나도 안 남는 일은 없다.
+
+        user.setDeleted(true);
+        user.setDeletedAt(LocalDateTime.now());
+        // 본인 탈퇴와 구분(User.deletedByAdmin 주석 참고) - 구글 재로그인 자동 복구가 이 계정까지
+        // 되살리지 못하게 막는 유일한 표식이다.
+        user.setDeletedByAdmin(true);
+        adminActionLogService.log("USER", id, "DELETE", user.getUsername());
+    }
+
+    @Transactional
+    public void restoreUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        user.setDeleted(false);
+        user.setDeletedAt(null);
+        user.setDeletedByAdmin(false);
+        adminActionLogService.log("USER", id, "RESTORE", user.getUsername());
+    }
+
+    // 계정 비활성화(정지) - 탈퇴와 달리 계정/작성 글은 전부 그대로 둔 채 로그인만 막는다. 총관리자가
+    // 문제 있는 계정을 즉시 정지시키고, 조사가 끝나면 다시 활성화할 수 있는 가벼운 조치다.
+    @Transactional
+    public void deactivateUser(Long id, String actingAdminUsername) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getUsername().equals(actingAdminUsername)) {
+            throw new IllegalArgumentException("본인 계정은 비활성화할 수 없습니다.");
+        }
+
+        if (user.isSuperAdmin()) {
+            throw new IllegalArgumentException("총관리자 계정은 비활성화할 수 없습니다.");
+        }
+
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("탈퇴한 계정입니다. 별도로 비활성화할 필요가 없습니다.");
+        }
+
+        user.setActive(false);
+        // 링크를 안 넣는 이유: 비활성화된 동안은 로그인 자체가 막혀서 어차피 못 열어본다 - 다시
+        // 활성화된 뒤 로그인하면 알림 목록에서 확인할 수 있다.
+        notificationService.notify(user, Notification.Type.ACCOUNT, "계정이 비활성화(정지)되었습니다.", null);
+        adminActionLogService.log("USER", id, "DEACTIVATE", user.getUsername());
+    }
+
+    @Transactional
+    public void activateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        user.setActive(true);
+        notificationService.notify(user, Notification.Type.ACCOUNT, "계정이 다시 활성화되었습니다. 로그인할 수 있어요.", "/mypage");
+        adminActionLogService.log("USER", id, "ACTIVATE", user.getUsername());
+    }
+
+    private AdminUserSummaryDto toSummaryDto(User user) {
+        return AdminUserSummaryDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .nickname(user.getNickname())
+                .role(user.getRole().name())
+                .schoolName(user.getSchoolName())
+                .deleted(user.isDeleted())
+                .deletedAt(user.getDeletedAt() != null ? user.getDeletedAt().format(DISPLAY_FORMAT) : null)
+                .active(user.isActive())
+                .canManageReports(user.isCanManageReports())
+                .canManagePosts(user.isCanManagePosts())
+                .canManageScheduleComments(user.isCanManageScheduleComments())
+                .canManageNotices(user.isCanManageNotices())
+                .canManageUsers(user.isCanManageUsers())
+                .canManageAdminPermissions(user.isCanManageAdminPermissions())
+                .canViewAuditLog(user.isCanViewAuditLog())
+                .canManageShop(user.isCanManageShop())
+                .canManagePolls(user.isCanManagePolls())
+                .build();
+    }
+
+    private AdminUserProfilePostDto toProfilePostDto(Post post) {
+        return AdminUserProfilePostDto.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .categoryLabel(post.getCategory().getLabel())
+                .createdAt(post.getCreatedAt().format(DISPLAY_FORMAT))
+                .build();
+    }
+
+    private AdminUserProfileCommentDto toProfileCommentDto(PostComment comment) {
+        return AdminUserProfileCommentDto.builder()
+                .id(comment.getId())
+                .content(comment.getContent())
+                .postId(comment.getPost().getId())
+                .postTitle(comment.getPost().getTitle())
+                .createdAt(comment.getCreatedAt().format(DISPLAY_FORMAT))
+                .build();
+    }
+}
