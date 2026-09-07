@@ -59,7 +59,7 @@ public class PostService {
     // pageSize: 사용자가 "페이지당 N개 보기"로 고를 수 있는 페이지 크기 (PageUtils.normalizeSize()로
     // 컨트롤러 단에서 이미 5~100 사이로 정규화된 값이 넘어온다).
     // scope: 검색 대상 - "title"(제목만) / "content"(내용만) / 그 외(기본, 제목+내용).
-    // sortOption: "oldest"(오래된순) / "views"(조회수 많은순) / 그 외(기본, 최신순).
+    // sortOption: "oldest"(오래된순) / "views"(조회수 많은순) / "likes"(좋아요순) / 그 외(기본, 최신순).
     public Page<PostListItemDto> getList(int page, Post.Category category, String keyword, int pageSize,
                                           String scope, String sortOption) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), pageSize, resolveSort(sortOption));
@@ -76,6 +76,9 @@ public class PostService {
         }
         if ("views".equals(sortOption)) {
             return Sort.by(Sort.Direction.DESC, "viewCount").and(Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        if ("likes".equals(sortOption)) {
+            return Sort.by(Sort.Direction.DESC, "likeCount").and(Sort.by(Sort.Direction.DESC, "createdAt"));
         }
         return Sort.by(Sort.Direction.DESC, "createdAt");
     }
