@@ -11,6 +11,7 @@ import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.service.AttendanceService;
 import com.webschool.webschool.user.service.EmailTokenService;
 import com.webschool.webschool.user.service.MyActivityService;
+import com.webschool.webschool.user.service.ShopService;
 import com.webschool.webschool.user.service.UserPointService;
 import com.webschool.webschool.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,6 +48,7 @@ public class AuthController {
     private final EmailTokenService emailTokenService;
     private final AttendanceService attendanceService;
     private final UserPointService userPointService;
+    private final ShopService shopService;
     // 구글 OAuth 클라이언트 등록(client-id/secret)이 안 돼 있으면 이 빈 자체가 없다(SecurityConfig
     // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
@@ -159,6 +161,10 @@ public class AuthController {
     public String myProfileSettingsForm(Authentication authentication, Model model) {
         User user = userService.getByUsername(authentication.getName());
         model.addAttribute("bio", user.getBio());
+        // 보유한 칭호/장식 중 무엇을 장착할지 이 화면에서 바로 고를 수 있게 함(사용자 요청) -
+        // /shop과 같은 카탈로그를 그대로 재사용(owned/equipped 플래그 포함), 템플릿에서
+        // owned == true인 항목만 걸러서 보여준다.
+        model.addAttribute("catalog", shopService.getCatalog(user));
         return "user/profile-edit";
     }
 
@@ -171,6 +177,7 @@ public class AuthController {
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
             model.addAttribute("bio", bio);
+            model.addAttribute("catalog", shopService.getCatalog(userService.getByUsername(authentication.getName())));
             return "user/profile-edit";
         }
     }
@@ -185,8 +192,10 @@ public class AuthController {
             userService.updateProfileImage(authentication.getName(), profileImage);
             return "redirect:/mypage/profile?updated=true";
         } catch (IllegalArgumentException e) {
+            User user = userService.getByUsername(authentication.getName());
             model.addAttribute("errorMessage", e.getMessage());
-            model.addAttribute("bio", userService.getByUsername(authentication.getName()).getBio());
+            model.addAttribute("bio", user.getBio());
+            model.addAttribute("catalog", shopService.getCatalog(user));
             return "user/profile-edit";
         }
     }

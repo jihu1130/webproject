@@ -8,10 +8,12 @@
     <link rel="stylesheet" th:href="@{/css/auth.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
     <link rel="stylesheet" th:href="@{/css/profile-card.css}">
+    <link rel="stylesheet" th:href="@{/css/shop.css}">
 </head>
 <body class="auth-body auth-body-plain">
 
 <div th:replace="~{fragments/navbar :: navbar('mypage')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
 
 <div class="auth-shell">
     <div class="auth-wrapper">
@@ -74,6 +76,56 @@
 
                 <button type="submit" class="btn btn-primary w-100">저장하기</button>
             </form>
+
+            <hr class="auth-section-divider">
+
+            <!-- 상점에서 구매한 치장품 중 어떤 걸 장착할지 여기서도 바로 고를 수 있게(사용자 요청) -
+                 /shop과 같은 카탈로그(owned/equipped 플래그 포함)를 재사용하되, 아직 안 산 상품(구매하기
+                 버튼)은 이 화면의 목적과 안 맞아서 owned == true인 것만 걸러서 보여준다. -->
+            <div class="auth-field">
+                <label class="form-label">치장품 장착</label>
+                <p class="text-muted small">상점에서 구매한 칭호/장식 중 원하는 걸 골라 장착하세요.</p>
+
+                <h3 class="shop-section-title"><i class="fa-solid fa-tag"></i> 칭호</h3>
+                <div th:if="${#lists.isEmpty(catalog.titles.?[owned])}" class="post-empty">
+                    아직 보유한 칭호가 없어요. <a th:href="@{/shop}">상점 구경하기</a>
+                </div>
+                <div class="shop-grid" th:unless="${#lists.isEmpty(catalog.titles.?[owned])}">
+                    <div class="shop-item-card" th:each="item : ${catalog.titles}" th:if="${item.owned}">
+                        <span class="shop-item-badge" th:text="${item.equipped} ? '장착중' : ''"></span>
+                        <div class="shop-item-preview shop-item-preview-title" th:text="${item.value}">칭호</div>
+                        <div class="shop-item-name" th:text="${item.label}">이름</div>
+                        <form th:if="${!item.equipped}" th:action="@{'/shop/equip/' + ${item.id}}" method="post">
+                            <input type="hidden" name="from" value="profile">
+                            <button type="submit" class="btn btn-outline-primary shop-item-btn">장착하기</button>
+                        </form>
+                        <form th:if="${item.equipped}" th:action="@{/shop/unequip/TITLE}" method="post">
+                            <input type="hidden" name="from" value="profile">
+                            <button type="submit" class="btn btn-outline-primary shop-item-btn">장착 해제</button>
+                        </form>
+                    </div>
+                </div>
+
+                <h3 class="shop-section-title"><i class="fa-solid fa-palette"></i> 장식</h3>
+                <div th:if="${#lists.isEmpty(catalog.colors.?[owned])}" class="post-empty">
+                    아직 보유한 장식이 없어요. <a th:href="@{/shop}">상점 구경하기</a>
+                </div>
+                <div class="shop-grid" th:unless="${#lists.isEmpty(catalog.colors.?[owned])}">
+                    <div class="shop-item-card" th:each="item : ${catalog.colors}" th:if="${item.owned}">
+                        <span class="shop-item-badge" th:text="${item.equipped} ? '장착중' : ''"></span>
+                        <div class="shop-item-preview shop-item-preview-color" th:style="'background:' + ${item.value}"></div>
+                        <div class="shop-item-name" th:text="${item.label}">이름</div>
+                        <form th:if="${!item.equipped}" th:action="@{'/shop/equip/' + ${item.id}}" method="post">
+                            <input type="hidden" name="from" value="profile">
+                            <button type="submit" class="btn btn-outline-primary shop-item-btn">장착하기</button>
+                        </form>
+                        <form th:if="${item.equipped}" th:action="@{/shop/unequip/AVATAR_COLOR}" method="post">
+                            <input type="hidden" name="from" value="profile">
+                            <button type="submit" class="btn btn-outline-primary shop-item-btn">장착 해제</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
             <div class="auth-footer"><a href="/mypage">마이페이지로 돌아가기</a></div>
 
