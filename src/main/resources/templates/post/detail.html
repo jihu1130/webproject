@@ -21,7 +21,7 @@
         <div class="post-blind-banner" th:if="${post.blind}">
             <i class="fa-solid fa-triangle-exclamation"></i>
             신고 누적(<span th:text="${post.reportCount}">3</span>회)으로 블라인드 처리된 게시물입니다.
-            작성자 본인과 관리자에게만 보여요.
+            작성자 본인에게만 보여요.
         </div>
 
         <!-- 공개범위 배너 - 전체 공개가 아닐 때만. 문구는 Post.Visibility enum의 라벨/설명 그대로. -->
