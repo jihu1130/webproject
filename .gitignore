@@ -19,6 +19,10 @@ logs/
 # DB 백업 - 실사용자 데이터 덤프가 커밋되면 안 됨(scripts/backup-db.ps1 산출물)
 backups/
 
+# k6 부하테스트 결과(loadtest/*.js --summary-export 산출물) - 로컬 실행마다 새로 생기는
+# 결과 파일이라 커밋 대상 아님, /admin/loadtest 화면이 이 폴더를 그대로 읽어서 보여준다.
+loadtest/results/
+
 # 민감 정보(DB 비밀번호, NEIS API 키, 구글 OAuth 시크릿 등)가 들어가는 실제 설정 파일 -
 # application.yml.example을 복사해서 로컬에만 만들 것. 커밋 대상에서 절대 빼지 말 것.
 src/main/resources/application.yml

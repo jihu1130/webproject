@@ -857,6 +857,9 @@
 }
 
 .dash-tier-fill {
+    /* <span>은 기본 display:inline이라 width가 있어도 실제로는 렌더링에 반영되지 않는다(브라우저가
+       인라인 요소의 width를 무시함) - block으로 바꿔야 style="width:N%"가 실제 그려진다. */
+    display: block;
     height: 100%;
     border-radius: 999px;
     background: var(--accent);
@@ -873,13 +876,104 @@
    바로 아래)에 놓이는 .dash-kpis 앞이라 별도 클래스로 뺐다. */
 .dash-section-heading {
     grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     font-size: 0.95rem;
     font-weight: 700;
     color: var(--ink);
     margin: 8px 0 -4px;
 }
 
+.dash-section-heading-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--brand-1);
+    text-decoration: none;
+}
+.dash-section-heading-link:hover { text-decoration: underline; }
+
+/* 부하테스트 결과 화면(/admin/loadtest) - dash-kpi/dash-card와 같은 카드 톤을 재사용하되,
+   실행 1건 = 카드 1개(요약 통계 여러 개를 그 안에 작은 그리드로 배치)라는 다른 형태라 별도
+   클래스로 뺐다. */
+.loadtest-empty {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    color: var(--muted);
+    margin-top: 16px;
+}
+
+.loadtest-run-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.loadtest-run {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 16px 18px;
+}
+
+.loadtest-run-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.loadtest-run-name {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.loadtest-run-time {
+    margin-left: 10px;
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.loadtest-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.loadtest-badge--pass { background: var(--success-soft); color: var(--success); }
+.loadtest-badge--fail { background: var(--danger-soft); color: var(--danger); }
+
+.loadtest-run-stats {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+}
+
+.loadtest-stat-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.loadtest-stat-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.loadtest-stat--danger .loadtest-stat-value { color: var(--danger); }
+
 @media (max-width: 720px) {
     .dash-kpis { grid-template-columns: repeat(2, 1fr); }
     .dash-grid { grid-template-columns: 1fr; }
+    .loadtest-run-stats { grid-template-columns: repeat(2, 1fr); }
 }

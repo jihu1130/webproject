@@ -75,6 +75,11 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/admin/dashboard")) {
             throw new AccessDeniedException("대시보드는 총관리자만 접근할 수 있습니다.");
         }
+        // 부하테스트 결과(AdminLoadTestController, 사용자 요청) - 대시보드의 서버 상태와 같은 이유로
+        // 총관리자 전용 고정.
+        if (uri.startsWith("/admin/loadtest")) {
+            throw new AccessDeniedException("부하테스트 결과는 총관리자만 접근할 수 있습니다.");
+        }
         // 게시글/댓글/한마디 관리 화면에서 작성자 이름을 눌러 프로필을 보는 기능(2026-08-10(5차) 추가) -
         // 계정 관리(/admin/users)는 총관리자 전용이지만, 이 조회 전용 화면은 신고/게시글/한마디 관리
         // 권한이 하나라도 있는 부관리자라면 볼 수 있게 한다(그 권한으로 이미 같은 정보(실명 닉네임 등)를

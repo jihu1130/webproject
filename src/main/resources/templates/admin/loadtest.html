@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 부하테스트 결과 - WebSchool</title>
+    <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-gauge-high"></i> 부하테스트 결과</h1>
+            <p class="page-sub">
+                <code>k6 run --summary-export=loadtest/results/파일명.json loadtest/시나리오.js</code>로 남긴
+                결과를 보여줘요 (총관리자 전용) - <a href="/admin/dashboard">대시보드로</a>
+            </p>
+        </div>
+
+        <div th:if="${#lists.isEmpty(runs)}" class="loadtest-empty">
+            아직 실행된 부하테스트가 없어요. <code>loadtest/</code> 아래 스크립트를
+            <code>--summary-export</code>와 함께 실행하면 여기 나타나요.
+        </div>
+
+        <div class="loadtest-run-list">
+            <div class="loadtest-run" th:each="run : ${runs}">
+                <div class="loadtest-run-header">
+                    <div>
+                        <span class="loadtest-run-name" th:text="${run.scenarioName()}">scenario</span>
+                        <span class="loadtest-run-time"
+                              th:text="${#temporals.format(run.ranAt(), 'yyyy-MM-dd HH:mm')}">2026-09-09 12:00</span>
+                    </div>
+                    <span class="loadtest-badge"
+                          th:classappend="${run.thresholdsPassed()} ? 'loadtest-badge--pass' : 'loadtest-badge--fail'"
+                          th:text="${run.thresholdsPassed()} ? '임계값 통과' : '임계값 실패'">임계값 통과</span>
+                </div>
+                <div class="loadtest-run-stats">
+                    <div class="loadtest-stat">
+                        <div class="loadtest-stat-label">총 요청</div>
+                        <div class="loadtest-stat-value" th:text="${run.totalRequests()}">0</div>
+                    </div>
+                    <div class="loadtest-stat">
+                        <div class="loadtest-stat-label">초당 요청</div>
+                        <div class="loadtest-stat-value" th:text="${#numbers.formatDecimal(run.requestsPerSec(), 1, 2)}">0</div>
+                    </div>
+                    <div class="loadtest-stat">
+                        <div class="loadtest-stat-label">평균 응답시간</div>
+                        <div class="loadtest-stat-value" th:text="${#numbers.formatDecimal(run.avgDurationMs(), 1, 1)} + 'ms'">0ms</div>
+                    </div>
+                    <div class="loadtest-stat">
+                        <div class="loadtest-stat-label">p95 응답시간</div>
+                        <div class="loadtest-stat-value" th:text="${#numbers.formatDecimal(run.p95DurationMs(), 1, 1)} + 'ms'">0ms</div>
+                    </div>
+                    <div class="loadtest-stat" th:classappend="${run.errorRatePercent()} > 0 ? 'loadtest-stat--danger' : ''">
+                        <div class="loadtest-stat-label">실패율</div>
+                        <div class="loadtest-stat-value" th:text="${#numbers.formatDecimal(run.errorRatePercent(), 1, 2)} + '%'">0%</div>
+                    </div>
+                    <div class="loadtest-stat">
+                        <div class="loadtest-stat-label">체크 통과</div>
+                        <div class="loadtest-stat-value" th:text="${run.checksPassed()} + ' / ' + ${run.checksTotal()}">0 / 0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>

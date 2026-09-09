@@ -59,7 +59,12 @@
                  이미 AdminAccessInterceptor에서 총관리자 전용이지만, 서버 지표는 특히 민감한
                  운영 정보라 화면에서도 한 번 더 명시적으로 총관리자만 보이게 가른다(사용자 요청). -->
             <th:block th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}">
-                <h2 class="dash-section-heading"><i class="fa-solid fa-server"></i> 서버 상태 (총관리자 전용)</h2>
+                <h2 class="dash-section-heading">
+                    <i class="fa-solid fa-server"></i> 서버 상태 (총관리자 전용)
+                    <a href="/admin/loadtest" class="dash-section-heading-link">
+                        <i class="fa-solid fa-gauge-high"></i> 부하테스트 결과 보기
+                    </a>
+                </h2>
                 <section class="dash-kpis">
                     <div class="dash-kpi" th:classappend="${serverSnapshot.activeSessionCount()} >= 200 ? 'dash-kpi--warn' : ''">
                         <div class="dash-kpi-label"><i class="fa-solid fa-user-clock"></i> 현재 로그인 세션</div>
