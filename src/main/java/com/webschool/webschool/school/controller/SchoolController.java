@@ -4,6 +4,7 @@ import com.webschool.webschool.poll.dto.PollCreateRequest;
 import com.webschool.webschool.poll.service.PollService;
 import com.webschool.webschool.school.domain.ScheduleComment;
 import com.webschool.webschool.school.dto.CalendarEventDto;
+import com.webschool.webschool.school.dto.PersonalEventDto;
 import com.webschool.webschool.school.dto.ScheduleCommentDto;
 import com.webschool.webschool.school.dto.ScheduleCommentReportResultDto;
 import com.webschool.webschool.school.dto.SchoolCalendarDto;
@@ -11,6 +12,7 @@ import com.webschool.webschool.school.dto.SchoolSearchResultDto;
 import com.webschool.webschool.school.dto.TimetableDto;
 import com.webschool.webschool.school.dto.VacationDdayDto;
 import com.webschool.webschool.school.service.NeisApiService;
+import com.webschool.webschool.school.service.PersonalEventService;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.school.service.SchoolService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class SchoolController {
     private final SchoolService schoolService;
     private final ScheduleCommentService scheduleCommentService;
     private final PollService pollService;
+    private final PersonalEventService personalEventService;
 
     // 1. 캘린더 페이지 요청 (/school/calendar)
     // http://localhost:8888/school/calendar
@@ -318,7 +321,15 @@ public class SchoolController {
             @RequestParam(defaultValue = "1") String classNm,
             Authentication authentication) {
 
-        return scheduleCommentService.getComments(atptCode, schoolCode, parseDate(date), grade, classNm, authentication.getName());
+        // 이 GET은 Feature 3부터 비로그인도 호출 가능(SecurityConfig permitAll) - 익명 요청은
+        // Authentication 파라미터 자체가 null로 들어온다(Spring MVC가 Authentication을 Principal로
+        // 취급해 request.getUserPrincipal()로 해석하는데, SecurityContextHolderAwareRequestWrapper가
+        // 익명 인증은 일부러 null로 감춘다 - AnonymousAuthenticationToken.isAuthenticated()가 true라고
+        // 방심하면 안 되는 지점). ScheduleCommentService.getComments()는 이미 currentUsername==null을
+        // "비로그인"으로 처리하도록 설계돼 있으므로(toDto()의 mine/likedByMe 등 null 체크 참고) 여기서는
+        // null을 그대로 넘기기만 하면 된다.
+        String currentUsername = authentication != null ? authentication.getName() : null;
+        return scheduleCommentService.getComments(atptCode, schoolCode, parseDate(date), grade, classNm, currentUsername);
     }
 
     // 6. 날짜별 한마디 댓글 작성
@@ -376,6 +387,45 @@ public class SchoolController {
 
     private LocalDate parseDate(String date) {
         return LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyyMMdd"));
+    }
+
+    // 11. 개인 전용 일정 - 나만 볼 수 있는 캘린더 메모(학교/학년/반과 무관). 항상 로그인 필요
+    // (SecurityConfig의 /school/api/personal-events/** 규칙 참고).
+    @GetMapping("/api/personal-events")
+    @ResponseBody
+    public List<PersonalEventDto> getPersonalEvents(@RequestParam String date, Authentication authentication) {
+        return personalEventService.getEventsForDate(authentication.getName(), parseDate(date));
+    }
+
+    // 월 그리드에 점으로 표시할 날짜 목록
+    @GetMapping("/api/personal-events/month")
+    @ResponseBody
+    public List<String> getPersonalEventMonthDots(@RequestParam int year, @RequestParam int month,
+                                                    Authentication authentication) {
+        return personalEventService.getEventDatesInRange(authentication.getName(), year, month);
+    }
+
+    @PostMapping("/api/personal-events")
+    @ResponseBody
+    public PersonalEventDto createPersonalEvent(@RequestParam String date, @RequestParam String title,
+                                                 @RequestParam(required = false) String memo,
+                                                 Authentication authentication) {
+        return personalEventService.createEvent(authentication.getName(), parseDate(date), title, memo);
+    }
+
+    @PutMapping("/api/personal-events/{id}")
+    @ResponseBody
+    public PersonalEventDto updatePersonalEvent(@PathVariable Long id, @RequestParam String title,
+                                                 @RequestParam(required = false) String memo,
+                                                 Authentication authentication) {
+        return personalEventService.updateEvent(id, authentication.getName(), title, memo);
+    }
+
+    @DeleteMapping("/api/personal-events/{id}")
+    @ResponseBody
+    public Map<String, Object> deletePersonalEvent(@PathVariable Long id, Authentication authentication) {
+        personalEventService.deleteEvent(id, authentication.getName());
+        return Map.of("deleted", true);
     }
 
     // PostController.buildPollRequest()와 동일한 조립 로직 - 설문 첨부 파라미터를 받는 화면(게시글

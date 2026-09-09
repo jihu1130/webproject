@@ -43,6 +43,12 @@ public class SchoolSetupInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        // 위 isAuthenticated() 검사만 보고 "비로그인이면 여기서 걸러진다"고 오해하지 말 것 -
+        // Spring Security의 AnonymousAuthenticationToken은 기본값으로 isAuthenticated()가 true다
+        // (완전 비인증이 아니라 "익명 사용자로 인증됨" 취급). 캘린더가 비로그인 열람을 허용한 뒤에도
+        // (Feature 3, SecurityConfig의 /school/** permitAll 참고) 이 인터셉터가 익명 사용자를
+        // /school-setup으로 잘못 튕기지 않는 진짜 이유는 바로 아래 findByUsername("anonymousUser")가
+        // 항상 null을 반환해서 user == null 분기로 자연스럽게 통과되기 때문이다.
         User user = userRepository.findByUsername(authentication.getName()).orElse(null);
         if (user == null || !user.needsSchoolSetup()) {
             return true;

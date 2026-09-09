@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var currentCommentClassNm = null; // 댓글이 공유되는 반
     var currentMonthEventMap = {}; // 'YYYY-MM-DD' -> 학사일정명 배열 (하루에 여러 일정이 겹칠 수 있음, 현재 보이는 42칸 그리드 범위)
     var pendingHighlightCommentId = null; // 게시글의 "한마디로 바로가기" 카드로 들어왔을 때 강조 표시할 댓글 id
+    var personalEventDateSet = {}; // 'YYYY-MM-DD' -> true, 개인 일정이 있는 날짜(현재 보이는 42칸 그리드 범위, 로그인 사용자만)
 
     var DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -30,16 +31,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     classSelect.addEventListener('change', updateTitle);
 
+    // 우선순위(뒤에 호출될수록 우선) - 로그인 사용자 기본 학교 < localStorage 캐시 < URL 파라미터.
     applyMySchoolIfAvailable();
+    applyLocalStorageSchoolIfAvailable();
     initSchoolSearch();
     initEventSearch();
     initQuicknav();
 
-    // 게시글 본문의 "한마디로 바로가기" 카드를 눌러 들어온 경우 - selectedSchool/currentYear/
-    // currentMonth/selectedDateStr을 그 한마디 기준으로 미리 맞춰두기만 한다. 실제 상세 패널을 여는
-    // 건 아래 handleDayClick(selectedDateStr) 한 곳에서만 하도록 남겨서(중복 호출 방지) 이 함수는
-    // handleDayClick을 직접 부르지 않는다.
-    applySharedCommentLinkIfPresent();
+    // URL에 학교/날짜 파라미터가 있으면(공유 링크로 들어왔거나, "한마디로 바로가기" 카드로 들어온
+    // 경우) selectedSchool/currentYear/currentMonth/selectedDateStr을 그 기준으로 맞춰둔다. 실제
+    // 상세 패널을 여는 건 아래 handleDayClick(selectedDateStr) 한 곳에서만 하도록 남겨서(중복 호출
+    // 방지) 이 함수는 handleDayClick을 직접 부르지 않는다.
+    applyUrlParamsIfPresent();
     updateTitle();
     loadMonthEvents(); // 로그인 사용자의 저장된 학교(있다면)가 반영된 뒤에 조회해야 정확함
     loadVacationDday();
@@ -141,12 +144,51 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         applyMonthEventChips(currentMonthEventMap);
+        applyPersonalEventDots(personalEventDateSet);
+    }
+
+    // 개인 일정이 있는 날짜 칸에 작은 점을 표시 - 학사일정 칩(applyMonthEventChips)과 달리 이름/기간이
+    // 없는 단순 "있다/없다" 표시라 훨씬 가벼운 별도 로직으로 둔다.
+    function applyPersonalEventDots(dateSet) {
+        var cells = calGridBody.querySelectorAll('.cal-day');
+        cells.forEach(function (cell) {
+            var existing = cell.querySelector('.cal-day-personal-dot');
+            if (existing) existing.remove();
+            if (dateSet[cell.dataset.date]) {
+                var dot = document.createElement('span');
+                dot.className = 'cal-day-personal-dot';
+                dot.title = '개인 일정 있음';
+                cell.appendChild(dot);
+            }
+        });
+    }
+
+    function loadPersonalEventMonthDots() {
+        if (!window.__LOGGED_IN__) {
+            personalEventDateSet = {};
+            return;
+        }
+        var params = new URLSearchParams({ year: currentYear, month: currentMonth });
+        fetch(`/school/api/personal-events/month?${params.toString()}`)
+            .then(function (res) { return res.ok ? res.json() : []; })
+            .then(function (dates) {
+                var set = {};
+                (dates || []).forEach(function (d) { set[d] = true; });
+                personalEventDateSet = set;
+                applyPersonalEventDots(personalEventDateSet);
+            })
+            .catch(function () {
+                // 부가 표시 기능이라 실패해도 조용히 무시(loadMonthEvents()와 동일한 원칙)
+            });
     }
 
     // 현재 학교의 학사일정(시험, 방학, 각종 "OO주간" 등 특정 날짜/기간에 잡힌 일정
     // 전부)을 조회해서 그리드에 걸쳐 있는 해당 날짜 칸마다 작은 배지로 표시한다.
     // 서버가 기간 전체를 이미 걸러서 내려주므로 프론트에서 추가 필터링은 안 함.
     function loadMonthEvents() {
+        loadPersonalEventMonthDots(); // 학교 학사일정과는 독립적이지만(개인 일정은 학교 무관), 보이는
+        // 연/월이 바뀔 때마다 같이 갱신되면 되므로 이 함수 호출 시점에 얹어서 별도 호출부를 늘리지 않는다.
+
         var params = new URLSearchParams({ year: currentYear, month: currentMonth });
         if (selectedSchool) {
             params.set('atptCode', selectedSchool.officeCode);
@@ -173,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // 방학 D-Day 배지 - 학교가 선택돼 있을 때만 조회한다(선택 안 됐으면 배지 숨김).
     // 서버가 없음(404)을 주면(방학 정보를 못 찾음) 배지를 숨긴다.
     function loadVacationDday() {
+        loadWeatherWidget(); // 학교 선택이 바뀌는 3개 지점(loadVacationDday 호출부)과 항상 같이 움직여야 하므로 여기 안에 끼워넣는다(personalEventDateSet과 동일한 방식)
         var badge = document.getElementById('vacationDdayBadge');
         if (!badge) return;
 
@@ -209,6 +252,68 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(function () {
                 badge.style.display = 'none';
             });
+    }
+
+    // 이번 주(일~토) 날씨 위젯. 서버가 학교 주소→격자 매칭에 실패하면(kma-grid.csv 없음/API 키
+    // 미설정 등) 404를 주므로 그때는 위젯 자체를 숨긴다. 과거 날짜인데 데이터가 없는 칸(이 기능
+    // 배포 전이라 캐시가 없는 경우)과 아직 예보 범위 밖이라 비어있는 미래 날짜는 서버가 둘 다
+    // hasData:false로 내려주므로 여기서는 구분하지 않고 그냥 "-"로만 표시한다.
+    function loadWeatherWidget() {
+        var widget = document.getElementById('weatherWidget');
+        var daysBox = document.getElementById('weatherWidgetDays');
+        if (!widget || !daysBox) return;
+
+        if (!selectedSchool) {
+            widget.style.display = 'none';
+            return;
+        }
+
+        var params = new URLSearchParams({
+            atptCode: selectedSchool.officeCode,
+            schoolCode: selectedSchool.schoolCode
+        });
+
+        fetch(`/school/api/weather?${params.toString()}`)
+            .then(function (res) { return res.status === 404 ? null : res.json(); })
+            .then(function (week) {
+                if (!week || !week.days) {
+                    widget.style.display = 'none';
+                    return;
+                }
+                var todayStr = formatLocalDate(new Date());
+                daysBox.innerHTML = week.days.map(function (day, i) {
+                    var isToday = day.date === todayStr;
+                    var cls = 'weather-day' + (isToday ? ' weather-day--today' : '');
+                    if (!day.hasData) {
+                        return `<div class="${cls}"><span class="weather-day-dow">${DOW_KO[i]}</span><span class="weather-day-empty">-</span></div>`;
+                    }
+                    var icon = weatherIcon(day.ptyLabel, day.skyLabel);
+                    var pop = (day.pop === null || day.pop === undefined) ? '' : `<span class="weather-day-pop">${day.pop}%</span>`;
+                    return `
+                        <div class="${cls}">
+                            <span class="weather-day-dow">${DOW_KO[i]}</span>
+                            <span class="weather-day-icon">${icon}</span>
+                            ${pop}
+                            <span class="weather-day-temp"><b>${day.tmx != null ? day.tmx : '-'}°</b> / ${day.tmn != null ? day.tmn : '-'}°</span>
+                        </div>
+                    `;
+                }).join('');
+                widget.style.display = 'block';
+            })
+            .catch(function () {
+                widget.style.display = 'none';
+            });
+    }
+
+    function weatherIcon(ptyLabel, skyLabel) {
+        if (ptyLabel === '비') return '🌧️';
+        if (ptyLabel === '비/눈') return '🌨️';
+        if (ptyLabel === '눈') return '❄️';
+        if (ptyLabel === '소나기') return '🌦️';
+        if (skyLabel === '맑음') return '☀️';
+        if (skyLabel === '구름많음') return '⛅';
+        if (skyLabel === '흐림') return '☁️';
+        return '·';
     }
 
     // 매주 반복되는 토요휴업일 자체는 표시하면 오히려 매주 눈에 띄어 정작 중요한
@@ -461,6 +566,7 @@ document.addEventListener('DOMContentLoaded', function () {
         selectedDateStr = dateStr;
         renderGrid();
         openPanel();
+        persistSelectionState(); // 날짜도 공유 URL(?date=)에 반영
         var formattedDate = dateStr.replace(/-/g, '');
         fetchCalendarDetails(formattedDate, dateStr);
     }
@@ -568,6 +674,88 @@ document.addEventListener('DOMContentLoaded', function () {
         var classNm = document.getElementById('classSelect').value;
         var schoolPrefix = selectedSchool ? selectedSchool.schoolName + ' ' : '';
         document.getElementById('calendarTitleText').textContent = `${schoolPrefix}${grade}학년 ${classNm}반 시간표 캘린더`;
+        persistSelectionState(); // 학교/학년/반이 바뀌는 모든 지점(updateTitle 호출부)과 항상 같이 움직인다
+    }
+
+    // ── 학교/학년/반/날짜 선택 상태 캐싱 + 공유용 URL(Feature 3, 사용자 제안) ──────
+    // 비로그인 사용자도 캘린더를 볼 수 있게 되면서(위 SecurityConfig 참고), 검색한 학교/학년/반을
+    // localStorage에 남겨 재방문 시 다시 검색하지 않아도 되게 하고, 동시에 현재 상태를 주소창
+    // URL에도 반영해서(history.replaceState - 새 히스토리 항목을 쌓지 않음) 링크만으로 다른 사람과
+    // 공유할 수 있게 한다. 결정 우선순위는 아래 applyMySchoolIfAvailable/applyLocalStorageSchoolIfAvailable/
+    // applyUrlParamsIfPresent 세 함수의 호출 순서 자체가 곧 우선순위다(뒤에 호출될수록 우선) -
+    // URL 파라미터 > localStorage > 로그인 사용자 기본 학교 > 빈 상태.
+    var SCHOOL_STORAGE_KEY = 'webschool.selectedSchool';
+
+    function persistSelectionState() {
+        var grade = document.getElementById('gradeSelect').value;
+        var classNm = document.getElementById('classSelect').value;
+
+        if (selectedSchool) {
+            try {
+                localStorage.setItem(SCHOOL_STORAGE_KEY, JSON.stringify({
+                    atptCode: selectedSchool.officeCode,
+                    schoolCode: selectedSchool.schoolCode,
+                    schoolName: selectedSchool.schoolName,
+                    schoolKind: selectedSchool.schoolKind,
+                    grade: grade,
+                    classNm: classNm
+                }));
+            } catch (e) {
+                // 시크릿 모드/저장소 차단 등으로 실패해도 캘린더 기능 자체엔 지장 없음 - 조용히 무시
+            }
+        }
+
+        syncShareableUrl(grade, classNm);
+    }
+
+    function syncShareableUrl(grade, classNm) {
+        if (!selectedSchool) return; // 학교 미선택 상태는 공유할 의미 있는 상태가 아니므로 URL을 건드리지 않음
+
+        var params = new URLSearchParams();
+        params.set('atptCode', selectedSchool.officeCode);
+        params.set('schoolCode', selectedSchool.schoolCode);
+        if (selectedSchool.schoolName) params.set('schoolName', selectedSchool.schoolName);
+        params.set('grade', grade);
+        if (classNm) params.set('classNm', classNm);
+        if (selectedDateStr) params.set('date', selectedDateStr);
+
+        var newUrl = window.location.pathname + '?' + params.toString();
+        history.replaceState(null, '', newUrl);
+    }
+
+    // localStorage에 캐시된 학교/학년/반 적용 - applyMySchoolIfAvailable()(로그인 사용자 기본
+    // 학교)보다 우선순위가 높으므로 그 다음에 호출해서 있으면 덮어쓴다.
+    function applyLocalStorageSchoolIfAvailable() {
+        var raw;
+        try {
+            raw = localStorage.getItem(SCHOOL_STORAGE_KEY);
+        } catch (e) {
+            return;
+        }
+        if (!raw) return;
+
+        var cached;
+        try {
+            cached = JSON.parse(raw);
+        } catch (e) {
+            return;
+        }
+        if (!cached || !cached.schoolCode || !cached.atptCode) return;
+
+        selectedSchool = {
+            schoolName: cached.schoolName || '',
+            schoolCode: cached.schoolCode,
+            officeCode: cached.atptCode,
+            schoolKind: cached.schoolKind || ''
+        };
+        document.getElementById('schoolSearchInput').value = cached.schoolName || '';
+
+        if (typeof buildGradeOptions === 'function') {
+            buildGradeOptions(cached.schoolKind || '', gradeSelect, cached.grade);
+        } else if (cached.grade) {
+            gradeSelect.value = cached.grade;
+        }
+        refreshClassOptions(cached.classNm || undefined);
     }
 
     // 학교가 선택되어 있으면 실제 반 목록으로 갱신 (선택된 값은 최대한 유지)
@@ -605,34 +793,42 @@ document.addEventListener('DOMContentLoaded', function () {
         refreshClassOptions(mySchool.classNum);
     }
 
-    // 0-1. SchoolController.openComment()가 만들어주는 "/school/calendar?...&highlightComment=" 링크로
-    // 들어온 경우 - 그 한마디가 있는 학교/날짜/학년/반으로 캘린더 상태를 미리 맞춰둔다(적용 순서상
-    // applyMySchoolIfAvailable() 이후, handleDayClick(selectedDateStr) 이전에 호출돼야 한다).
-    function applySharedCommentLinkIfPresent() {
+    // 0-1. URL 쿼리 파라미터로 캘린더 상태를 미리 맞춘다 - 두 가지 경로로 들어온다:
+    // (a) SchoolController.openComment()가 만들어주는 "?...&highlightComment=" 퍼머링크(원래
+    //     applySharedCommentLinkIfPresent였던 기존 동작, highlightComment가 있을 때만 강조 표시),
+    // (b) 캘린더 자체가 syncShareableUrl()로 계속 갱신해두는 "?atptCode=&schoolCode=&...&date="
+    //     공유 링크(Feature 3, 사용자 제안) - highlightComment 없이 atptCode+schoolCode만 있어도
+    //     그 상태로 캘린더가 열린다. 우선순위가 가장 높으므로(URL > localStorage > 로그인 사용자
+    //     기본 학교) applyMySchoolIfAvailable()/applyLocalStorageSchoolIfAvailable() 이후,
+    //     handleDayClick(selectedDateStr) 이전에 호출돼야 한다.
+    function applyUrlParamsIfPresent() {
         var params = new URLSearchParams(window.location.search);
-        var highlightId = params.get('highlightComment');
-        if (!highlightId) return;
-
         var atptCode = params.get('atptCode');
         var schoolCode = params.get('schoolCode');
+        if (!atptCode || !schoolCode) return;
+
         var schoolName = params.get('schoolName');
         var date = params.get('date');
         var grade = params.get('grade');
         var classNm = params.get('classNm');
-        if (!atptCode || !schoolCode || !date) return;
+        var highlightId = params.get('highlightComment');
 
         selectedSchool = { schoolName: schoolName || '', schoolCode: schoolCode, officeCode: atptCode, schoolKind: '' };
         document.getElementById('schoolSearchInput').value = schoolName || '';
 
-        var dateParts = date.split('-');
-        currentYear = parseInt(dateParts[0], 10);
-        currentMonth = parseInt(dateParts[1], 10);
-        selectedDateStr = date;
+        if (date) {
+            var dateParts = date.split('-');
+            currentYear = parseInt(dateParts[0], 10);
+            currentMonth = parseInt(dateParts[1], 10);
+            selectedDateStr = date;
+        }
 
         if (grade) { gradeSelect.value = grade; }
         refreshClassOptions(classNm || undefined);
 
-        pendingHighlightCommentId = highlightId;
+        if (highlightId) {
+            pendingHighlightCommentId = highlightId;
+        }
     }
 
     // 2. 학교 검색 (공용 위젯 사용)
@@ -657,6 +853,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     buildGradeOptions('', gradeSelect);
                 }
                 fillClassSelect(classSelect, '반 선택', fallbackClassList());
+                // 명시적으로 학교 선택을 지운 경우 캐시/URL도 함께 지운다 - 안 그러면 새로고침했을 때
+                // localStorage/URL에 남은 이전 학교가 다시 적용돼 "지웠는데 계속 돌아온다"는 혼란을 준다.
+                try { localStorage.removeItem(SCHOOL_STORAGE_KEY); } catch (e) { /* 무시 */ }
+                history.replaceState(null, '', window.location.pathname);
                 updateTitle();
                 loadMonthEvents();
                 loadVacationDday();
@@ -775,19 +975,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? '<a href="/users/' + c.authorUuid + '" class="comment-nickname">' + escapeHtml(c.nickname) + '</a>'
                 : '<span class="comment-nickname">' + escapeHtml(c.nickname) + '</span>';
             // 버그수정 프롬포트 요청 - 아이콘 전용 버튼에 title만 있고 aria-label이 없었다.
-            var actionsHtml = c.mine
+            // 비로그인 사용자는 애초에 c.mine이 항상 false로 오지만(서버에 로그인 사용자가 없으므로),
+            // 신고 버튼까지 노출하면 눌렀을 때 인증 필요 API가 조용히 실패하므로(Feature 3,
+            // /school/api/comments/{id}/report는 여전히 인증 필요) window.__LOGGED_IN__일 때만 렌더링한다.
+            var actionsHtml = !window.__LOGGED_IN__ ? '' : (c.mine
                 ? `<a href="/school/comments/${c.uuid}/edit" class="comment-edit-btn" title="수정" aria-label="수정"><i class="fa-solid fa-pen"></i></a>
                    <button type="button" class="comment-delete-btn" title="삭제" aria-label="삭제"><i class="fa-solid fa-xmark"></i></button>`
                 : (c.reportedByMe
                     ? '<button type="button" class="comment-report-btn" title="이미 신고했어요" aria-label="이미 신고했어요" disabled><i class="fa-solid fa-flag"></i></button>'
-                    : '<button type="button" class="comment-report-btn" title="신고" aria-label="신고"><i class="fa-solid fa-flag"></i></button>');
-            var likeBookmarkHtml = `
+                    : '<button type="button" class="comment-report-btn" title="신고" aria-label="신고"><i class="fa-solid fa-flag"></i></button>'));
+            // 좋아요/북마크도 마찬가지로 인증이 필요한 동작이라 비로그인이면 숨긴다. 공유 링크
+            // 복사는 서버 API를 안 타는 순수 클라이언트 동작이라 로그인 여부와 무관하게 항상 보여준다.
+            var likeBookmarkHtml = (window.__LOGGED_IN__ ? `
                 <button type="button" class="comment-like-btn${c.likedByMe ? ' active' : ''}" title="좋아요" aria-label="좋아요">
                     <i class="fa-solid fa-heart"></i> <span class="comment-like-count">${c.likeCount}</span>
                 </button>
                 <button type="button" class="comment-bookmark-btn${c.bookmarkedByMe ? ' active' : ''}" title="북마크" aria-label="북마크">
                     <i class="fa-solid fa-bookmark"></i>
-                </button>
+                </button>` : `<span class="comment-like-count-readonly"><i class="fa-solid fa-heart"></i> ${c.likeCount}</span>`) + `
                 <button type="button" class="comment-share-btn" title="공유 링크 복사" aria-label="공유 링크 복사">
                     <i class="fa-solid fa-link"></i>
                 </button>`;
@@ -964,15 +1169,172 @@ document.addEventListener('DOMContentLoaded', function () {
     // 카드까지 삽입 가능한 리치 에디터를 좁은 패널에 두기 불편하다는 요청(2026-08-19)으로 게시글
     // 작성 화면과 같은 전용 페이지(/school/comments/new)로 이동시킨다. 현재 패널에 열려있는
     // 날짜/학년/반 컨텍스트를 쿼리 파라미터로 그대로 넘겨서 그 페이지에서 그대로 등록되게 한다.
-    document.getElementById('newCommentBtn').addEventListener('click', function () {
-        var params = commentParams(); // date(yyyyMMdd)/grade/classNm(+선택된 학교) 포함
-        var isoDate = currentCommentDate.slice(0, 4) + '-' + currentCommentDate.slice(4, 6) + '-' + currentCommentDate.slice(6, 8);
-        params.set('date', isoDate);
-        if (selectedSchool) {
-            params.set('schoolName', selectedSchool.schoolName || '');
+    // 비로그인 사용자는 이 버튼 자체가 서버에서 안 그려진다(calendar.html의 sec:authorize
+    // 참고, post/detail.html의 postCommentForm과 동일 패턴) - null 체크 필요.
+    var newCommentBtnEl = document.getElementById('newCommentBtn');
+    if (newCommentBtnEl) {
+        newCommentBtnEl.addEventListener('click', function () {
+            var params = commentParams(); // date(yyyyMMdd)/grade/classNm(+선택된 학교) 포함
+            var isoDate = currentCommentDate.slice(0, 4) + '-' + currentCommentDate.slice(4, 6) + '-' + currentCommentDate.slice(6, 8);
+            params.set('date', isoDate);
+            if (selectedSchool) {
+                params.set('schoolName', selectedSchool.schoolName || '');
+            }
+            window.location.href = '/school/comments/new?' + params.toString();
+        });
+    }
+
+    // ── 내 개인 일정(나만 보이는 캘린더 메모) ───────────────────────────
+    // 모달(WebSchoolModal.prompt)은 입력 필드가 하나뿐이라 제목+메모 두 필드를 받기엔
+    // 부족해서, 패널 안에 인라인 폼을 직접 넣는다(mealContent/timetableList처럼 이 패널의
+    // 다른 섹션들도 전부 모달이 아닌 인라인 요소라 UI 톤도 맞다).
+    var personalEventSection = document.getElementById('personalEventSection');
+    var personalEventList = personalEventSection ? document.getElementById('personalEventList') : null;
+    var newPersonalEventBtn = personalEventSection ? document.getElementById('newPersonalEventBtn') : null;
+
+    function loadPersonalEvents() {
+        if (!personalEventList || !window.__LOGGED_IN__) return;
+        personalEventList.innerHTML = '<div class="comment-empty">불러오는 중...</div>';
+        fetch(`/school/api/personal-events?date=${currentCommentDate}`)
+            .then(function (res) { return res.json(); })
+            .then(renderPersonalEvents)
+            .catch(function () {
+                personalEventList.innerHTML = '<div class="comment-empty">일정을 불러오지 못했습니다.</div>';
+            });
+    }
+
+    function renderPersonalEvents(events) {
+        if (!personalEventList) return;
+        personalEventList.innerHTML = '';
+
+        if (!events || events.length === 0) {
+            personalEventList.innerHTML = '<div class="comment-empty">이 날 등록한 개인 일정이 없어요.</div>';
+        } else {
+            events.forEach(function (ev) {
+                personalEventList.appendChild(buildPersonalEventItem(ev));
+            });
         }
-        window.location.href = '/school/comments/new?' + params.toString();
-    });
+    }
+
+    function buildPersonalEventItem(ev) {
+        var item = document.createElement('div');
+        item.className = 'personal-event-item';
+        item.dataset.eventId = ev.id;
+
+        var editedBadge = ev.edited ? ' <span class="comment-edited">(수정됨)</span>' : '';
+        item.innerHTML = `
+            <div class="personal-event-item-header">
+                <span class="personal-event-title"></span>${editedBadge}
+                <button type="button" class="personal-event-edit-btn" title="수정" aria-label="수정"><i class="fa-solid fa-pen"></i></button>
+                <button type="button" class="personal-event-delete-btn" title="삭제" aria-label="삭제"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="personal-event-memo"></div>
+        `;
+        // title/memo는 사용자가 직접 입력한 순수 텍스트라 innerHTML이 아니라 textContent로만
+        // 채운다(제목엔 서버 검증이 있지만 이중 방어 - HtmlSanitizer를 아예 거치지 않는 필드이므로).
+        item.querySelector('.personal-event-title').textContent = ev.title;
+        var memoEl = item.querySelector('.personal-event-memo');
+        if (ev.memo) {
+            memoEl.textContent = ev.memo;
+        } else {
+            memoEl.remove();
+        }
+
+        item.querySelector('.personal-event-edit-btn').addEventListener('click', function () {
+            item.replaceWith(buildPersonalEventForm(ev));
+        });
+        item.querySelector('.personal-event-delete-btn').addEventListener('click', function () {
+            deletePersonalEvent(ev.id);
+        });
+
+        return item;
+    }
+
+    function buildPersonalEventForm(existing) {
+        var form = document.createElement('form');
+        form.className = 'personal-event-form';
+        form.innerHTML = `
+            <input type="text" class="personal-event-form-title" placeholder="일정 제목" maxlength="100" required>
+            <textarea class="personal-event-form-memo" placeholder="메모 (선택)" maxlength="1000" rows="2"></textarea>
+            <div class="personal-event-form-actions">
+                <button type="button" class="personal-event-form-cancel">취소</button>
+                <button type="submit" class="personal-event-form-save">저장</button>
+            </div>
+        `;
+        form.querySelector('.personal-event-form-title').value = existing ? existing.title : '';
+        form.querySelector('.personal-event-form-memo').value = existing ? (existing.memo || '') : '';
+
+        form.querySelector('.personal-event-form-cancel').addEventListener('click', function () {
+            if (existing) {
+                form.replaceWith(buildPersonalEventItem(existing));
+            } else {
+                form.remove();
+            }
+        });
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var title = form.querySelector('.personal-event-form-title').value.trim();
+            var memo = form.querySelector('.personal-event-form-memo').value.trim();
+            if (!title) return;
+
+            var saveBtn = form.querySelector('.personal-event-form-save');
+            saveBtn.disabled = true;
+
+            var body = new URLSearchParams({ title: title, memo: memo });
+            var request = existing
+                ? fetch('/school/api/personal-events/' + existing.id, {
+                    method: 'PUT',
+                    headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, WebSchoolCsrf.headers()),
+                    body: body.toString()
+                })
+                : fetch('/school/api/personal-events', {
+                    method: 'POST',
+                    headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, WebSchoolCsrf.headers()),
+                    body: (function () { body.set('date', currentCommentDate); return body; })().toString()
+                });
+
+            request
+                .then(function (res) {
+                    return res.json().then(function (data) {
+                        if (!res.ok) throw new Error(data.error || '저장에 실패했습니다.');
+                        return data;
+                    });
+                })
+                .then(function () {
+                    loadPersonalEvents();
+                    loadPersonalEventMonthDots();
+                })
+                .catch(function (err) {
+                    WebSchoolModal.alert(err.message || '저장에 실패했습니다.');
+                    saveBtn.disabled = false;
+                });
+        });
+
+        return form;
+    }
+
+    async function deletePersonalEvent(id) {
+        if (!(await WebSchoolModal.confirm('이 개인 일정을 삭제할까요?', { danger: true }))) return;
+        fetch('/school/api/personal-events/' + id, { method: 'DELETE', headers: WebSchoolCsrf.headers() })
+            .then(function (res) {
+                if (!res.ok) throw new Error('삭제 실패');
+                loadPersonalEvents();
+                loadPersonalEventMonthDots();
+            })
+            .catch(function () {
+                WebSchoolModal.alert('개인 일정 삭제에 실패했습니다.');
+            });
+    }
+
+    if (newPersonalEventBtn) {
+        newPersonalEventBtn.addEventListener('click', function () {
+            if (personalEventList.querySelector('.personal-event-form')) return; // 이미 폼이 열려있으면 무시
+            var emptyPlaceholder = personalEventList.querySelector('.comment-empty');
+            if (emptyPlaceholder) emptyPlaceholder.remove();
+            personalEventList.insertBefore(buildPersonalEventForm(null), personalEventList.firstChild);
+        });
+    }
 
     // 3. 백엔드 REST API 호출 및 상세 패널 바인딩 함수
     function fetchCalendarDetails(formattedDate, displayDate) {
@@ -1082,6 +1444,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 loadComments();
+                loadPersonalEvents();
             })
             .catch(error => {
                 console.error('상세 에러 로그:', error);

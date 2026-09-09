@@ -138,6 +138,31 @@ public class SchoolService {
                 .build();
     }
 
+    // 날씨 위젯용 학교 주소 확보 - School.address가 비어있으면 NEIS에서 조회해 영구
+    // 저장하고(학교당 1회, TTL 없음), 이미 있으면 그대로 반환한다. NEIS 조회가 실패하거나
+    // 주소를 못 찾으면 null을 반환하고(예외 없음), 호출부(WeatherService)가 이 학교는
+    // 날씨 기능을 조용히 건너뛰게 한다.
+    @Transactional
+    public String resolveSchoolAddress(String atptCode, String schoolCode) {
+        School school = schoolRepository.findBySdSchulCode(schoolCode)
+                .orElseGet(() -> schoolRepository.save(School.builder()
+                        .atptOfcdcScCode(atptCode)
+                        .sdSchulCode(schoolCode)
+                        .schoolName("우리 학교")
+                        .build()));
+
+        if (school.getAddress() != null && !school.getAddress().isBlank()) {
+            return school.getAddress();
+        }
+
+        String address = neisApiService.fetchSchoolAddressByCode(atptCode, schoolCode);
+        if (address != null && !address.isBlank()) {
+            school.setAddress(address);
+            schoolRepository.save(school);
+        }
+        return address;
+    }
+
     // updatedAt이 없거나(구버전 캐시 데이터) TTL을 넘겼으면 만료로 판단한다.
     private boolean isCacheExpired(LocalDateTime updatedAt) {
         return updatedAt == null || ChronoUnit.HOURS.between(updatedAt, LocalDateTime.now()) >= CACHE_TTL_HOURS;

@@ -357,6 +357,76 @@
     .cal-nav-today-btn { margin-left: 0; flex: 1 1 100%; justify-content: center; order: 10; }
 }
 
+/* 이번 주 날씨 위젯 - 7칸(일~토)을 가로로 늘어놓는다. 과거/미래 예보범위 밖이라 데이터가
+   없는 칸은 서버가 hasData:false로 내려주고(calendar.js loadWeatherWidget) "-"만 표시한다. */
+.weather-widget {
+    background: white;
+    border-radius: 1.25rem;
+    padding: 14px 18px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    margin-bottom: 16px;
+}
+
+.weather-widget-header {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.weather-widget-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.weather-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    border-radius: 10px;
+}
+
+.weather-day--today {
+    background: var(--surface-soft);
+}
+
+.weather-day-dow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.weather-day-icon { font-size: 1.3rem; }
+
+.weather-day-pop {
+    font-size: 0.68rem;
+    color: #2563eb;
+}
+
+.weather-day-temp {
+    font-size: 0.78rem;
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+.weather-day-empty {
+    font-size: 0.9rem;
+    color: var(--muted);
+    padding: 10px 0;
+}
+
+@media (max-width: 560px) {
+    .weather-widget-days { gap: 2px; }
+    .weather-day { padding: 6px 2px; }
+    .weather-day-temp { font-size: 0.7rem; }
+}
+
 /* 캘린더 그리드 + 상세 패널 레이아웃 */
 .cal-grid-main {
     display: grid;
@@ -432,6 +502,16 @@
 .cal-day:nth-last-child(-n+7) { border-bottom: none; }
 
 .cal-day:hover { background-color: #f8f8ff; }
+
+/* 개인 일정이 있는 날짜 표시 - .cal-day가 flex-direction:column이라 그냥 마지막 자식으로 넣으면
+   날짜 숫자/학사일정 띠 아래에 자연스럽게 한 줄 차지한다(절대 위치 계산 불필요). */
+.cal-day-personal-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--brand-1);
+    align-self: center;
+}
 
 /* 학사일정 띠 (시험, 방학, "OO주간" 등 그 날짜에 잡힌 일정 전부 - 토요휴업일 제외).
    하루짜리든 여러 날에 걸친 것이든 항상 칸 폭 전체를 꽉 채워서(.cal-day 좌우
@@ -823,7 +903,19 @@ a.comment-nickname:hover { text-decoration: underline; }
 }
 .comment-edit-btn,
 .comment-report-btn,
-.comment-like-btn { margin-left: auto; }
+.comment-like-btn,
+.comment-like-count-readonly { margin-left: auto; }
+
+/* 비로그인 사용자에게 보이는 좋아요 수 - 버튼이 아니라 그냥 숫자만(클릭해도 아무 동작 없음,
+   Feature 3 - 좋아요는 인증 필요 동작이라 버튼 자체를 안 그린다) */
+.comment-like-count-readonly {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding: 3px 6px;
+}
 /* comment-edit-btn은 수정 페이지로 이동하는 <a>라 버튼들과 달리 텍스트 밑줄/기본 색이 붙는다 */
 .comment-edit-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .comment-edit-btn:hover { color: var(--brand-1); background: rgba(30, 79, 163, 0.08); transform: translateY(-1px); }
@@ -943,6 +1035,114 @@ a.comment-nickname:hover { text-decoration: underline; }
 .comment-new-btn:hover { filter: brightness(1.06); }
 .comment-new-btn:active { transform: translateY(1px); }
 
+/* 개인 일정 - .comment-item과 동일한 카드 톤을 그대로 재사용(나만 보는 일정이지만
+   시각적으로 한마디 카드와 어울리게). */
+.personal-event-item {
+    background: #f8f9fc;
+    border: 1px solid #edeef7;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+.personal-event-item + .personal-event-item,
+.personal-event-form + .personal-event-item {
+    margin-top: 8px;
+}
+
+.personal-event-item-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.personal-event-title {
+    font-weight: 700;
+    font-size: 12.5px;
+    color: var(--ink);
+    word-break: break-word;
+}
+
+.personal-event-edit-btn,
+.personal-event-delete-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    border-radius: 999px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 3px 6px;
+    line-height: 1;
+    transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.personal-event-edit-btn { margin-left: auto; }
+.personal-event-delete-btn { margin-left: 2px; }
+.personal-event-edit-btn:hover { color: var(--brand-1); background: rgba(30, 79, 163, 0.08); transform: translateY(-1px); }
+.personal-event-delete-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
+
+.personal-event-memo {
+    margin-top: 3px;
+    font-size: 12.5px;
+    color: var(--ink);
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.personal-event-form {
+    background: #f8f9fc;
+    border: 1px solid #edeef7;
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.personal-event-form-title,
+.personal-event-form-memo {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 9px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ink);
+    background: white;
+    box-sizing: border-box;
+    resize: vertical;
+}
+.personal-event-form-title:focus,
+.personal-event-form-memo:focus {
+    outline: none;
+    border-color: var(--brand-1);
+}
+
+.personal-event-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.personal-event-form-cancel,
+.personal-event-form-save {
+    border: none;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+}
+.personal-event-form-cancel { background: var(--surface-soft); color: var(--ink); }
+.personal-event-form-save {
+    /* --brand-fixed(고정 남색) - .comment-new-btn과 동일한 이유(다크모드에서도 흰 글자 대비 유지) */
+    background: var(--brand-fixed);
+    color: white;
+}
+.personal-event-form-save:hover { filter: brightness(1.06); }
+.personal-event-form-save:active { transform: translateY(1px); }
+.personal-event-form-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
 /* 범례 */
 .cal-legend {
     display: flex;
@@ -1004,9 +1204,12 @@ a.comment-nickname:hover { text-decoration: underline; }
     html:not([data-theme="light"]) .cal-grid-card,
     html:not([data-theme="light"]) .day-detail-panel,
     html:not([data-theme="light"]) .day-detail-close,
-    html:not([data-theme="light"]) .day-detail-day-nav-btn {
+    html:not([data-theme="light"]) .day-detail-day-nav-btn,
+    html:not([data-theme="light"]) .weather-widget {
         background: var(--surface);
     }
+
+    html:not([data-theme="light"]) .weather-day--today { background: var(--surface-soft); }
 
     html:not([data-theme="light"]) .cal-control-item input,
     html:not([data-theme="light"]) .cal-control-item select {
@@ -1017,8 +1220,17 @@ a.comment-nickname:hover { text-decoration: underline; }
     html:not([data-theme="light"]) .cal-dow-header,
     html:not([data-theme="light"]) .meal-box,
     html:not([data-theme="light"]) .timetable-empty,
-    html:not([data-theme="light"]) .comment-item {
+    html:not([data-theme="light"]) .comment-item,
+    html:not([data-theme="light"]) .personal-event-item,
+    html:not([data-theme="light"]) .personal-event-form {
         background: var(--surface-soft);
+    }
+
+    html:not([data-theme="light"]) .personal-event-form-title,
+    html:not([data-theme="light"]) .personal-event-form-memo {
+        background: var(--surface);
+        color: var(--ink);
+        border-color: var(--border);
     }
 
     /* .meal-box는 배경만 위에서 var(--surface-soft)로 바뀌고 글자색(#495057, 라이트모드
@@ -1054,9 +1266,12 @@ html[data-theme="dark"] .cal-nav-select-group select,
 html[data-theme="dark"] .cal-grid-card,
 html[data-theme="dark"] .day-detail-panel,
 html[data-theme="dark"] .day-detail-close,
-html[data-theme="dark"] .day-detail-day-nav-btn {
+html[data-theme="dark"] .day-detail-day-nav-btn,
+html[data-theme="dark"] .weather-widget {
     background: var(--surface);
 }
+
+html[data-theme="dark"] .weather-day--today { background: var(--surface-soft); }
 
 html[data-theme="dark"] .cal-control-item input,
 html[data-theme="dark"] .cal-control-item select {
@@ -1067,8 +1282,17 @@ html[data-theme="dark"] .cal-control-item select {
 html[data-theme="dark"] .cal-dow-header,
 html[data-theme="dark"] .meal-box,
 html[data-theme="dark"] .timetable-empty,
-html[data-theme="dark"] .comment-item {
+html[data-theme="dark"] .comment-item,
+html[data-theme="dark"] .personal-event-item,
+html[data-theme="dark"] .personal-event-form {
     background: var(--surface-soft);
+}
+
+html[data-theme="dark"] .personal-event-form-title,
+html[data-theme="dark"] .personal-event-form-memo {
+    background: var(--surface);
+    color: var(--ink);
+    border-color: var(--border);
 }
 
 html[data-theme="dark"] .meal-box { color: var(--ink); }

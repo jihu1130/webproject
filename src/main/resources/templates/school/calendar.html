@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -124,6 +124,11 @@
             </button>
         </div>
 
+        <div id="weatherWidget" class="weather-widget" style="display:none;">
+            <div class="weather-widget-header"><i class="fa-solid fa-cloud-sun" aria-hidden="true"></i> 이번 주 날씨</div>
+            <div id="weatherWidgetDays" class="weather-widget-days"></div>
+        </div>
+
         <div class="cal-grid-main" id="calGridMain">
             <div class="cal-grid-card">
                 <div class="cal-grid-accent"></div>
@@ -175,13 +180,26 @@
                         </div>
                     </div>
 
+                    <div class="day-detail-section" id="personalEventSection" sec:authorize="isAuthenticated()">
+                        <div class="comment-section-header">
+                            <h4><i class="fa-solid fa-user-pen"></i> 내 개인 일정</h4>
+                            <button type="button" id="newPersonalEventBtn" class="comment-new-btn">
+                                <i class="fa-solid fa-plus"></i> 일정 추가
+                            </button>
+                        </div>
+                        <div id="personalEventList" class="personal-event-list"></div>
+                    </div>
+
                     <div class="day-detail-section">
                         <div class="comment-section-header">
                             <h4><i class="fa-solid fa-comments"></i> 오늘의 한마디</h4>
-                            <button type="button" id="newCommentBtn" class="comment-new-btn">
+                            <button type="button" id="newCommentBtn" class="comment-new-btn" sec:authorize="isAuthenticated()">
                                 <i class="fa-solid fa-pen"></i> 새 한마디 작성
                             </button>
                         </div>
+                        <p class="post-comment-login-notice" sec:authorize="!isAuthenticated()">
+                            한마디를 작성하려면 <a href="/login">로그인</a>이 필요해요.
+                        </p>
                         <div id="commentList" class="comment-list"></div>
                     </div>
                 </div>
@@ -197,6 +215,13 @@
     </div>
 </div>
 
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // 비로그인 사용자도 캘린더를 열람할 수 있게 된 뒤(Feature 3) - JS 쪽에서 "쓰기 동작" 버튼을
+    // 숨기거나 개인 일정 관련 API 호출을 건너뛸지 판단하는 데 쓴다.
+    window.__LOGGED_IN__ = /*[[${loginUser != null}]]*/ false;
+    /*]]>*/
+</script>
 <script th:if="${loginUser != null}" th:inline="javascript">
     /*<![CDATA[*/
     window.__USER_SCHOOL__ = {

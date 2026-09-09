@@ -77,7 +77,28 @@ public class SecurityConfig {
                         // 포인트/티어 랭킹 - 공개 프로필이 이미 포인트·티어를 permitAll로 보여주고
                         // 있어 같은 공개 수준으로 로그인 없이도 열람 가능
                         .requestMatchers(HttpMethod.GET, "/ranking", "/ranking/tiers").permitAll()
-                        // 캘린더(학사/급식 조회)는 로그인한 사용자만 이용 가능
+                        // 캘린더 비로그인 열람 허용(Feature 3, 사용자 확정) - 아래 4개 규칙은 선언
+                        // 순서가 그대로 우선순위(먼저 매칭되는 규칙이 적용)라 반드시 이 순서를 유지할 것.
+                        //
+                        // 1) 개인 일정은 원천적으로 비공개 데이터라 항상 인증 필요 - 나중에 실수로
+                        //    "/school/api/**" 같은 넓은 permitAll로 바뀌는 걸 막기 위해 이 규칙을
+                        //    이 블록 맨 앞에 명시적으로 둔다.
+                        .requestMatchers("/school/api/personal-events/**").authenticated()
+                        // 2) 한마디 작성/수정 "페이지 진입"(GET)은 로그인 필요 - /posts/new, /posts/*/edit과 동일한 이유
+                        .requestMatchers(HttpMethod.GET, "/school/comments/new", "/school/comments/*/edit").authenticated()
+                        // 3) 캘린더 페이지·조회성 API·한마디 목록/퍼머링크·날씨 위젯은 /posts처럼 비로그인도 열람 가능
+                        .requestMatchers(HttpMethod.GET,
+                                "/school/calendar",
+                                "/school/api/timetable",
+                                "/school/api/calendar-details",
+                                "/school/api/calendar-events",
+                                "/school/api/calendar-events/search",
+                                "/school/api/vacation-dday",
+                                "/school/api/weather",
+                                "/school/api/comments",
+                                "/school/comments/*"
+                        ).permitAll()
+                        // 4) 나머지 /school/** 전부(한마디 작성/수정/삭제/신고/좋아요/북마크 등 쓰기 동작)는 로그인 필요
                         .requestMatchers("/school/**").authenticated()
                         // 관리자 전용 화면은 ROLE_ADMIN(부관리자)/ROLE_SUPER_ADMIN(총관리자) 둘 다 접근 가능.
                         // 그 안에서 구체적으로 어떤 메뉴(신고/게시글/한마디/계정 관리)까지 볼 수 있는지는

@@ -17,6 +17,7 @@ import com.webschool.webschool.post.repository.PostContestVoteRepository;
 import com.webschool.webschool.post.repository.PostLikeRepository;
 import com.webschool.webschool.post.repository.PostReportRepository;
 import com.webschool.webschool.post.repository.PostRepository;
+import com.webschool.webschool.school.repository.PersonalEventRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentBookmarkRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentLikeRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentReportRepository;
@@ -47,9 +48,9 @@ import java.util.List;
 // users를 참조하는 FK 29개(2026-09-05 information_schema로 직접 확인, CLAUDE.md의 "29개"와 일치)를
 // 두 그룹으로 나눠 처리한다 - A그룹(콘텐츠 보존, FK만 NULL로 끊음: 게시글/댓글/한마디/공지/설문/
 // 콘테스트 수상기록/신고/문의/제재 이력)과 B그룹(개인 활동 흔적이라 행 자체를 함께 삭제: 좋아요/
-// 북마크/투표/구매내역/포인트내역/출석/토큰/알림/차단관계). 상세 분류는 각 리포지토리의
-// detach*()/deleteAllBy*() 메서드 주석 참고. FK 위반을 피하려면 반드시 B그룹 삭제 → A그룹 NULL-out
-// → users 행 삭제 순서를 지켜야 한다.
+// 북마크/투표/구매내역/포인트내역/출석/토큰/알림/차단관계/개인 캘린더 일정). 상세 분류는 각
+// 리포지토리의 detach*()/deleteAllBy*() 메서드 주석 참고. FK 위반을 피하려면 반드시 B그룹 삭제
+// → A그룹 NULL-out → users 행 삭제 순서를 지켜야 한다.
 @Service
 @RequiredArgsConstructor
 public class AccountHardDeleteService {
@@ -80,6 +81,7 @@ public class AccountHardDeleteService {
     private final CommentBookmarkRepository commentBookmarkRepository;
     private final ScheduleCommentLikeRepository scheduleCommentLikeRepository;
     private final ScheduleCommentBookmarkRepository scheduleCommentBookmarkRepository;
+    private final PersonalEventRepository personalEventRepository;
     private final PollVoteRepository pollVoteRepository;
     private final PostContestVoteRepository postContestVoteRepository;
     private final PostContestEntryRepository postContestEntryRepository;
@@ -129,6 +131,7 @@ public class AccountHardDeleteService {
         commentBookmarkRepository.deleteAllByUserId(userId);
         scheduleCommentLikeRepository.deleteAllByUserId(userId);
         scheduleCommentBookmarkRepository.deleteAllByUserId(userId);
+        personalEventRepository.deleteAllByUserId(userId);
         pollVoteRepository.deleteAllByVoterId(userId);
         postContestVoteRepository.deleteAllByVoterId(userId);
         postContestEntryRepository.deleteAllByNominatorId(userId);

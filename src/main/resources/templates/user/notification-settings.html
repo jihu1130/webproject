@@ -52,6 +52,16 @@
                         </span>
                     </label>
                 </div>
+                <div class="form-check mb-2">
+                    <input type="checkbox" class="form-check-input" id="weatherAlertEnabled" name="weatherAlertEnabled"
+                           value="true" th:checked="${weatherAlertEnabled}">
+                    <label class="form-check-label" for="weatherAlertEnabled">
+                        내 학교 지역 날씨 알림
+                        <span class="d-block text-muted small">
+                            등교 전, 비/눈이 오거나 너무 덥거나 추운 날 미리 알려드려요
+                        </span>
+                    </label>
+                </div>
 
                 <button type="submit" class="btn btn-primary w-100">저장하기</button>
             </form>
