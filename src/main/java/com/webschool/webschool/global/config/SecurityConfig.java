@@ -94,7 +94,6 @@ public class SecurityConfig {
                                 "/school/api/calendar-events",
                                 "/school/api/calendar-events/search",
                                 "/school/api/vacation-dday",
-                                "/school/api/weather",
                                 "/school/api/comments",
                                 "/school/comments/*"
                         ).permitAll()

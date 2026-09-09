@@ -149,12 +149,6 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean contestDeadlineAlertEnabled;
 
-    // 관심학교(=내 학교) 지역 날씨 알림 수신 여부 - contestDeadlineAlertEnabled와 동일한 이유로
-    // 기본값은 꺼짐(옵트인). weather.service.WeatherAlertService가 이 플래그가 켜진 사용자만
-    // 대상으로 스케줄러를 돌린다.
-    @Column(nullable = false, columnDefinition = "boolean default false")
-    private boolean weatherAlertEnabled;
-
     // 댓글/좋아요/답글 알림 개별 on-off(todo.md "고도화 후보" 항목) - contestDeadlineAlertEnabled와
     // 반대로 이 셋은 기존에 이미 항상 켜져 있던 알림을 사용자가 끌 수 있게 여는 것이라 기본값을
     // true로 둔다(옵트아웃 - active 필드와 동일한 이유로 Java 필드 초기값을 직접 줘야 신규

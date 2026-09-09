@@ -247,7 +247,6 @@ public class AuthController {
     public String notificationSettingsForm(Authentication authentication, Model model) {
         User user = userService.getByUsername(authentication.getName());
         model.addAttribute("contestDeadlineAlertEnabled", user.isContestDeadlineAlertEnabled());
-        model.addAttribute("weatherAlertEnabled", user.isWeatherAlertEnabled());
         model.addAttribute("commentAlertEnabled", user.isCommentAlertEnabled());
         model.addAttribute("likeAlertEnabled", user.isLikeAlertEnabled());
         model.addAttribute("replyAlertEnabled", user.isReplyAlertEnabled());
@@ -256,13 +255,12 @@ public class AuthController {
 
     @PostMapping("/mypage/notifications")
     public String notificationSettingsSubmit(@RequestParam(defaultValue = "false") boolean contestDeadlineAlertEnabled,
-                                              @RequestParam(defaultValue = "false") boolean weatherAlertEnabled,
                                               @RequestParam(defaultValue = "false") boolean commentAlertEnabled,
                                               @RequestParam(defaultValue = "false") boolean likeAlertEnabled,
                                               @RequestParam(defaultValue = "false") boolean replyAlertEnabled,
                                               Authentication authentication) {
         userService.updateNotificationPreferences(authentication.getName(), contestDeadlineAlertEnabled,
-                weatherAlertEnabled, commentAlertEnabled, likeAlertEnabled, replyAlertEnabled);
+                commentAlertEnabled, likeAlertEnabled, replyAlertEnabled);
         return "redirect:/mypage/notifications?updated=true";
     }
 

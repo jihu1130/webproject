@@ -28,9 +28,4 @@ public class School {
 
     private String lctnScNm;        // 소재지
     private String fondYmd;         // 설립일자
-
-    // 날씨 위젯용 도로명주소(NEIS ORG_RDNMA) - 학교당 1회만 조회해 영구 캐싱한다(SchoolService.
-    // resolveSchoolAddress() 참고, 주소는 사실상 안 바뀌므로 TTL 불필요, Timetable/Meal 캐시와
-    // 다른 점).
-    private String address;
 }

@@ -215,7 +215,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // 방학 D-Day 배지 - 학교가 선택돼 있을 때만 조회한다(선택 안 됐으면 배지 숨김).
     // 서버가 없음(404)을 주면(방학 정보를 못 찾음) 배지를 숨긴다.
     function loadVacationDday() {
-        loadWeatherWidget(); // 학교 선택이 바뀌는 3개 지점(loadVacationDday 호출부)과 항상 같이 움직여야 하므로 여기 안에 끼워넣는다(personalEventDateSet과 동일한 방식)
         var badge = document.getElementById('vacationDdayBadge');
         if (!badge) return;
 
@@ -252,68 +251,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(function () {
                 badge.style.display = 'none';
             });
-    }
-
-    // 이번 주(일~토) 날씨 위젯. 서버가 학교 주소→격자 매칭에 실패하면(kma-grid.csv 없음/API 키
-    // 미설정 등) 404를 주므로 그때는 위젯 자체를 숨긴다. 과거 날짜인데 데이터가 없는 칸(이 기능
-    // 배포 전이라 캐시가 없는 경우)과 아직 예보 범위 밖이라 비어있는 미래 날짜는 서버가 둘 다
-    // hasData:false로 내려주므로 여기서는 구분하지 않고 그냥 "-"로만 표시한다.
-    function loadWeatherWidget() {
-        var widget = document.getElementById('weatherWidget');
-        var daysBox = document.getElementById('weatherWidgetDays');
-        if (!widget || !daysBox) return;
-
-        if (!selectedSchool) {
-            widget.style.display = 'none';
-            return;
-        }
-
-        var params = new URLSearchParams({
-            atptCode: selectedSchool.officeCode,
-            schoolCode: selectedSchool.schoolCode
-        });
-
-        fetch(`/school/api/weather?${params.toString()}`)
-            .then(function (res) { return res.status === 404 ? null : res.json(); })
-            .then(function (week) {
-                if (!week || !week.days) {
-                    widget.style.display = 'none';
-                    return;
-                }
-                var todayStr = formatLocalDate(new Date());
-                daysBox.innerHTML = week.days.map(function (day, i) {
-                    var isToday = day.date === todayStr;
-                    var cls = 'weather-day' + (isToday ? ' weather-day--today' : '');
-                    if (!day.hasData) {
-                        return `<div class="${cls}"><span class="weather-day-dow">${DOW_KO[i]}</span><span class="weather-day-empty">-</span></div>`;
-                    }
-                    var icon = weatherIcon(day.ptyLabel, day.skyLabel);
-                    var pop = (day.pop === null || day.pop === undefined) ? '' : `<span class="weather-day-pop">${day.pop}%</span>`;
-                    return `
-                        <div class="${cls}">
-                            <span class="weather-day-dow">${DOW_KO[i]}</span>
-                            <span class="weather-day-icon">${icon}</span>
-                            ${pop}
-                            <span class="weather-day-temp"><b>${day.tmx != null ? day.tmx : '-'}°</b> / ${day.tmn != null ? day.tmn : '-'}°</span>
-                        </div>
-                    `;
-                }).join('');
-                widget.style.display = 'block';
-            })
-            .catch(function () {
-                widget.style.display = 'none';
-            });
-    }
-
-    function weatherIcon(ptyLabel, skyLabel) {
-        if (ptyLabel === '비') return '🌧️';
-        if (ptyLabel === '비/눈') return '🌨️';
-        if (ptyLabel === '눈') return '❄️';
-        if (ptyLabel === '소나기') return '🌦️';
-        if (skyLabel === '맑음') return '☀️';
-        if (skyLabel === '구름많음') return '⛅';
-        if (skyLabel === '흐림') return '☁️';
-        return '·';
     }
 
     // 매주 반복되는 토요휴업일 자체는 표시하면 오히려 매주 눈에 띄어 정작 중요한

@@ -333,11 +333,10 @@ public class UserService {
     // 안 넘어오므로 컨트롤러 쪽에서 각 필드를 defaultValue=false로 받아 그대로 전달한다.
     @Transactional
     public void updateNotificationPreferences(String username, boolean contestDeadlineAlertEnabled,
-                                               boolean weatherAlertEnabled, boolean commentAlertEnabled,
-                                               boolean likeAlertEnabled, boolean replyAlertEnabled) {
+                                               boolean commentAlertEnabled, boolean likeAlertEnabled,
+                                               boolean replyAlertEnabled) {
         User user = getByUsername(username);
         user.setContestDeadlineAlertEnabled(contestDeadlineAlertEnabled);
-        user.setWeatherAlertEnabled(weatherAlertEnabled);
         user.setCommentAlertEnabled(commentAlertEnabled);
         user.setLikeAlertEnabled(likeAlertEnabled);
         user.setReplyAlertEnabled(replyAlertEnabled);

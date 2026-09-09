@@ -87,36 +87,6 @@ public class NeisApiService {
         return results;
     }
 
-    // 특정 학교(코드 지정)의 도로명주소만 단건 조회 - searchSchools()는 학교명 검색이라
-    // 이미 학교 코드를 알고 있는 상황(School.address 캐싱)엔 안 맞아서 별도로 뺐다.
-    public String fetchSchoolAddressByCode(String atptCode, String schoolCode) {
-        if (atptCode == null || atptCode.isBlank() || schoolCode == null || schoolCode.isBlank()) {
-            return null;
-        }
-
-        String url = String.format(
-                "https://open.neis.go.kr/hub/schoolInfo?KEY=%s&Type=json&ATPT_OFCDC_SC_CODE=%s&SD_SCHUL_CODE=%s",
-                apiKey, atptCode, schoolCode
-        );
-
-        String body = send(url);
-        if (body == null) {
-            return null;
-        }
-
-        try {
-            JsonNode root = MAPPER.readTree(body);
-            JsonNode rows = root.path("schoolInfo").path(1).path("row");
-            if (rows.isArray() && !rows.isEmpty()) {
-                String address = rows.get(0).path("ORG_RDNMA").asText("");
-                return address.isBlank() ? null : address;
-            }
-        } catch (Exception e) {
-            log.warn("NEIS 학교 주소 응답 파싱 실패 (schoolCode={}): {}", schoolCode, e.toString());
-        }
-        return null;
-    }
-
     // 학교의 실제 학급(반) 목록 조회 (학년 지정 시 해당 학년만)
     public List<String> fetchClassList(String atptCode, String schoolCode, String grade) {
         java.util.LinkedHashSet<String> distinctClasses = new java.util.LinkedHashSet<>();

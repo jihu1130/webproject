@@ -357,76 +357,6 @@
     .cal-nav-today-btn { margin-left: 0; flex: 1 1 100%; justify-content: center; order: 10; }
 }
 
-/* 이번 주 날씨 위젯 - 7칸(일~토)을 가로로 늘어놓는다. 과거/미래 예보범위 밖이라 데이터가
-   없는 칸은 서버가 hasData:false로 내려주고(calendar.js loadWeatherWidget) "-"만 표시한다. */
-.weather-widget {
-    background: white;
-    border-radius: 1.25rem;
-    padding: 14px 18px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
-    margin-bottom: 16px;
-}
-
-.weather-widget-header {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--muted);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.weather-widget-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-}
-
-.weather-day {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 8px 4px;
-    border-radius: 10px;
-}
-
-.weather-day--today {
-    background: var(--surface-soft);
-}
-
-.weather-day-dow {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--muted);
-}
-
-.weather-day-icon { font-size: 1.3rem; }
-
-.weather-day-pop {
-    font-size: 0.68rem;
-    color: #2563eb;
-}
-
-.weather-day-temp {
-    font-size: 0.78rem;
-    color: var(--ink);
-    white-space: nowrap;
-}
-
-.weather-day-empty {
-    font-size: 0.9rem;
-    color: var(--muted);
-    padding: 10px 0;
-}
-
-@media (max-width: 560px) {
-    .weather-widget-days { gap: 2px; }
-    .weather-day { padding: 6px 2px; }
-    .weather-day-temp { font-size: 0.7rem; }
-}
-
 /* 캘린더 그리드 + 상세 패널 레이아웃 */
 .cal-grid-main {
     display: grid;
@@ -1204,12 +1134,9 @@ a.comment-nickname:hover { text-decoration: underline; }
     html:not([data-theme="light"]) .cal-grid-card,
     html:not([data-theme="light"]) .day-detail-panel,
     html:not([data-theme="light"]) .day-detail-close,
-    html:not([data-theme="light"]) .day-detail-day-nav-btn,
-    html:not([data-theme="light"]) .weather-widget {
+    html:not([data-theme="light"]) .day-detail-day-nav-btn {
         background: var(--surface);
     }
-
-    html:not([data-theme="light"]) .weather-day--today { background: var(--surface-soft); }
 
     html:not([data-theme="light"]) .cal-control-item input,
     html:not([data-theme="light"]) .cal-control-item select {
@@ -1266,12 +1193,9 @@ html[data-theme="dark"] .cal-nav-select-group select,
 html[data-theme="dark"] .cal-grid-card,
 html[data-theme="dark"] .day-detail-panel,
 html[data-theme="dark"] .day-detail-close,
-html[data-theme="dark"] .day-detail-day-nav-btn,
-html[data-theme="dark"] .weather-widget {
+html[data-theme="dark"] .day-detail-day-nav-btn {
     background: var(--surface);
 }
-
-html[data-theme="dark"] .weather-day--today { background: var(--surface-soft); }
 
 html[data-theme="dark"] .cal-control-item input,
 html[data-theme="dark"] .cal-control-item select {
