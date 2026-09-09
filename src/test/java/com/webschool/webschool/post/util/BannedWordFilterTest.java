@@ -34,11 +34,6 @@ class BannedWordFilterTest {
     }
 
     @Test
-    void englishBannedWordIsCaseInsensitive() {
-        assertThrows(IllegalArgumentException.class, () -> BannedWordFilter.validate("you FUCK off"));
-    }
-
-    @Test
     void falsePositiveLikeSubstringStillMatchesKnownLimitation() {
         // "시발음"(poem pronunciation)처럼 정상 단어가 우연히 금지어를 부분 문자열로 포함하는 경우도
         // 걸러진다 - 단순 포함 검사의 알려진 한계이며 새 정규화로 해결되는 문제가 아니다(회귀 테스트

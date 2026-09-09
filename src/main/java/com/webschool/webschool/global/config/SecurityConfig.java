@@ -10,8 +10,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
@@ -94,6 +97,19 @@ public class SecurityConfig {
                 // 아래 requestCache() 참고 - 네비바 알림 배지 폴링 요청이 로그인 후 리다이렉트
                 // 대상으로 잘못 저장되는 버그(todo.md #15) 수정.
                 .requestCache(cache -> cache.requestCache(requestCache()))
+                // 관리자 대시보드의 "현재 로그인 세션 수"(AdminDashboardController)가 읽는
+                // 레지스트리 - 세션 최대 개수 제한 등은 안 걸고 등록/조회 용도로만 쓴다.
+                // sessionRegistry()만 등록해선 세션 만료(로그아웃/타임아웃) 이벤트를 못 받아
+                // getAllSessions(expiredOnly=false)가 죽은 세션을 계속 살아있는 것처럼
+                // 세도록 아래 httpSessionEventPublisher() 빈이 반드시 같이 있어야 한다.
+                .sessionManagement(session -> session
+                        .sessionConcurrency(concurrency -> concurrency
+                                .sessionRegistry(sessionRegistry())
+                                // maximumSessions를 실제로 호출해야 RegisterSessionAuthenticationStrategy가
+                                // 인증 흐름에 실제로 붙는다(sessionRegistry()만 지정하면 등록 자체가 안
+                                // 일어나서 대시보드의 세션 수가 항상 0으로 나오는 걸 직접 겪고 알게 됨) -
+                                // 동시 세션 개수를 막을 생각은 없어서 -1(무제한)로 둔다.
+                                .maximumSessions(-1)))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
@@ -141,5 +157,18 @@ public class SecurityConfig {
         requestCache.setRequestMatcher(new NegatedRequestMatcher(
                 PathPatternRequestMatcher.pathPattern("/notifications/unread-count")));
         return requestCache;
+    }
+
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    // ServletContext에 HttpSessionEventPublisher 리스너를 등록해서 세션 생성/소멸 이벤트를
+    // SessionRegistry에 전달한다(WebConfig에 별도로 등록하지 않고 여기 빈으로만 선언해도
+    // Spring Boot가 ServletListenerRegistrationBean 없이 자동으로 리스너로 등록해준다).
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 }

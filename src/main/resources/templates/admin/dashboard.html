@@ -51,6 +51,59 @@
                 <h2>포인트 티어 분포</h2>
                 <div id="dashTierChart" class="dash-tier-list"></div>
             </section>
+
+            <!-- 서버 상태(사용자 요청, 2026-09-09) - Actuator/Micrometer에서 직접 읽은 실시간 값
+                 (요청마다 새로 조회, 별도 캐시 없음) + 1분 간격으로 쌓은 최근 1시간 추이
+                 (ServerMetricsHistoryService). CloudWatch 알람과 같은 임계치(CPU 80%/메모리 85%,
+                 AWS.md 7단계 참고)를 넘으면 dash-kpi--warn으로 눈에 띄게 한다. 이 페이지 자체가
+                 이미 AdminAccessInterceptor에서 총관리자 전용이지만, 서버 지표는 특히 민감한
+                 운영 정보라 화면에서도 한 번 더 명시적으로 총관리자만 보이게 가른다(사용자 요청). -->
+            <th:block th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}">
+                <h2 class="dash-section-heading"><i class="fa-solid fa-server"></i> 서버 상태 (총관리자 전용)</h2>
+                <section class="dash-kpis">
+                    <div class="dash-kpi" th:classappend="${serverSnapshot.activeSessionCount()} >= 200 ? 'dash-kpi--warn' : ''">
+                        <div class="dash-kpi-label"><i class="fa-solid fa-user-clock"></i> 현재 로그인 세션</div>
+                        <div class="dash-kpi-value" th:text="${serverSnapshot.activeSessionCount()}">0</div>
+                    </div>
+                    <div class="dash-kpi" th:classappend="${serverSnapshot.cpuUsagePercent()} != null and ${serverSnapshot.cpuUsagePercent()} >= 80 ? 'dash-kpi--warn' : ''">
+                        <div class="dash-kpi-label"><i class="fa-solid fa-microchip"></i> CPU 사용률</div>
+                        <div class="dash-kpi-value">
+                            <span th:if="${serverSnapshot.cpuUsagePercent()} != null" th:text="${serverSnapshot.cpuUsagePercent()} + '%'">0%</span>
+                            <span th:if="${serverSnapshot.cpuUsagePercent()} == null">-</span>
+                        </div>
+                    </div>
+                    <div class="dash-kpi" th:classappend="${serverSnapshot.heapUsedPercent()} >= 85 ? 'dash-kpi--warn' : ''">
+                        <div class="dash-kpi-label"><i class="fa-solid fa-memory"></i> 힙 메모리 사용률</div>
+                        <div class="dash-kpi-value" th:text="${serverSnapshot.heapUsedPercent()} + '%'">0%</div>
+                        <div class="dash-kpi-sub" th:text="${serverSnapshot.heapUsedMb()} + ' / ' + ${serverSnapshot.heapCommittedMb()} + ' MB'">0 / 0 MB</div>
+                    </div>
+                    <div class="dash-kpi">
+                        <div class="dash-kpi-label"><i class="fa-solid fa-hourglass-half"></i> 서버 가동시간</div>
+                        <div class="dash-kpi-value" th:text="${serverSnapshot.uptimeLabel()}">-</div>
+                    </div>
+                    <div class="dash-kpi">
+                        <div class="dash-kpi-label"><i class="fa-solid fa-hard-drive"></i> 디스크 여유공간</div>
+                        <div class="dash-kpi-value">
+                            <span th:if="${serverSnapshot.diskFreeGb()} != null" th:text="${#numbers.formatDecimal(serverSnapshot.diskFreeGb(), 1, 1)} + ' GB'">0 GB</span>
+                            <span th:if="${serverSnapshot.diskFreeGb()} == null">-</span>
+                        </div>
+                        <div class="dash-kpi-sub" th:if="${serverSnapshot.diskTotalGb()} != null"
+                             th:text="'전체 ' + ${#numbers.formatDecimal(serverSnapshot.diskTotalGb(), 1, 1)} + ' GB 중'">전체 0 GB 중</div>
+                    </div>
+                </section>
+
+                <section class="dash-card">
+                    <h2>CPU 사용률 추이 (최근 1시간, 1분 간격)</h2>
+                    <div id="dashCpuHistoryChart" class="dash-chart"
+                         role="img" aria-label="최근 1시간 동안 1분 간격으로 측정한 CPU 사용률 추이 차트"></div>
+                </section>
+
+                <section class="dash-card">
+                    <h2>힙 메모리 사용량 추이 (최근 1시간, 1분 간격, MB)</h2>
+                    <div id="dashHeapHistoryChart" class="dash-chart"
+                         role="img" aria-label="최근 1시간 동안 1분 간격으로 측정한 힙 메모리 사용량 추이 차트"></div>
+                </section>
+            </th:block>
         </div>
     </div>
 </div>
@@ -68,6 +121,18 @@
 
     renderTrendChart(document.getElementById('dashPostTrendChart'), trendLabels, trendValues);
     renderTierChart(document.getElementById('dashTierChart'), tierLabels, tierValues);
+
+    // 서버 상태 추이 차트 - 총관리자가 아니면 dashboard.html에서 이 섹션 자체(th:block)가 안
+    // 그려지므로 컨테이너가 없다. renderTrendChart가 이미 !container를 체크하니 그냥 시도해도
+    // 안전하지만, 모델 변수도 총관리자가 아닐 땐 아예 안 채워지므로(컨트롤러가 항상 채우긴
+    // 하지만) 명시적으로 한 번 더 존재 체크.
+    var serverHistoryLabels = /*[[${serverHistoryLabels}]]*/ [];
+    var cpuHistoryValues = /*[[${serverCpuHistoryValues}]]*/ [];
+    var heapHistoryValues = /*[[${serverHeapHistoryValues}]]*/ [];
+    if (document.getElementById('dashCpuHistoryChart')) {
+        renderTrendChart(document.getElementById('dashCpuHistoryChart'), serverHistoryLabels, cpuHistoryValues);
+        renderTrendChart(document.getElementById('dashHeapHistoryChart'), serverHistoryLabels, heapHistoryValues);
+    }
 
     function renderTrendChart(container, labels, values) {
         if (!container || values.length === 0) return;
@@ -105,8 +170,11 @@
             if (isLast) {
                 dots += '<text class="dash-chart-value-label" x="' + cx + '" y="' + (cy - 10) + '" text-anchor="end">' + v + '</text>';
             }
-            // 라벨이 14개 다 있으면 좁은 화면에서 겹치므로 이틀에 하나씩만 표시(마지막은 항상 표시).
-            if (i % 2 === 0 || isLast) {
+            // 라벨이 다 있으면 좁은 화면에서 겹치므로 대략 7개만 남게 건너뛰며 표시(마지막은 항상
+            // 표시) - 포스트 추이(14개)든 서버 지표 추이(60개)든 같은 함수를 재사용하므로 데이터
+            // 길이에 맞춰 step을 계산한다(고정 2칸 간격이면 60개일 때 라벨이 30개나 남아 겹친다).
+            var labelStep = Math.max(1, Math.ceil(values.length / 7));
+            if (i % labelStep === 0 || isLast) {
                 xLabels += '<text class="dash-chart-axis-label" x="' + cx + '" y="' + (height - 6) + '" text-anchor="middle">' + labels[i] + '</text>';
             }
         });

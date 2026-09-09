@@ -800,6 +800,13 @@
     font-variant-numeric: tabular-nums;
 }
 
+.dash-kpi-sub {
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
 .dash-card {
     grid-column: span 1;
     background: var(--surface);
@@ -860,6 +867,16 @@
     text-align: right;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
+}
+
+/* 서버 상태 KPI 행 앞에 붙는 소제목 - .dash-card h2와 같은 스타일이지만 .dash-card 밖(.dash-grid
+   바로 아래)에 놓이는 .dash-kpis 앞이라 별도 클래스로 뺐다. */
+.dash-section-heading {
+    grid-column: 1 / -1;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 8px 0 -4px;
 }
 
 @media (max-width: 720px) {

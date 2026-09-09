@@ -1,5 +1,6 @@
 package com.webschool.webschool.admin.controller;
 
+import com.webschool.webschool.admin.service.ServerMetricsHistoryService;
 import com.webschool.webschool.bugreport.repository.BugReportRepository;
 import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
@@ -35,6 +36,7 @@ public class AdminDashboardController {
     private final PostCommentRepository postCommentRepository;
     private final ScheduleCommentRepository scheduleCommentRepository;
     private final BugReportRepository bugReportRepository;
+    private final ServerMetricsHistoryService serverMetricsHistoryService;
 
     @GetMapping("/admin/dashboard")
     public String dashboard(Model model) {
@@ -65,6 +67,22 @@ public class AdminDashboardController {
         }
         model.addAttribute("tierLabels", tierCounts.keySet().stream().map(PointTier::getLabel).toList());
         model.addAttribute("tierValues", new ArrayList<>(tierCounts.values()));
+
+        // 서버 상태(사용자 요청, 2026-09-09) - Actuator + Micrometer(#24, 로컬 Prometheus/Grafana
+        // 연동과 같은 지표원)에서 직접 읽는다. CloudWatch 알람이 보는 지표(CPU/메모리/디스크)와
+        // 같은 축이지만, 그건 임계치 초과 시 이메일로만 오고 평소엔 숫자를 볼 방법이 없었다.
+        // 템플릿에서 총관리자에게만 노출(dashboard.html의 loginUser.role 체크 참고) - 이 페이지
+        // 자체가 이미 AdminAccessInterceptor에서 총관리자 전용이지만, 위임 범위가 나중에 넓어져도
+        // 서버 지표만은 항상 총관리자 전용으로 남도록 화면에서 한 번 더 명시적으로 가른다.
+        ServerMetricsHistoryService.Snapshot snapshot = serverMetricsHistoryService.getSnapshot();
+        model.addAttribute("serverSnapshot", snapshot);
+
+        List<ServerMetricsHistoryService.Sample> history = serverMetricsHistoryService.getHistory();
+        DateTimeFormatter timeLabel = DateTimeFormatter.ofPattern("HH:mm");
+        model.addAttribute("serverHistoryLabels", history.stream().map(s -> timeLabel.format(s.time())).toList());
+        model.addAttribute("serverCpuHistoryValues",
+                history.stream().map(s -> s.cpuPercent() == null ? 0 : s.cpuPercent()).toList());
+        model.addAttribute("serverHeapHistoryValues", history.stream().map(ServerMetricsHistoryService.Sample::heapUsedMb).toList());
 
         return "admin/dashboard";
     }
