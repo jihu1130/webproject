@@ -915,32 +915,36 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function toggleCommentLike(id, btn) {
-        fetch('/school/api/comments/' + id + '/like', { method: 'POST', headers: WebSchoolCsrf.headers() })
-            .then(function (res) {
-                if (!res.ok) throw new Error('처리 실패');
-                return res.json();
-            })
-            .then(function (body) {
-                btn.classList.toggle('active', body.liked);
-                btn.querySelector('.comment-like-count').textContent = body.likeCount;
-            })
-            .catch(function () {
-                WebSchoolModal.alert('좋아요 처리에 실패했습니다.');
-            });
+        WebSchoolRequestGuard.run(btn, function () {
+            return fetch('/school/api/comments/' + id + '/like', { method: 'POST', headers: WebSchoolCsrf.headers() })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('처리 실패');
+                    return res.json();
+                })
+                .then(function (body) {
+                    btn.classList.toggle('active', body.liked);
+                    btn.querySelector('.comment-like-count').textContent = body.likeCount;
+                })
+                .catch(function () {
+                    WebSchoolModal.alert('좋아요 처리에 실패했습니다.');
+                });
+        });
     }
 
     function toggleCommentBookmark(id, btn) {
-        fetch('/school/api/comments/' + id + '/bookmark', { method: 'POST', headers: WebSchoolCsrf.headers() })
-            .then(function (res) {
-                if (!res.ok) throw new Error('처리 실패');
-                return res.json();
-            })
-            .then(function (body) {
-                btn.classList.toggle('active', body.bookmarked);
-            })
-            .catch(function () {
-                WebSchoolModal.alert('북마크 처리에 실패했습니다.');
-            });
+        WebSchoolRequestGuard.run(btn, function () {
+            return fetch('/school/api/comments/' + id + '/bookmark', { method: 'POST', headers: WebSchoolCsrf.headers() })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('처리 실패');
+                    return res.json();
+                })
+                .then(function (body) {
+                    btn.classList.toggle('active', body.bookmarked);
+                })
+                .catch(function () {
+                    WebSchoolModal.alert('북마크 처리에 실패했습니다.');
+                });
+        });
     }
 
     // 게시글 리치 에디터의 "🔗 링크 카드 삽입" 버튼에 붙여넣을 수 있는 이 한마디만의 고유 링크를

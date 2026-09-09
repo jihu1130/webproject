@@ -71,26 +71,29 @@ function initPollWidget(container, fetchUrl) {
             return;
         }
 
-        container.querySelector('.poll-widget-submit').addEventListener('click', function () {
-            var selected = Array.prototype.slice
-                .call(container.querySelectorAll('input[name="pollOption"]:checked'))
-                .map(function (input) { return Number(input.value); });
-            var customInput = container.querySelector('.poll-widget-custom-input');
-            var customText = customInput ? customInput.value.trim() : '';
+        var submitBtn = container.querySelector('.poll-widget-submit');
+        submitBtn.addEventListener('click', function () {
+            WebSchoolRequestGuard.run(submitBtn, function () {
+                var selected = Array.prototype.slice
+                    .call(container.querySelectorAll('input[name="pollOption"]:checked'))
+                    .map(function (input) { return Number(input.value); });
+                var customInput = container.querySelector('.poll-widget-custom-input');
+                var customText = customInput ? customInput.value.trim() : '';
 
-            fetch('/polls/' + poll.id + '/vote', {
-                method: 'POST',
-                headers: Object.assign({ 'Content-Type': 'application/json' }, WebSchoolCsrf.headers()),
-                body: JSON.stringify({ optionIds: selected, customOptionText: customText })
-            }).then(function (res) {
-                if (!res.ok) {
-                    return res.json().then(function (body) {
-                        throw new Error(body.error || '투표에 실패했습니다.');
-                    });
-                }
-                return res.json();
-            }).then(render).catch(function (err) {
-                alert(err.message);
+                return fetch('/polls/' + poll.id + '/vote', {
+                    method: 'POST',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, WebSchoolCsrf.headers()),
+                    body: JSON.stringify({ optionIds: selected, customOptionText: customText })
+                }).then(function (res) {
+                    if (!res.ok) {
+                        return res.json().then(function (body) {
+                            throw new Error(body.error || '투표에 실패했습니다.');
+                        });
+                    }
+                    return res.json();
+                }).then(render).catch(function (err) {
+                    alert(err.message);
+                });
             });
         });
     }

@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var acceptBtn = item.querySelector('.post-comment-accept-btn');
         if (acceptBtn) {
-            acceptBtn.addEventListener('click', function () { toggleAcceptAnswer(c.id); });
+            acceptBtn.addEventListener('click', function () { toggleAcceptAnswer(c.id, acceptBtn); });
         }
 
         var replyBtn = item.querySelector('.post-comment-reply-btn');
@@ -330,50 +330,56 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ---- QNA 답변 채택 ----
-    function toggleAcceptAnswer(id) {
-        fetch('/posts/' + postId + '/comments/' + id + '/accept', { method: 'POST', headers: WebSchoolCsrf.headers() })
-            .then(function (res) {
-                return res.json().then(function (body) {
-                    if (!res.ok) throw new Error(body.error || '채택 처리에 실패했습니다.');
-                    return body;
+    function toggleAcceptAnswer(id, btn) {
+        WebSchoolRequestGuard.run(btn, function () {
+            return fetch('/posts/' + postId + '/comments/' + id + '/accept', { method: 'POST', headers: WebSchoolCsrf.headers() })
+                .then(function (res) {
+                    return res.json().then(function (body) {
+                        if (!res.ok) throw new Error(body.error || '채택 처리에 실패했습니다.');
+                        return body;
+                    });
+                })
+                .then(function () {
+                    loadComments(); // 채택 상태는 댓글 목록 전체의 정렬/배지에 영향을 주므로 통째로 다시 불러온다
+                })
+                .catch(function (err) {
+                    WebSchoolModal.alert(err.message || '채택 처리에 실패했습니다.');
                 });
-            })
-            .then(function () {
-                loadComments(); // 채택 상태는 댓글 목록 전체의 정렬/배지에 영향을 주므로 통째로 다시 불러온다
-            })
-            .catch(function (err) {
-                WebSchoolModal.alert(err.message || '채택 처리에 실패했습니다.');
-            });
+        });
     }
 
     // ---- 댓글 좋아요/북마크 ----
     function toggleCommentLike(id, btn) {
-        fetch('/posts/' + postId + '/comments/' + id + '/like', { method: 'POST', headers: WebSchoolCsrf.headers() })
-            .then(function (res) {
-                if (!res.ok) throw new Error('처리 실패');
-                return res.json();
-            })
-            .then(function (body) {
-                btn.classList.toggle('active', body.liked);
-                btn.querySelector('.post-comment-like-count').textContent = body.likeCount;
-            })
-            .catch(function () {
-                WebSchoolModal.alert('좋아요 처리에 실패했습니다.');
-            });
+        WebSchoolRequestGuard.run(btn, function () {
+            return fetch('/posts/' + postId + '/comments/' + id + '/like', { method: 'POST', headers: WebSchoolCsrf.headers() })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('처리 실패');
+                    return res.json();
+                })
+                .then(function (body) {
+                    btn.classList.toggle('active', body.liked);
+                    btn.querySelector('.post-comment-like-count').textContent = body.likeCount;
+                })
+                .catch(function () {
+                    WebSchoolModal.alert('좋아요 처리에 실패했습니다.');
+                });
+        });
     }
 
     function toggleCommentBookmark(id, btn) {
-        fetch('/posts/' + postId + '/comments/' + id + '/bookmark', { method: 'POST', headers: WebSchoolCsrf.headers() })
-            .then(function (res) {
-                if (!res.ok) throw new Error('처리 실패');
-                return res.json();
-            })
-            .then(function (body) {
-                btn.classList.toggle('active', body.bookmarked);
-            })
-            .catch(function () {
-                WebSchoolModal.alert('북마크 처리에 실패했습니다.');
-            });
+        WebSchoolRequestGuard.run(btn, function () {
+            return fetch('/posts/' + postId + '/comments/' + id + '/bookmark', { method: 'POST', headers: WebSchoolCsrf.headers() })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('처리 실패');
+                    return res.json();
+                })
+                .then(function (body) {
+                    btn.classList.toggle('active', body.bookmarked);
+                })
+                .catch(function () {
+                    WebSchoolModal.alert('북마크 처리에 실패했습니다.');
+                });
+        });
     }
 
     var commentForm = document.getElementById('postCommentForm');
@@ -446,36 +452,40 @@ document.addEventListener('DOMContentLoaded', function () {
     var postLikeBtn = document.getElementById('postLikeBtn');
     if (postLikeBtn) {
         postLikeBtn.addEventListener('click', function () {
-            fetch('/posts/' + postId + '/like', { method: 'POST', headers: WebSchoolCsrf.headers() })
-                .then(function (res) {
-                    if (!res.ok) throw new Error('처리 실패');
-                    return res.json();
-                })
-                .then(function (body) {
-                    postLikeBtn.classList.toggle('active', body.liked);
-                    document.getElementById('postLikeCount').textContent = body.likeCount;
-                })
-                .catch(function () {
-                    WebSchoolModal.alert('좋아요 처리에 실패했습니다.');
-                });
+            WebSchoolRequestGuard.run(postLikeBtn, function () {
+                return fetch('/posts/' + postId + '/like', { method: 'POST', headers: WebSchoolCsrf.headers() })
+                    .then(function (res) {
+                        if (!res.ok) throw new Error('처리 실패');
+                        return res.json();
+                    })
+                    .then(function (body) {
+                        postLikeBtn.classList.toggle('active', body.liked);
+                        document.getElementById('postLikeCount').textContent = body.likeCount;
+                    })
+                    .catch(function () {
+                        WebSchoolModal.alert('좋아요 처리에 실패했습니다.');
+                    });
+            });
         });
     }
 
     var postBookmarkBtn = document.getElementById('postBookmarkBtn');
     if (postBookmarkBtn) {
         postBookmarkBtn.addEventListener('click', function () {
-            fetch('/posts/' + postId + '/bookmark', { method: 'POST', headers: WebSchoolCsrf.headers() })
-                .then(function (res) {
-                    if (!res.ok) throw new Error('처리 실패');
-                    return res.json();
-                })
-                .then(function (body) {
-                    postBookmarkBtn.classList.toggle('active', body.bookmarked);
-                    postBookmarkBtn.querySelector('span').textContent = body.bookmarked ? '북마크됨' : '북마크';
-                })
-                .catch(function () {
-                    WebSchoolModal.alert('북마크 처리에 실패했습니다.');
-                });
+            WebSchoolRequestGuard.run(postBookmarkBtn, function () {
+                return fetch('/posts/' + postId + '/bookmark', { method: 'POST', headers: WebSchoolCsrf.headers() })
+                    .then(function (res) {
+                        if (!res.ok) throw new Error('처리 실패');
+                        return res.json();
+                    })
+                    .then(function (body) {
+                        postBookmarkBtn.classList.toggle('active', body.bookmarked);
+                        postBookmarkBtn.querySelector('span').textContent = body.bookmarked ? '북마크됨' : '북마크';
+                    })
+                    .catch(function () {
+                        WebSchoolModal.alert('북마크 처리에 실패했습니다.');
+                    });
+            });
         });
     }
 
@@ -483,22 +493,24 @@ document.addEventListener('DOMContentLoaded', function () {
     var contestVoteBtn = document.getElementById('contestVoteBtn');
     if (contestVoteBtn) {
         contestVoteBtn.addEventListener('click', function () {
-            var entryId = contestVoteBtn.getAttribute('data-entry-id');
-            fetch('/posts/contest/entries/' + entryId + '/vote', { method: 'POST', headers: WebSchoolCsrf.headers() })
-                .then(function (res) {
-                    if (!res.ok) {
-                        return res.json().then(function (body) { throw new Error(body.error || '투표에 실패했습니다.'); });
-                    }
-                    contestVoteBtn.disabled = true;
-                    contestVoteBtn.textContent = '투표완료';
-                    var votesEl = document.querySelector('.contest-post-widget .contest-entry-votes');
-                    if (votesEl) {
-                        votesEl.textContent = (parseInt(votesEl.textContent, 10) + 1) + '표';
-                    }
-                })
-                .catch(function (err) {
-                    WebSchoolModal.alert(err.message || '투표에 실패했습니다.');
-                });
+            WebSchoolRequestGuard.run(contestVoteBtn, function () {
+                var entryId = contestVoteBtn.getAttribute('data-entry-id');
+                return fetch('/posts/contest/entries/' + entryId + '/vote', { method: 'POST', headers: WebSchoolCsrf.headers() })
+                    .then(function (res) {
+                        if (!res.ok) {
+                            return res.json().then(function (body) { throw new Error(body.error || '투표에 실패했습니다.'); });
+                        }
+                        contestVoteBtn.disabled = true;
+                        contestVoteBtn.textContent = '투표완료';
+                        var votesEl = document.querySelector('.contest-post-widget .contest-entry-votes');
+                        if (votesEl) {
+                            votesEl.textContent = (parseInt(votesEl.textContent, 10) + 1) + '표';
+                        }
+                    })
+                    .catch(function (err) {
+                        WebSchoolModal.alert(err.message || '투표에 실패했습니다.');
+                    });
+            });
         });
     }
 });
