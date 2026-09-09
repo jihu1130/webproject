@@ -32,13 +32,3 @@
 .search-more-link:hover {
     color: var(--brand-1);
 }
-
-.search-section-empty {
-    background: var(--surface);
-    border: 1px dashed var(--border);
-    border-radius: 14px;
-    padding: 20px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.88rem;
-}

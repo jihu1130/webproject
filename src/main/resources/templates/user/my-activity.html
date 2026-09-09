@@ -43,7 +43,9 @@
 
         <!-- 게시글 탭 -->
         <div th:if="${tab == 'posts'}">
-            <div th:if="${posts.empty}" class="admin-empty">작성한 게시글이 없어요.</div>
+            <th:block th:if="${posts.empty}">
+                <div th:replace="~{fragments/empty-state :: box('fa-solid fa-file-lines', '작성한 게시글이 없어요.', '글쓰기', '/posts/new')}"></div>
+            </th:block>
 
             <ul class="post-list" th:unless="${posts.empty}">
                 <li class="post-list-item" th:each="post : ${posts}">
@@ -84,7 +86,9 @@
 
         <!-- 댓글 탭 -->
         <div th:if="${tab == 'comments'}">
-            <div th:if="${comments.empty}" class="admin-empty">작성한 댓글이 없어요.</div>
+            <th:block th:if="${comments.empty}">
+                <div th:replace="~{fragments/empty-state :: box('fa-solid fa-comment', '작성한 댓글이 없어요.', null, null)}"></div>
+            </th:block>
 
             <ul class="post-list" th:unless="${comments.empty}">
                 <li class="post-list-item my-activity-comment-item" th:each="comment : ${comments}">
@@ -121,7 +125,9 @@
 
         <!-- 오늘의 한마디 탭 -->
         <div th:if="${tab == 'schedule'}">
-            <div th:if="${scheduleComments.empty}" class="admin-empty">작성한 한마디가 없어요.</div>
+            <th:block th:if="${scheduleComments.empty}">
+                <div th:replace="~{fragments/empty-state :: box('fa-solid fa-message', '작성한 한마디가 없어요.', null, null)}"></div>
+            </th:block>
 
             <ul class="post-list" th:unless="${scheduleComments.empty}">
                 <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleComments}">
@@ -167,7 +173,9 @@
 
             <!-- 좋아요한 게시글 -->
             <div th:if="${likeType == 'post'}">
-                <div th:if="${likes.empty}" class="admin-empty">좋아요한 게시글이 없어요.</div>
+                <th:block th:if="${likes.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-heart', '좋아요한 게시글이 없어요.', null, null)}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${likes.empty}">
                     <li class="post-list-item" th:each="post : ${likes}">
@@ -204,7 +212,9 @@
 
             <!-- 좋아요한 댓글 -->
             <div th:if="${likeType == 'comment'}">
-                <div th:if="${commentLikes.empty}" class="admin-empty">좋아요한 댓글이 없어요.</div>
+                <th:block th:if="${commentLikes.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-heart', '좋아요한 댓글이 없어요.', null, null)}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${commentLikes.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${commentLikes}">
@@ -241,7 +251,9 @@
 
             <!-- 좋아요한 오늘의 한마디 -->
             <div th:if="${likeType == 'schedule'}">
-                <div th:if="${scheduleLikes.empty}" class="admin-empty">좋아요한 한마디가 없어요.</div>
+                <th:block th:if="${scheduleLikes.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-heart', '좋아요한 한마디가 없어요.', null, null)}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${scheduleLikes.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleLikes}">
@@ -288,7 +300,9 @@
 
             <!-- 북마크한 게시글 -->
             <div th:if="${bookmarkType == 'post'}">
-                <div th:if="${bookmarks.empty}" class="admin-empty">북마크한 게시글이 없어요.</div>
+                <th:block th:if="${bookmarks.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-bookmark', '북마크한 게시글이 없어요.', null, null)}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${bookmarks.empty}">
                     <li class="post-list-item" th:each="post : ${bookmarks}">
@@ -325,7 +339,9 @@
 
             <!-- 북마크한 댓글 -->
             <div th:if="${bookmarkType == 'comment'}">
-                <div th:if="${commentBookmarks.empty}" class="admin-empty">북마크한 댓글이 없어요.</div>
+                <th:block th:if="${commentBookmarks.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-bookmark', '북마크한 댓글이 없어요.', null, null)}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${commentBookmarks.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${commentBookmarks}">
@@ -362,7 +378,9 @@
 
             <!-- 북마크한 오늘의 한마디 -->
             <div th:if="${bookmarkType == 'schedule'}">
-                <div th:if="${scheduleBookmarks.empty}" class="admin-empty">북마크한 한마디가 없어요.</div>
+                <th:block th:if="${scheduleBookmarks.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-bookmark', '북마크한 한마디가 없어요.', null, null)}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${scheduleBookmarks.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleBookmarks}">
@@ -409,7 +427,9 @@
 
             <!-- 신고한 게시글 -->
             <div th:if="${reportType == 'post'}">
-                <div th:if="${reports.empty}" class="admin-empty">신고한 게시글이 없어요.</div>
+                <th:block th:if="${reports.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-flag', '신고한 게시글이 없어요.', null, null)}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${reports.empty}">
                     <li class="post-list-item" th:each="post : ${reports}">
@@ -445,7 +465,9 @@
 
             <!-- 신고한 댓글 -->
             <div th:if="${reportType == 'comment'}">
-                <div th:if="${commentReports.empty}" class="admin-empty">신고한 댓글이 없어요.</div>
+                <th:block th:if="${commentReports.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-flag', '신고한 댓글이 없어요.', null, null)}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${commentReports.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${commentReports}">
@@ -482,7 +504,9 @@
 
             <!-- 신고한 오늘의 한마디 -->
             <div th:if="${reportType == 'schedule'}">
-                <div th:if="${scheduleReports.empty}" class="admin-empty">신고한 한마디가 없어요.</div>
+                <th:block th:if="${scheduleReports.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-flag', '신고한 한마디가 없어요.', null, null)}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${scheduleReports.empty}">
                     <li class="post-list-item my-activity-comment-item" th:each="comment : ${scheduleReports}">
@@ -521,7 +545,9 @@
 
         <!-- 차단 목록 탭 -->
         <div th:if="${tab == 'blocks'}">
-            <div th:if="${#lists.isEmpty(blocks)}" class="admin-empty">차단한 사용자가 없어요.</div>
+            <th:block th:if="${#lists.isEmpty(blocks)}">
+                <div th:replace="~{fragments/empty-state :: box('fa-solid fa-user-slash', '차단한 사용자가 없어요.', null, null)}"></div>
+            </th:block>
 
             <ul class="post-list" th:unless="${#lists.isEmpty(blocks)}">
                 <li class="post-list-item" th:each="b : ${blocks}">

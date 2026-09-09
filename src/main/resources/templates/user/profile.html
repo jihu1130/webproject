@@ -73,7 +73,9 @@
             </button>
         </div>
 
-        <div th:if="${profile.posts.empty}" class="post-empty">아직 작성한 게시글이 없어요.</div>
+        <th:block th:if="${profile.posts.empty}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-file-lines', '아직 작성한 게시글이 없어요.', null, null)}"></div>
+        </th:block>
 
         <ul class="post-list" th:unless="${profile.posts.empty}">
             <li class="post-list-item" th:each="post : ${profile.posts}">

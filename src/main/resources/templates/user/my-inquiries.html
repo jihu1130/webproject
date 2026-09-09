@@ -21,9 +21,9 @@
             <p class="page-sub">내가 남긴 문의와 관리자 답변을 확인할 수 있어요</p>
         </div>
 
-        <div th:if="${inquiries.empty}" class="admin-empty">
-            아직 남긴 문의가 없어요. <a href="/bug-reports/new">문의하기</a>에서 남겨보세요.
-        </div>
+        <th:block th:if="${inquiries.empty}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-comment-dots', '아직 남긴 문의가 없어요.', '문의하기', '/bug-reports/new')}"></div>
+        </th:block>
 
         <ul class="post-list my-inquiry-list" th:unless="${inquiries.empty}">
             <li class="post-list-item my-inquiry-item" th:each="inquiry : ${inquiries}">

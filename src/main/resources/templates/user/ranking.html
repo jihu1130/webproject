@@ -49,7 +49,9 @@
             <hr class="ranking-my-rank-divider">
         </div>
 
-        <div th:if="${#lists.isEmpty(topRanking)}" class="post-empty">아직 랭킹에 표시할 사용자가 없어요.</div>
+        <th:block th:if="${#lists.isEmpty(topRanking)}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-ranking-star', '아직 랭킹에 표시할 사용자가 없어요.', null, null)}"></div>
+        </th:block>
 
         <div class="ranking-list" th:unless="${#lists.isEmpty(topRanking)}">
             <div class="ranking-row" th:each="item : ${topRanking}"

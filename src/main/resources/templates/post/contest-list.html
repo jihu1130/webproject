@@ -34,9 +34,9 @@
             </div>
         </div>
 
-        <div th:if="${entries.empty}" class="post-list-empty">
-            아직 이번 주 후보가 없어요. 게시물 상세 페이지에서 "이번 주 추천 후보 신청" 버튼으로 신청해보세요!
-        </div>
+        <th:block th:if="${entries.empty}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-trophy', '아직 이번 주 후보가 없어요. 게시물 상세 페이지의 &quot;이번 주 추천 후보 신청&quot; 버튼으로 신청할 수 있어요.', '게시글 둘러보기', '/posts')}"></div>
+        </th:block>
 
         <div class="contest-entry-list">
             <div class="contest-entry" th:each="entry, iter : ${entries}">

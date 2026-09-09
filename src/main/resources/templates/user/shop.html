@@ -21,7 +21,9 @@
         </div>
 
         <h2 class="shop-section-title"><i class="fa-solid fa-tag"></i> 칭호</h2>
-        <div th:if="${#lists.isEmpty(catalog.titles)}" class="post-empty">아직 판매 중인 칭호가 없어요.</div>
+        <th:block th:if="${#lists.isEmpty(catalog.titles)}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-tag', '아직 판매 중인 칭호가 없어요.', null, null)}"></div>
+        </th:block>
         <div class="shop-grid" th:unless="${#lists.isEmpty(catalog.titles)}">
             <div class="shop-item-card" th:each="item : ${catalog.titles}">
                 <span class="shop-item-badge" th:text="${item.equipped} ? '장착중' : (${item.owned} ? '보유중' : '')"></span>
@@ -42,7 +44,9 @@
         </div>
 
         <h2 class="shop-section-title"><i class="fa-solid fa-palette"></i> 아바타 색상</h2>
-        <div th:if="${#lists.isEmpty(catalog.colors)}" class="post-empty">아직 판매 중인 색상이 없어요.</div>
+        <th:block th:if="${#lists.isEmpty(catalog.colors)}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-palette', '아직 판매 중인 색상이 없어요.', null, null)}"></div>
+        </th:block>
         <div class="shop-grid" th:unless="${#lists.isEmpty(catalog.colors)}">
             <div class="shop-item-card" th:each="item : ${catalog.colors}">
                 <span class="shop-item-badge" th:text="${item.equipped} ? '장착중' : (${item.owned} ? '보유중' : '')"></span>

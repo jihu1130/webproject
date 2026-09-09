@@ -26,10 +26,12 @@
             </form>
         </div>
 
-        <div th:if="${notices.empty}" class="post-empty">
-            <span th:if="${keyword != null and !#strings.isEmpty(keyword)}">검색 결과가 없어요.</span>
-            <span th:unless="${keyword != null and !#strings.isEmpty(keyword)}">아직 등록된 공지사항이 없어요.</span>
-        </div>
+        <th:block th:if="${notices.empty and keyword != null and !#strings.isEmpty(keyword)}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-magnifying-glass', '검색 결과가 없어요.', null, null)}"></div>
+        </th:block>
+        <th:block th:if="${notices.empty and (keyword == null or #strings.isEmpty(keyword))}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-bullhorn', '아직 등록된 공지사항이 없어요.', null, null)}"></div>
+        </th:block>
 
         <ul class="post-list" th:unless="${notices.empty}">
             <li class="post-list-item" th:classappend="${notice.active} ? ' notice-list-item-active'" th:each="notice : ${notices}">

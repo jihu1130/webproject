@@ -24,9 +24,9 @@
             </form>
         </div>
 
-        <div th:if="${notifications.empty}" class="post-empty">
-            <span>아직 도착한 알림이 없어요.</span>
-        </div>
+        <th:block th:if="${notifications.empty}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-bell-slash', '아직 도착한 알림이 없어요.', null, null)}"></div>
+        </th:block>
 
         <ul class="notif-list" th:unless="${notifications.empty}">
             <li th:each="n : ${notifications}" class="notif-item" th:classappend="${!n.read} ? ' notif-item-unread'">

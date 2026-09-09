@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 빈 상태(empty state) 공용 컴포넌트(디자인 개선 계획 - 빈 상태 디자인 통일, 2026-09-09) - 예전엔
+     .post-empty(아이콘을 CSS ::before로 고정 - post.css 주석에 "7개 화면이 공유"라고 적혀있었지만
+     실제로는 화면마다 다른 아이콘을 줄 수가 없는 구조였음)/.search-section-empty/.post-list-empty
+     3개 클래스가 거의 같은 모양을 각자 따로 그리고 있었고, 그마저도 user/my-activity.html·
+     my-inquiries.html은 관리자 전용이어야 할 .admin-empty를 그대로 가져다 쓰고 있었다. 아이콘을
+     화면 맥락에 맞게 넘길 수 있도록 진짜 th:fragment 파라미터로 바꾸고, CTA(선택)까지 한 군데서
+     관리한다. icon은 FontAwesome 클래스 전체 문자열("fa-solid fa-inbox" 등), ctaText/ctaHref는
+     둘 다 있을 때만 버튼을 렌더링한다(하나만 넘기면 무시 - null 전달 시 자리만 비고 버튼 없음).
+     관리자 화면 전용 .admin-empty(admin.css)는 의도적으로 그대로 둔다 - 사용자 화면보다 더
+     사무적인 톤(아이콘/CTA 없음)을 유지하기로 함. -->
+<div th:fragment="box(icon, message, ctaText, ctaHref)" class="empty-state">
+    <i th:class="${icon}"></i>
+    <p th:text="${message}"></p>
+    <a th:if="${ctaText != null and ctaHref != null}"
+       th:href="@{${ctaHref}}" th:text="${ctaText}" class="empty-state-cta"></a>
+</div>
+
+</body>
+</html>

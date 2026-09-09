@@ -760,7 +760,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var commentList = document.getElementById('commentList');
 
         if (!comments || comments.length === 0) {
-            commentList.innerHTML = '<div class="comment-empty">아직 댓글이 없어요. 첫 댓글을 남겨보세요!</div>';
+            commentList.innerHTML = '<div class="comment-empty"><i class="fa-solid fa-message"></i>아직 댓글이 없어요. 첫 댓글을 남겨보세요!</div>';
             return;
         }
 

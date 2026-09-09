@@ -73,10 +73,15 @@
             </form>
         </div>
 
-        <div th:if="${posts.empty}" class="post-empty">
-            <span th:if="${keyword != null and !#strings.isEmpty(keyword)}">검색 결과가 없어요.</span>
-            <span th:unless="${keyword != null and !#strings.isEmpty(keyword)}">아직 작성된 게시물이 없어요. 첫 게시물을 남겨보세요!</span>
-        </div>
+        <th:block th:if="${posts.empty and keyword != null and !#strings.isEmpty(keyword)}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-magnifying-glass', '검색 결과가 없어요.', null, null)}"></div>
+        </th:block>
+        <th:block th:if="${posts.empty and (keyword == null or #strings.isEmpty(keyword))}" sec:authorize="isAuthenticated()">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-inbox', '아직 작성된 게시물이 없어요. 첫 게시물을 남겨보세요!', '글쓰기', '/posts/new')}"></div>
+        </th:block>
+        <th:block th:if="${posts.empty and (keyword == null or #strings.isEmpty(keyword))}" sec:authorize="!isAuthenticated()">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-inbox', '아직 작성된 게시물이 없어요.', null, null)}"></div>
+        </th:block>
 
         <ul class="post-list" th:unless="${posts.empty}">
             <li class="post-list-item reveal-on-scroll" th:each="post : ${posts}">

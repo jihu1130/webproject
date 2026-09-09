@@ -93,9 +93,9 @@
                 <p class="text-muted small">상점에서 구매한 칭호/장식 중 원하는 걸 골라 장착하세요.</p>
 
                 <h3 class="shop-section-title"><i class="fa-solid fa-tag"></i> 칭호</h3>
-                <div th:if="${#lists.isEmpty(catalog.titles.?[owned])}" class="post-empty">
-                    아직 보유한 칭호가 없어요. <a th:href="@{/shop}">상점 구경하기</a>
-                </div>
+                <th:block th:if="${#lists.isEmpty(catalog.titles.?[owned])}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-tag', '아직 보유한 칭호가 없어요.', '상점 구경하기', '/shop')}"></div>
+                </th:block>
                 <!-- 칭호가 늘어날수록 카드형은 세로로 한없이 길어져서(사용자 지적) 알약 모양
                      칩으로 바꾸고, 장착 여부는 별도 배지 문구 대신 칩 강조색+체크 아이콘으로만
                      표시해 공간을 아낀다. 클릭 = 그 칩 자체가 제출 버튼(폼 하나당 아이템 하나). -->
@@ -112,9 +112,9 @@
                 </div>
 
                 <h3 class="shop-section-title"><i class="fa-solid fa-palette"></i> 장식</h3>
-                <div th:if="${#lists.isEmpty(catalog.colors.?[owned])}" class="post-empty">
-                    아직 보유한 장식이 없어요. <a th:href="@{/shop}">상점 구경하기</a>
-                </div>
+                <th:block th:if="${#lists.isEmpty(catalog.colors.?[owned])}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-palette', '아직 보유한 장식이 없어요.', '상점 구경하기', '/shop')}"></div>
+                </th:block>
                 <div class="equip-chip-row" th:unless="${#lists.isEmpty(catalog.colors.?[owned])}">
                     <form th:each="item : ${catalog.colors}" th:if="${item.owned}" class="equip-chip-form"
                           th:action="@{${item.equipped} ? '/shop/unequip/AVATAR_COLOR' : '/shop/equip/' + ${item.id}}" method="post">

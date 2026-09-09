@@ -18,7 +18,9 @@
             <p class="page-sub">적립·소비 내역을 확인할 수 있어요 - <a href="/ranking">전체 포인트 랭킹 보기</a></p>
         </div>
 
-        <div th:if="${logs.empty}" class="post-empty">아직 포인트 내역이 없어요.</div>
+        <th:block th:if="${logs.empty}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-coins', '아직 포인트 내역이 없어요. 출석체크만 해도 포인트가 쌓여요.', '출석체크하러 가기', '/mypage')}"></div>
+        </th:block>
 
         <ul class="post-list" th:unless="${logs.empty}">
             <li class="post-list-item" th:each="log : ${logs}">

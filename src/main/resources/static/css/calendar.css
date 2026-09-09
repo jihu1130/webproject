@@ -751,11 +751,23 @@
     margin-bottom: 10px;
 }
 
+/* 좁은 사이드 패널(#dayDetailPanel) 안에 들어가는 축소판 - 화면 전체 폭을 쓰는
+   .empty-state(post.css, 디자인 개선 계획 - 빈 상태 디자인 통일, 2026-09-09)를 그대로 쓰면
+   패널 안에서 지나치게 커 보여서 자체 축소 버전을 유지한다. 로딩/에러 상태도 같은 클래스를
+   재사용하는데, "아직 댓글이 없어요"일 때만 아이콘을 붙인다(loadComments()/renderComments()
+   참고 - 로딩·에러는 그대로 텍스트만). */
 .comment-empty {
     text-align: center;
     color: var(--muted);
     font-size: 12.5px;
     padding: 14px 0;
+}
+
+.comment-empty i {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--border);
+    margin-bottom: 6px;
 }
 
 .comment-item {

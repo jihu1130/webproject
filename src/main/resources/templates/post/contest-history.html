@@ -21,9 +21,9 @@
             <a href="/posts/contest" class="btn btn-outline-primary"><i class="fa-solid fa-arrow-left"></i> 이번 주로</a>
         </div>
 
-        <div th:if="${weeks.empty}" class="post-list-empty">
-            아직 마감된 회차가 없어요.
-        </div>
+        <th:block th:if="${weeks.empty}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-clock-rotate-left', '아직 마감된 회차가 없어요.', null, null)}"></div>
+        </th:block>
 
         <div class="contest-week-group" th:each="week : ${weeks}">
             <h2 class="contest-week-title" th:text="${week.weekStart} + ' 주'">2026-01-01 주</h2>

@@ -27,9 +27,9 @@
             </form>
         </div>
 
-        <div th:if="${keyword == null or #strings.isEmpty(keyword)}" class="post-empty">
-            검색어를 입력해주세요.
-        </div>
+        <th:block th:if="${keyword == null or #strings.isEmpty(keyword)}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-magnifying-glass', '검색어를 입력해주세요.', null, null)}"></div>
+        </th:block>
 
         <th:block th:if="${keyword != null and !#strings.isEmpty(keyword)}">
 
@@ -41,7 +41,9 @@
                     </a>
                 </div>
 
-                <div th:if="${posts.empty}" class="search-section-empty">커뮤니티에서 찾은 게시글이 없어요.</div>
+                <th:block th:if="${posts.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-comments', '커뮤니티에서 찾은 게시글이 없어요.', '커뮤니티 전체보기', '/posts')}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${posts.empty}">
                     <li class="post-list-item" th:each="post : ${posts}">
@@ -65,7 +67,9 @@
                     </a>
                 </div>
 
-                <div th:if="${notices.empty}" class="search-section-empty">공지사항에서 찾은 결과가 없어요.</div>
+                <th:block th:if="${notices.empty}">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-bullhorn', '공지사항에서 찾은 결과가 없어요.', '공지사항 전체보기', '/notices')}"></div>
+                </th:block>
 
                 <ul class="post-list" th:unless="${notices.empty}">
                     <li class="post-list-item" th:each="notice : ${notices}">
@@ -87,12 +91,12 @@
                     <a href="/school/calendar" class="search-more-link">캘린더로 가기 <i class="fa-solid fa-chevron-right"></i></a>
                 </div>
 
-                <div th:if="${event == null}" class="search-section-empty" sec:authorize="isAuthenticated()">
-                    학사일정에서 찾은 결과가 없어요.
-                </div>
-                <div th:if="${event == null}" class="search-section-empty" sec:authorize="!isAuthenticated()">
-                    로그인하면 우리 학교 학사일정도 함께 검색돼요.
-                </div>
+                <th:block th:if="${event == null}" sec:authorize="isAuthenticated()">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-calendar-xmark', '학사일정에서 찾은 결과가 없어요.', '캘린더로 가기', '/school/calendar')}"></div>
+                </th:block>
+                <th:block th:if="${event == null}" sec:authorize="!isAuthenticated()">
+                    <div th:replace="~{fragments/empty-state :: box('fa-solid fa-calendar-xmark', '로그인하면 우리 학교 학사일정도 함께 검색돼요.', '로그인하기', '/login')}"></div>
+                </th:block>
 
                 <ul class="post-list" th:if="${event != null}">
                     <li class="post-list-item">
