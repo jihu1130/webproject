@@ -115,8 +115,13 @@
             <div th:if="${param.verified}" class="mypage-alert mypage-alert-success">이메일 인증이 완료되었습니다.</div>
             <div th:if="${param.verifyError}" class="mypage-alert mypage-alert-danger">인증 링크가 유효하지 않거나 만료되었습니다.</div>
             <div th:if="${param.resent}" class="mypage-alert mypage-alert-success">인증 메일을 다시 보냈습니다.</div>
-            <div th:if="${param.attendance != null and param.attendance[0] == 'success'}" class="mypage-alert mypage-alert-success">출석체크 완료! 포인트가 적립되었습니다.</div>
-            <div th:if="${param.attendance != null and param.attendance[0] == 'already'}" class="mypage-alert mypage-alert-success">오늘은 이미 출석체크를 완료했습니다.</div>
+            <div th:if="${param.attendance != null and param.attendance[0] == 'success'}" class="mypage-alert mypage-alert-success">
+                출석체크 완료! <strong th:text="${param.streakDay[0]}">1</strong>일 연속 출석으로
+                <strong th:text="${param.points[0]}">10</strong>P 적립되었습니다.
+            </div>
+            <div th:if="${param.attendance != null and param.attendance[0] == 'already'}" class="mypage-alert mypage-alert-success">
+                오늘은 이미 출석체크를 완료했습니다. (<strong th:text="${param.streakDay[0]}">1</strong>일 연속)
+            </div>
 
             <!-- 예전엔 이 6개 버튼이 전부 세로로 꽉 채운 한 줄짜리라 모바일에서 스크롤을 한참
                  내려야 로그아웃까지 보였다(사용자 지적 - 폰 화면 한 눈에 안 들어옴). 아이콘+라벨
@@ -126,12 +131,17 @@
                 <form th:if="${loginUser != null and !attendanceCheckedInToday}"
                       th:action="@{/mypage/attendance}" method="post" class="mypage-quick-grid-form">
                     <button type="submit" class="mypage-quick-tile">
-                        <i class="fa-solid fa-calendar-check"></i> 출석체크 (+10P)
+                        <i class="fa-solid fa-calendar-check"></i> 출석체크
+                        (<span th:text="${attendanceStreakDay}">1</span>일차 +<span th:text="${attendanceNextPoints}">10</span>P)
                     </button>
                 </form>
                 <div th:if="${loginUser != null and attendanceCheckedInToday}" class="mypage-quick-tile mypage-quick-tile-done">
-                    <i class="fa-solid fa-calendar-check"></i> 출석체크 완료
+                    <i class="fa-solid fa-calendar-check"></i> 출석체크 완료 (<span th:text="${attendanceStreakDay}">1</span>일 연속)
                 </div>
+
+                <button type="button" id="attendanceCalendarTrigger" class="mypage-quick-tile" th:if="${loginUser != null}">
+                    <i class="fa-solid fa-calendar-days"></i> 출석 현황
+                </button>
 
                 <a href="/mypage/profile" class="mypage-quick-tile">
                     <i class="fa-solid fa-id-card"></i> 프로필 설정
@@ -173,6 +183,26 @@
     </div>
 </div>
 
+<!-- 출석 미니 캘린더 팝업(디자인 개선 계획 - 출석체크 캘린더, 2026-09-09 추가) - modal.js는 텍스트
+     전용(confirm/alert/prompt)이라 커스텀 그리드를 담을 수 없어 이 화면 전용으로 새로 만든다.
+     내용은 static/js/attendance-calendar.js가 /mypage/attendance/calendar API로 채운다. -->
+<div id="attendanceCalOverlay" class="attendance-cal-overlay" hidden>
+    <div class="attendance-cal-popup" role="dialog" aria-modal="true" aria-labelledby="attendanceCalTitle">
+        <div class="attendance-cal-header">
+            <button type="button" class="attendance-cal-nav" id="attendanceCalPrev" aria-label="이전 달"><i class="fa-solid fa-chevron-left"></i></button>
+            <h3 id="attendanceCalTitle" class="attendance-cal-title">-</h3>
+            <button type="button" class="attendance-cal-nav" id="attendanceCalNext" aria-label="다음 달"><i class="fa-solid fa-chevron-right"></i></button>
+            <button type="button" class="attendance-cal-close" id="attendanceCalClose" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="attendance-cal-streak" id="attendanceCalStreak"></p>
+        <div class="attendance-cal-dow">
+            <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+        </div>
+        <div class="attendance-cal-grid" id="attendanceCalGrid"></div>
+    </div>
+</div>
+
 <th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+<script th:src="@{/js/attendance-calendar.js}"></script>
 </body>
 </html>

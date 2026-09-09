@@ -1,5 +1,7 @@
 package com.webschool.webschool.user.controller;
 
+import com.webschool.webschool.user.dto.AttendanceCalendarDto;
+import com.webschool.webschool.user.dto.AttendanceCheckInResult;
 import com.webschool.webschool.user.dto.EmailSetupDto;
 import com.webschool.webschool.user.dto.MyPageUpdateDto;
 import com.webschool.webschool.user.dto.PasswordSetupDto;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 @Controller
@@ -75,17 +78,49 @@ public class AuthController {
         // 프로필 카드 통계 바(게시글/댓글/받은 좋아요) - 프로필_디자인.md 설계 반영.
         model.addAttribute("stats", myActivityService.getStats(authentication.getName()));
         User user = userService.getByUsername(authentication.getName());
-        model.addAttribute("attendanceCheckedInToday", attendanceService.hasCheckedInToday(user.getId()));
+        boolean checkedInToday = attendanceService.hasCheckedInToday(user.getId());
+        model.addAttribute("attendanceCheckedInToday", checkedInToday);
+        // 출석체크 버튼에 "N일차 +M P" 미리보기를 보여주기 위한 값 - 스트릭 보너스 도입(2026-09-09)으로
+        // 더 이상 고정 포인트가 아니라서 하드코딩된 문구 대신 매번 계산한 값을 그대로 노출한다.
+        int streakDay = attendanceService.getCurrentStreakDay(user.getId());
+        model.addAttribute("attendanceStreakDay", streakDay);
+        model.addAttribute("attendanceNextPoints", attendanceService.pointsForStreakDay(streakDay));
         return "user/mypage";
     }
 
-    // 출석체크(todo.md 요구사항) - 매일 방문 시 기본 포인트 지급. 하루 한 번만 지급되며,
-    // 이미 체크인했으면 checkIn()이 조용히 아무 것도 하지 않는다.
+    // 출석체크(todo.md 요구사항) - 매일 방문 시 연속 출석일수에 따라 포인트 지급(AttendanceService
+    // 상단 주석 참고). 하루 한 번만 지급되며, 이미 체크인했으면 checkIn()이 조용히 아무 것도 하지
+    // 않는다. 결과(며칠째/몇 포인트인지)를 플래시 메시지에 그대로 보여주기 위해 쿼리 파라미터로 넘긴다.
     @PostMapping("/mypage/attendance")
     public String checkInAttendance(Authentication authentication) {
         User user = userService.getByUsername(authentication.getName());
-        boolean checkedIn = attendanceService.checkIn(user);
-        return "redirect:/mypage?attendance=" + (checkedIn ? "success" : "already");
+        AttendanceCheckInResult result = attendanceService.checkIn(user);
+        String status = result.isCheckedIn() ? "success" : "already";
+        return "redirect:/mypage?attendance=" + status
+                + "&streakDay=" + result.getStreakDay()
+                + "&points=" + result.getPointsAwarded();
+    }
+
+    // 마이페이지 출석 미니 캘린더 팝업(디자인 개선 계획 - 출석체크 캘린더, 2026-09-09 추가) - 알림
+    // 읽지않음 카운트(/notifications/unread-count), 설문 위젯(/polls/**)과 동일한 "위젯이 별도 API로
+    // 자기 상태를 조회하는" 패턴. year/month를 생략하면 이번 달을 기본값으로 쓴다.
+    @GetMapping("/mypage/attendance/calendar")
+    @ResponseBody
+    public AttendanceCalendarDto attendanceCalendar(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            Authentication authentication) {
+        User user = userService.getByUsername(authentication.getName());
+        LocalDate today = LocalDate.now();
+        int targetYear = year != null ? year : today.getYear();
+        int targetMonth = month != null ? month : today.getMonthValue();
+
+        return AttendanceCalendarDto.builder()
+                .attendedDates(attendanceService.getAttendedDatesInMonth(user.getId(), targetYear, targetMonth)
+                        .stream().map(LocalDate::toString).toList())
+                .currentStreakDay(attendanceService.getCurrentStreakDay(user.getId()))
+                .checkedInToday(attendanceService.hasCheckedInToday(user.getId()))
+                .build();
     }
 
     // 포인트 내역 화면(todo.md 요구사항) - 적립/소비 이력을 최신순으로 보여준다.
