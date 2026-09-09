@@ -1,0 +1,12 @@
+# Grafana가 기동 시 자동으로 읽어들이는 프로비저닝 설정 - 대시보드 화면에서 수동으로
+# "Add data source"를 누르지 않아도 Prometheus가 기본 데이터소스로 바로 잡혀있게 한다.
+# docker-compose.yml의 grafana 서비스가 /etc/grafana/provisioning/datasources/ 아래에
+# 이 파일을 마운트한다(Grafana 공식 프로비저닝 규약 - 디렉터리 안의 *.yml을 전부 읽음).
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true

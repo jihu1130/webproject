@@ -113,6 +113,11 @@ cp .env.example .env
 docker compose up --build   # http://localhost:8888
 ```
 
+같은 `docker compose up`으로 애플리케이션 지표(요청 처리량/응답시간/JVM 등) 모니터링용
+Prometheus([http://localhost:9090](http://localhost:9090))와
+Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, Prometheus
+데이터소스 자동 연결됨)도 함께 뜹니다.
+
 ## 🌐 배포
 
 - **서비스 주소**: [https://webschool.kro.kr/](https://webschool.kro.kr/)

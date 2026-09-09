@@ -50,7 +50,12 @@ public class SecurityConfig {
                         .requestMatchers("/", "/register", "/login", "/oauth2/**", "/login/oauth2/**",
                                 "/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico", "/error",
                                 "/api/users/check-username", "/school/api/search", "/school/api/classes",
-                                "/actuator/health",
+                                // /actuator/prometheus - 로컬 Prometheus 컨테이너가 인증 없이 스크레이프하므로
+                                // health와 동일하게 permitAll(todo.md #24, 로컬 모니터링 범위). 나중에 이
+                                // 스택을 운영 서버에 배포하게 되면 JVM/요청량 같은 내부 지표가 공개
+                                // 인터넷에 그대로 노출되니, 그 시점엔 nginx IP 화이트리스트 등으로 별도
+                                // 제한을 다시 고려할 것.
+                                "/actuator/health", "/actuator/prometheus",
                                 "/find-username", "/forgot-password", "/reset-password", "/verify-email")
                         .permitAll()
                         // 버그 리포트는 비로그인 사용자도 제출 가능(사용자 확정 정책)

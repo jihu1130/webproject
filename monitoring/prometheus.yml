@@ -1,0 +1,13 @@
+# Prometheus 스크레이프 설정 (로컬 모니터링, todo.md #24 - AWS CloudWatch 알람과는
+# 별개로 애플리케이션 지표를 세밀하게 시각화하는 용도). docker-compose.yml의
+# prometheus 서비스가 이 파일을 그대로 마운트해서 쓴다.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: webschool
+    metrics_path: /actuator/prometheus
+    static_configs:
+      # 컨테이너 네트워크 안에서는 서비스명 "app"이 곧 호스트명이다(application-docker.yml의
+      # DB 접속 방식과 동일한 원리).
+      - targets: ["app:8888"]

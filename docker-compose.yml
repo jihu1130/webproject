@@ -29,5 +29,34 @@ services:
     volumes:
       - ../uploads:/data/uploads
 
+  # 애플리케이션 지표(요청 처리량/응답시간/JVM 등) 로컬 모니터링 - AWS CloudWatch
+  # 알람(리소스/에러 임계치)과는 별개 용도(todo.md #24). app이 노출하는
+  # /actuator/prometheus를 monitoring/prometheus.yml 설정대로 스크레이프한다.
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      # 로컬 전용 기본 계정 - 운영에 그대로 쓰지 말 것(2단계에서 실제로 쓰게 되면
+      # 반드시 별도 비밀번호로 교체).
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./monitoring/grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+
 volumes:
   mysql-data:
+  prometheus-data:
+  grafana-data:
