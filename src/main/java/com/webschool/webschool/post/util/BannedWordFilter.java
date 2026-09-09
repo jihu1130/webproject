@@ -13,8 +13,8 @@ public final class BannedWordFilter {
 
     private static final List<String> BANNED_WORDS = List.of(
             "시발", "씨발", "씨팔", "시팔", "개새끼", "개새키", "병신", "병신새끼",
-            "좆", "좇", "지랄", "느금마", "니애미", "미친놈", "미친년", "개자식",
-            "썅년", "썅놈", "fuck", "motherfucker"
+            "좆", "좇", "지랄", "느금마", "니애미", "미친놈", "미친년",
+            "썅년"
     );
 
     // 한글 음절/자모, 영문, 숫자만 남기고 나머지(공백/구두점/특수기호/제로폭문자 등)는
