@@ -1,0 +1,12 @@
+.git
+.gradle
+build
+.idea
+.vscode
+*.iml
+backups
+logs
+*.md
+!README.md
+.env
+src/main/resources/application.yml

@@ -105,6 +105,14 @@ cp src/main/resources/application.yml.example src/main/resources/application.yml
 ./gradlew bootRun   # http://localhost:8888
 ```
 
+로컬에 MySQL을 직접 설치하고 싶지 않다면 Docker Compose로 앱+DB를 함께 띄울 수도 있습니다.
+
+```bash
+cp .env.example .env
+# → MYSQL_ROOT_PASSWORD / NEIS_API_KEY 입력
+docker compose up --build   # http://localhost:8888
+```
+
 ## 🌐 배포
 
 - **서비스 주소**: [https://webschool.kro.kr/](https://webschool.kro.kr/)

@@ -1,0 +1,37 @@
+# docker-compose 전용 프로파일(SPRING_PROFILES_ACTIVE=docker) - 시크릿 없음(git 추적 대상).
+# DB 비밀번호/NEIS 키는 여기 넣지 않고 docker-compose.yml이 .env에서 읽어
+# SPRING_DATASOURCE_USERNAME/SPRING_DATASOURCE_PASSWORD/NEIS_API_KEY 환경변수로 주입한다
+# (application.yml.example이 실제 값을 로컬 파일에만 두는 것과 동일한 원칙).
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # compose 서비스명 "db"가 컨테이너 네트워크 안에서 MySQL 호스트가 된다.
+    url: jdbc:mysql://db:3306/webschool?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.hibernate.dialect.MySQLDialect
+  servlet:
+    multipart:
+      max-file-size: 300MB
+      max-request-size: 320MB
+
+server:
+  forward-headers-strategy: framework
+  port: 8888
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  upload:
+    dir: /data/uploads # docker-compose가 호스트 ../uploads를 여기에 바인드 마운트
+    s3:
+      bucket: ''
+      region: ap-northeast-2
+      base-url: ''
+  base-url: http://localhost:8888

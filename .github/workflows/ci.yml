@@ -82,6 +82,12 @@ jobs:
       - name: Build and test
         run: ./gradlew build --console=plain
 
+      # Dockerfile이 매 커밋마다 실제로 빌드되는지만 확인(레지스트리 push는 안 함,
+      # 자격증명이 필요 없어 안전) - Docker 이미지로 아직 배포하지 않지만 Dockerfile이
+      # 조용히 깨지는 걸 미리 잡기 위함(todo.md #24 Docker 도입 1단계).
+      - name: Verify Docker image builds
+        run: docker build -t webschool:ci .
+
       # 이 잡이 빌드한 jar를 뒤이은 deploy 잡이 그대로 쓴다(같은 jar를 재빌드하지
       # 않고 그대로 배포해 빌드-배포 산출물 불일치를 방지).
       - name: Upload jar artifact

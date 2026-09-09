@@ -23,6 +23,9 @@ backups/
 # application.yml.example을 복사해서 로컬에만 만들 것. 커밋 대상에서 절대 빼지 말 것.
 src/main/resources/application.yml
 
+# docker-compose용 시크릿(.env.example을 복사해서 만들 것) - 위와 동일한 이유로 커밋 금지.
+.env
+
 # 작업용 메모/문서(CLAUDE.md, todo.md, AWS.md 등) - 코드와 무관한 로컬 참고 문서라 원격에는
 # 올리지 않는다. README.md는 깃허브 저장소 소개 화면에 쓰이므로 예외로 계속 커밋한다.
 *.md
