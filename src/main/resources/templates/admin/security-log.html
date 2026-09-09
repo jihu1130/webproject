@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 보안 로그 - WebSchool</title>
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-shield-halved"></i> 보안 로그</h1>
+            <p class="page-sub">로그인 실패·계정 잠금·권한 변경처럼 보안 관점에서 봐야 하는 기록만 모았어요</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('security-log')}"></div>
+
+        <div class="list-toolbar" style="margin-top: 12px;">
+            <form th:action="@{/admin/security-log}" method="get" class="admin-search-form">
+                <select name="action">
+                    <option value="" th:selected="${action == null or action == ''}">전체 조치</option>
+                    <option value="LOGIN_FAIL" th:selected="${action == 'LOGIN_FAIL'}">로그인 실패</option>
+                    <option value="ACCOUNT_LOCK" th:selected="${action == 'ACCOUNT_LOCK'}">계정 잠금</option>
+                    <option value="PERMISSIONS" th:selected="${action == 'PERMISSIONS'}">권한 변경</option>
+                    <option value="PROMOTE" th:selected="${action == 'PROMOTE'}">승격</option>
+                    <option value="PROMOTE_SUPER_ADMIN" th:selected="${action == 'PROMOTE_SUPER_ADMIN'}">총관리자 승격</option>
+                    <option value="DEMOTE" th:selected="${action == 'DEMOTE'}">강등</option>
+                    <option value="DEACTIVATE" th:selected="${action == 'DEACTIVATE'}">정지</option>
+                    <option value="ACTIVATE" th:selected="${action == 'ACTIVATE'}">정지 해제</option>
+                    <option value="PENALTY_ISSUE" th:selected="${action == 'PENALTY_ISSUE'}">제재 부여</option>
+                    <option value="PENALTY_REVOKE" th:selected="${action == 'PENALTY_REVOKE'}">제재 해제</option>
+                </select>
+                <input type="date" name="from" th:value="${from}" title="시작일">
+                <input type="date" name="to" th:value="${to}" title="종료일">
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+
+        <div th:if="${logs.empty}" class="admin-empty">기록된 보안 이벤트가 없어요.</div>
+
+        <div class="admin-table-wrap" th:unless="${logs.empty}">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>일시</th>
+                    <th>계정</th>
+                    <th>조치</th>
+                    <th>비고</th>
+                    <th>IP</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="log : ${logs}">
+                    <td th:text="${log.createdAt}">날짜</td>
+                    <td>
+                        <a th:if="${log.adminUserId != null}" th:href="@{'/admin/profiles/' + ${log.adminUserId}}"
+                           class="admin-table-title" th:text="${log.adminUsername}">계정</a>
+                        <span th:unless="${log.adminUserId != null}" th:text="${log.adminUsername}">계정</span>
+                    </td>
+                    <td>
+                        <span class="admin-status-badge"
+                              th:classappend="${log.actionBadgeClass}"
+                              th:text="${log.actionLabel}">조치</span>
+                    </td>
+                    <td th:text="${log.detail} ?: '-'">비고</td>
+                    <td th:text="${log.ip} ?: '-'">IP</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="post-pagination" th:if="${logs.totalPages > 1}">
+            <a th:if="${logs.hasPrevious()}" th:href="@{/admin/security-log(page=${logs.number - 1}, action=${action}, from=${from}, to=${to})}" class="post-page-link" aria-label="이전 페이지">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}"
+               th:href="@{/admin/security-log(page=${i}, action=${action}, from=${from}, to=${to})}" th:text="${i + 1}"
+               th:classappend="${i == logs.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${logs.hasNext()}" th:href="@{/admin/security-log(page=${logs.number + 1}, action=${action}, from=${from}, to=${to})}" class="post-page-link" aria-label="다음 페이지">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>

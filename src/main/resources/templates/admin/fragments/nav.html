@@ -22,6 +22,11 @@
      고정 순서(1~10)에 포함되지 않는 별도 항목이라 번호를 붙이지 않았다 - 특정 관리 기능이 아니라
      여러 기능에 걸친 KPI 개요라 성격이 다르고, 총관리자 전용(AdminAccessInterceptor 참고)이라
      위임 권한 플래그로 게이팅하지도 않는다. 항상 첫 그룹 맨 앞에 둔다.
+     "보안 로그"(/admin/security-log)/"에러 로그"(/admin/error-log, 둘 다 2026-09-09 추가, 사용자
+     요청 - 기존 "8. 감사 로그"가 일반 활동까지 섞여 있어 "사용로그" 같다는 지적)도 같은 이유로
+     번호를 안 붙였다. "보안 로그"는 감사 로그와 같은 canViewAuditLog로 위임 가능(같은 테이블을
+     걸러 보여주는 화면일 뿐이라 새 정보가 없음), "에러 로그"는 스택 트레이스 노출 우려로 대시보드와
+     동일하게 총관리자 전용 고정. 성격이 감사 로그와 가장 가까워서 8번 바로 뒤에 둔다.
      주의: loginUser는 DTO가 아니라 실제 User 엔티티라 role이 String이 아니라 User.Role enum이다.
      다른 관리자 화면(AdminUserSummaryDto 등)은 서비스 단에서 role을 미리 .name()으로 문자열
      변환해두지만, 여기서는 엔티티를 그대로 쓰므로 반드시 .name()을 붙여 문자열로 비교해야 한다
@@ -63,6 +68,10 @@
     <span class="admin-tabs-group">
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewAuditLog)}"
            href="/admin/audit-log" class="post-category-tab" th:classappend="${active == 'audit-log'} ? ' active' : ''"><i class="fa-solid fa-clipboard-list"></i> 8. 감사 로그</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewAuditLog)}"
+           href="/admin/security-log" class="post-category-tab" th:classappend="${active == 'security-log'} ? ' active' : ''"><i class="fa-solid fa-shield-halved"></i> 보안 로그</a>
+        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+           href="/admin/error-log" class="post-category-tab" th:classappend="${active == 'error-log'} ? ' active' : ''"><i class="fa-solid fa-triangle-exclamation"></i> 에러 로그</a>
         <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
            href="/admin/bug-reports" class="post-category-tab" th:classappend="${active == 'bug-reports'} ? ' active' : ''"><i class="fa-solid fa-comment-dots"></i> 9. 문의 관리</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageShop)}"

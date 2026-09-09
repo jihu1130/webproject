@@ -74,7 +74,19 @@ public class AdminActionLogService {
             Map.entry("SELF_DELETE", "회원 탈퇴"),
             Map.entry("SCHOOL_SETUP", "학교 설정"),
             Map.entry("PENALTY_ISSUE", "제재 부여"),
-            Map.entry("PENALTY_REVOKE", "제재 해제")
+            Map.entry("PENALTY_REVOKE", "제재 해제"),
+            Map.entry("LOGIN_FAIL", "로그인 실패"),
+            Map.entry("ACCOUNT_LOCK", "계정 잠금")
+    );
+
+    // 보안 로그(/admin/security-log)에서 걸러 보여줄 action 목록 - 감사 로그(전체 활동)와 달리
+    // "침입 시도/권한 변경처럼 보안 관점에서 봐야 하는 것"만 추려서 별도 화면으로 분리했다(사용자 요청 -
+    // 기존 감사 로그가 일반 활동까지 섞여 있어 "사용로그" 같다는 지적). LOGIN_FAIL/ACCOUNT_LOCK은
+    // LoginAttemptService.recordFailure()에서 새로 기록하고, 나머지는 기존에 이미 쌓이던 계정/권한
+    // 변경 조치를 그대로 재사용한다.
+    private static final java.util.Set<String> SECURITY_ACTIONS = java.util.Set.of(
+            "LOGIN_FAIL", "ACCOUNT_LOCK", "PERMISSIONS", "PROMOTE", "PROMOTE_SUPER_ADMIN",
+            "DEMOTE", "DEACTIVATE", "ACTIVATE", "PENALTY_ISSUE", "PENALTY_REVOKE"
     );
 
     // 감사 로그 배지 색상 - 수정사항.md 지적: 템플릿에서 "BLIND/DELETE/DEACTIVATE/DEMOTE면 빨강,
@@ -100,7 +112,11 @@ public class AdminActionLogService {
             Map.entry("PENALTY_ISSUE", "admin-status-blind"),
             Map.entry("REPORT_CANCEL", "admin-status-cleared"),
             Map.entry("ACCEPT_ANSWER", "admin-status-cleared"),
-            Map.entry("PENALTY_REVOKE", "admin-status-cleared")
+            Map.entry("PENALTY_REVOKE", "admin-status-cleared"),
+            // LOGIN_FAIL은 한 번쯤 있을 수 있는 흔한 실수(중립)로, ACCOUNT_LOCK은 5회 연속 실패로
+            // 실제 잠긴 상태(경고)라 blind와 같은 톤으로 구분한다.
+            Map.entry("LOGIN_FAIL", "admin-status-neutral"),
+            Map.entry("ACCOUNT_LOCK", "admin-status-blind")
     );
 
     private final AdminActionLogRepository adminActionLogRepository;
@@ -153,6 +169,19 @@ public class AdminActionLogService {
                 .filter(l -> adminUsername == null || adminUsername.isBlank()
                         || l.getAdminUsername().equalsIgnoreCase(adminUsername))
                 .filter(l -> targetType == null || targetType.isBlank() || l.getTargetType().equals(targetType))
+                .filter(l -> matchesDateRange(l.getCreatedAt(), from, to))
+                .map(this::toDto)
+                .collect(Collectors.toList());
+        return PageUtils.paginate(filtered, page, PAGE_SIZE);
+    }
+
+    // 감사 로그(getLogs)와 필터 조건만 다르고 나머지 로직(날짜 범위/DTO 변환/페이지네이션)은 동일해서
+    // 새 리포지토리 쿼리 없이 같은 findAllByOrderByCreatedAtDesc() 결과를 SECURITY_ACTIONS로 한 번
+    // 더 거르는 방식으로 구현했다.
+    public Page<AdminActionLogDto> getSecurityLogs(int page, String action, LocalDate from, LocalDate to) {
+        List<AdminActionLogDto> filtered = adminActionLogRepository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(l -> SECURITY_ACTIONS.contains(l.getAction()))
+                .filter(l -> action == null || action.isBlank() || l.getAction().equals(action))
                 .filter(l -> matchesDateRange(l.getCreatedAt(), from, to))
                 .map(this::toDto)
                 .collect(Collectors.toList());

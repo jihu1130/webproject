@@ -1,5 +1,6 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,12 @@ public class LoginAttemptService {
     private static final long LOCKOUT_MINUTES = 5;
 
     private final UserRepository userRepository;
+    private final AdminActionLogService adminActionLogService;
 
     // 반환값: 이번 실패까지 누적된 연속 실패 횟수. 존재하지 않는 아이디는 계정 존재 여부를
     // 노출하지 않기 위해 -1을 반환해서 호출부(LoginFailureHandler)가 "n/5회" 안내를 보여주지
-    // 않게 한다.
+    // 않게 한다. 같은 이유로 보안 로그(/admin/security-log)에도 안 남긴다 - AdminActionLog.targetId가
+    // NOT NULL이라 어차피 실제 계정 없이는 기록할 수도 없음.
     @Transactional
     public int recordFailure(String username) {
         User user = userRepository.findByUsername(username).orElse(null);
@@ -38,8 +41,15 @@ public class LoginAttemptService {
         }
         userRepository.incrementFailedLoginAttempts(username);
         int newAttempts = user.getFailedLoginAttempts() + 1;
+        // 보안 로그 - 로그인 시도 자체는 아직 미인증 상태(SecurityContext에 실제 사용자 없음)라
+        // AdminActionLogService의 4-arg log()를 쓰면 전부 "system"으로 찍혀서 "누구 계정에 대한
+        // 시도였는지" 알 수 없다. 실행자(actor) 자리에 시도 대상 계정명을 직접 넘긴다.
+        adminActionLogService.log("USER", user.getId(), "LOGIN_FAIL",
+                newAttempts + "/" + MAX_ATTEMPTS + "회 연속 실패", username);
         if (newAttempts >= MAX_ATTEMPTS) {
             userRepository.lockAccountUntil(username, LocalDateTime.now().plusMinutes(LOCKOUT_MINUTES));
+            adminActionLogService.log("USER", user.getId(), "ACCOUNT_LOCK",
+                    LOCKOUT_MINUTES + "분 잠금", username);
         }
         return newAttempts;
     }

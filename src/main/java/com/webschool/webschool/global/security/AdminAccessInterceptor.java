@@ -64,6 +64,16 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/admin/audit-log") && !user.isCanViewAuditLog()) {
             throw new AccessDeniedException("감사 로그 열람 권한이 없습니다.");
         }
+        // 보안 로그(로그인 실패/계정 잠금/권한 변경) - 감사 로그와 같은 AdminActionLog 테이블을
+        // 걸러 보여주는 화면이라 같은 권한 플래그로 게이팅한다.
+        if (uri.startsWith("/admin/security-log") && !user.isCanViewAuditLog()) {
+            throw new AccessDeniedException("보안 로그 열람 권한이 없습니다.");
+        }
+        // 에러 로그 - 대시보드/부하테스트와 같은 이유(스택 트레이스에 내부 경로 등이 노출될 수 있음)로
+        // 총관리자 전용 고정.
+        if (uri.startsWith("/admin/error-log")) {
+            throw new AccessDeniedException("에러 로그는 총관리자만 접근할 수 있습니다.");
+        }
         // 버그 리포트 관리 - 위임 권한 플래그 없이 총관리자 전용으로 고정(사용자 확정, 이번 라운드 범위 밖).
         if (uri.startsWith("/admin/bug-reports")) {
             throw new AccessDeniedException("버그 리포트 관리는 총관리자만 접근할 수 있습니다.");

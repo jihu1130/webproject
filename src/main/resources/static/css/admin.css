@@ -977,3 +977,80 @@
     .dash-grid { grid-template-columns: 1fr; }
     .loadtest-run-stats { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* 에러 로그(/admin/error-log) - 테이블이 아니라 카드 리스트로 보여준다. 메시지는 항상 보이고
+   스택 트레이스는 <details>로 접어둬서(네이티브 HTML, 별도 JS 없이) 목록 전체가 벽처럼
+   길어지지 않게 한다. */
+.error-log-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0 16px;
+}
+
+.error-log-count {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.error-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.error-log-entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--danger);
+    border-radius: var(--radius-card);
+    padding: 14px 16px;
+}
+
+.error-log-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.error-log-logger {
+    font-family: 'Courier New', monospace;
+    color: var(--ink);
+    opacity: 0.75;
+    overflow-wrap: anywhere;
+}
+
+.error-log-message {
+    font-size: 0.9rem;
+    color: var(--ink);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+    margin: 0 0 6px;
+}
+
+.error-log-entry summary {
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--brand-1-dark);
+    font-weight: 600;
+}
+
+.error-log-stack {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    background: var(--surface-soft);
+    border-radius: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    max-height: 320px;
+    overflow-y: auto;
+}
