@@ -131,12 +131,15 @@
                 <form th:if="${loginUser != null and !attendanceCheckedInToday}"
                       th:action="@{/mypage/attendance}" method="post" class="mypage-quick-grid-form">
                     <button type="submit" class="mypage-quick-tile">
-                        <i class="fa-solid fa-calendar-check"></i> 출석체크
-                        (<span th:text="${attendanceStreakDay}">1</span>일차 +<span th:text="${attendanceNextPoints}">10</span>P)
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>출석체크</span>
+                        <span class="mypage-quick-tile-sub"><span th:text="${attendanceStreakDay}">1</span>일차 +<span th:text="${attendanceNextPoints}">10</span>P</span>
                     </button>
                 </form>
                 <div th:if="${loginUser != null and attendanceCheckedInToday}" class="mypage-quick-tile mypage-quick-tile-done">
-                    <i class="fa-solid fa-calendar-check"></i> 출석체크 완료 (<span th:text="${attendanceStreakDay}">1</span>일 연속)
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>출석체크 완료</span>
+                    <span class="mypage-quick-tile-sub"><span th:text="${attendanceStreakDay}">1</span>일 연속</span>
                 </div>
 
                 <button type="button" id="attendanceCalendarTrigger" class="mypage-quick-tile" th:if="${loginUser != null}">

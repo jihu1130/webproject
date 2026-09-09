@@ -191,6 +191,17 @@
     color: var(--brand-1);
 }
 
+/* 출석 스트릭 도입(2026-09-09) 이후 "출석체크 완료 (1일 연속)"처럼 라벨이 길어진 타일이
+   생겼는데, 좁은 3열 그리드 폭에서 괄호/숫자 사이에서 줄바꿈이 일어나 3줄로 쪼개지며
+   타일만 유독 커 보이는 문제가 있었다(사용자 지적) - 메인 라벨은 다른 타일과 동일하게
+   짧게 유지하고, 부가 정보만 별도 줄의 작은 텍스트로 뺀다. */
+.mypage-quick-tile-sub {
+    font-size: 0.68rem;
+    font-weight: 600;
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
 .mypage-quick-tile:hover {
     border-color: var(--brand-1);
     background: rgba(30, 79, 163, 0.06);
