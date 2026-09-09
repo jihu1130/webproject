@@ -257,7 +257,8 @@
     width: 42px;
     border-radius: 9px;
     border: none;
-    background: var(--brand-gradient);
+    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
+    background: var(--brand-fixed);
     color: #fff;
     cursor: pointer;
     font-size: 0.9rem;
@@ -745,4 +746,123 @@
     .admin-main-tabs .admin-tabs-divider {
         flex-shrink: 0;
     }
+}
+
+/* ---- 관리자 대시보드(/admin/dashboard, 2026-09-09 추가) ----
+   KPI 타일 4개 + 최근 14일 게시글 추이 차트 + 포인트 티어 분포. 브랜드 남색(--brand-1)은 추이
+   차트의 선 하나에만 쓰고, KPI 타일은 "무엇에 반응해야 하는가"를 색으로 구분한다 - 신고/문의처럼
+   조치가 필요한 수치만 danger/warn을 쓰고, 단순 현황 수치(사용자/게시글)는 색을 비워 ink로만
+   보여준다(성적표 도장 팔레트에서 danger/warn은 원래 "주의가 필요함"을 뜻하는 색이라 그 의미를
+   그대로 가져옴 - theme.css 참고). */
+.dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.dash-kpis {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.dash-kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 16px 18px;
+    border-left: 3px solid var(--border);
+}
+
+.dash-kpi--danger { border-left-color: var(--danger); }
+.dash-kpi--warn { border-left-color: var(--warn); }
+
+.dash-kpi-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+.dash-kpi-label i { width: 14px; text-align: center; }
+.dash-kpi--danger .dash-kpi-label i { color: var(--danger); }
+.dash-kpi--warn .dash-kpi-label i { color: var(--warn); }
+
+.dash-kpi-value {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.dash-card {
+    grid-column: span 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 18px 20px 20px;
+}
+
+.dash-card h2 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 12px;
+}
+
+.dash-chart { width: 100%; }
+.dash-chart svg { width: 100%; height: auto; display: block; }
+.dash-chart-line { fill: none; stroke: var(--brand-1); stroke-width: 2; }
+.dash-chart-area { fill: var(--brand-gradient-tint-2); stroke: none; }
+.dash-chart-dot { fill: var(--surface); stroke: var(--brand-1); stroke-width: 2; }
+.dash-chart-dot--last { fill: var(--brand-1); }
+.dash-chart-gridline { stroke: var(--border); stroke-width: 1; }
+.dash-chart-axis-label { fill: var(--muted); font-size: 9px; font-family: inherit; }
+.dash-chart-value-label { fill: var(--ink); font-size: 10px; font-weight: 700; font-family: inherit; }
+
+.dash-tier-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dash-tier-row {
+    display: grid;
+    grid-template-columns: 52px 1fr 34px;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+}
+
+.dash-tier-name { color: var(--ink); font-weight: 600; }
+
+.dash-tier-track {
+    background: var(--surface-soft);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.dash-tier-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.4s ease;
+}
+
+.dash-tier-count {
+    text-align: right;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+    .dash-kpis { grid-template-columns: repeat(2, 1fr); }
+    .dash-grid { grid-template-columns: 1fr; }
 }

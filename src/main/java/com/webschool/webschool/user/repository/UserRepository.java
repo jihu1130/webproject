@@ -53,4 +53,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 로그인 사용자가 상위 랭킹 밖에 있을 때 자기 순위를 계산하는 용도
     // (UserPointService.getMyRankingIfOutsideTop() 참고) - "나보다 포인트 많은 사용자 수 + 1".
     long countByDeletedFalseAndPointsGreaterThan(int points);
+
+    // 관리자 대시보드 KPI 타일 - "활성 사용자 수".
+    long countByDeletedFalse();
+
+    // 관리자 대시보드 티어 분포 차트용 - User에는 tier 컬럼이 없어(PointTier.forPoints()로 매번
+    // 계산) points만 뽑아서 컨트롤러에서 PointTier.forPoints()로 버킷팅한다.
+    @Query("SELECT u.points FROM User u WHERE u.deleted = false")
+    List<Integer> findAllActivePoints();
 }

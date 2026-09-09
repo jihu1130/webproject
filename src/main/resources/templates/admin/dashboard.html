@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 대시보드 - WebSchool</title>
+    <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-shield-halved"></i> 관리자 대시보드</h1>
+            <p class="page-sub">가입자·게시글·신고·문의 현황을 한눈에 봐요 (총관리자 전용)</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('dashboard')}"></div>
+
+        <div class="dash-grid">
+            <section class="dash-kpis">
+                <div class="dash-kpi">
+                    <div class="dash-kpi-label"><i class="fa-solid fa-users"></i> 활성 사용자</div>
+                    <div class="dash-kpi-value" th:text="${activeUserCount}">0</div>
+                </div>
+                <div class="dash-kpi">
+                    <div class="dash-kpi-label"><i class="fa-solid fa-file-lines"></i> 전체 게시글</div>
+                    <div class="dash-kpi-value" th:text="${totalPostCount}">0</div>
+                </div>
+                <div class="dash-kpi dash-kpi--danger">
+                    <div class="dash-kpi-label"><i class="fa-solid fa-flag"></i> 미해결 신고</div>
+                    <div class="dash-kpi-value" th:text="${unresolvedReportCount}">0</div>
+                </div>
+                <div class="dash-kpi dash-kpi--warn">
+                    <div class="dash-kpi-label"><i class="fa-solid fa-comment-dots"></i> 미답변 문의</div>
+                    <div class="dash-kpi-value" th:text="${unansweredInquiryCount}">0</div>
+                </div>
+            </section>
+
+            <section class="dash-card">
+                <h2>최근 14일 게시글 작성 추이</h2>
+                <div id="dashPostTrendChart" class="dash-chart"
+                     role="img" aria-label="최근 14일 동안 하루 평균 게시글 작성 수 추이 차트"></div>
+            </section>
+
+            <section class="dash-card">
+                <h2>포인트 티어 분포</h2>
+                <div id="dashTierChart" class="dash-tier-list"></div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+
+<!-- Chart.js 등 라이브러리를 새로 들이지 않고, 프로젝트 전반의 "순수 Vanilla JS" 관례를 그대로
+     따라 SVG를 직접 그린다 - 데이터 포인트가 최대 14개/7개뿐이라 라이브러리 도입은 과함. -->
+<script th:inline="javascript">
+(function () {
+    var trendLabels = /*[[${postTrendLabels}]]*/ [];
+    var trendValues = /*[[${postTrendValues}]]*/ [];
+    var tierLabels = /*[[${tierLabels}]]*/ [];
+    var tierValues = /*[[${tierValues}]]*/ [];
+
+    renderTrendChart(document.getElementById('dashPostTrendChart'), trendLabels, trendValues);
+    renderTierChart(document.getElementById('dashTierChart'), tierLabels, tierValues);
+
+    function renderTrendChart(container, labels, values) {
+        if (!container || values.length === 0) return;
+
+        var width = 560, height = 220;
+        var padding = { top: 16, right: 12, bottom: 26, left: 8 };
+        var plotW = width - padding.left - padding.right;
+        var plotH = height - padding.top - padding.bottom;
+
+        var maxValue = Math.max.apply(null, values);
+        var niceMax = maxValue === 0 ? 4 : Math.ceil(maxValue * 1.2);
+        var stepX = values.length > 1 ? plotW / (values.length - 1) : 0;
+
+        function xAt(i) { return padding.left + stepX * i; }
+        function yAt(v) { return padding.top + plotH - (v / niceMax) * plotH; }
+
+        var linePoints = values.map(function (v, i) { return xAt(i) + ',' + yAt(v); }).join(' ');
+        var areaPoints = linePoints + ' ' + xAt(values.length - 1) + ',' + (padding.top + plotH)
+            + ' ' + xAt(0) + ',' + (padding.top + plotH);
+
+        var gridLines = '';
+        var gridSteps = 3;
+        for (var g = 0; g <= gridSteps; g++) {
+            var gy = padding.top + (plotH / gridSteps) * g;
+            gridLines += '<line class="dash-chart-gridline" x1="' + padding.left + '" y1="' + gy
+                + '" x2="' + (width - padding.right) + '" y2="' + gy + '"></line>';
+        }
+
+        var dots = '';
+        var xLabels = '';
+        values.forEach(function (v, i) {
+            var isLast = i === values.length - 1;
+            var cx = xAt(i), cy = yAt(v);
+            dots += '<circle class="dash-chart-dot' + (isLast ? ' dash-chart-dot--last' : '') + '" cx="' + cx + '" cy="' + cy + '" r="' + (isLast ? 4 : 3) + '"></circle>';
+            if (isLast) {
+                dots += '<text class="dash-chart-value-label" x="' + cx + '" y="' + (cy - 10) + '" text-anchor="end">' + v + '</text>';
+            }
+            // 라벨이 14개 다 있으면 좁은 화면에서 겹치므로 이틀에 하나씩만 표시(마지막은 항상 표시).
+            if (i % 2 === 0 || isLast) {
+                xLabels += '<text class="dash-chart-axis-label" x="' + cx + '" y="' + (height - 6) + '" text-anchor="middle">' + labels[i] + '</text>';
+            }
+        });
+
+        container.innerHTML =
+            '<svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="xMidYMid meet">'
+            + gridLines
+            + '<polygon class="dash-chart-area" points="' + areaPoints + '"></polygon>'
+            + '<polyline class="dash-chart-line" points="' + linePoints + '"></polyline>'
+            + dots + xLabels
+            + '</svg>';
+    }
+
+    function renderTierChart(container, labels, values) {
+        if (!container) return;
+        var maxValue = Math.max.apply(null, values.concat([1]));
+        var rows = '';
+        labels.forEach(function (label, i) {
+            var value = values[i];
+            var pct = Math.round((value / maxValue) * 100);
+            rows += '<div class="dash-tier-row">'
+                + '<span class="dash-tier-name">' + label + '</span>'
+                + '<span class="dash-tier-track"><span class="dash-tier-fill" style="width:' + pct + '%"></span></span>'
+                + '<span class="dash-tier-count">' + value + '</span>'
+                + '</div>';
+        });
+        container.innerHTML = rows;
+    }
+})();
+</script>
+</body>
+</html>

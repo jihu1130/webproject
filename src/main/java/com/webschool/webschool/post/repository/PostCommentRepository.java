@@ -78,4 +78,7 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
     @Modifying
     @Query("UPDATE PostComment c SET c.author = null WHERE c.author.id = :userId")
     void detachAuthor(@Param("userId") Long userId);
+
+    // 관리자 대시보드 KPI 타일 - "미해결 신고" 합산 대상 중 댓글 쪽 (PostRepository의 동명 메서드와 동일한 이유).
+    long countByDeletedFalseAndBlindTrueAndReportClearedFalse();
 }

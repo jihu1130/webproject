@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -110,4 +111,17 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Modifying
     @Query("UPDATE Post p SET p.author = null WHERE p.author.id = :userId")
     void detachAuthor(@Param("userId") Long userId);
+
+    // 관리자 대시보드 KPI 타일 - "전체 게시글 수".
+    long countByDeletedFalse();
+
+    // 관리자 대시보드 KPI 타일 - "미해결 신고" 합산 대상 중 게시글 쪽. blind=true인데 아직
+    // reportCleared 처리(관리자 "문제없음" 판결)가 안 된 것만 센다(CLAUDE.md "신고→자동 블라인드
+    // 패턴" 참고) - findReportedOrBlindPosts()는 reportCleared 여부를 안 걸러서 그대로 재사용할 수 없었음.
+    long countByDeletedFalseAndBlindTrueAndReportClearedFalse();
+
+    // 관리자 대시보드 추이 차트용 - 최근 N일 게시글 생성 시각만 뽑아 컨트롤러에서 일자별로 집계한다
+    // (MySQL DATE() 그룹핑을 JPQL로 이식하는 대신, 컨트롤러 쪽 다른 집계(티어 버킷팅)와 같은 방식으로 통일).
+    @Query("SELECT p.createdAt FROM Post p WHERE p.deleted = false AND p.createdAt >= :since")
+    List<LocalDateTime> findCreatedAtSince(@Param("since") LocalDateTime since);
 }

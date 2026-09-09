@@ -27,6 +27,10 @@
     /* --danger도 같은 이유(다크모드에서 밝은 산호색으로 뒤집힘)로 흰 글자를 얹는 알림
        배지(.site-nav-bell-badge) 배경에 쓰면 대비가 2.42:1까지 떨어졌다 - 고정 버전 추가. */
     --danger-fixed: #b5342a;
+    /* --accent도 같은 이유(다크모드에서 밝은 노랑 #f0c15e로 뒤집힘)로 흰 글자를 얹는 곳(index.css
+       .bento-icon-sky)에 쓰면 마찬가지로 대비가 무너진다 - 다크모드 대비 전수 감사(2026-09-09)로
+       발견, 같은 고정 패턴 추가. */
+    --accent-fixed: #c98a1f;
 
     --brand-gradient: var(--brand-1);
     --brand-gradient-dark: var(--brand-1-dark);

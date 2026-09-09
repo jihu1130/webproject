@@ -116,7 +116,10 @@
 .post-category-tab:hover { border-color: var(--brand-1); color: var(--brand-1); }
 
 .post-category-tab.active {
-    background: var(--brand-gradient);
+    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 글자 대비 유지, theme.css 상단 주석 참고.
+       다크모드 대비 전수 감사(2026-09-09)로 발견 - 원래 var(--brand-gradient)라 다크모드에서
+       밝은 하늘색으로 뒤집혀 흰 글자 대비가 무너져 있었다. */
+    background: var(--brand-fixed);
     border-color: transparent;
     color: #fff;
 }
@@ -161,7 +164,9 @@
     width: 42px;
     border-radius: 9px;
     border: none;
-    background: var(--brand-gradient);
+    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), 아래 post-search-row/post-comment-form
+       버튼과 동일한 이유(theme.css 상단 주석 참고). */
+    background: var(--brand-fixed);
     color: #fff;
     cursor: pointer;
     font-size: 0.9rem;
@@ -191,7 +196,8 @@
     width: 42px;
     border-radius: 9px;
     border: none;
-    background: var(--brand-gradient);
+    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
+    background: var(--brand-fixed);
     color: #fff;
     cursor: pointer;
     font-size: 0.9rem;
@@ -227,7 +233,8 @@
 .post-search-scope:hover { border-color: var(--brand-1); color: var(--brand-1); }
 
 .post-search-scope:has(input:checked) {
-    background: var(--brand-gradient);
+    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
+    background: var(--brand-fixed);
     border-color: transparent;
     color: #fff;
 }
@@ -432,7 +439,8 @@ a.post-list-nickname:hover { text-decoration: underline; }
 .post-page-link:hover { background: rgba(30, 79, 163, 0.08); border-color: var(--brand-1); }
 
 .post-page-link.active {
-    background: var(--brand-gradient);
+    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
+    background: var(--brand-fixed);
     border-color: transparent;
     color: #fff;
 }
@@ -1494,7 +1502,8 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     width: 42px;
     border-radius: 9px;
     border: none;
-    background: var(--brand-gradient);
+    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
+    background: var(--brand-fixed);
     color: #fff;
     cursor: pointer;
     font-size: 0.9rem;
@@ -1859,7 +1868,8 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: var(--brand-gradient);
+    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
+    background: var(--brand-fixed);
     color: white;
     font-weight: 700;
     font-size: 0.85rem;

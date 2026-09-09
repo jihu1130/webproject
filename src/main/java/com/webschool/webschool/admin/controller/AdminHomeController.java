@@ -23,7 +23,13 @@ public class AdminHomeController {
         if (user == null) {
             return "redirect:/admin/access-denied";
         }
-        if (user.isSuperAdmin() || user.isCanManageReports()) {
+        // 총관리자는 특정 기능 화면이 아니라 KPI 개요(대시보드)부터 보게 한다 - 부관리자는 위임받은
+        // 권한 범위 밖의 수치(예: 문의 관리는 총관리자 전용)까지 노출되므로 대시보드 자체가
+        // 총관리자 전용(AdminAccessInterceptor 참고)이라 이 분기를 분리했다.
+        if (user.isSuperAdmin()) {
+            return "redirect:/admin/dashboard";
+        }
+        if (user.isCanManageReports()) {
             return "redirect:/admin/reports";
         }
         if (user.isCanManagePosts()) {

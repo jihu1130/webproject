@@ -16,4 +16,7 @@ public interface BugReportRepository extends JpaRepository<BugReport, Long> {
     @Modifying
     @Query("UPDATE BugReport b SET b.reporter = null WHERE b.reporter.id = :userId")
     void detachReporter(@Param("userId") Long userId);
+
+    // 관리자 대시보드 KPI 타일 - "미답변 문의 수".
+    long countByResolvedFalse();
 }

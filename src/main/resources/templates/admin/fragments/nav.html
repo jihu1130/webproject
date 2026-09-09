@@ -18,6 +18,10 @@
      이동했다(사용자 요청 - 아래 contentSubTabs fragment 참고) - 권한 체계 자체는 안 바뀌었고
      여전히 canManagePolls로 독립 게이팅된다(poll 패키지가 post/school 어느 쪽에도 속하지 않는 것과
      같은 이유, AdminAccessInterceptor도 그대로 유지), UI 위치만 옮긴 것.
+     "대시보드"(/admin/dashboard, 디자인 개선 계획 우선순위 "상" 1번으로 2026-09-09 추가)는 이
+     고정 순서(1~10)에 포함되지 않는 별도 항목이라 번호를 붙이지 않았다 - 특정 관리 기능이 아니라
+     여러 기능에 걸친 KPI 개요라 성격이 다르고, 총관리자 전용(AdminAccessInterceptor 참고)이라
+     위임 권한 플래그로 게이팅하지도 않는다. 항상 첫 그룹 맨 앞에 둔다.
      주의: loginUser는 DTO가 아니라 실제 User 엔티티라 role이 String이 아니라 User.Role enum이다.
      다른 관리자 화면(AdminUserSummaryDto 등)은 서비스 단에서 role을 미리 .name()으로 문자열
      변환해두지만, 여기서는 엔티티를 그대로 쓰므로 반드시 .name()을 붙여 문자열로 비교해야 한다
@@ -35,6 +39,8 @@
      구분할 수 있게 했다. -->
 <nav class="post-category-tabs admin-main-tabs">
     <span class="admin-tabs-group">
+        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+           href="/admin/dashboard" class="post-category-tab" th:classappend="${active == 'dashboard'} ? ' active' : ''"><i class="fa-solid fa-gauge-high"></i> 대시보드</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageReports)}"
            href="/admin/reports" class="post-category-tab" th:classappend="${active == 'reports'} ? ' active' : ''"><i class="fa-solid fa-flag"></i> 1. 신고 관리</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePosts)}"
