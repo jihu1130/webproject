@@ -126,7 +126,7 @@
                 <form th:if="${loginUser != null and !attendanceCheckedInToday}"
                       th:action="@{/mypage/attendance}" method="post" class="mypage-quick-grid-form">
                     <button type="submit" class="mypage-quick-tile">
-                        <i class="fa-solid fa-calendar-check"></i> 출석체크 (+3P)
+                        <i class="fa-solid fa-calendar-check"></i> 출석체크 (+10P)
                     </button>
                 </form>
                 <div th:if="${loginUser != null and attendanceCheckedInToday}" class="mypage-quick-tile mypage-quick-tile-done">
