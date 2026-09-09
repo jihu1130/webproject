@@ -28,10 +28,20 @@ const SCHOOL_CODE = '8181104';
 const GRADE = 1;
 const CLASS_NM = '1';
 
-// 매번 다른 값이 나오도록 실행 시각(초)을 그대로 날짜 자리에 우겨넣는다 - 실제 존재하는
-// 날짜일 필요는 없다(NEIS가 빈 배열/캐시 미존재로 응답해도 캐시 미스 자체는 동일하게
-// 재현되므로), 오직 "한 번도 캐시된 적 없는 키"라는 조건만 중요하다.
-const DATE = __ENV.DATE || `2099${String(Math.floor(Date.now() / 1000) % 1000).padStart(4, '0')}`.slice(0, 8);
+// 실제 존재하는 날짜일 필요는 없지만(NEIS가 빈 배열/캐시 미존재로 응답해도 캐시 미스 자체는
+// 동일하게 재현됨), **달력상 유효한 날짜여야 한다** - SchoolService.getCalendarDetails()가
+// date 파라미터를 검증 없이 LocalDate.parse()에 바로 넘기므로(2026-09-09 이 스크립트로 직접
+// 발견 - 월/일이 잘못된 문자열을 넘기면 DateTimeParseException으로 500이 났었음), 문자열을
+// 직접 조립하지 않고 Date 객체로 계산해서 항상 유효한 날짜가 나오게 한다. 10~20년 뒤 범위에서
+// 무작위로 골라 실행마다 "한 번도 캐시된 적 없는 키"가 되게 한다.
+function futureDateString() {
+    var d = new Date();
+    d.setFullYear(d.getFullYear() + 10 + Math.floor(Math.random() * 10));
+    d.setDate(d.getDate() + Math.floor(Math.random() * 365));
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+    return '' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+}
+const DATE = __ENV.DATE || futureDateString();
 
 export const options = {
     scenarios: {
