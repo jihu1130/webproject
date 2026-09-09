@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+    <!-- WebSchool 로고 - 졸업모(학업) + 지구본(전 세계 학생 커뮤니티) + 화살표(성장/연결).
+         theme.css의 brand-1 토큰(#1e4fa3, "교표 블루")과 정확히 같은 색을 써서 사이트 전체
+         브랜드 색과 통일했다. 작은 크기(파비콘/네브바)에서도 알아볼 수 있게 그리드/화살표는
+         굵고 단순하게 그렸고, 화살표는 졸업모 아래(y>=42)만 지나가게 해서 서로 겹치지 않는다. -->
+    <defs>
+        <clipPath id="globeClip">
+            <circle cx="58" cy="79" r="33"/>
+        </clipPath>
+    </defs>
+
+    <!-- 화살표(성장/연결) - 지구본 왼쪽 아래에서 시작해 오른쪽 위로 감아 올라간다. 흰 테두리를
+         먼저 깔아서 겹치는 지구본과 분리돼 보이게 한다. -->
+    <g fill="none" stroke-linecap="round">
+        <path d="M 13,93 C 5,64 22,43 50,45 C 76,47 92,50 105,39" stroke="#ffffff" stroke-width="14"/>
+        <path d="M 13,93 C 5,64 22,43 50,45 C 76,47 92,50 105,39" stroke="#1e4fa3" stroke-width="9"/>
+    </g>
+    <polygon points="96,47 123,17 120,55" fill="#ffffff"/>
+    <polygon points="101,44 118,24 114,49" fill="#1e4fa3"/>
+
+    <!-- 지구본 -->
+    <circle cx="58" cy="79" r="33" fill="#1e4fa3"/>
+    <g fill="none" stroke="#ffffff" stroke-width="3.2">
+        <ellipse cx="58" cy="79" rx="33" ry="11" clip-path="url(#globeClip)"/>
+        <ellipse cx="58" cy="79" rx="11" ry="33" clip-path="url(#globeClip)"/>
+        <line x1="25" y1="79" x2="91" y2="79" clip-path="url(#globeClip)"/>
+    </g>
+
+    <!-- 졸업모 -->
+    <line x1="18" y1="20" x2="18" y2="45" stroke="#1e4fa3" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="18" cy="51" r="5" fill="#1e4fa3"/>
+    <rect x="40" y="25" width="36" height="19" rx="4" fill="#1e4fa3"/>
+    <polygon points="58,2 102,22 58,42 14,22" fill="#1e4fa3"/>
+</svg>
