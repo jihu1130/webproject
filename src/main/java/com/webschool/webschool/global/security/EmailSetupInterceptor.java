@@ -42,6 +42,17 @@ public class EmailSetupInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        // 구글 계정은 이 게이트를 적용하지 않는다 - 이메일이 비어있는 이유가 대부분 구글 이메일이
+        // 이미 다른 계정(본인의 로컬 계정 등)에 등록돼 있어 CustomOAuth2UserService가 백필을
+        // 건너뛴 경우인데, 그렇다고 여기서 "다른" 이메일을 새로 등록시키는 건 사용자에게 혼란만
+        // 준다(실사용자 신고 - "구글 로그인했는데 이메일을 하나 더 등록하라고 한다"). 게이트의
+        // 원래 목적인 "비밀번호 찾기 가능하게" 자체도 구글 계정에는 적용되지 않는다 -
+        // UserService.requestPasswordReset()이 구글 계정이면 토큰 발급 없이 안내 메일만 보내고
+        // 끝나므로, 이 계정의 email 필드가 비어있어도 잃는 기능이 없다.
+        if (user.getProvider() == User.Provider.GOOGLE) {
+            return true;
+        }
+
         if (ALLOWED_PATHS.contains(request.getRequestURI())) {
             return true;
         }
