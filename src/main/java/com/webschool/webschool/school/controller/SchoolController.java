@@ -16,6 +16,7 @@ import com.webschool.webschool.school.service.PersonalEventService;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.school.service.SchoolService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -93,7 +94,18 @@ public class SchoolController {
             @RequestParam(defaultValue = "1") String classNm,
             @RequestParam(required = false) String schoolKind) {
 
-        return schoolService.getCalendarDetails(atptCode, schoolCode, date, grade, classNm, schoolKind);
+        try {
+            return schoolService.getCalendarDetails(atptCode, schoolCode, date, grade, classNm, schoolKind);
+        } catch (DataIntegrityViolationException e) {
+            // 같은 학교/학년/반/날짜 시간표 캐시가 비어있을 때 동시에 여러 요청이 몰리면
+            // 전부 캐시 미스로 보고 나이스 조회 결과를 DB에 저장하려다 unique 제약(학교+학년+반+
+            // 날짜+교시)에서 충돌한다(todo.md #24 "캘린더 NEIS 캐시 만료 몰림" 참고, 운영에서
+            // 실제로 반복 발생 확인됨). 이 요청은 진 쪽이므로 한 번 더 시도하면 이번엔 이긴 쪽이
+            // 이미 커밋해둔 캐시를 그대로 읽어온다 - InnoDB 행 잠금 때문에 진 쪽이
+            // DataIntegrityViolationException을 받는 시점엔 이긴 쪽이 이미 커밋을 마친 상태라
+            // 재시도가 즉시 캐시 히트로 이어진다.
+            return schoolService.getCalendarDetails(atptCode, schoolCode, date, grade, classNm, schoolKind);
+        }
     }
 
     // 4-1. 캘린더 월 그리드용 학사일정 - 기본은 해당 월(+그리드에 보이는 앞뒤 달
