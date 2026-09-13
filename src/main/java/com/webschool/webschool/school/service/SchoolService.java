@@ -20,7 +20,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -87,7 +90,8 @@ public class SchoolService {
             timetableDtos = new ArrayList<>();
         } else {
             // DB에 없거나 만료됐으면 나이스 API 호출 후 DB에 저장
-            timetableDtos = neisApiService.fetchTimetableFromNeis(atptCode, schoolCode, dateStr, grade, classNm, schoolKind);
+            timetableDtos = mergeDuplicatePeriods(
+                    neisApiService.fetchTimetableFromNeis(atptCode, schoolCode, dateStr, grade, classNm, schoolKind));
             for (TimetableDto dto : timetableDtos) {
                 int periodInt = Integer.parseInt(dto.getPerio().replace("교시", "").trim());
                 timetableRepository.save(Timetable.builder()
@@ -136,6 +140,24 @@ public class SchoolService {
                 .meal(mealMenu)
                 .eventName(eventName)
                 .build();
+    }
+
+    // 분반 수업(같은 교시에 과목이 그룹별로 나뉘는 경우) 등으로 나이스가 같은 교시를 여러
+    // row로 내려줄 때가 있다 - 그대로 저장하면 (학교+날짜+학년+반+교시) unique 제약에
+    // 걸려 DataIntegrityViolationException이 난다(운영에서 실제로 반복 발생 확인, 재시도로도
+    // 해결 안 됨 - 동시 요청 경합이 아니라 같은 요청 안에서 이미 중복이라 결정적으로 매번
+    // 재현됨). 같은 교시는 과목명을 "/"로 합쳐 한 행으로 만든다.
+    private List<TimetableDto> mergeDuplicatePeriods(List<TimetableDto> dtos) {
+        Map<String, Set<String>> subjectsByPerio = new LinkedHashMap<>();
+        for (TimetableDto dto : dtos) {
+            subjectsByPerio.computeIfAbsent(dto.getPerio(), k -> new LinkedHashSet<>()).add(dto.getSubject());
+        }
+        return subjectsByPerio.entrySet().stream()
+                .map(e -> TimetableDto.builder()
+                        .perio(e.getKey())
+                        .subject(String.join(" / ", e.getValue()))
+                        .build())
+                .collect(Collectors.toList());
     }
 
     // updatedAt이 없거나(구버전 캐시 데이터) TTL을 넘겼으면 만료로 판단한다.
