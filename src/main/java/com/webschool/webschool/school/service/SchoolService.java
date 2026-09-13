@@ -72,6 +72,13 @@ public class SchoolService {
 
         if (!cachedTimetables.isEmpty() && cachedTimetables.stream().anyMatch(t -> isCacheExpired(t.getUpdatedAt()))) {
             timetableRepository.deleteAll(cachedTimetables);
+            // Hibernate는 flush 시 삭제보다 삽입을 먼저 실행한다(액션 큐 기본 순서) - flush()
+            // 없이 바로 아래에서 같은 unique key(학교+날짜+학년+반+교시)로 새 행을 저장하면,
+            // 방금 지운 행이 DB에는 아직 남아있는 상태라 그 새 삽입이 그 "안 지워진" 기존 행과
+            // 충돌해 DataIntegrityViolationException이 난다. 실제로 로컬에서 재현해 확인함 -
+            // 동시 요청 경합이 아니라 단일 요청 안에서 매번 결정적으로 재현되는 문제였음
+            // (이전 두 차례 수정은 경합/나이스 중복 응답으로 잘못 진단해 효과가 없었음).
+            timetableRepository.flush();
             cachedTimetables = List.of();
         }
 
