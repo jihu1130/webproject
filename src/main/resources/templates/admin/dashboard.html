@@ -66,10 +66,9 @@
                     </a>
                 </h2>
                 <section class="dash-kpis">
-                    <div class="dash-kpi" th:classappend="${serverSnapshot.activeSessionCount()} >= 200 ? 'dash-kpi--warn' : ''">
-                        <div class="dash-kpi-label"><i class="fa-solid fa-user-clock"></i> 현재 로그인 세션</div>
-                        <div class="dash-kpi-value" th:text="${serverSnapshot.activeSessionCount()}">0</div>
-                    </div>
+                    <!-- "현재 로그인 세션" KPI는 제거됨(세션 인증 → JWT 전체 교체, 2026-09-14) -
+                         stateless JWT에서는 SessionRegistry 기반 동시 세션 추적 자체가 성립하지
+                         않는다(사용자 확정 - 이 기능은 포기). -->
                     <div class="dash-kpi" th:classappend="${serverSnapshot.cpuUsagePercent()} != null and ${serverSnapshot.cpuUsagePercent()} >= 80 ? 'dash-kpi--warn' : ''">
                         <div class="dash-kpi-label"><i class="fa-solid fa-microchip"></i> CPU 사용률</div>
                         <div class="dash-kpi-value">

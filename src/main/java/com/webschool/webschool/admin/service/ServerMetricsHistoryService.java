@@ -4,7 +4,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -28,14 +27,13 @@ public class ServerMetricsHistoryService {
     private static final int MAX_SAMPLES = 60; // 1분 간격 샘플링 * 60 = 최근 1시간
 
     private final MeterRegistry meterRegistry;
-    private final SessionRegistry sessionRegistry;
 
     private final Deque<Sample> history = new ArrayDeque<>();
 
-    public record Sample(LocalDateTime time, Double cpuPercent, long heapUsedMb, long activeSessionCount) {
+    public record Sample(LocalDateTime time, Double cpuPercent, long heapUsedMb) {
     }
 
-    public record Snapshot(long activeSessionCount, Double cpuUsagePercent, long heapUsedMb, long heapCommittedMb,
+    public record Snapshot(Double cpuUsagePercent, long heapUsedMb, long heapCommittedMb,
                             long heapUsedPercent, Double diskFreeGb, Double diskTotalGb, String uptimeLabel) {
     }
 
@@ -44,8 +42,7 @@ public class ServerMetricsHistoryService {
         Sample s = new Sample(
                 LocalDateTime.now(),
                 roundPercent(gaugeValue("process.cpu.usage")),
-                toMb(sumGauges("jvm.memory.used", "area", "heap")),
-                countActiveSessions());
+                toMb(sumGauges("jvm.memory.used", "area", "heap")));
         synchronized (history) {
             history.addLast(s);
             while (history.size() > MAX_SAMPLES) {
@@ -64,7 +61,6 @@ public class ServerMetricsHistoryService {
         double heapUsedBytes = sumGauges("jvm.memory.used", "area", "heap");
         double heapCommittedBytes = sumGauges("jvm.memory.committed", "area", "heap");
         return new Snapshot(
-                countActiveSessions(),
                 roundPercent(gaugeValue("process.cpu.usage")),
                 toMb(heapUsedBytes),
                 toMb(heapCommittedBytes),
@@ -72,16 +68,6 @@ public class ServerMetricsHistoryService {
                 toGb(firstGaugeValue("disk.free")),
                 toGb(firstGaugeValue("disk.total")),
                 formatUptime(gaugeValue("process.uptime")));
-    }
-
-    // 로그인 중인 계정 수가 아니라 "동시 세션 수"(같은 계정으로 여러 브라우저에서 로그인하면
-    // 그만큼 더 잡힘) - SecurityConfig의 sessionRegistry()가 세션 생성/소멸
-    // (HttpSessionEventPublisher 경유)을 계속 추적하므로 만료된 세션은 자동으로 빠진다
-    // (expiredOnly=false로 살아있는 것만 조회).
-    private long countActiveSessions() {
-        return sessionRegistry.getAllPrincipals().stream()
-                .mapToLong(principal -> sessionRegistry.getAllSessions(principal, false).size())
-                .sum();
     }
 
     // MeterRegistry.find()는(=RequiredSearch가 아니라 Search) 지표가 없어도 예외 없이 null/빈

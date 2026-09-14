@@ -1,24 +1,26 @@
 package com.webschool.webschool.global.config;
 
+import com.webschool.webschool.global.security.CookieOAuth2AuthorizationRequestRepository;
+import com.webschool.webschool.global.security.JwtAuthenticationFilter;
+import com.webschool.webschool.global.security.JwtService;
 import com.webschool.webschool.global.security.LoginFailureHandler;
 import com.webschool.webschool.global.security.LoginSuccessHandler;
+import com.webschool.webschool.global.security.OAuth2LoginSuccessHandler;
 import com.webschool.webschool.user.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
-import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
-import org.springframework.security.web.savedrequest.RequestCache;
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
-import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.savedrequest.NullRequestCache;
 
 @Configuration
 @EnableWebSecurity
@@ -34,6 +36,10 @@ public class SecurityConfig {
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
     private final LoginSuccessHandler loginSuccessHandler;
     private final LoginFailureHandler loginFailureHandler;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final CookieOAuth2AuthorizationRequestRepository cookieOAuth2AuthorizationRequestRepository;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtService jwtService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -42,6 +48,21 @@ public class SecurityConfig {
                 // rich-editor.js, calendar.js, post-detail.js)만 static/js/csrf.js 헬퍼로
                 // 토큰을 같이 보내도록 손봤고, 나머지 th:action 폼은
                 // thymeleaf-extras-springsecurity6가 자동으로 hidden 토큰을 넣어준다.
+                // 세션 인증 → JWT 전체 교체(2026-09-14)로 CsrfTokenRepository만 세션 기반에서
+                // 쿠키 기반(CookieCsrfTokenRepository)으로 바꿨다 - Thymeleaf의 자동 hidden
+                // input과 WebSchoolCsrf.headers() 둘 다 요청 속성(메타태그/hidden input)에서
+                // 토큰을 읽는 방식이라 이 교체를 몰라도 그대로 동작한다(템플릿/JS 무수정). 이
+                // 앱의 JS는 document.cookie로 CSRF 쿠키를 직접 읽는 코드가 전혀 없으므로(항상
+                // 서버가 렌더링한 meta 태그에서만 읽음, csrf.js 참고) withHttpOnlyFalse()가
+                // 필요한 "JS가 쿠키를 읽어 헤더에 넣는" 고전적 더블서밋 패턴이 아니다 - 기본
+                // 생성자(httpOnly=true)로 XSS 표면을 한 겹 더 줄인다. SameSite를 jwt 쿠키와
+                // 동일하게 명시적으로 Lax로 맞춘다(기본값은 브라우저마다 미표기 쿠키를 다르게
+                // 취급할 수 있어 명시하는 편이 안전).
+                .csrf(csrf -> {
+                    CookieCsrfTokenRepository repository = new CookieCsrfTokenRepository();
+                    repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+                    csrf.csrfTokenRepository(repository);
+                })
                 .authorizeHttpRequests(auth -> auth
                         // "/error"가 permitAll이 아니면, 핸들러가 없는 요청(존재하지 않는 정적 파일 등 -
                         // 예: /favicon.ico)이 Spring Boot 기본 에러 처리로 "/error"에 내부 포워드될 때
@@ -105,35 +126,29 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(login -> login
                         .loginPage("/login")
-                        // alwaysUse=false: 로그인 페이지로 리다이렉트되기 전 원래 요청했던 URL(예: /school/calendar)이 있으면 그곳으로 되돌아간다.
                         // 로그인 시도 횟수 제한(todo.md "고도화 후보") - 성공 시 실패 카운터 리셋,
                         // 실패 시 카운터 증가/잠금 판단은 각각 LoginSuccessHandler/LoginFailureHandler로 위임.
+                        // successHandler가 이제 JWT 쿠키를 발급하고 항상 홈으로 보낸다(사용자 확정,
+                        // "원래 요청했던 페이지로 복귀" 기능은 OAuth2 로그인과 동일하게 단순화됨).
                         .successHandler(loginSuccessHandler)
                         .failureHandler(loginFailureHandler)
                         .permitAll()
                 )
-                // 아래 requestCache() 참고 - 네비바 알림 배지 폴링 요청이 로그인 후 리다이렉트
-                // 대상으로 잘못 저장되는 버그(todo.md #15) 수정.
-                .requestCache(cache -> cache.requestCache(requestCache()))
-                // 관리자 대시보드의 "현재 로그인 세션 수"(AdminDashboardController)가 읽는
-                // 레지스트리 - 세션 최대 개수 제한 등은 안 걸고 등록/조회 용도로만 쓴다.
-                // sessionRegistry()만 등록해선 세션 만료(로그아웃/타임아웃) 이벤트를 못 받아
-                // getAllSessions(expiredOnly=false)가 죽은 세션을 계속 살아있는 것처럼
-                // 세도록 아래 httpSessionEventPublisher() 빈이 반드시 같이 있어야 한다.
+                // 로그인/인가 실패 시 요청을 저장했다가 로그인 후 되돌아가는 기능은 이제 안 쓴다
+                // (사용자 확정 - 항상 홈으로 단순화) - 저장 자체를 하지 않아 불필요한 세션 생성도 막는다.
+                .requestCache(cache -> cache.requestCache(new NullRequestCache()))
                 .sessionManagement(session -> session
-                        .sessionConcurrency(concurrency -> concurrency
-                                .sessionRegistry(sessionRegistry())
-                                // maximumSessions를 실제로 호출해야 RegisterSessionAuthenticationStrategy가
-                                // 인증 흐름에 실제로 붙는다(sessionRegistry()만 지정하면 등록 자체가 안
-                                // 일어나서 대시보드의 세션 수가 항상 0으로 나오는 걸 직접 겪고 알게 됨) -
-                                // 동시 세션 개수를 막을 생각은 없어서 -1(무제한)로 둔다.
-                                .maximumSessions(-1)))
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
-                        .invalidateHttpSession(true)
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.addHeader(HttpHeaders.SET_COOKIE,
+                                    jwtService.buildExpiredCookie(request.isSecure()).toString());
+                            response.sendRedirect("/");
+                        })
                 )
                 .exceptionHandling(exceptions -> exceptions
                         // 부관리자가 권한 없는 관리자 메뉴에 접근하면 whitelabel 403 대신 안내 화면으로 보낸다.
@@ -141,7 +156,11 @@ public class SecurityConfig {
                         // 없습니다." 처럼 구체적인 이유가 담겨 있는데, 예전엔 여기서 버려지고 항상
                         // 똑같은 뭉뚱그린 안내문만 보였다 - 세션에 한 번만 담아 access-denied 화면에서
                         // 보여준다(RedirectAttributes.addFlashAttribute와 같은 원리를 여기서는 이
-                        // 핸들러가 Spring MVC 컨트롤러가 아니라서 직접 세션에 심어 흉내낸다).
+                        // 핸들러가 Spring MVC 컨트롤러가 아니라서 직접 세션에 심어 흉내낸다). 참고:
+                        // sessionCreationPolicy(STATELESS)는 Spring Security 자신이 SecurityContext를
+                        // 세션에 두지 않겠다는 설정일 뿐, 앱 코드가 request.getSession()으로 평범한
+                        // HttpSession을 쓰는 것 자체는 막지 않는다(RedirectAttributes.addFlashAttribute
+                        // 등 이 앱 곳곳의 flash 메시지 패턴도 전부 동일하게 계속 동작함).
                         .accessDeniedHandler((request, response, ex) -> {
                             String target = request.getRequestURI().startsWith("/admin/") ? "/admin/access-denied" : "/";
                             if (target.equals("/admin/access-denied") && ex.getMessage() != null) {
@@ -154,41 +173,14 @@ public class SecurityConfig {
         if (clientRegistrationRepositoryProvider.getIfAvailable() != null) {
             http.oauth2Login(oauth2 -> oauth2
                     .loginPage("/login")
+                    .authorizationEndpoint(authorization -> authorization
+                            .authorizationRequestRepository(cookieOAuth2AuthorizationRequestRepository))
                     .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                    .defaultSuccessUrl("/", false)
+                    .successHandler(oAuth2LoginSuccessHandler)
                     .failureUrl("/login?error=true")
             );
         }
 
         return http.build();
-    }
-
-    // 네비바 종 배지가 20초마다 폴링하는 /notifications/unread-count(notification.js)는
-    // fetch()로 호출되는데 X-Requested-With 헤더를 안 붙인다 - Spring Security 기본
-    // RequestCache(HttpSessionRequestCache)는 이런 요청을 일반 페이지 이동과 구분하지 못하고,
-    // 세션이 만료된 시점에 마침 이 폴링이 나가면 "로그인 성공 후 되돌아갈 곳"으로 그 요청을
-    // 저장해버린다. 그 결과 로그인에 성공해도 홈이 아니라 이 API의 JSON 응답
-    // ({"count":0})만 그대로 보이는 버그가 있었다(실사용자 신고, 2026-09-02, todo.md #15).
-    // 이 경로만 저장 대상에서 제외해서 항상 원래 의도대로(홈 또는 실제로 요청했던 페이지로)
-    // 리다이렉트되게 한다.
-    @Bean
-    public RequestCache requestCache() {
-        HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
-        requestCache.setRequestMatcher(new NegatedRequestMatcher(
-                PathPatternRequestMatcher.pathPattern("/notifications/unread-count")));
-        return requestCache;
-    }
-
-    @Bean
-    public SessionRegistry sessionRegistry() {
-        return new SessionRegistryImpl();
-    }
-
-    // ServletContext에 HttpSessionEventPublisher 리스너를 등록해서 세션 생성/소멸 이벤트를
-    // SessionRegistry에 전달한다(WebConfig에 별도로 등록하지 않고 여기 빈으로만 선언해도
-    // Spring Boot가 ServletListenerRegistrationBean 없이 자동으로 리스너로 등록해준다).
-    @Bean
-    public HttpSessionEventPublisher httpSessionEventPublisher() {
-        return new HttpSessionEventPublisher();
     }
 }

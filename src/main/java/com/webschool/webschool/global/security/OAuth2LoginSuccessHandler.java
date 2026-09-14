@@ -1,6 +1,5 @@
 package com.webschool.webschool.global.security;
 
-import com.webschool.webschool.user.service.LoginAttemptService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,20 +11,19 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-// 세션 인증 → JWT 전체 교체(사용자 확정, 2026-09-14) - 예전엔 SavedRequestAwareAuthenticationSuccessHandler로
-// "원래 요청했던 페이지로 복귀"를 지원했지만, stateless 전환과 함께 사용자가 "항상 홈으로
-// 단순화"를 택해서(OAuth2 로그인이 이미 이렇게 동작 중이던 것과 통일) 더 이상 필요 없다.
+// 세션 인증 → JWT 전체 교체(사용자 확정, 2026-09-14) - 구글 로그인도 폼 로그인(LoginSuccessHandler)과
+// 동일하게 JWT 쿠키를 발급하고 홈으로 보낸다. CustomOAuth2UserService가 이미
+// nameAttributeKey="username"으로 맞춰둬서 authentication.getName()이 로그인 방식과 무관하게
+// 항상 내부 username을 반환하므로, 이 핸들러는 그 값을 그대로 재사용하면 된다(별도 분기 불필요).
 @Component
 @RequiredArgsConstructor
-public class LoginSuccessHandler implements AuthenticationSuccessHandler {
+public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final LoginAttemptService loginAttemptService;
     private final JwtService jwtService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                          Authentication authentication) throws ServletException, IOException {
-        loginAttemptService.recordSuccess(authentication.getName());
         String token = jwtService.generateToken(authentication.getName());
         response.addHeader(HttpHeaders.SET_COOKIE, jwtService.buildCookie(token, request.isSecure()).toString());
         response.sendRedirect("/");

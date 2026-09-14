@@ -72,6 +72,12 @@ neis:
   api:
     key: YOUR_NEIS_API_KEY
 
+# 세션 인증 → JWT 전체 교체(2026-09-14) - 로그인 토큰 서명용 HMAC 키(32바이트 이상 권장).
+# 비워두면 앱은 정상 기동하되 매 재시작마다 임의 키를 새로 생성해서 기존 로그인이 전부
+# 무효화된다(JwtService 참고) - 운영 배포 전 반드시 강한 랜덤 값을 채울 것.
+jwt:
+  secret: YOUR_JWT_SECRET_MIN_32_BYTES
+
 app:
   upload:
     dir: ../uploads # 프로젝트 폴더(webproject-main/webproject-main) 밖, 게시글 이미지 저장 위치
