@@ -172,7 +172,7 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --parameters 'commands=["aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 938436186735.dkr.ecr.ap-northeast-2.amazonaws.com","docker compose -f /opt/webschool/docker-compose.prod.yml pull","docker compose -f /opt/webschool/docker-compose.prod.yml up -d"]' \
+            --parameters 'commands=["aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 938436186735.dkr.ecr.ap-northeast-2.amazonaws.com","docker-compose -f /opt/webschool/docker-compose.prod.yml pull","docker-compose -f /opt/webschool/docker-compose.prod.yml up -d"]' \
             --query "Command.CommandId" --output text)
           echo "Command ID: $COMMAND_ID"
 
