@@ -106,22 +106,22 @@ jobs:
           JWT_SECRET: ci-dummy-jwt-secret-at-least-32-bytes-long
         run: docker compose config -q
 
-      # 이 잡이 빌드한 jar를 뒤이은 deploy 잡이 그대로 쓴다(같은 jar를 재빌드하지
-      # 않고 그대로 배포해 빌드-배포 산출물 불일치를 방지).
-      - name: Upload jar artifact
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: webschool-jar
-          path: build/libs/webschool-0.0.1-SNAPSHOT.jar
-          retention-days: 1
+      - name: Validate docker-compose.prod.yml
+        run: docker compose -f docker-compose.prod.yml config -q
 
   # 5단계(CD) - build 잡이 성공한 뒤 main 브랜치 푸시에서만 실행. AWS 인증은 장기
   # 액세스 키를 GitHub Secrets에 저장하지 않고 OIDC로 임시 자격증명을 발급받는
   # 방식(webschool-github-actions-deploy 역할, main 브랜치 푸시에서만 assume 가능
-  # 하도록 신뢰 정책에 고정 - AWS.md "5단계 체크리스트" 참고). 배포 절차 자체는
-  # 지금까지 수동으로 하던 것과 동일: jar를 S3에 올리고, SSM으로 서버가 그 jar를
-  # 받아 재시작하게 시킨다(SSH 없이 SSM만 쓰는 이 프로젝트 원칙과 일치).
+  # 하도록 신뢰 정책에 고정 - AWS.md "5단계 체크리스트" 참고).
+  #
+  # 2026-09-16 Docker 기반 배포로 전환(todo.md #24 2단계) - "jar를 S3에 올리고
+  # systemctl restart"에서 "이미지를 ECR에 push하고 EC2에서 docker compose pull+up"
+  # 으로 교체. 운영 DB는 아직 베어메탈 MySQL이라(2단계 DB 컷오버는 별도 작업) app
+  # 컨테이너만 교체하고 host 네트워크로 기존 localhost:3306에 그대로 접속한다
+  # (docker-compose.prod.yml 참고). 기존 systemd 서비스(webschool.service)는
+  # 컨테이너 전환 시점에 비활성화하고 이 워크플로우와 무관하게 서버에 남겨둔다
+  # (롤백 대비 - 문제 생기면 컨테이너 중지 후 systemctl start webschool로 즉시
+  # 복귀 가능).
   deploy:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -131,12 +131,10 @@ jobs:
       contents: read
     env:
       INSTANCE_ID: i-0992a58038aca44da
+      ECR_REPO: 938436186735.dkr.ecr.ap-northeast-2.amazonaws.com/webschool
     steps:
-      - name: Download jar artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: webschool-jar
-          path: build/libs
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -155,9 +153,18 @@ jobs:
           echo "state=$STATE" >> "$GITHUB_OUTPUT"
           echo "인스턴스 상태: $STATE"
 
-      - name: Upload jar to S3
+      - name: Log in to ECR
         if: steps.instance.outputs.state == 'running'
-        run: aws s3 cp build/libs/webschool-0.0.1-SNAPSHOT.jar s3://webschool-deploy-938436186735/webschool.jar
+        run: aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin "$ECR_REPO"
+
+      # sha 태그는 롤백/추적용으로 남기고, latest를 실제 배포 대상으로 쓴다
+      # (서버 스크립트가 매번 태그를 새로 알 필요 없이 항상 latest만 pull).
+      - name: Build and push image
+        if: steps.instance.outputs.state == 'running'
+        run: |
+          docker build -t "$ECR_REPO:${{ github.sha }}" -t "$ECR_REPO:latest" .
+          docker push "$ECR_REPO:${{ github.sha }}"
+          docker push "$ECR_REPO:latest"
 
       - name: Deploy via SSM
         if: steps.instance.outputs.state == 'running'
@@ -165,7 +172,7 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --parameters 'commands=["sudo aws s3 cp s3://webschool-deploy-938436186735/webschool.jar /opt/webschool/webschool.jar","sudo systemctl restart webschool"]' \
+            --parameters 'commands=["aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 938436186735.dkr.ecr.ap-northeast-2.amazonaws.com","docker compose -f /opt/webschool/docker-compose.prod.yml pull","docker compose -f /opt/webschool/docker-compose.prod.yml up -d"]' \
             --query "Command.CommandId" --output text)
           echo "Command ID: $COMMAND_ID"
 

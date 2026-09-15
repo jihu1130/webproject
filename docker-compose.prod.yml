@@ -1,0 +1,23 @@
+# 운영 서버(EC2) 전용 - todo.md #24 "Docker 도입 2단계". 로컬 docker-compose.yml과
+# 별개 파일인 이유: 운영 DB는 아직 베어메탈 MySQL(EC2 로컬 설치, todo.md #24 2단계
+# 완료 전까지 유지)이라 db 컨테이너가 없고, app 컨테이너가 host 네트워크로 그
+# 베어메탈 MySQL(localhost:3306)에 기존과 동일하게 접속한다.
+#
+# 시크릿 관리 - .env/docker profile을 쓰지 않고 기존 /opt/webschool/application.yml을
+# 그대로 bind mount한다(read-only). 이유: 이 파일에 이미 운영 DB 비밀번호/NEIS 키/
+# jwt.secret/구글 OAuth/SMTP 자격증명이 전부 들어있고(지금까지 베어메탈 jar가 써온
+# 바로 그 파일), Spring Boot가 작업 디렉터리(WORKDIR /app)의 application.yml을
+# classpath 설정보다 높은 우선순위로 자동으로 읽으므로 별도 프로파일/환경변수
+# 재입력 없이 기존 설정을 그대로 재사용할 수 있다 - 전환 중 실수로 시크릿을
+# 잘못 옮겨적을 위험 자체를 없앤다(오늘 jwt.secret 관련 장애 참고, 같은 실수를
+# 반복하지 않기 위한 설계).
+services:
+  app:
+    image: 938436186735.dkr.ecr.ap-northeast-2.amazonaws.com/webschool:latest
+    restart: unless-stopped
+    network_mode: "host"
+    # 업로드 파일은 운영에서 이미 S3(app.upload.s3.bucket)를 쓰므로 로컬 디스크
+    # 볼륨 마운트 불필요(FileUploadService가 s3.bucket 값이 있으면 S3를 우선 사용).
+    volumes:
+      - /opt/webschool/application.yml:/app/application.yml:ro
+      - /opt/webschool/logs:/app/logs
