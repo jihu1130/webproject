@@ -19,7 +19,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 
 @Configuration
@@ -48,21 +48,34 @@ public class SecurityConfig {
                 // rich-editor.js, calendar.js, post-detail.js)만 static/js/csrf.js 헬퍼로
                 // 토큰을 같이 보내도록 손봤고, 나머지 th:action 폼은
                 // thymeleaf-extras-springsecurity6가 자동으로 hidden 토큰을 넣어준다.
-                // 세션 인증 → JWT 전체 교체(2026-09-14)로 CsrfTokenRepository만 세션 기반에서
-                // 쿠키 기반(CookieCsrfTokenRepository)으로 바꿨다 - Thymeleaf의 자동 hidden
-                // input과 WebSchoolCsrf.headers() 둘 다 요청 속성(메타태그/hidden input)에서
-                // 토큰을 읽는 방식이라 이 교체를 몰라도 그대로 동작한다(템플릿/JS 무수정). 이
-                // 앱의 JS는 document.cookie로 CSRF 쿠키를 직접 읽는 코드가 전혀 없으므로(항상
-                // 서버가 렌더링한 meta 태그에서만 읽음, csrf.js 참고) withHttpOnlyFalse()가
-                // 필요한 "JS가 쿠키를 읽어 헤더에 넣는" 고전적 더블서밋 패턴이 아니다 - 기본
-                // 생성자(httpOnly=true)로 XSS 표면을 한 겹 더 줄인다. SameSite를 jwt 쿠키와
-                // 동일하게 명시적으로 Lax로 맞춘다(기본값은 브라우저마다 미표기 쿠키를 다르게
-                // 취급할 수 있어 명시하는 편이 안전).
-                .csrf(csrf -> {
-                    CookieCsrfTokenRepository repository = new CookieCsrfTokenRepository();
-                    repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
-                    csrf.csrfTokenRepository(repository);
-                })
+                //
+                // 세션 인증 → JWT 전체 교체(2026-09-14) 때 CsrfTokenRepository를 세션 기반에서
+                // 쿠키 기반(CookieCsrfTokenRepository)으로 바꿨었는데, 2026-09-16 실사용 중
+                // "관리자 액션마다 CSRF 토큰 검증 실패"가 재현됨(총관리자 포함 매번, 동시 요청
+                // 여부와 무관) - 처음엔 "동시 요청 2개가 쿠키 발급을 경합한다"는 가설로
+                // HttpSessionCsrfTokenRepository(세션 저장)로만 되돌려봤는데도 재현이 그대로
+                // 남아있어서(todo.md 기록) 원인 재조사 결과, **진짜 원인은
+                // sessionCreationPolicy(STATELESS)와 세션 기반 CSRF 저장소의 근본적인 충돌**이었다:
+                // curl로 실제 쿠키를 주고받으며 확인해보니 로그인한 상태로 아무 페이지나 열 때마다
+                // 매번 완전히 새로운 세션(JSESSIONID)+CSRF 토큰이 발급되고 있었다(연속 요청 3개가
+                // 전부 서로 다른 토큰 - 세션이 전혀 재사용되지 않음). 이유: Spring Security는
+                // STATELESS에서도 SessionManagementFilter 자체는 그대로 필터체인에 넣고, 이
+                // 필터는 "이 인증이 이 세션에서 처음 나타난 것인지"를
+                // SecurityContextRepository.containsContext(request)로 판단하는데, STATELESS일 땐
+                // 이 repository가 RequestAttributeSecurityContextRepository(요청 하나 안에서만
+                // 유효)라 다음 요청엔 항상 비어있다. 그런데 이 앱의 JwtAuthenticationFilter는 매
+                // 요청마다 SecurityContextHolder.setAuthentication()을 직접 호출해서 이
+                // repository API 자체를 거치지 않으므로 containsContext()가 매 요청 항상 false가
+                // 되고, SessionManagementFilter는 모든 요청을 "로그인 직후 첫 요청"으로 오인해
+                // 세션 고정 보호(session fixation protection)를 매번 재실행 - 세션을 매번 새로
+                // 만들어버린다. 화면에 렌더링된 CSRF 토큰은 그 순간 이미 서버가 버린 세션 소속이라
+                // 제출 시점엔 무조건 불일치가 난다(동시성과는 무관하게 100% 재현되는 게 당연했던
+                // 구조). sessionCreationPolicy를 IF_REQUIRED로 바꾸면(아래 sessionManagement 참고)
+                // 세션이 요청 간에 정상적으로 재사용됨을 확인했고, 실제 브라우저로 관리자 액션
+                // (계정 비활성화)까지 성공하는 것으로 최종 검증함(2026-09-16). JWT 인증 자체는
+                // 여전히 쿠키만으로 이뤄지고(로그인 상태 판별에 세션을 안 씀), 세션은 CSRF 토큰
+                // 저장 용도로만 쓰인다.
+                .csrf(csrf -> csrf.csrfTokenRepository(new HttpSessionCsrfTokenRepository()))
                 .authorizeHttpRequests(auth -> auth
                         // "/error"가 permitAll이 아니면, 핸들러가 없는 요청(존재하지 않는 정적 파일 등 -
                         // 예: /favicon.ico)이 Spring Boot 기본 에러 처리로 "/error"에 내부 포워드될 때
@@ -140,8 +153,17 @@ public class SecurityConfig {
                 // 로그인/인가 실패 시 요청을 저장했다가 로그인 후 되돌아가는 기능은 이제 안 쓴다
                 // (사용자 확정 - 항상 홈으로 단순화) - 저장 자체를 하지 않아 불필요한 세션 생성도 막는다.
                 .requestCache(cache -> cache.requestCache(new NullRequestCache()))
+                // STATELESS였다가 2026-09-16 CSRF 버그 조사로 IF_REQUIRED로 변경(위 csrf() 블록의
+                // 상세 원인 참고) - JwtAuthenticationFilter가 SecurityContextRepository API를
+                // 거치지 않고 SecurityContextHolder를 직접 채우기 때문에 STATELESS에서는
+                // SessionManagementFilter가 매 요청을 "로그인 직후"로 오인해 세션을 매번
+                // 새로 만들어버려(세션 기반 CSRF 토큰이 절대 재사용될 수 없는 구조) 세션 고정
+                // 보호 자체가 제대로 동작하지 않았다. IF_REQUIRED로 바꿔도 로그인 상태 판별은
+                // 여전히 JWT 쿠키만으로 이뤄진다(CustomUserDetailsService를 매 요청 재조회하는
+                // JwtAuthenticationFilter 로직 자체는 무수정) - 세션은 CSRF 토큰을 필요한
+                // 시점에만 생성해서 재사용하는 용도로만 쓰인다.
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessHandler((request, response, authentication) -> {
@@ -156,11 +178,7 @@ public class SecurityConfig {
                         // 없습니다." 처럼 구체적인 이유가 담겨 있는데, 예전엔 여기서 버려지고 항상
                         // 똑같은 뭉뚱그린 안내문만 보였다 - 세션에 한 번만 담아 access-denied 화면에서
                         // 보여준다(RedirectAttributes.addFlashAttribute와 같은 원리를 여기서는 이
-                        // 핸들러가 Spring MVC 컨트롤러가 아니라서 직접 세션에 심어 흉내낸다). 참고:
-                        // sessionCreationPolicy(STATELESS)는 Spring Security 자신이 SecurityContext를
-                        // 세션에 두지 않겠다는 설정일 뿐, 앱 코드가 request.getSession()으로 평범한
-                        // HttpSession을 쓰는 것 자체는 막지 않는다(RedirectAttributes.addFlashAttribute
-                        // 등 이 앱 곳곳의 flash 메시지 패턴도 전부 동일하게 계속 동작함).
+                        // 핸들러가 Spring MVC 컨트롤러가 아니라서 직접 세션에 심어 흉내낸다).
                         .accessDeniedHandler((request, response, ex) -> {
                             String target = request.getRequestURI().startsWith("/admin/") ? "/admin/access-denied" : "/";
                             if (target.equals("/admin/access-denied") && ex.getMessage() != null) {
