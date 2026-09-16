@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var monthSelect = document.getElementById('quickMonthSelect');
 
         var baseYear = new Date().getFullYear();
-        for (var y = baseYear - 5; y <= baseYear + 5; y++) {
+        for (var y = baseYear - 1; y <= baseYear + 1; y++) {
             var yOpt = document.createElement('option');
             yOpt.value = y;
             yOpt.textContent = y + '년';
