@@ -1,5 +1,8 @@
 package com.webschool.webschool;
 
+import com.webschool.webschool.bugreport.domain.BugReport;
+import com.webschool.webschool.bugreport.repository.BugReportRepository;
+import com.webschool.webschool.bugreport.service.BugReportService;
 import com.webschool.webschool.notice.repository.NoticeRepository;
 import com.webschool.webschool.notice.service.NoticeService;
 import com.webschool.webschool.post.domain.Post;
@@ -8,7 +11,9 @@ import com.webschool.webschool.post.dto.PostFormDto;
 import com.webschool.webschool.post.repository.CommentReportRepository;
 import com.webschool.webschool.post.repository.PostBookmarkRepository;
 import com.webschool.webschool.post.repository.PostCommentRepository;
+import com.webschool.webschool.post.domain.PostRecommend;
 import com.webschool.webschool.post.repository.PostLikeRepository;
+import com.webschool.webschool.post.repository.PostRecommendRepository;
 import com.webschool.webschool.post.repository.PostReportRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.post.service.PostCommentService;
@@ -29,15 +34,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// 개발용 테스트 데이터 생성기. 실행하면 test1~test5(아이디=비밀번호, 닉네임은 실제 유저처럼
-// 보이도록 별도 지정) 계정 + 계정별 한마디 1개, admin/admin(ROLE_ADMIN) 계정, 커뮤니티
-// 게시글 10개(자유 4 · 익명 3 · 질의응답 3, 목록 화면이 기본 페이지당 10개를 보여주므로
-// 첫 페이지가 바로 꽉 차 보이도록 맞춘 개수) + 공지사항(별도 모델) 1개를 만들고, 신고→
-// 자동 블라인드 흐름을 화면에서 바로 확인할 수 있도록 게시글/댓글/한마디 신고 내역까지
-// 함께 심는다.
+// 개발용 테스트 데이터 생성기. 실행하면 test1~test5(아이디와 완전히 같지 않도록 비밀번호는
+// "아이디!" 형태 - 예: test1/test1!, 닉네임은 실제 유저처럼 보이도록 별도 지정) 계정 +
+// 계정별 한마디 1개, admin/admin!(ROLE_ADMIN, canManageNotices만 On) 계정, subadmin/subadmin!
+// (ROLE_ADMIN, 세분화된 부관리자 권한 9개를 전부 켠 "풀권한 부관리자" 데모 계정), 커뮤니티
+// 게시글 15개(자유 5 · 익명 5 · 질의응답 5 - 계정마다 한 카테고리씩 고르게 나눠 쓰지 않고
+// 계정당 3개씩을 서로 다른 카테고리 조합으로 섞어서 채움), 문의하기 12개(버그/건의/계정 문의/
+// 기타 4종 × 3개) + 공지사항(별도 모델) 1개를 만들고, 신고→자동 블라인드 흐름을 화면에서
+// 바로 확인할 수 있도록 게시글/댓글/한마디 신고 내역까지 함께 심는다.
 //
 // 제목/본문은 "OO 테스트 게시글 1"처럼 시더임이 드러나는 문구 대신, 실제로 그 카테고리를
 // 쓸 법한 학생이 썼을 만한 구체적인 내용으로 채운다(2026-09-02) - 커뮤니티 화면을 눈으로
@@ -70,12 +78,14 @@ class TestDataSeeder {
     private static final int USER_COUNT = 5;
     private static final String USERNAME_PREFIX = "test";
     private static final String ADMIN_USERNAME = "admin";
-    private static final String ADMIN_PASSWORD = "admin";
+    private static final String ADMIN_PASSWORD = "admin!";
+    private static final String SUBADMIN_USERNAME = "subadmin";
+    private static final String SUBADMIN_PASSWORD = "subadmin!";
     private static final String SCHOOL_NAME = "아산배방중학교";
     private static final String SCHOOL_CODE = "8181104";
     private static final String ATPT_CODE = "N10";
     private static final String SCHOOL_KIND = "중학교";
-    private static final String GRADE = "1";
+    private static final String GRADE = "3";
     private static final String CLASS_NUM = "1";
 
     // 로그인 아이디(test1~test5)와 화면에 보이는 닉네임을 분리 - 아이디는 문서화된 대로 단순하게
@@ -94,6 +104,10 @@ class TestDataSeeder {
 
     private record ScheduleCommentSeed(String username, String content,
                                         List<String> likedBy, List<String> bookmarkedBy) {
+    }
+
+    private record BugReportSeed(BugReport.Category category, String authorUsername, String title,
+                                  String content) {
     }
 
     // 신고 시나리오에서 직접 참조해야 해서 상수로 분리 - 자유 1번은 3명이 신고해 자동 블라인드,
@@ -143,7 +157,28 @@ class TestDataSeeder {
             new PostSeed(Post.Category.QNA, SEOYEON, "기숙사 생활할 때 노트북 꼭 필요한가요?",
                     "다음 학기부터 기숙사 들어가는데 노트북을 가져가야 할지 고민이에요. 과제할 때 많이 "
                             + "쓰나요? 선배님들 조언 부탁드려요.",
-                    List.of(MINSEO, HAJUN, DOYUN), List.of(JIWOO))
+                    List.of(MINSEO, HAJUN, DOYUN), List.of(JIWOO)),
+            // 카테고리별 5개씩 채우려고 추가한 5개(2026-09-16) - 계정 5명이 한 카테고리씩
+            // 고르게 나눠 쓰지 않고 계정마다 다른 조합(자유 2+질의응답 1, 자유 1+익명 1 등)으로
+            // 섞어서 계정당 3개씩 쓴 것처럼 보이게 한다.
+            new PostSeed(Post.Category.FREE, JIWOO, "매점 신메뉴 마라탕후루 먹어본 사람?",
+                    "오늘 매점에 새로 나왔던데 맛이 궁금해서요. 먹어보신 분 계시면 후기 좀 알려주세요.",
+                    List.of(MINSEO, SEOYEON), List.of(HAJUN)),
+            new PostSeed(Post.Category.ANONYMOUS, HAJUN, "성적 떨어졌다고 부모님께 말씀드리기 무서워요",
+                    "이번 중간고사 성적이 많이 떨어져서 집에 어떻게 말씀드려야 할지 모르겠어요. "
+                            + "다들 성적 떨어졌을 때 어떻게 얘기하세요?",
+                    List.of(JIWOO, DOYUN), List.of(SEOYEON)),
+            new PostSeed(Post.Category.ANONYMOUS, SEOYEON, "친한 친구가 다른 무리랑 더 친해진 것 같아요",
+                    "요즘 제일 친했던 친구가 다른 애들이랑 더 자주 어울리는 것 같아서 서운해요. "
+                            + "괜히 티 내기도 그렇고 어떻게 해야 할지 모르겠어요.",
+                    List.of(MINSEO, HAJUN, JIWOO), List.of()),
+            new PostSeed(Post.Category.QNA, MINSEO, "영어 단어 외울 때 다들 어떤 방법 쓰세요?",
+                    "단어장으로 외워도 금방 까먹어서 고민이에요. 효과 봤던 암기 방법 있으면 공유해주세요.",
+                    List.of(SEOYEON, DOYUN), List.of(HAJUN)),
+            new PostSeed(Post.Category.QNA, DOYUN, "체육복 사이즈 교환 어디서 하나요?",
+                    "이번에 새로 산 체육복이 너무 작게 나와서 교환하고 싶은데 어디서 신청하는지 "
+                            + "아시는 분 계세요?",
+                    List.of(MINSEO, JIWOO), List.of())
     );
 
     // 오늘의 한마디 - 계정(test1~test5) 순서와 1:1 대응. 하준의 한마디는 신고→블라인드 시나리오
@@ -159,6 +194,42 @@ class TestDataSeeder {
                     List.of(JIWOO, DOYUN), List.of()),
             new ScheduleCommentSeed(DOYUN, "오늘 저녁 급식 메뉴 뭔지 아시는 분 계세요?",
                     List.of(MINSEO, SEOYEON), List.of(HAJUN))
+    );
+
+    // 문의하기(종류별 3개, 2026-09-16 추가) - 버그/건의/계정 문의/기타 4종 모두 실제로 있을 법한
+    // 내용으로 채워서 관리자 문의 목록 화면을 데모할 때 종류별 필터가 바로 확인되게 한다.
+    private static final List<BugReportSeed> BUG_REPORT_SEEDS = List.of(
+            new BugReportSeed(BugReport.Category.BUG, MINSEO, "게시글 작성 중에 이미지 업로드가 자꾸 실패해요",
+                    "글 쓰다가 사진을 첨부하려고 하면 로딩만 계속 돌고 안 올라가요. 다른 사진으로도 "
+                            + "해봤는데 똑같아요."),
+            new BugReportSeed(BugReport.Category.BUG, HAJUN, "댓글 삭제했는데 새로고침하면 다시 보여요",
+                    "댓글 삭제 버튼 누르면 바로 사라지긴 하는데, 페이지를 새로고침하면 그 댓글이 "
+                            + "다시 나타나요."),
+            new BugReportSeed(BugReport.Category.BUG, JIWOO, "알림 종 아이콘 숫자가 읽어도 안 줄어들어요",
+                    "알림 확인했는데도 계속 숫자가 그대로 떠있어서 새 알림이 있는 줄 알고 계속 "
+                            + "들어가보게 돼요."),
+            new BugReportSeed(BugReport.Category.SUGGESTION, SEOYEON, "다크모드 지원해주시면 좋겠어요",
+                    "밤에 폰으로 볼 때 화면이 너무 밝아서 눈이 아파요. 다크모드 있으면 편할 것 같아요."),
+            new BugReportSeed(BugReport.Category.SUGGESTION, DOYUN, "게시글 검색할 때 카테고리 필터도 있으면 좋겠어요",
+                    "지금은 전체에서 검색되는데, 자유/익명/질문 카테고리별로 나눠서 검색할 수 "
+                            + "있으면 원하는 글 찾기 더 편할 것 같아요."),
+            new BugReportSeed(BugReport.Category.SUGGESTION, MINSEO, "댓글에도 좋아요 순 정렬 추가해주세요",
+                    "댓글이 많이 달린 글은 정렬이 없어서 스크롤이 너무 길어요. 좋아요 많은 댓글 "
+                            + "순으로도 볼 수 있으면 좋겠어요."),
+            new BugReportSeed(BugReport.Category.ACCOUNT, HAJUN, "비밀번호를 변경하고 싶은데 방법을 모르겠어요",
+                    "마이페이지 어디에서 비밀번호를 바꿀 수 있는지 못 찾겠어서요. 알려주시면 "
+                            + "감사하겠습니다."),
+            new BugReportSeed(BugReport.Category.ACCOUNT, JIWOO, "가입할 때 반을 잘못 입력했는데 수정이 안 돼요",
+                    "3반으로 가입해야 했는데 실수로 다른 반으로 입력했어요. 마이페이지에서 수정하는 "
+                            + "방법 알려주세요."),
+            new BugReportSeed(BugReport.Category.ACCOUNT, SEOYEON, "탈퇴한 계정을 다시 복구할 수 있나요?",
+                    "얼마 전에 실수로 탈퇴를 눌렀는데 다시 살릴 수 있는 방법이 있을까요?"),
+            new BugReportSeed(BugReport.Category.OTHER, DOYUN, "학교 축제 부스 관련해서 문의드려요",
+                    "축제 때 부스 신청은 어디서 하는지 사이트에 안내가 없어서 여쭤봅니다."),
+            new BugReportSeed(BugReport.Category.OTHER, MINSEO, "이용약관이랑 개인정보처리방침은 어디서 볼 수 있나요?",
+                    "찾아봤는데 못 찾겠어서 문의드려요."),
+            new BugReportSeed(BugReport.Category.OTHER, HAJUN, "이 사이트는 저희 학교 학생들만 쓸 수 있는 건가요?",
+                    "다른 학교 학생들도 같이 쓰는 사이트인지 궁금해서 여쭤봅니다.")
     );
 
     @Autowired
@@ -215,6 +286,15 @@ class TestDataSeeder {
     @Autowired
     private NoticeRepository noticeRepository;
 
+    @Autowired
+    private PostRecommendRepository postRecommendRepository;
+
+    @Autowired
+    private BugReportService bugReportService;
+
+    @Autowired
+    private BugReportRepository bugReportRepository;
+
     @Test
     void seedTestData() {
         createSchoolIfAbsent();
@@ -224,6 +304,7 @@ class TestDataSeeder {
         }
 
         createAdminIfAbsent();
+        createSubAdminIfAbsent();
 
         for (ScheduleCommentSeed seed : SCHEDULE_COMMENT_SEEDS) {
             createScheduleCommentIfAbsent(seed.username(), seed.content());
@@ -235,8 +316,13 @@ class TestDataSeeder {
 
         createNoticeIfAbsent();
 
+        for (BugReportSeed seed : BUG_REPORT_SEEDS) {
+            createInquiryIfAbsent(seed);
+        }
+
         seedReportScenarios();
         seedEngagement();
+        seedRecommendScenarios();
     }
 
     // ScheduleCommentService.findOrCreateSchool()에 학교 생성을 맡기면 이름이 "우리 학교"로
@@ -259,10 +345,14 @@ class TestDataSeeder {
             return;
         }
 
+        // 비밀번호를 아이디와 완전히 동일하게 두지 않도록 "!"를 붙인다(2026-09-16) -
+        // 예: 아이디 test1 / 비밀번호 test1!.
+        String password = username + "!";
+
         RegisterDto dto = new RegisterDto();
         dto.setUsername(username);
-        dto.setPassword(username);
-        dto.setConfirmPassword(username);
+        dto.setPassword(password);
+        dto.setConfirmPassword(password);
         dto.setNickname(nickname);
         dto.setEmail(username + "@test.local");
         dto.setSchoolName(SCHOOL_NAME);
@@ -322,6 +412,45 @@ class TestDataSeeder {
         userRepository.save(admin);
     }
 
+    // admin과 별개로, 세분화된 권한 9개를 전부 켠 "풀권한 부관리자" 데모 계정(ROLE_SUPER_ADMIN이
+    // 아니라 ROLE_ADMIN 그대로 - 총관리자와 달리 권한 관리 화면에서 만든 것처럼 개별 플래그로
+    // 전부 허용된 상태를 보여주기 위함). admin과 동일하게 계정 존재 여부와 무관하게 매번
+    // 권한 상태를 보장한다.
+    private void createSubAdminIfAbsent() {
+        if (!userRepository.existsByUsername(SUBADMIN_USERNAME)) {
+            RegisterDto dto = new RegisterDto();
+            dto.setUsername(SUBADMIN_USERNAME);
+            dto.setPassword(SUBADMIN_PASSWORD);
+            dto.setConfirmPassword(SUBADMIN_PASSWORD);
+            dto.setNickname(SUBADMIN_USERNAME);
+            dto.setEmail(SUBADMIN_USERNAME + "@test.local");
+            dto.setSchoolName(SCHOOL_NAME);
+            dto.setSchoolCode(SCHOOL_CODE);
+            dto.setAtptCode(ATPT_CODE);
+            dto.setSchoolKind(SCHOOL_KIND);
+            dto.setGrade(GRADE);
+            dto.setClassNum(CLASS_NUM);
+
+            userService.register(dto);
+        }
+
+        User subAdmin = userRepository.findByUsername(SUBADMIN_USERNAME)
+                .orElseThrow(() -> new IllegalStateException("subadmin 계정 생성에 실패했습니다."));
+        if (subAdmin.getRole() != User.Role.ROLE_ADMIN && subAdmin.getRole() != User.Role.ROLE_SUPER_ADMIN) {
+            subAdmin.setRole(User.Role.ROLE_ADMIN);
+        }
+        subAdmin.setCanManageReports(true);
+        subAdmin.setCanManagePosts(true);
+        subAdmin.setCanManageScheduleComments(true);
+        subAdmin.setCanManageNotices(true);
+        subAdmin.setCanManageUsers(true);
+        subAdmin.setCanManageAdminPermissions(true);
+        subAdmin.setCanViewAuditLog(true);
+        subAdmin.setCanManageShop(true);
+        subAdmin.setCanManagePolls(true);
+        userRepository.save(subAdmin);
+    }
+
     private void createNoticeIfAbsent() {
         String title = "2학기 학사일정 안내";
 
@@ -335,6 +464,17 @@ class TestDataSeeder {
                 "2학기 학사일정이 확정되어 안내드립니다. 중간고사는 10월 중, 기말고사는 12월 중 진행될 "
                         + "예정이며 세부 일정은 추후 학교 홈페이지 공지사항을 통해 다시 안내드리겠습니다. "
                         + "궁금한 점은 담임 선생님께 문의 바랍니다.");
+    }
+
+    private void createInquiryIfAbsent(BugReportSeed seed) {
+        boolean exists = bugReportRepository.findAllByOrderByCreatedAtDesc().stream()
+                .anyMatch(report -> report.getTitle().equals(seed.title()));
+        if (exists) {
+            return;
+        }
+
+        bugReportService.submitReport(seed.authorUsername(), seed.category().name(), seed.title(),
+                seed.content(), null, null, null);
     }
 
     private void createPostIfAbsent(PostSeed seed) {
@@ -400,6 +540,48 @@ class TestDataSeeder {
             likeScheduleCommentIfNeeded(commentId, seed.username(), seed.likedBy());
             bookmarkScheduleCommentIfNeeded(commentId, seed.username(), seed.bookmarkedBy());
         }
+    }
+
+    // 추천 게시글 데모 데이터(2026-09-16) - 일간/주간/월간/전체(초기화 없음) 랭킹이 실제로
+    // 다르게 보이도록 자유 게시판 글 3개에 서로 다른 시점의 추천을 심는다: A는 오늘 받은
+    // 추천만 있어 일간/주간/월간/전체 랭킹에 전부 나오고, B는 8일 전(항상 이번 주 밖) 추천이라
+    // 주간부터는 빠지고, C는 60일 전(항상 이번 달 밖) 추천이라 전체 랭킹에만 남는다 - "오늘
+    // 3개 내일 2개면 내일 일간은 2, 주간은 누적 5"처럼 별도 리셋 로직 없이 기간 조건만으로
+    // 집계가 자연히 달라지는 걸 보여주기 위함. 자유 게시판 + 전체공개 글만 추천 대상이라
+    // (PostRecommendService.recommend() 참고) 셋 다 그 조건을 만족하는 글로 골랐다.
+    private void seedRecommendScenarios() {
+        recommendPostIfNeeded("야자 끝나고 다들 집 어떻게 가세요", MINSEO,
+                List.of(HAJUN, JIWOO, SEOYEON), LocalDateTime.now());
+        recommendPostIfNeeded("학교 축제 언제쯤 할지 아시는 분 계세요?", HAJUN,
+                List.of(MINSEO, JIWOO), LocalDateTime.now().minusDays(8));
+        recommendPostIfNeeded("매점 신메뉴 마라탕후루 먹어본 사람?", JIWOO,
+                List.of(MINSEO, HAJUN, SEOYEON, DOYUN), LocalDateTime.now().minusDays(60));
+    }
+
+    private void recommendPostIfNeeded(String postTitle, String authorUsername, List<String> voterUsernames,
+                                        LocalDateTime recommendedAt) {
+        Post post = findPostByTitle(postTitle);
+        if (post == null) {
+            return;
+        }
+        for (String voterUsername : excludeAuthor(voterUsernames, authorUsername)) {
+            User voter = userRepository.findByUsername(voterUsername).orElse(null);
+            if (voter == null || postRecommendRepository.existsByPost_IdAndVoter_Id(post.getId(), voter.getId())) {
+                continue;
+            }
+            PostRecommend recommend = new PostRecommend();
+            recommend.setPost(post);
+            recommend.setVoter(voter);
+            recommend.setCreatedAt(recommendedAt);
+            postRecommendRepository.save(recommend);
+        }
+    }
+
+    private Post findPostByTitle(String title) {
+        return postRepository.findAllByDeletedFalseOrderByCreatedAtDesc().stream()
+                .filter(p -> p.getTitle().equals(title))
+                .findFirst()
+                .orElse(null);
     }
 
     private Long findPostIdByTitle(String title) {
