@@ -93,6 +93,15 @@ public class AdminPostService {
                 .collect(Collectors.toList());
     }
 
+    // 블라인드된 게시물만 - "블라인드" 탭(2026-09-16 추가). 관리자가 "전체 게시글" 탭에서 블라인드된
+    // 글을 일일이 찾지 않고 바로 모아서 일괄 처리(혐의없음/블라인드 해제/삭제)할 수 있게 한다.
+    public List<AdminPostSummaryDto> getBlindPosts(String keyword) {
+        return postRepository.findAllByDeletedFalseAndBlindTrueOrderByCreatedAtDesc().stream()
+                .map(this::toSummaryDto)
+                .filter(dto -> matches(keyword, dto.getTitle(), dto.getAuthorNickname()))
+                .collect(Collectors.toList());
+    }
+
     // 관리자 목록 검색 - 데이터 규모가 작아 DB 쿼리 대신 조회 후 메모리에서 필터링(제목/내용/작성자 대상)
     private boolean matches(String keyword, String... fields) {
         if (keyword == null || keyword.isBlank()) {

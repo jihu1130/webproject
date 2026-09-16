@@ -25,13 +25,18 @@ public class AdminPostController {
                         @RequestParam(required = false) String keyword,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) Integer size, Model model) {
-        // viewMode: "all"(기본, 전체 게시글) / "deleted"(삭제됨) - 신고 관리는 /admin/reports로 분리됨
-        boolean deletedView = "deleted".equals(status);
-        List<AdminPostSummaryDto> filtered = deletedView ? adminPostService.getDeletedPosts(keyword) : adminPostService.getAllPosts(keyword);
+        // viewMode: "all"(기본, 전체 게시글) / "deleted"(삭제됨) / "blind"(블라인드, 2026-09-16 추가) -
+        // 신고 관리는 /admin/reports로 분리됨
+        String viewMode = "deleted".equals(status) ? "deleted" : "blind".equals(status) ? "blind" : "all";
+        List<AdminPostSummaryDto> filtered = switch (viewMode) {
+            case "deleted" -> adminPostService.getDeletedPosts(keyword);
+            case "blind" -> adminPostService.getBlindPosts(keyword);
+            default -> adminPostService.getAllPosts(keyword);
+        };
         int pageSize = PageUtils.normalizeSize(size);
         Page<AdminPostSummaryDto> posts = PageUtils.paginate(filtered, page, pageSize);
         model.addAttribute("posts", posts);
-        model.addAttribute("viewMode", deletedView ? "deleted" : "all");
+        model.addAttribute("viewMode", viewMode);
         model.addAttribute("keyword", keyword);
         return "admin/post-list";
     }
@@ -114,6 +119,30 @@ public class AdminPostController {
                               @ModelAttribute ListState state) {
         if (ids != null) {
             ids.forEach(id -> { try { adminPostService.deletePost(id); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirectToList());
+    }
+
+    // "블라인드" 탭에서 여러 개를 한 번에 되돌리기 위한 일괄 해제(2026-09-16 추가) - bulk-blind와
+    // 동일한 패턴, 대상만 반대.
+    @PostMapping("/bulk-unblind")
+    public String bulkUnblind(@RequestParam(required = false) List<Long> ids,
+                               @RequestParam(required = false) String returnUrl,
+                               @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminPostService.setBlind(id, false); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirectToList());
+    }
+
+    // 일괄 "문제없음" 처리(2026-09-16 추가) - 그동안 상세 페이지에서 한 건씩만 가능했던 혐의없음
+    // 처리를 목록에서 여러 건 한 번에 할 수 있게 한다.
+    @PostMapping("/bulk-clear-report")
+    public String bulkClearReport(@RequestParam(required = false) List<Long> ids,
+                                   @RequestParam(required = false) String returnUrl,
+                                   @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminPostService.clearReport(id); } catch (IllegalArgumentException ignored) { } });
         }
         return resolveReturn(returnUrl, state.redirectToList());
     }

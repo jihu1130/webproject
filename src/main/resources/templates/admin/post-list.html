@@ -18,8 +18,11 @@
     <div class="admin-container">
         <div class="page-heading admin-page-heading">
             <h1><i class="fa-solid fa-shield-halved"></i> 관리자 대시보드</h1>
-            <p class="page-sub"
-               th:text="${viewMode == 'deleted'} ? '작성자·관리자가 삭제한 게시물을 확인하고 복구할 수 있어요' : '전체 게시물을 둘러보고 필요하면 미리 관리할 수 있어요'">설명</p>
+            <p class="page-sub" th:switch="${viewMode}">
+                <span th:case="'deleted'">작성자·관리자가 삭제한 게시물을 확인하고 복구할 수 있어요</span>
+                <span th:case="'blind'">블라인드된 게시물만 모아서 혐의없음/블라인드 해제/삭제를 한 번에 처리할 수 있어요</span>
+                <span th:case="*">전체 게시물을 둘러보고 필요하면 미리 관리할 수 있어요</span>
+            </p>
         </div>
 
         <div th:replace="~{admin/fragments/nav :: tabs('posts')}"></div>
@@ -27,18 +30,19 @@
 
         <div class="post-category-tabs admin-status-tabs">
             <a th:href="@{/admin/posts}" class="post-category-tab" th:classappend="${viewMode == 'all'} ? ' active' : ''">전체 게시글</a>
+            <a th:href="@{/admin/posts(status='blind')}" class="post-category-tab" th:classappend="${viewMode == 'blind'} ? ' active' : ''">블라인드</a>
             <a th:href="@{/admin/posts(status='deleted')}" class="post-category-tab" th:classappend="${viewMode == 'deleted'} ? ' active' : ''">삭제됨</a>
         </div>
 
         <div class="list-toolbar">
             <form th:action="@{/admin/posts}" method="get" class="admin-search-form">
-                <input type="hidden" name="status" th:value="${viewMode == 'deleted'} ? 'deleted' : ''">
+                <input type="hidden" name="status" th:value="${viewMode == 'all'} ? '' : ${viewMode}">
                 <input type="text" name="keyword" placeholder="제목/작성자 검색" th:value="${keyword}">
                 <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
             <form th:action="@{/admin/posts}" method="get" class="page-size-select">
-                <input type="hidden" name="status" th:value="${viewMode == 'deleted'} ? 'deleted' : ''">
+                <input type="hidden" name="status" th:value="${viewMode == 'all'} ? '' : ${viewMode}">
                 <input type="hidden" name="keyword" th:value="${keyword}">
                 <label for="admin-post-page-size">페이지당</label>
                 <select id="admin-post-page-size" name="size" onchange="this.form.submit()">
@@ -52,12 +56,17 @@
 
         <div th:if="${posts.empty}" class="admin-empty">
             <span th:if="${viewMode == 'deleted'}">삭제된 게시물이 없어요.</span>
+            <span th:if="${viewMode == 'blind'}">블라인드된 게시물이 없어요.</span>
             <span th:if="${viewMode == 'all'}">게시물이 없어요.</span>
         </div>
 
         <div class="admin-bulk-toolbar" id="bulkToolbar-posts" th:unless="${posts.empty or viewMode == 'deleted'}">
             <span class="admin-bulk-count">0개 선택됨</span>
-            <button type="button" class="btn btn-outline-primary" data-bulk-action="/admin/posts/bulk-blind" data-bulk-label="블라인드 처리" disabled>선택 블라인드</button>
+            <button type="button" class="btn btn-outline-primary" th:if="${viewMode != 'blind'}"
+                    data-bulk-action="/admin/posts/bulk-blind" data-bulk-label="블라인드 처리" disabled>선택 블라인드</button>
+            <button type="button" class="btn btn-outline-primary" th:if="${viewMode == 'blind'}"
+                    data-bulk-action="/admin/posts/bulk-unblind" data-bulk-label="블라인드 해제" disabled>선택 블라인드 해제</button>
+            <button type="button" class="btn btn-outline-primary" data-bulk-action="/admin/posts/bulk-clear-report" data-bulk-label="문제없음 처리" disabled>선택 혐의없음</button>
             <button type="button" class="post-delete-btn" data-bulk-action="/admin/posts/bulk-delete" data-bulk-label="삭제" data-bulk-danger="true" disabled>선택 삭제</button>
         </div>
 
@@ -92,7 +101,7 @@
                         <span class="post-category-badge" th:classappend="'post-category-badge-' + ${post.category}" th:text="${post.categoryLabel}">자유</span>
                     </td>
                     <td>
-                        <a th:href="@{'/admin/posts/' + ${post.id}(status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, page=${posts.number}, size=${posts.size})}"
+                        <a th:href="@{'/admin/posts/' + ${post.id}(status=${viewMode == 'all'} ? null : ${viewMode}, keyword=${keyword}, page=${posts.number}, size=${posts.size})}"
                            class="admin-table-title" th:text="${post.title}">제목</a>
                         <span class="admin-status-badge admin-status-blind" th:if="${post.reportedCommentCount > 0}"
                               th:text="'댓글 신고 ' + ${post.reportedCommentCount}" title="이 게시물의 댓글 중 신고 누적/블라인드된 댓글이 있어요">댓글 신고</span>
@@ -107,14 +116,14 @@
         </div>
 
         <div class="post-pagination" th:if="${posts.totalPages > 1}">
-            <a th:if="${posts.hasPrevious()}" th:href="@{/admin/posts(page=${posts.number - 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${posts.size})}" class="post-page-link" aria-label="이전 페이지">
+            <a th:if="${posts.hasPrevious()}" th:href="@{/admin/posts(page=${posts.number - 1}, status=${viewMode == 'all'} ? null : ${viewMode}, keyword=${keyword}, size=${posts.size})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, posts.totalPages - 1)}"
-               th:href="@{/admin/posts(page=${i}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${posts.size})}" th:text="${i + 1}"
+               th:href="@{/admin/posts(page=${i}, status=${viewMode == 'all'} ? null : ${viewMode}, keyword=${keyword}, size=${posts.size})}" th:text="${i + 1}"
                th:classappend="${i == posts.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${posts.hasNext()}" th:href="@{/admin/posts(page=${posts.number + 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${posts.size})}" class="post-page-link" aria-label="다음 페이지">
+            <a th:if="${posts.hasNext()}" th:href="@{/admin/posts(page=${posts.number + 1}, status=${viewMode == 'all'} ? null : ${viewMode}, keyword=${keyword}, size=${posts.size})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>
