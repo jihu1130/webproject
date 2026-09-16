@@ -142,16 +142,9 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean canManagePolls;
 
-    // 콘테스트 마감 임박 알림(todo.md "설문 후속" 항목) 수신 여부 - 사용자가 마이페이지에서 직접
-    // 켜고 끄는 개인 알림 설정(관리자 위임 권한과는 성격이 다름). 기본값은 꺼짐(옵트인) - 사용자
-    // 확정 요구사항("알림 키고 끌 수 있게 해서 킨 사람만"). PostContestService.sendDeadlineReminder()
-    // 참고.
-    @Column(nullable = false, columnDefinition = "boolean default false")
-    private boolean contestDeadlineAlertEnabled;
-
-    // 댓글/좋아요/답글 알림 개별 on-off(todo.md "고도화 후보" 항목) - contestDeadlineAlertEnabled와
-    // 반대로 이 셋은 기존에 이미 항상 켜져 있던 알림을 사용자가 끌 수 있게 여는 것이라 기본값을
-    // true로 둔다(옵트아웃 - active 필드와 동일한 이유로 Java 필드 초기값을 직접 줘야 신규
+    // 댓글/좋아요/답글 알림 개별 on-off(todo.md "고도화 후보" 항목) - 이 셋은 기존에 이미 항상
+    // 켜져 있던 알림을 사용자가 끌 수 있게 여는 것이라 기본값을 true로 둔다(옵트아웃 - active
+    // 필드와 동일한 이유로 Java 필드 초기값을 직접 줘야 신규
     // 가입 흐름에서도 true로 시작함, User.points 주석 참고). NotificationService.notify()에서
     // Notification.Type별로 이 플래그들을 확인해서 꺼져 있으면 알림 자체를 생성하지 않는다.
     @Column(nullable = false, columnDefinition = "boolean default true")

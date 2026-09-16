@@ -16,7 +16,7 @@ import java.util.List;
 // 관리자 대시보드 "서버 상태" 카드/그래프(AdminDashboardController, 사용자 요청 2026-09-09)의
 // 데이터 소스. 현재 값은 Actuator/Micrometer 게이지에서 매 요청마다 바로 읽지만(getSnapshot()),
 // 그래프용 추이는 게이지가 "현재 값"만 주고 과거값을 기억하지 않으므로 이 서비스가 1분마다 직접
-// 샘플을 찍어 메모리에 쌓아둔다(PostContestService의 기존 @Scheduled 패턴과 동일) - 서버
+// 샘플을 찍어 메모리에 쌓아둔다(PostRecommendService의 기존 @Scheduled 패턴과 동일) - 서버
 // 재시작하면 history는 비워짐, DB에 영속화하지 않음(장기 이력이 필요하면 이미 있는 로컬
 // Prometheus/Grafana 스택(#24)을 쓰는 게 맞고, 이건 그 스택이 없어도 대시보드 화면 안에서
 // 바로 보이는 "최근 1시간" 용도로만 충분하면 됨).

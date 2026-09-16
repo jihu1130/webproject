@@ -71,18 +71,18 @@
                 </button>
             </div>
 
-            <!-- 이번 주 인기글 콘테스트 후보 투표 위젯 - 이 글이 이번 주 후보로 신청돼 있을 때만
-                 노출(PostController.detail()이 PostContestService.findEntryForPost()로 조회).
-                 원래 /posts/contest 목록에서만 투표할 수 있었는데, 글을 읽는 자리에서 바로 투표할
-                 수 있어야 자연스럽다는 요청으로 추가. -->
-            <div class="contest-post-widget" th:if="${contestEntry != null}">
-                <span class="contest-post-widget-label"><i class="fa-solid fa-trophy"></i> 이번 주 추천 후보</span>
-                <span class="contest-entry-votes" th:text="${contestEntry.voteCount} + '표'">0표</span>
-                <span th:if="${contestEntry.mine}" class="contest-entry-mine-badge">내 후보</span>
-                <button type="button" id="contestVoteBtn" class="btn btn-primary contest-vote-btn" th:if="${!contestEntry.mine}"
+            <!-- 추천 위젯 - 자유 게시판 + 전체 공개 글에서만 노출(PostController.detail()이
+                 PostRecommendService.getRecommendInfo()로 조회, null이면 대상이 아니므로 숨김).
+                 후보 신청 없이 누구나(본인 제외) 바로 추천할 수 있다(2026-09-16, 기존 "이번 주
+                 후보 신청" 방식 대체) - 일간/주간/월간/전체 랭킹은 /posts/contest에서 별도로 확인. -->
+            <div class="contest-post-widget" th:if="${postRecommend != null}">
+                <span class="contest-post-widget-label"><i class="fa-solid fa-fire"></i> 추천</span>
+                <span class="contest-entry-votes" th:text="${postRecommend.recommendCount} + '표'">0표</span>
+                <span th:if="${postRecommend.mine}" class="contest-entry-mine-badge">내 글</span>
+                <button type="button" id="postRecommendBtn" class="btn btn-primary contest-vote-btn" th:if="${!postRecommend.mine}"
                         sec:authorize="isAuthenticated()"
-                        th:data-entry-id="${contestEntry.entryId}" th:disabled="${contestEntry.votedByMe}"
-                        th:text="${contestEntry.votedByMe} ? '투표완료' : '투표하기'">투표하기</button>
+                        th:disabled="${postRecommend.recommendedByMe}"
+                        th:text="${postRecommend.recommendedByMe} ? '추천완료' : '추천하기'">추천하기</button>
             </div>
 
             <div class="post-detail-actions">
@@ -93,22 +93,6 @@
                     <form th:action="@{'/posts/' + ${post.uuid} + '/delete'}" method="post"
                           data-confirm="정말 삭제하시겠어요?" data-confirm-danger="true" class="post-delete-form">
                         <button type="submit" class="post-delete-btn"><i class="fa-solid fa-trash"></i> 삭제</button>
-                    </form>
-                    <!-- 인기 게시글 주간 콘테스트 후보 신청(todo.md 4번 항목) - 본인 게시물만, 회차당
-                         인당 1개. 이미 이번 주 후보(위 contest-post-widget에 쓰는 contestEntry)라면
-                         버튼 자체를 숨긴다 - 예전엔 항상 노출해서 다시 누르면 "이미 신청했습니다"
-                         flashError만 뜨는 뻔한 재시도가 있었는데, contestEntry는 이미 이 템플릿
-                         스코프에 있어 새 의존성 없이 바로 조건을 걸 수 있었다(2026-08-28 발견/수정).
-                         익명 글은 후보 목록에 신청자 실제 닉네임이 그대로 노출돼 익명성이 깨지므로
-                         버튼 자체를 숨긴다(PostContestService.nominate()의 서버단 검증과 짝). 비공개/
-                         링크 한정 공개 글도 마찬가지로 숨긴다 - 후보 목록 자체가 전체 공개라 올리면
-                         그 글의 공개범위 설정이 무력화되기 때문(사용자 지적, PostContestService.nominate()
-                         서버단 검증과 짝). -->
-                    <form th:if="${contestEntry == null and post.category != 'ANONYMOUS' and post.visibility == 'PUBLIC'}" th:action="@{/posts/contest/nominate}" method="post" class="post-contest-nominate-form">
-                        <input type="hidden" name="postUuid" th:value="${post.uuid}">
-                        <button type="submit" class="btn btn-outline-primary">
-                            <i class="fa-solid fa-trophy"></i> 이번 주 추천 후보 신청
-                        </button>
                     </form>
                 </div>
                 <button type="button" id="reportBtn" class="post-report-btn"
@@ -121,7 +105,7 @@
 
             <div class="post-detail-footer-links">
                 <a href="/posts" class="post-list-back"><i class="fa-solid fa-arrow-left"></i> 목록으로</a>
-                <a th:href="@{'/admin/posts/' + ${post.id}}" class="post-list-back" sec:authorize="hasRole('ADMIN')">
+                <a th:href="@{'/admin/posts/' + ${post.id}}" class="post-list-back" sec:authorize="hasAnyRole('ADMIN','SUPER_ADMIN')">
                     <i class="fa-solid fa-shield-halved"></i> 관리자 페이지에서 보기
                 </a>
             </div>

@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 // 출석체크(todo.md 요구사항) - 매일 방문 시 포인트를 지급한다. UserPointService.award()의
 // 일일 획득 상한(DAILY_CAP)과는 무관하게 항상 지급돼야 하므로(사용자 요청 - 다른 활동으로 이미
-// 한도를 채운 날에도 출석 보너스는 받아야 함) PostContestService 우승 포인트와 동일하게
+// 한도를 채운 날에도 출석 보너스는 받아야 함) PostRecommendService 우승 포인트와 동일하게
 // awardBonus()를 쓴다.
 //
 // 연속 출석 스트릭 보너스(디자인 개선 계획 - 출석체크 누적 포인트, 2026-09-09 추가) - 1일차 10P부터

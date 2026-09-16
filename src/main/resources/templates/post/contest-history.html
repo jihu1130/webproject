@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>지난 우승 이력 - WebSchool</title>
+    <title>일별 1위 이력 - WebSchool</title>
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/post.css}">
 </head>
@@ -15,40 +15,37 @@
     <div class="post-container post-container-narrow">
         <div class="post-list-header">
             <div class="page-heading post-page-heading">
-                <h1><i class="fa-solid fa-clock-rotate-left"></i> 지난 우승 이력</h1>
-                <p class="page-sub">매주 월요일 자정 마감된 이번 주 추천 게시글 콘테스트 결과예요</p>
+                <h1><i class="fa-solid fa-clock-rotate-left"></i> 일별 1위 이력</h1>
+                <p class="page-sub">매일 자정 마감된 추천 게시글 1위 결과예요</p>
             </div>
-            <a href="/posts/contest" class="btn btn-outline-primary"><i class="fa-solid fa-arrow-left"></i> 이번 주로</a>
+            <a href="/posts/contest" class="btn btn-outline-primary"><i class="fa-solid fa-arrow-left"></i> 추천 게시글로</a>
         </div>
 
-        <th:block th:if="${weeks.empty}">
-            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-clock-rotate-left', '아직 마감된 회차가 없어요.', null, null)}"></div>
+        <th:block th:if="${results.empty}">
+            <div th:replace="~{fragments/empty-state :: box('fa-solid fa-clock-rotate-left', '아직 마감된 날짜가 없어요.', null, null)}"></div>
         </th:block>
 
-        <div class="contest-week-group" th:each="week : ${weeks}">
-            <h2 class="contest-week-title" th:text="${week.weekStart} + ' 주'">2026-01-01 주</h2>
-            <div class="contest-entry-list">
-                <div class="contest-entry" th:each="result : ${week.results}">
-                    <span class="contest-entry-rank" th:text="${result.rank}">1</span>
-                    <div class="contest-entry-body">
-                        <a th:href="@{'/posts/' + ${result.postUuid}}" class="contest-entry-title" th:text="${result.postTitle}">제목</a>
-                        <span class="contest-entry-author" th:text="${result.authorNickname}">작성자</span>
-                    </div>
-                    <span class="contest-entry-votes" th:text="${result.voteCount} + '표'">0표</span>
-                    <span class="contest-entry-prize" th:text="'+' + ${result.prizePoints} + 'P'">+0P</span>
+        <div class="contest-entry-list">
+            <div class="contest-entry" th:each="result : ${results}">
+                <span class="contest-history-date" th:text="${result.resultDate}">2026-01-01</span>
+                <div class="contest-entry-body">
+                    <a th:href="@{'/posts/' + ${result.postUuid}}" class="contest-entry-title" th:text="${result.postTitle}">제목</a>
+                    <span class="contest-entry-author" th:text="${result.authorNickname}">작성자</span>
                 </div>
+                <span class="contest-entry-votes" th:text="${result.recommendCount} + '표'">0표</span>
+                <span class="contest-entry-prize" th:text="'+' + ${result.prizePoints} + 'P'">+0P</span>
             </div>
         </div>
 
-        <div class="post-pagination" th:if="${weeks.totalPages > 1}">
-            <a th:if="${weeks.hasPrevious()}" th:href="@{/posts/contest/history(page=${weeks.number - 1})}" class="post-page-link" aria-label="이전 페이지">
+        <div class="post-pagination" th:if="${results.totalPages > 1}">
+            <a th:if="${results.hasPrevious()}" th:href="@{/posts/contest/history(page=${results.number - 1})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
-            <a th:each="i : ${#numbers.sequence(0, weeks.totalPages - 1)}"
+            <a th:each="i : ${#numbers.sequence(0, results.totalPages - 1)}"
                th:href="@{/posts/contest/history(page=${i})}" th:text="${i + 1}"
-               th:classappend="${i == weeks.number} ? ' active' : ''"
+               th:classappend="${i == results.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${weeks.hasNext()}" th:href="@{/posts/contest/history(page=${weeks.number + 1})}" class="post-page-link" aria-label="다음 페이지">
+            <a th:if="${results.hasNext()}" th:href="@{/posts/contest/history(page=${results.number + 1})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>

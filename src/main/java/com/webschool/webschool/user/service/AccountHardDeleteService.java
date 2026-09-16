@@ -11,10 +11,9 @@ import com.webschool.webschool.post.repository.CommentLikeRepository;
 import com.webschool.webschool.post.repository.CommentReportRepository;
 import com.webschool.webschool.post.repository.PostBookmarkRepository;
 import com.webschool.webschool.post.repository.PostCommentRepository;
-import com.webschool.webschool.post.repository.PostContestEntryRepository;
-import com.webschool.webschool.post.repository.PostContestResultRepository;
-import com.webschool.webschool.post.repository.PostContestVoteRepository;
+import com.webschool.webschool.post.repository.PostDailyBestResultRepository;
 import com.webschool.webschool.post.repository.PostLikeRepository;
+import com.webschool.webschool.post.repository.PostRecommendRepository;
 import com.webschool.webschool.post.repository.PostReportRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.school.repository.PersonalEventRepository;
@@ -67,7 +66,7 @@ public class AccountHardDeleteService {
     private final NoticeRepository noticeRepository;
     private final PollRepository pollRepository;
     private final PollOptionRepository pollOptionRepository;
-    private final PostContestResultRepository postContestResultRepository;
+    private final PostDailyBestResultRepository postDailyBestResultRepository;
     private final PostReportRepository postReportRepository;
     private final CommentReportRepository commentReportRepository;
     private final ScheduleCommentReportRepository scheduleCommentReportRepository;
@@ -83,8 +82,7 @@ public class AccountHardDeleteService {
     private final ScheduleCommentBookmarkRepository scheduleCommentBookmarkRepository;
     private final PersonalEventRepository personalEventRepository;
     private final PollVoteRepository pollVoteRepository;
-    private final PostContestVoteRepository postContestVoteRepository;
-    private final PostContestEntryRepository postContestEntryRepository;
+    private final PostRecommendRepository postRecommendRepository;
     private final UserShopItemRepository userShopItemRepository;
     private final UserPointLogRepository userPointLogRepository;
     private final AttendanceLogRepository attendanceLogRepository;
@@ -93,7 +91,7 @@ public class AccountHardDeleteService {
     private final UserBlockRepository userBlockRepository;
 
     // 매일 새벽 4시 10분 - DB 백업(새벽 3시)/CloudWatch 로그 수집과 겹치지 않는 시간대.
-    // PostContestService.tallyPreviousWeek()와 동일한 배치 패턴(cron 직접 명시, 전체를 한 트랜잭션
+    // PostRecommendService.tallyPreviousDay()와 동일한 배치 패턴(cron 직접 명시, 전체를 한 트랜잭션
     // 대신 대상자별로 개별 하드 삭제 - 한 명 실패가 나머지 처리를 막지 않도록 대상자 단위로 분리).
     @Scheduled(cron = "0 10 4 * * *")
     public void hardDeleteExpiredAccounts() {
@@ -133,8 +131,7 @@ public class AccountHardDeleteService {
         scheduleCommentBookmarkRepository.deleteAllByUserId(userId);
         personalEventRepository.deleteAllByUserId(userId);
         pollVoteRepository.deleteAllByVoterId(userId);
-        postContestVoteRepository.deleteAllByVoterId(userId);
-        postContestEntryRepository.deleteAllByNominatorId(userId);
+        postRecommendRepository.deleteAllByVoterId(userId);
         userShopItemRepository.deleteAllByUserId(userId);
         userPointLogRepository.deleteAllByUserId(userId);
         attendanceLogRepository.deleteAllByUserId(userId);
@@ -150,7 +147,7 @@ public class AccountHardDeleteService {
         noticeRepository.detachAuthor(userId);
         pollRepository.detachCreator(userId);
         pollOptionRepository.detachAddedBy(userId);
-        postContestResultRepository.detachAuthor(userId);
+        postDailyBestResultRepository.detachAuthor(userId);
         postReportRepository.detachReporter(userId);
         commentReportRepository.detachReporter(userId);
         scheduleCommentReportRepository.detachReporter(userId);

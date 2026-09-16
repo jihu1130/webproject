@@ -1844,7 +1844,7 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 
 .poll-widget-submit { margin-top: 12px; padding: 9px 20px; font-size: 0.85rem; }
 
-/* 인기 게시글 주간 콘테스트 - post/contest-list.html */
+/* 추천 게시글 랭킹 - post/contest-list.html (2026-09-16, 기존 "인기 게시글 주간 콘테스트" 대체) */
 .contest-rule-hint {
     margin-left: 6px;
     color: var(--muted);
@@ -1852,15 +1852,21 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     font-size: 0.85rem;
 }
 
-.contest-countdown {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 6px;
+/* 일간/주간/월간/전체 기간 탭 - .post-category-tab과 같은 "알약형" 언어로 통일. */
+.contest-period-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.contest-period-tab {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
     font-size: 0.85rem;
     font-weight: 700;
-    color: var(--brand-1-dark);
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
+.contest-period-tab:hover { border-color: var(--brand-1); color: var(--brand-1); }
+.contest-period-tab.active { background: var(--brand-fixed); border-color: transparent; color: #fff; }
 
 .contest-entry-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -1912,18 +1918,19 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     padding: 6px 12px;
 }
 
-/* 콘테스트 과거 우승 이력(post/contest-history.html) - 회차(주)별로 묶어서 보여준다. */
-.contest-week-group { margin-bottom: 24px; }
-.contest-week-title {
-    font-size: 0.95rem;
+/* 일별 추천 게시글 1위 이력(post/contest-history.html) - 날짜별 1행씩, 순위 원 대신 날짜를 보여준다. */
+.contest-history-date {
+    flex-shrink: 0;
+    width: 76px;
+    font-size: 0.82rem;
     font-weight: 700;
     color: var(--muted);
-    margin: 0 0 10px;
+    text-align: center;
 }
 .contest-entry-prize { flex-shrink: 0; font-weight: 700; color: var(--brand-1); font-size: 0.9rem; }
 
-/* 게시글 상세에서 그 글이 이번 주 콘테스트 후보일 때 바로 투표할 수 있는 위젯(post/detail.html) -
-   /posts/contest 목록까지 가지 않아도 글을 읽던 자리에서 바로 투표할 수 있게 한다. */
+/* 게시글 상세에서 자유 게시판 전체 공개 글에 바로 추천할 수 있는 위젯(post/detail.html) -
+   /posts/contest 목록까지 가지 않아도 글을 읽던 자리에서 바로 추천할 수 있게 한다. */
 .contest-post-widget {
     display: flex;
     align-items: center;

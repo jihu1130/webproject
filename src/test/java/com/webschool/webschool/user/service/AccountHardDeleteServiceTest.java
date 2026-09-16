@@ -18,20 +18,18 @@ import com.webschool.webschool.post.domain.CommentReport;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostBookmark;
 import com.webschool.webschool.post.domain.PostComment;
-import com.webschool.webschool.post.domain.PostContestEntry;
-import com.webschool.webschool.post.domain.PostContestResult;
-import com.webschool.webschool.post.domain.PostContestVote;
+import com.webschool.webschool.post.domain.PostDailyBestResult;
 import com.webschool.webschool.post.domain.PostLike;
+import com.webschool.webschool.post.domain.PostRecommend;
 import com.webschool.webschool.post.domain.PostReport;
 import com.webschool.webschool.post.repository.CommentBookmarkRepository;
 import com.webschool.webschool.post.repository.CommentLikeRepository;
 import com.webschool.webschool.post.repository.CommentReportRepository;
 import com.webschool.webschool.post.repository.PostBookmarkRepository;
 import com.webschool.webschool.post.repository.PostCommentRepository;
-import com.webschool.webschool.post.repository.PostContestEntryRepository;
-import com.webschool.webschool.post.repository.PostContestResultRepository;
-import com.webschool.webschool.post.repository.PostContestVoteRepository;
+import com.webschool.webschool.post.repository.PostDailyBestResultRepository;
 import com.webschool.webschool.post.repository.PostLikeRepository;
+import com.webschool.webschool.post.repository.PostRecommendRepository;
 import com.webschool.webschool.post.repository.PostReportRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.school.domain.School;
@@ -101,9 +99,8 @@ class AccountHardDeleteServiceTest {
     @Autowired private PollRepository pollRepository;
     @Autowired private PollOptionRepository pollOptionRepository;
     @Autowired private PollVoteRepository pollVoteRepository;
-    @Autowired private PostContestEntryRepository postContestEntryRepository;
-    @Autowired private PostContestVoteRepository postContestVoteRepository;
-    @Autowired private PostContestResultRepository postContestResultRepository;
+    @Autowired private PostRecommendRepository postRecommendRepository;
+    @Autowired private PostDailyBestResultRepository postDailyBestResultRepository;
     @Autowired private UserPenaltyRepository userPenaltyRepository;
     @Autowired private BugReportRepository bugReportRepository;
     @Autowired private EmailTokenRepository emailTokenRepository;
@@ -176,14 +173,13 @@ class AccountHardDeleteServiceTest {
         pollOption.setAddedBy(target);
         pollOptionRepository.save(pollOption);
 
-        PostContestResult contestResult = new PostContestResult();
-        contestResult.setWeekStart(LocalDate.now());
-        contestResult.setRank(1);
-        contestResult.setPost(post);
-        contestResult.setAuthor(target);
-        contestResult.setVoteCount(3);
-        contestResult.setPrizePoints(30);
-        postContestResultRepository.save(contestResult);
+        PostDailyBestResult dailyBestResult = new PostDailyBestResult();
+        dailyBestResult.setResultDate(LocalDate.now());
+        dailyBestResult.setPost(post);
+        dailyBestResult.setAuthor(target);
+        dailyBestResult.setRecommendCount(3);
+        dailyBestResult.setPrizePoints(15);
+        postDailyBestResultRepository.save(dailyBestResult);
 
         UserPenalty penaltyAsTarget = new UserPenalty();
         penaltyAsTarget.setTarget(target);
@@ -255,17 +251,10 @@ class AccountHardDeleteServiceTest {
         pollVote.setVoter(target);
         pollVoteRepository.save(pollVote);
 
-        PostContestEntry contestEntry = new PostContestEntry();
-        contestEntry.setPost(post);
-        contestEntry.setNominator(target);
-        contestEntry.setWeekStart(LocalDate.now());
-        postContestEntryRepository.save(contestEntry);
-
-        PostContestVote contestVote = new PostContestVote();
-        contestVote.setEntry(contestEntry);
-        contestVote.setVoter(target);
-        contestVote.setWeekStart(LocalDate.now());
-        postContestVoteRepository.save(contestVote);
+        PostRecommend recommend = new PostRecommend();
+        recommend.setPost(post);
+        recommend.setVoter(target);
+        postRecommendRepository.save(recommend);
 
         ShopItem shopItem = shopItemRepository.save(newShopItem());
         UserShopItem userShopItem = new UserShopItem();
@@ -324,7 +313,7 @@ class AccountHardDeleteServiceTest {
         assertNull(noticeRepository.findById(notice.getId()).get().getAuthor());
         assertNull(pollRepository.findById(poll.getId()).get().getCreator());
         assertNull(pollOptionRepository.findById(pollOption.getId()).get().getAddedBy());
-        assertNull(postContestResultRepository.findById(contestResult.getId()).get().getAuthor());
+        assertNull(postDailyBestResultRepository.findById(dailyBestResult.getId()).get().getAuthor());
         assertNull(userPenaltyRepository.findById(penaltyAsTarget.getId()).get().getTarget());
         assertNull(userPenaltyRepository.findById(penaltyIssuedByTarget.getId()).get().getIssuedBy());
         // 대상이 아니었던 쪽(penaltyAsTarget의 issuedBy=helper, penaltyIssuedByTarget의 target=helper)은
@@ -341,8 +330,7 @@ class AccountHardDeleteServiceTest {
         assertTrue(scheduleCommentLikeRepository.findById(scheduleCommentLike.getId()).isEmpty());
         assertTrue(scheduleCommentBookmarkRepository.findById(scheduleCommentBookmark.getId()).isEmpty());
         assertTrue(pollVoteRepository.findById(pollVote.getId()).isEmpty());
-        assertTrue(postContestEntryRepository.findById(contestEntry.getId()).isEmpty());
-        assertTrue(postContestVoteRepository.findById(contestVote.getId()).isEmpty());
+        assertTrue(postRecommendRepository.findById(recommend.getId()).isEmpty());
         assertTrue(userShopItemRepository.findById(userShopItem.getId()).isEmpty());
         assertTrue(userPointLogRepository.findById(pointLog.getId()).isEmpty());
         assertTrue(attendanceLogRepository.findById(attendanceLog.getId()).isEmpty());
@@ -360,9 +348,7 @@ class AccountHardDeleteServiceTest {
         pollVoteRepository.deleteById(pollVote.getId());
         pollOptionRepository.deleteById(pollOption.getId());
         pollRepository.deleteById(poll.getId());
-        postContestVoteRepository.deleteById(contestVote.getId());
-        postContestEntryRepository.deleteById(contestEntry.getId());
-        postContestResultRepository.deleteById(contestResult.getId());
+        postDailyBestResultRepository.deleteById(dailyBestResult.getId());
         scheduleCommentReportRepository.deleteById(scheduleCommentReport.getId());
         scheduleCommentRepository.deleteById(scheduleComment.getId());
         commentReportRepository.deleteById(commentReport.getId());
