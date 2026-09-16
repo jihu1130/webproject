@@ -40,6 +40,10 @@ public interface ScheduleCommentRepository extends JpaRepository<ScheduleComment
     // 관리자용: 소프트 삭제된 한마디 목록 (최근 삭제순) - "삭제됨" 탭
     List<ScheduleComment> findAllByDeletedTrueOrderByDeletedAtDesc();
 
+    // 관리자용: 현재 블라인드 상태인 한마디만 - "블라인드" 탭(2026-09-16 추가,
+    // PostRepository.findAllByDeletedFalseAndBlindTrueOrderByCreatedAtDesc()와 동일한 이유)
+    List<ScheduleComment> findAllByDeletedFalseAndBlindTrueOrderByCreatedAtDesc();
+
     // 관리자용: 블라인드 처리됐거나 신고가 누적된 한마디 (삭제된 것은 제외) - "신고 관리" 탭
     @Query("SELECT c FROM ScheduleComment c WHERE c.deleted = false AND (c.blind = true OR c.reportCount > 0) "
             + "ORDER BY c.blind DESC, c.reportCount DESC, c.createdAt DESC")

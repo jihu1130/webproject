@@ -53,6 +53,10 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
     // 관리자용: 소프트 삭제된 댓글 목록 (최근 삭제순) - "댓글 관리" 삭제됨 탭
     List<PostComment> findAllByDeletedTrueOrderByDeletedAtDesc();
 
+    // 관리자용: 현재 블라인드 상태인 댓글만 - "댓글 관리" 블라인드 탭(2026-09-16 추가,
+    // PostRepository.findAllByDeletedFalseAndBlindTrueOrderByCreatedAtDesc()와 동일한 이유)
+    List<PostComment> findAllByDeletedFalseAndBlindTrueOrderByCreatedAtDesc();
+
     // 관리자용: 게시글 목록에서 "이 글에 신고된 댓글이 있는지" 배지를 보여주기 위한 카운트
     // (게시물 자체는 신고가 없어도 그 밑에 신고된 댓글이 있을 수 있는데, 기존엔 "전체 게시글" 탭만
     // 봐서는 알 방법이 없었다 - 신고 관리 > 댓글 탭에서 따로 확인해야 했음)

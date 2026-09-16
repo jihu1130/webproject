@@ -29,14 +29,16 @@ public class AdminCommentController {
                         @RequestParam(required = false) String keyword,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) Integer size, Model model) {
-        boolean deletedView = "deleted".equals(status);
-        List<AdminCommentReportSummaryDto> filtered = deletedView
-                ? adminPostService.getDeletedComments(keyword)
-                : adminPostService.getAllComments(keyword);
+        String viewMode = "deleted".equals(status) ? "deleted" : "blind".equals(status) ? "blind" : "all";
+        List<AdminCommentReportSummaryDto> filtered = switch (viewMode) {
+            case "deleted" -> adminPostService.getDeletedComments(keyword);
+            case "blind" -> adminPostService.getBlindComments(keyword);
+            default -> adminPostService.getAllComments(keyword);
+        };
         int pageSize = PageUtils.normalizeSize(size);
         Page<AdminCommentReportSummaryDto> comments = PageUtils.paginate(filtered, page, pageSize);
         model.addAttribute("comments", comments);
-        model.addAttribute("viewMode", deletedView ? "deleted" : "all");
+        model.addAttribute("viewMode", viewMode);
         model.addAttribute("keyword", keyword);
         return "admin/comment-list";
     }
@@ -95,6 +97,27 @@ public class AdminCommentController {
                               @ModelAttribute ListState state) {
         if (ids != null) {
             ids.forEach(id -> { try { adminPostService.deleteComment(id); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirect());
+    }
+
+    // "블라인드" 탭 일괄 해제/문제없음 처리(2026-09-16 추가) - AdminPostController와 동일 패턴.
+    @PostMapping("/bulk-unblind")
+    public String bulkUnblind(@RequestParam(required = false) List<Long> ids,
+                               @RequestParam(required = false) String returnUrl,
+                               @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminPostService.setCommentBlind(id, false); } catch (IllegalArgumentException ignored) { } });
+        }
+        return resolveReturn(returnUrl, state.redirect());
+    }
+
+    @PostMapping("/bulk-clear-report")
+    public String bulkClearReport(@RequestParam(required = false) List<Long> ids,
+                                   @RequestParam(required = false) String returnUrl,
+                                   @ModelAttribute ListState state) {
+        if (ids != null) {
+            ids.forEach(id -> { try { adminPostService.clearCommentReport(id); } catch (IllegalArgumentException ignored) { } });
         }
         return resolveReturn(returnUrl, state.redirect());
     }

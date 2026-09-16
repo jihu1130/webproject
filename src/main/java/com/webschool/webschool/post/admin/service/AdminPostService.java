@@ -76,6 +76,14 @@ public class AdminPostService {
                 .collect(Collectors.toList());
     }
 
+    // 댓글 관리 "블라인드" 탭(2026-09-16 추가) - 게시물의 getBlindPosts()와 동일한 이유
+    public List<AdminCommentReportSummaryDto> getBlindComments(String keyword) {
+        return postCommentRepository.findAllByDeletedFalseAndBlindTrueOrderByCreatedAtDesc().stream()
+                .map(this::toCommentReportSummaryDto)
+                .filter(dto -> matches(keyword, dto.getContent(), dto.getAuthorNickname()))
+                .collect(Collectors.toList());
+    }
+
     // 소프트 삭제된 게시물 목록 (6-6 항목 - 관리자 페이지 "삭제됨" 탭)
     public List<AdminPostSummaryDto> getDeletedPosts(String keyword) {
         return postRepository.findAllByDeletedTrueOrderByDeletedAtDesc().stream()

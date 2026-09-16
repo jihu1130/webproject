@@ -57,6 +57,14 @@ public class AdminScheduleCommentService {
                 .collect(Collectors.toList());
     }
 
+    // 블라인드된 한마디만 - "블라인드" 탭(2026-09-16 추가, AdminPostService.getBlindPosts()와 동일한 이유)
+    public List<AdminScheduleCommentSummaryDto> getBlindComments(String keyword) {
+        return scheduleCommentRepository.findAllByDeletedFalseAndBlindTrueOrderByCreatedAtDesc().stream()
+                .map(this::toSummaryDto)
+                .filter(dto -> matches(keyword, dto.getContent(), dto.getAuthorNickname()))
+                .collect(Collectors.toList());
+    }
+
     private boolean matches(String keyword, String... fields) {
         if (keyword == null || keyword.isBlank()) {
             return true;

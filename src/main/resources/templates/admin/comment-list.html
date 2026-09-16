@@ -18,26 +18,30 @@
     <div class="admin-container">
         <div class="page-heading admin-page-heading">
             <h1><i class="fa-solid fa-shield-halved"></i> 관리자 대시보드</h1>
-            <p class="page-sub"
-               th:text="${viewMode == 'deleted'} ? '작성자·관리자가 삭제한 댓글을 확인하고 복구할 수 있어요' : '전체 댓글을 둘러보고 신고/블라인드를 관리할 수 있어요 (게시글을 하나씩 열지 않아도 됩니다)'">설명</p>
+            <p class="page-sub" th:switch="${viewMode}">
+                <span th:case="'deleted'">작성자·관리자가 삭제한 댓글을 확인하고 복구할 수 있어요</span>
+                <span th:case="'blind'">블라인드된 댓글만 모아서 혐의없음/블라인드 해제/삭제를 한 번에 처리할 수 있어요</span>
+                <span th:case="*">전체 댓글을 둘러보고 신고/블라인드를 관리할 수 있어요 (게시글을 하나씩 열지 않아도 됩니다)</span>
+            </p>
         </div>
 
         <div th:replace="~{admin/fragments/nav :: tabs('comments')}"></div>
 
         <div class="post-category-tabs admin-status-tabs">
             <a th:href="@{/admin/comments}" class="post-category-tab" th:classappend="${viewMode == 'all'} ? ' active' : ''">전체</a>
+            <a th:href="@{/admin/comments(status='blind')}" class="post-category-tab" th:classappend="${viewMode == 'blind'} ? ' active' : ''">블라인드</a>
             <a th:href="@{/admin/comments(status='deleted')}" class="post-category-tab" th:classappend="${viewMode == 'deleted'} ? ' active' : ''">삭제됨</a>
         </div>
 
         <div class="list-toolbar">
             <form th:action="@{/admin/comments}" method="get" class="admin-search-form">
-                <input type="hidden" name="status" th:value="${viewMode == 'deleted'} ? 'deleted' : ''">
+                <input type="hidden" name="status" th:value="${viewMode == 'all'} ? '' : ${viewMode}">
                 <input type="text" name="keyword" placeholder="내용/작성자 검색" th:value="${keyword}">
                 <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
             <form th:action="@{/admin/comments}" method="get" class="page-size-select">
-                <input type="hidden" name="status" th:value="${viewMode == 'deleted'} ? 'deleted' : ''">
+                <input type="hidden" name="status" th:value="${viewMode == 'all'} ? '' : ${viewMode}">
                 <input type="hidden" name="keyword" th:value="${keyword}">
                 <label for="admin-comment-page-size">페이지당</label>
                 <select id="admin-comment-page-size" name="size" onchange="this.form.submit()">
@@ -51,12 +55,17 @@
 
         <div th:if="${comments.empty}" class="admin-empty">
             <span th:if="${viewMode == 'deleted'}">삭제된 댓글이 없어요.</span>
+            <span th:if="${viewMode == 'blind'}">블라인드된 댓글이 없어요.</span>
             <span th:if="${viewMode == 'all'}">댓글이 없어요.</span>
         </div>
 
         <div class="admin-bulk-toolbar" id="bulkToolbar-comments" th:unless="${comments.empty or viewMode == 'deleted'}">
             <span class="admin-bulk-count">0개 선택됨</span>
-            <button type="button" class="btn btn-outline-primary" data-bulk-action="/admin/comments/bulk-blind" data-bulk-label="블라인드 처리" disabled>선택 블라인드</button>
+            <button type="button" class="btn btn-outline-primary" th:if="${viewMode != 'blind'}"
+                    data-bulk-action="/admin/comments/bulk-blind" data-bulk-label="블라인드 처리" disabled>선택 블라인드</button>
+            <button type="button" class="btn btn-outline-primary" th:if="${viewMode == 'blind'}"
+                    data-bulk-action="/admin/comments/bulk-unblind" data-bulk-label="블라인드 해제" disabled>선택 블라인드 해제</button>
+            <button type="button" class="btn btn-outline-primary" data-bulk-action="/admin/comments/bulk-clear-report" data-bulk-label="문제없음 처리" disabled>선택 혐의없음</button>
             <button type="button" class="post-delete-btn" data-bulk-action="/admin/comments/bulk-delete" data-bulk-label="삭제" data-bulk-danger="true" disabled>선택 삭제</button>
         </div>
 
@@ -102,7 +111,7 @@
                     <td th:text="${comment.createdAt}">날짜</td>
                     <td th:if="${viewMode == 'deleted'}" th:text="${comment.deletedAt}">삭제일</td>
                     <td>
-                        <div class="admin-user-actions" th:with="stateStatus=${viewMode == 'deleted'} ? 'deleted' : null">
+                        <div class="admin-user-actions" th:with="stateStatus=${viewMode == 'all'} ? null : ${viewMode}">
                             <form th:if="${comment.deleted}" th:action="@{'/admin/comments/' + ${comment.id} + '/restore'}" method="post"
                                   data-confirm="이 댓글을 복구할까요?">
                                 <div th:replace="~{admin/fragments/list-state :: hidden(${stateStatus}, ${keyword}, ${comments.number}, ${comments.size})}"></div>
@@ -143,14 +152,14 @@
         </div>
 
         <div class="post-pagination" th:if="${comments.totalPages > 1}">
-            <a th:if="${comments.hasPrevious()}" th:href="@{/admin/comments(page=${comments.number - 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" class="post-page-link" aria-label="이전 페이지">
+            <a th:if="${comments.hasPrevious()}" th:href="@{/admin/comments(page=${comments.number - 1}, status=${viewMode == 'all'} ? null : ${viewMode}, keyword=${keyword}, size=${comments.size})}" class="post-page-link" aria-label="이전 페이지">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
             <a th:each="i : ${#numbers.sequence(0, comments.totalPages - 1)}"
-               th:href="@{/admin/comments(page=${i}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" th:text="${i + 1}"
+               th:href="@{/admin/comments(page=${i}, status=${viewMode == 'all'} ? null : ${viewMode}, keyword=${keyword}, size=${comments.size})}" th:text="${i + 1}"
                th:classappend="${i == comments.number} ? ' active' : ''"
                class="post-page-link"></a>
-            <a th:if="${comments.hasNext()}" th:href="@{/admin/comments(page=${comments.number + 1}, status=${viewMode == 'deleted'} ? 'deleted' : null, keyword=${keyword}, size=${comments.size})}" class="post-page-link" aria-label="다음 페이지">
+            <a th:if="${comments.hasNext()}" th:href="@{/admin/comments(page=${comments.number + 1}, status=${viewMode == 'all'} ? null : ${viewMode}, keyword=${keyword}, size=${comments.size})}" class="post-page-link" aria-label="다음 페이지">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         </div>
