@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.documentElement.setAttribute('data-theme', next);
         try { localStorage.setItem('theme', next); } catch (e) {}
         applyIcon(next);
+        // Chart.js처럼 canvas에 색을 직접 굳혀 그리는 라이브러리는 var(--brand-1) 같은
+        // CSS 변수와 달리 테마가 바뀌어도 저절로 안 따라온다 - 그런 화면이 다시 그릴 수 있게
+        // 알려준다(예: admin/dashboard.html).
+        document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: next } }));
     });
 
     // 명시적으로 고른 적 없는 사용자(localStorage에 저장된 값이 없는 사용자)는 시스템 설정이
@@ -35,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var theme = e.matches ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', theme);
             applyIcon(theme);
+            document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: theme } }));
         });
     }
 });

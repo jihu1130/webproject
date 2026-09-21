@@ -43,13 +43,18 @@
 
             <section class="dash-card">
                 <h2>최근 14일 게시글 작성 추이</h2>
-                <div id="dashPostTrendChart" class="dash-chart"
-                     role="img" aria-label="최근 14일 동안 하루 평균 게시글 작성 수 추이 차트"></div>
+                <div class="dash-chart">
+                    <canvas id="dashPostTrendChart"
+                            role="img" aria-label="최근 14일 동안 하루 평균 게시글 작성 수 추이 차트"></canvas>
+                </div>
             </section>
 
             <section class="dash-card">
                 <h2>포인트 티어 분포</h2>
-                <div id="dashTierChart" class="dash-tier-list"></div>
+                <div class="dash-chart">
+                    <canvas id="dashTierChart"
+                            role="img" aria-label="포인트 티어별 사용자 수 분포 차트"></canvas>
+                </div>
             </section>
 
             <!-- 서버 상태(사용자 요청, 2026-09-09) - Actuator/Micrometer에서 직접 읽은 실시간 값
@@ -98,14 +103,18 @@
 
                 <section class="dash-card">
                     <h2>CPU 사용률 추이 (최근 1시간, 1분 간격)</h2>
-                    <div id="dashCpuHistoryChart" class="dash-chart"
-                         role="img" aria-label="최근 1시간 동안 1분 간격으로 측정한 CPU 사용률 추이 차트"></div>
+                    <div class="dash-chart">
+                        <canvas id="dashCpuHistoryChart"
+                                role="img" aria-label="최근 1시간 동안 1분 간격으로 측정한 CPU 사용률 추이 차트"></canvas>
+                    </div>
                 </section>
 
                 <section class="dash-card">
                     <h2>힙 메모리 사용량 추이 (최근 1시간, 1분 간격, MB)</h2>
-                    <div id="dashHeapHistoryChart" class="dash-chart"
-                         role="img" aria-label="최근 1시간 동안 1분 간격으로 측정한 힙 메모리 사용량 추이 차트"></div>
+                    <div class="dash-chart">
+                        <canvas id="dashHeapHistoryChart"
+                                role="img" aria-label="최근 1시간 동안 1분 간격으로 측정한 힙 메모리 사용량 추이 차트"></canvas>
+                    </div>
                 </section>
             </th:block>
         </div>
@@ -114,99 +123,140 @@
 
 <th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
 
-<!-- Chart.js 등 라이브러리를 새로 들이지 않고, 프로젝트 전반의 "순수 Vanilla JS" 관례를 그대로
-     따라 SVG를 직접 그린다 - 데이터 포인트가 최대 14개/7개뿐이라 라이브러리 도입은 과함. -->
+<!-- 그래프는 Chart.js로 그린다(사용자 확정, 2026-09-21 - 기존 "순수 Vanilla SVG" 방침을
+     대체). Chart.js는 색을 캔버스에 직접 굳혀 그리므로 var(--brand-1) 같은 CSS 변수와 달리
+     다크모드 토글에 저절로 안 따라간다 - dark-mode.js가 쏘는 "themechange" 이벤트를 듣고
+     테마 토큰을 다시 읽어 각 차트에 재적용한다. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script th:inline="javascript">
 (function () {
     var trendLabels = /*[[${postTrendLabels}]]*/ [];
     var trendValues = /*[[${postTrendValues}]]*/ [];
     var tierLabels = /*[[${tierLabels}]]*/ [];
     var tierValues = /*[[${tierValues}]]*/ [];
-
-    renderTrendChart(document.getElementById('dashPostTrendChart'), trendLabels, trendValues);
-    renderTierChart(document.getElementById('dashTierChart'), tierLabels, tierValues);
-
-    // 서버 상태 추이 차트 - 총관리자가 아니면 dashboard.html에서 이 섹션 자체(th:block)가 안
-    // 그려지므로 컨테이너가 없다. renderTrendChart가 이미 !container를 체크하니 그냥 시도해도
-    // 안전하지만, 모델 변수도 총관리자가 아닐 땐 아예 안 채워지므로(컨트롤러가 항상 채우긴
-    // 하지만) 명시적으로 한 번 더 존재 체크.
     var serverHistoryLabels = /*[[${serverHistoryLabels}]]*/ [];
     var cpuHistoryValues = /*[[${serverCpuHistoryValues}]]*/ [];
     var heapHistoryValues = /*[[${serverHeapHistoryValues}]]*/ [];
+
+    var charts = [];
+
+    function themeColor(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+
+    function renderLineChart(canvasId, labels, values) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas || !values || values.length === 0) return;
+
+        var chart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    borderColor: themeColor('--brand-1'),
+                    backgroundColor: themeColor('--brand-gradient-tint-2'),
+                    pointBackgroundColor: themeColor('--surface'),
+                    pointBorderColor: themeColor('--brand-1'),
+                    pointBorderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: themeColor('--muted'), font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 7 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: themeColor('--border') },
+                        ticks: { color: themeColor('--muted'), font: { size: 10 }, precision: 0 }
+                    }
+                }
+            }
+        });
+        charts.push(chart);
+    }
+
+    function renderTierChart(canvasId, labels, values) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        var chart = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: themeColor('--brand-gradient-tint-2'),
+                    hoverBackgroundColor: themeColor('--brand-1'),
+                    borderRadius: 6,
+                    barThickness: 16
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: themeColor('--border') },
+                        ticks: { color: themeColor('--muted'), font: { size: 10 }, precision: 0 }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: themeColor('--ink'), font: { size: 11, weight: '600' } }
+                    }
+                }
+            }
+        });
+        charts.push(chart);
+    }
+
+    renderLineChart('dashPostTrendChart', trendLabels, trendValues);
+    renderTierChart('dashTierChart', tierLabels, tierValues);
+
+    // 서버 상태 추이 차트 - 총관리자가 아니면 dashboard.html에서 이 섹션 자체(th:block)가 안
+    // 그려지므로 캔버스가 없다. renderLineChart가 이미 !canvas를 체크하니 그냥 호출해도
+    // 안전하지만, 존재 체크를 한 번 더 명시해 의도를 분명히 한다.
     if (document.getElementById('dashCpuHistoryChart')) {
-        renderTrendChart(document.getElementById('dashCpuHistoryChart'), serverHistoryLabels, cpuHistoryValues);
-        renderTrendChart(document.getElementById('dashHeapHistoryChart'), serverHistoryLabels, heapHistoryValues);
+        renderLineChart('dashCpuHistoryChart', serverHistoryLabels, cpuHistoryValues);
+        renderLineChart('dashHeapHistoryChart', serverHistoryLabels, heapHistoryValues);
     }
 
-    function renderTrendChart(container, labels, values) {
-        if (!container || values.length === 0) return;
-
-        var width = 560, height = 220;
-        var padding = { top: 16, right: 12, bottom: 26, left: 8 };
-        var plotW = width - padding.left - padding.right;
-        var plotH = height - padding.top - padding.bottom;
-
-        var maxValue = Math.max.apply(null, values);
-        var niceMax = maxValue === 0 ? 4 : Math.ceil(maxValue * 1.2);
-        var stepX = values.length > 1 ? plotW / (values.length - 1) : 0;
-
-        function xAt(i) { return padding.left + stepX * i; }
-        function yAt(v) { return padding.top + plotH - (v / niceMax) * plotH; }
-
-        var linePoints = values.map(function (v, i) { return xAt(i) + ',' + yAt(v); }).join(' ');
-        var areaPoints = linePoints + ' ' + xAt(values.length - 1) + ',' + (padding.top + plotH)
-            + ' ' + xAt(0) + ',' + (padding.top + plotH);
-
-        var gridLines = '';
-        var gridSteps = 3;
-        for (var g = 0; g <= gridSteps; g++) {
-            var gy = padding.top + (plotH / gridSteps) * g;
-            gridLines += '<line class="dash-chart-gridline" x1="' + padding.left + '" y1="' + gy
-                + '" x2="' + (width - padding.right) + '" y2="' + gy + '"></line>';
-        }
-
-        var dots = '';
-        var xLabels = '';
-        values.forEach(function (v, i) {
-            var isLast = i === values.length - 1;
-            var cx = xAt(i), cy = yAt(v);
-            dots += '<circle class="dash-chart-dot' + (isLast ? ' dash-chart-dot--last' : '') + '" cx="' + cx + '" cy="' + cy + '" r="' + (isLast ? 4 : 3) + '"></circle>';
-            if (isLast) {
-                dots += '<text class="dash-chart-value-label" x="' + cx + '" y="' + (cy - 10) + '" text-anchor="end">' + v + '</text>';
+    document.addEventListener('themechange', function () {
+        charts.forEach(function (chart) {
+            var ds = chart.data.datasets[0];
+            if (chart.config.type === 'bar') {
+                ds.backgroundColor = themeColor('--brand-gradient-tint-2');
+                ds.hoverBackgroundColor = themeColor('--brand-1');
+                chart.options.scales.x.grid.color = themeColor('--border');
+                chart.options.scales.x.ticks.color = themeColor('--muted');
+                chart.options.scales.y.ticks.color = themeColor('--ink');
+            } else {
+                ds.borderColor = themeColor('--brand-1');
+                ds.backgroundColor = themeColor('--brand-gradient-tint-2');
+                ds.pointBackgroundColor = themeColor('--surface');
+                ds.pointBorderColor = themeColor('--brand-1');
+                chart.options.scales.y.grid.color = themeColor('--border');
+                chart.options.scales.y.ticks.color = themeColor('--muted');
+                chart.options.scales.x.ticks.color = themeColor('--muted');
             }
-            // 라벨이 다 있으면 좁은 화면에서 겹치므로 대략 7개만 남게 건너뛰며 표시(마지막은 항상
-            // 표시) - 포스트 추이(14개)든 서버 지표 추이(60개)든 같은 함수를 재사용하므로 데이터
-            // 길이에 맞춰 step을 계산한다(고정 2칸 간격이면 60개일 때 라벨이 30개나 남아 겹친다).
-            var labelStep = Math.max(1, Math.ceil(values.length / 7));
-            if (i % labelStep === 0 || isLast) {
-                xLabels += '<text class="dash-chart-axis-label" x="' + cx + '" y="' + (height - 6) + '" text-anchor="middle">' + labels[i] + '</text>';
-            }
+            chart.update();
         });
-
-        container.innerHTML =
-            '<svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="xMidYMid meet">'
-            + gridLines
-            + '<polygon class="dash-chart-area" points="' + areaPoints + '"></polygon>'
-            + '<polyline class="dash-chart-line" points="' + linePoints + '"></polyline>'
-            + dots + xLabels
-            + '</svg>';
-    }
-
-    function renderTierChart(container, labels, values) {
-        if (!container) return;
-        var maxValue = Math.max.apply(null, values.concat([1]));
-        var rows = '';
-        labels.forEach(function (label, i) {
-            var value = values[i];
-            var pct = Math.round((value / maxValue) * 100);
-            rows += '<div class="dash-tier-row">'
-                + '<span class="dash-tier-name">' + label + '</span>'
-                + '<span class="dash-tier-track"><span class="dash-tier-fill" style="width:' + pct + '%"></span></span>'
-                + '<span class="dash-tier-count">' + value + '</span>'
-                + '</div>';
-        });
-        container.innerHTML = rows;
-    }
+    });
 })();
 </script>
 </body>
