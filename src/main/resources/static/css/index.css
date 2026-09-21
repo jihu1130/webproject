@@ -1,393 +1,327 @@
 /* ════════════════════════════════════════════════════════════
-   WebSchool 메인 페이지 — 2026-08 전면 재설계
-   구성: 히어로(패럴랙스 목업) → 마퀴 → 벤토 기능 그리드 → 3단계 시작하기
-        → CTA 밴드 → 푸터. theme.css의 브랜드 변수/`.reveal-on-scroll`를 그대로 쓴다.
+   WebSchool 메인 페이지 — 2026-09 파격 리디자인 (v2, 사용자 피드백 반영)
+   "상단 네비 → 히어로 → 카드 그리드" 공식을 의도적으로 버리고, 이 서비스의 정체성
+   (시간표 · 게시판 · 학교 생활)을 그래픽 언어로 삼았다: 질문형 헤드라인 +
+   바인더 인덱스 탭 오프닝(v1의 거대 스택 타이포/배경 격자텍스트/티커/스티키노트는
+   사용자 피드백으로 전부 걷어냄) → 회전된 쪽지가 흩어진 "게시판" 기능 소개 →
+   진짜 교시표 칸으로 만든 시작 방법(v1의 윤곽선 숫자 리스트 대체) → 반전 컬러
+   스테이트먼트 밴드. 모든 색상은 theme.css 토큰만 참조하므로 다크모드가 별도
+   보정 없이 자동으로 따라간다. 네비바(fragments/navbar.html)는 65개 페이지가
+   공유하는 인프라라 그대로 둔다.
    ════════════════════════════════════════════════════════════ */
 
 html { scroll-behavior: smooth; }
 
-.section-kicker {
-    display: inline-block;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    color: var(--brand-1);
-    margin-bottom: 0.6rem;
+/* 두 섹션(게시판/시작 방법)이 공유하는 제목 블록 */
+.board-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 24px;
+    max-width: 1180px;
+    margin: 0 auto 56px;
+    padding: 0 24px 24px;
+    border-bottom: 3px solid var(--ink);
 }
-.section-title {
-    font-size: 2rem;
-    font-weight: 700;
+.board-kicker {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brand-1);
+    margin-bottom: 0.5rem;
+}
+.board-title {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.05;
     letter-spacing: -0.02em;
     color: var(--ink);
-    margin: 0 0 0.6rem;
-}
-.section-sub { color: var(--muted); font-size: 1rem; margin: 0; }
-.section-intro { text-align: center; max-width: 560px; margin: 0 auto 3rem; }
-
-.text-gradient {
-    background: var(--brand-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
 }
 
-/* ══════════ 히어로 ══════════ */
-.hero {
+/* ══════════ 오프닝 — 질문형 헤드라인 + 바인더 인덱스 탭 ══════════ */
+.op {
     position: relative;
-    overflow: hidden;
-    background: var(--nav-bg);
-    padding: 96px 24px 64px;
+    background: var(--bg);
+    padding: 72px 24px 96px;
 }
 
-.hero-blob {
+.op-stamp {
     position: absolute;
+    top: 32px;
+    right: 24px;
+    width: 92px;
+    height: 92px;
     border-radius: 50%;
-    filter: blur(70px);
-    opacity: 0.55;
-    pointer-events: none;
-    animation: blob-drift 14s ease-in-out infinite;
-}
-.hero-blob-1 { width: 420px; height: 420px; background: var(--brand-1); top: -160px; left: -100px; }
-.hero-blob-2 { width: 380px; height: 380px; background: var(--brand-2); bottom: -180px; right: -80px; animation-duration: 18s; animation-delay: -4s; }
-.hero-blob-3 { width: 260px; height: 260px; background: var(--accent); top: 40%; left: 50%; animation-duration: 20s; animation-delay: -9s; opacity: 0.35; }
-
-@keyframes blob-drift {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(30px, -24px) scale(1.08); }
-}
-
-.hero-grid-lines {
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    background-size: 42px 42px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 40%, transparent 100%);
-    pointer-events: none;
-}
-
-.hero-inner {
-    position: relative;
-    max-width: 720px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.hero-pop {
-    opacity: 0;
-    animation: hero-pop-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    animation-delay: var(--pop-delay, 0ms);
-}
-@keyframes hero-pop-in {
-    from { opacity: 0; transform: translateY(22px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.hero-title {
-    font-size: 2.7rem;
-    line-height: 1.25;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    margin: 0 0 1.1rem;
-    color: #fff;
-}
-
-.hero-sub {
-    color: rgba(255, 255, 255, 0.78);
-    font-size: 1.08rem;
-    line-height: 1.65;
-    margin: 0 auto 1.8rem;
-    max-width: 480px;
-}
-
-.hero-cta-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 1.6rem; }
-
-.hero-cta-primary,
-.hero-cta-secondary {
-    padding: 0.9rem 1.6rem;
-    border-radius: 10px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-
-/* --brand-fixed(고정 남색) - 흰 배경 위 글자라 다크모드에서 --brand-1이 밝은 하늘색으로
-   뒤집히면 대비가 2.48:1까지 떨어졌었다(theme.css 상단 주석 참고) */
-.hero-cta-primary { background: #fff; color: var(--brand-fixed); }
-.hero-cta-primary:hover { color: var(--brand-fixed-dark); transform: translateY(-2px); box-shadow: 0 0.6rem 1.4rem rgba(0, 0, 0, 0.25); }
-
-.hero-cta-secondary { border: 1.5px solid rgba(255, 255, 255, 0.5); color: #fff; }
-.hero-cta-secondary:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
-
-.hero-badges {
+    border: 3px solid var(--brand-fixed);
+    background: var(--surface);
+    color: var(--brand-fixed);
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 16px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.88rem;
-    font-weight: 600;
+    text-decoration: none;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.hero-badges i { color: #4ade80; margin-right: 5px; }
+.op-stamp:hover { transform: scale(1.06); box-shadow: var(--shadow-card-lg); }
+.op-stamp-label { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.op-stamp-date { font-size: 1.25rem; font-weight: 900; margin-top: 2px; }
 
-@media (prefers-reduced-motion: reduce) {
-    .hero-blob, .hero-pop { animation: none; opacity: 1; }
-}
-
-@media (max-width: 880px) {
-    .hero-title { font-size: 2.2rem; }
-}
-@media (max-width: 560px) {
-    .hero { padding: 80px 20px 56px; }
-}
-
-/* ══════════ 벤토 기능 그리드 ══════════ */
-.bento-section {
+.op-inner {
     max-width: 1180px;
     margin: 0 auto;
-    padding: 88px 24px;
 }
 
-.bento-grid {
+.op-eyebrow {
+    margin: 0 0 1.25rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.op-headline { margin: 0; max-width: 780px; }
+.op-line {
+    display: block;
+    font-size: clamp(2.6rem, 6.5vw, 5rem);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+}
+.op-accent { color: var(--brand-1); }
+
+.op-desc {
+    margin: 1.5rem 0 0;
+    font-size: clamp(1.05rem, 1.8vw, 1.2rem);
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.6;
+}
+
+/* 바인더 인덱스 탭 - 실제 기능으로 바로 넘어가는 링크. 탭이 파일 가장자리에
+   꽂힌 색인처럼 보이도록 아래쪽 굵은 선(폴더 가장자리) 위에 위쪽만 둥근
+   탭 모양으로 얹는다. */
+.op-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 3rem;
+    border-bottom: 3px solid var(--ink);
+}
+.op-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 22px;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--ink);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 14px 14px 0 0;
+    background: var(--brand-gradient-tint-1);
+    transition: transform 0.18s ease;
+}
+.op-tab:nth-child(even) { background: var(--accent-soft); }
+.op-tab i { font-size: 0.95rem; color: var(--brand-1); }
+.op-tab:hover { transform: translateY(-4px); }
+
+@media (max-width: 560px) {
+    .op { padding: 56px 20px 72px; }
+    .op-stamp { width: 76px; height: 76px; top: 20px; right: 16px; }
+    .op-tab { padding: 12px 16px; font-size: 0.9rem; }
+}
+
+/* ══════════ 게시판 (기능 소개) — 회전된 쪽지 카드 ══════════ */
+.board-section {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 100px 24px;
+}
+
+.board {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: minmax(170px, auto);
-    grid-auto-flow: dense;
-    gap: 20px;
+    gap: 28px 24px;
+    align-items: start;
 }
 
-.bento-card {
+.note {
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 1.75rem;
-    border-radius: 1.25rem;
-    background: #fff;
+    gap: 0.6rem;
+    background: var(--surface);
     border: 1px solid var(--border);
+    border-radius: 4px 18px 18px 18px;
+    padding: 1.75rem;
     text-decoration: none;
     color: inherit;
-    overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.bento-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 1.2rem 2.4rem rgba(30, 27, 58, 0.12);
-    border-color: transparent;
+.note:hover { transform: rotate(0deg) translateY(-4px) scale(1.02); box-shadow: var(--shadow-card-lg); z-index: 2; }
+
+.note-lg { grid-column: span 2; padding: 2.25rem; }
+.note-lg h3 { font-size: 1.5rem; }
+
+.note-rot-a { transform: rotate(-1.6deg); }
+.note-rot-b { transform: rotate(1.1deg); margin-top: 18px; }
+.note-rot-c { transform: rotate(-0.8deg); margin-top: -10px; }
+
+.note-tape {
+    position: absolute;
+    top: -14px;
+    left: 28px;
+    width: 64px;
+    height: 26px;
+    border-radius: 3px;
+    transform: rotate(-3deg);
+    opacity: 0.9;
+}
+.note-tape-brand { background: var(--brand-gradient-tint-2); border: 1px solid var(--brand-1); }
+.note-tape-accent { background: var(--accent-soft); border: 1px solid var(--accent); }
+
+.note-icon { font-size: 1.6rem; color: var(--brand-1); }
+.note h3 { margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--ink); }
+.note p { margin: 0; font-size: 0.92rem; color: var(--muted); line-height: 1.5; flex-grow: 1; }
+.note-link { margin-top: 0.3rem; font-weight: 800; font-size: 0.85rem; color: var(--brand-1); }
+
+@media (max-width: 900px) {
+    .board { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .board { grid-template-columns: 1fr; }
+    .note-lg { grid-column: span 1; }
+    .note-rot-a, .note-rot-b, .note-rot-c { transform: none; margin-top: 0; }
+    .note:hover { transform: translateY(-2px); }
 }
 
-.bento-card-lg {
-    grid-column: span 2;
-    grid-row: span 2;
-    /* 원래 여기만 별도 브랜드 틴트 배경을 줘서 "강조 카드"로 두드러지게 하려고 했는데,
-       옅게 하든 진하게 하든 회색/이질적으로 보인다는 지적이 계속돼서 아예 포기 -
-       다른 카드들과 완전히 동일한 배경(흰색/--surface)을 쓰고 아이콘 색으로만
-       구분되게 통일(사용자 요청). */
-    justify-content: flex-end;
-}
-.bento-card-lg h3 { font-size: 1.4rem; }
-.bento-card-lg p { max-width: 320px; }
-
-.bento-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
-    background: var(--brand-fixed);
-    color: #fff;
-}
-/* --accent-fixed - 위와 동일한 이유(다크모드에서 --accent가 밝은 노랑으로 뒤집혀 흰 아이콘
-   대비가 무너짐), theme.css 상단 주석 참고. */
-.bento-icon-sky { background: var(--accent-fixed); }
-.bento-icon-soon { background: var(--brand-gradient-soft); color: var(--brand-1); }
-
-.bento-card h3 { margin: 0; font-size: 1.08rem; font-weight: 700; color: var(--ink); }
-.bento-card p { margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
-
-.bento-link {
-    margin-top: 0.4rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--brand-1);
-}
-.bento-card:hover .bento-link i { transform: translateX(3px); }
-.bento-link i { transition: transform 0.15s ease; }
-
-.bento-card-soon { border: 1.5px dashed var(--border); background: var(--surface-soft); cursor: default; }
-.bento-card-soon:hover { transform: none; box-shadow: none; }
-.bento-badge-soon {
-    align-self: flex-start;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--muted);
-    background: var(--surface-soft);
-    padding: 0.2rem 0.65rem;
-    border-radius: 50px;
-}
-
-@media (max-width: 880px) {
-    .bento-grid { grid-template-columns: repeat(2, 1fr); }
-    .bento-card-lg { grid-column: span 2; grid-row: span 1; }
-}
-@media (max-width: 560px) {
-    .bento-grid { grid-template-columns: 1fr; }
-    .bento-card-lg { grid-column: span 1; }
-}
-
-/* ══════════ 3단계 시작하기 ══════════ */
-.steps-section {
-    background: var(--surface-soft);
-    padding: 88px 24px;
-}
-
-.steps-track {
-    position: relative;
-    max-width: 1000px;
+/* ══════════ 시작 방법 — 진짜 교시표 칸 ══════════ */
+.period-section {
+    max-width: 1180px;
     margin: 0 auto;
+    padding: 100px 24px;
+}
+
+.period-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 32px;
-}
-
-.steps-line {
-    position: absolute;
-    top: 46px;
-    left: 16%;
-    right: 16%;
-    height: 2px;
-    background: repeating-linear-gradient(90deg, var(--border) 0 10px, transparent 10px 18px);
-    z-index: 0;
-}
-
-.step-card {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-    background: #fff;
-    border-radius: 1.1rem;
-    padding: 2rem 1.4rem 1.6rem;
-    box-shadow: 0 0.6rem 1.6rem rgba(30, 27, 58, 0.06);
-}
-
-.step-number {
-    position: absolute;
-    top: -16px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    /* --brand-fixed(고정 남색) - 다크모드에서도 흰 숫자 대비 유지 */
-    background: var(--brand-fixed);
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0.3rem 0.8rem rgba(30, 79, 163, 0.35);
-}
-
-.step-icon {
-    width: 56px;
-    height: 56px;
-    margin: 0.6rem auto 1rem;
-    border-radius: 1rem;
-    background: rgba(30, 79, 163, 0.08);
-    color: var(--brand-1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.35rem;
-}
-
-.step-card h4 { margin: 0 0 0.4rem; font-weight: 700; color: var(--ink); }
-.step-card p { margin: 0; font-size: 0.86rem; color: var(--muted); line-height: 1.5; }
-
-@media (max-width: 768px) {
-    .steps-track { grid-template-columns: 1fr; }
-    .steps-line { display: none; }
-}
-
-/* ══════════ CTA 밴드 ══════════ */
-/* 예전엔 이 섹션 전체가 --brand-fixed 단색 배경이라(흰 글자를 얹는 카드), 페이지의 다른
-   모든 섹션(흰/크림 배경 + 파란색은 아이콘·버튼 같은 포인트로만 사용)과 다르게 하단에
-   "혼자만 파란색 블록"으로 튀어 보였다(작업 지시서 항목) - 다른 섹션과 같은 배경/텍스트
-   색 규칙(var(--surface)/var(--ink)/var(--muted), 다크모드도 자동으로 따라감)으로 맞추고
-   버튼도 사이트 전역 .btn-brand/.btn-outline-brand와 동일한 배색으로 뒤집었다. */
-.cta-band {
-    position: relative;
+    border: 2px solid var(--ink);
+    border-radius: 24px;
     overflow: hidden;
-    background: var(--surface);
-    padding: 80px 24px;
-    text-align: center;
 }
-.cta-blob {
-    position: absolute;
-    width: 480px;
-    height: 480px;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, var(--brand-gradient-tint-2), transparent 70%);
-    pointer-events: none;
-}
-.cta-inner { position: relative; max-width: 620px; margin: 0 auto; }
-.cta-band h2 { color: var(--ink); font-size: 1.8rem; font-weight: 700; margin: 0 0 0.7rem; letter-spacing: -0.02em; }
-.cta-band p { color: var(--muted); margin: 0 0 1.8rem; font-size: 1rem; }
 
-.cta-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
-.cta-btn-primary,
-.cta-btn-secondary {
-    padding: 0.85rem 1.7rem;
-    border-radius: 10px;
-    font-weight: 700;
-    text-decoration: none;
+.period-cell {
+    padding: 2.25rem 2rem;
+    border-left: 2px solid var(--ink);
+}
+.period-cell:first-child { border-left: none; }
+
+.period-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--brand-fixed);
+    background: var(--brand-gradient-tint-2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.period-cell h4 { margin: 0 0 0.5rem; font-size: 1.2rem; font-weight: 800; color: var(--ink); }
+.period-cell p { margin: 0; font-size: 0.92rem; color: var(--muted); line-height: 1.5; }
+
+@media (max-width: 700px) {
+    .period-row { grid-template-columns: 1fr; }
+    .period-cell { border-left: none; border-top: 2px solid var(--ink); }
+    .period-cell:first-child { border-top: none; }
+}
+
+/* ══════════ 스테이트먼트 밴드 — 화이트 ══════════
+   사용자 요청(2026-09-21)으로 반전(짙은 인디고) 배경을 걷어내고 화이트로 변경. 이 밴드는
+   히어로/푸터 같은 "항상 같은 톤" 블록이라 다크모드에서도 값이 안 바뀌는 게 맞으므로(주변
+   var(--bg)/var(--ink)를 안 쓰고) 배경/글자색 전부 고정 리터럴로 유지한다 - 안 그러면
+   다크모드에서 var(--ink)가 밝은 색으로 뒤집히면서 흰 배경 위에서 안 보이게 된다. */
+.statement-band {
+    background: #fff;
+    padding: 110px 24px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+.statement-inner { max-width: 800px; margin: 0 auto; }
+.statement-band h2 {
+    margin: 0 0 1.2rem;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+}
+.statement-band h2 .stmt-line { display: block; }
+.statement-band p {
+    margin: 0 0 2.5rem;
+    max-width: 520px;
+    font-size: 1.1rem;
+    color: rgba(15, 23, 42, 0.65);
+}
+.statement-actions { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.statement-btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    /* --brand-fixed(고정 인디고) - 다크모드에서도 대비 유지, theme.css 상단 주석 참고 */
+    background: var(--brand-fixed);
+    color: #fff;
+    font-weight: 800;
+    padding: 1rem 1.8rem;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: transform 0.15s ease;
 }
-/* --brand-fixed(고정 남색) - .btn-brand와 동일한 배색(theme.css 상단 주석), 다크모드에서도
-   흰 글자 대비 유지 */
-.cta-btn-primary { background: var(--brand-fixed); color: #fff; }
-.cta-btn-primary:hover { filter: brightness(1.06); transform: translateY(-2px); box-shadow: 0 0.6rem 1.4rem rgba(30, 79, 163, 0.3); }
-.cta-btn-secondary { background: var(--surface); border: 1.5px solid var(--brand-1); color: var(--brand-1); }
-.cta-btn-secondary:hover { background: var(--brand-gradient-tint-1); transform: translateY(-2px); }
+.statement-btn:hover { transform: translateY(-2px); }
+.statement-link {
+    color: var(--brand-fixed);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    opacity: 0.85;
+}
+.statement-link:hover { opacity: 1; }
 
 /* ══════════ 푸터 ══════════ */
-.site-footer { background: var(--nav-bg); padding: 48px 24px 20px; }
-.footer-inner {
+.site-footer2 { background: var(--bg); border-top: 1px solid var(--border); padding: 56px 24px 28px; }
+.footer2-inner {
     max-width: 1180px;
     margin: 0 auto;
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
-    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
     padding-bottom: 28px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-.footer-brand { max-width: 340px; }
-.footer-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.1rem; color: #fff; margin-bottom: 0.6rem; }
-.footer-brand p { color: rgba(255, 255, 255, 0.55); font-size: 0.85rem; line-height: 1.6; margin: 0; }
-
-.footer-links { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
-.footer-links a { color: rgba(255, 255, 255, 0.75); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: color 0.15s ease; }
-.footer-links a:hover { color: #fff; }
-
-.footer-bottom { max-width: 1180px; margin: 0 auto; padding-top: 20px; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 0.82rem; }
+.footer2-word {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+}
+.footer2-word img { border-radius: 8px; }
+.footer2-links { display: flex; gap: 24px; flex-wrap: wrap; }
+.footer2-links a { color: var(--muted); font-weight: 600; font-size: 0.92rem; text-decoration: none; }
+.footer2-links a:hover { color: var(--brand-1); }
+.footer2-bottom { max-width: 1180px; margin: 0 auto; color: var(--muted); font-size: 0.8rem; }
 
 /* ══════════ 맨 위로 버튼 ══════════ */
 .back-to-top {
@@ -398,7 +332,7 @@ html { scroll-behavior: smooth; }
     height: 44px;
     border-radius: 50%;
     border: none;
-    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
+    /* --brand-fixed - 다크모드 대비 유지, theme.css 상단 주석 참고 */
     background: var(--brand-fixed);
     color: #fff;
     font-size: 1rem;
@@ -406,7 +340,7 @@ html { scroll-behavior: smooth; }
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 0.6rem 1.4rem rgba(30, 79, 163, 0.35);
+    box-shadow: 0 0.6rem 1.4rem rgba(79, 70, 229, 0.35);
     opacity: 0;
     transform: translateY(12px);
     pointer-events: none;
@@ -415,26 +349,3 @@ html { scroll-behavior: smooth; }
 }
 .back-to-top.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .back-to-top:hover { filter: brightness(1.08); }
-
-/* 다크모드 - hero-cta-primary/cta-btn-primary의 흰 배경 자체는 그대로 둬도 되지만(둘 다
-   여전히 밝은 색 위 어두운 텍스트 조합이 필요), 글자색은 --brand-fixed로 고정해뒀다(위에서
-   수정 - 예전엔 var(--brand-1)이라 다크모드에서 대비가 무너졌었다). 아래는 그 외 콘텐츠
-   카드류. */
-@media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .bento-card,
-    html:not([data-theme="light"]) .step-card {
-        background: var(--surface);
-    }
-    html:not([data-theme="light"]) .bento-card-soon { background: var(--surface-soft); border-color: var(--border); }
-    html:not([data-theme="light"]) .bento-badge-soon { background: var(--surface-soft); }
-    html:not([data-theme="light"]) .steps-section { background: var(--surface-soft); }
-}
-
-/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .bento-card,
-html[data-theme="dark"] .step-card {
-    background: var(--surface);
-}
-html[data-theme="dark"] .bento-card-soon { background: var(--surface-soft); border-color: var(--border); }
-html[data-theme="dark"] .bento-badge-soon { background: var(--surface-soft); }
-html[data-theme="dark"] .steps-section { background: var(--surface-soft); }

@@ -11,170 +11,147 @@
 
 <div th:replace="~{fragments/navbar :: navbar('home')}"></div>
 
-<!-- ══════════ 히어로 ══════════ -->
-<header class="hero">
-    <div class="hero-blob hero-blob-1"></div>
-    <div class="hero-blob hero-blob-2"></div>
-    <div class="hero-blob hero-blob-3"></div>
-    <div class="hero-grid-lines"></div>
+<!-- ══════════ 오프닝 — 질문형 헤드라인 + 바인더 인덱스 탭 ══════════ -->
+<header class="op">
+    <a href="/school/calendar" class="op-stamp" title="오늘 시간표 보러가기">
+        <span class="op-stamp-label">오늘</span>
+        <span class="op-stamp-date" id="opStampDate">-</span>
+    </a>
 
-    <div class="hero-inner">
-        <div class="hero-copy">
-            <h1 class="hero-title hero-pop" style="--pop-delay:0ms">
-                우리 학교 생활의 전부,<br>
-                <span class="text-gradient">웹스쿨</span> 하나로 끝내요
-            </h1>
-            <p class="hero-sub hero-pop" style="--pop-delay:80ms">
-                시간표 · 급식 · 학사일정을 한곳에서 확인하고,<br class="hero-sub-break">
-                같은 학교 친구들과 자유롭게 소통해보세요.
-            </p>
+    <div class="op-inner">
+        <p class="op-eyebrow reveal-on-scroll">WEBSCHOOL &middot; <span id="opToday">오늘</span></p>
 
-            <div class="hero-cta-group hero-pop" style="--pop-delay:160ms">
-                <a href="/school/calendar" class="hero-cta-primary">
-                    캘린더 보러가기 <i class="fa-solid fa-arrow-right"></i>
-                </a>
-                <a href="#features" class="hero-cta-secondary">
-                    <i class="fa-solid fa-play"></i> 기능 둘러보기
-                </a>
-            </div>
+        <h1 class="op-headline">
+            <span class="op-line reveal-on-scroll">우리 학교 생활의 전부,</span>
+            <span class="op-line op-accent reveal-on-scroll" style="--reveal-delay:1">웹스쿨 하나로 끝내요</span>
+        </h1>
 
-            <div class="hero-badges hero-pop" style="--pop-delay:240ms">
-                <span><i class="fa-solid fa-circle-check"></i> 무료로 이용</span>
-                <span><i class="fa-solid fa-circle-check"></i> 학교/학년/반별 맞춤</span>
-                <span><i class="fa-solid fa-circle-check"></i> 실시간 데이터</span>
-            </div>
-        </div>
+        <p class="op-desc reveal-on-scroll" style="--reveal-delay:2">
+            시간표부터 커뮤니티까지, 오늘 하루를 여기 다 적어둘게요.
+        </p>
+
+        <nav class="op-tabs reveal-on-scroll" style="--reveal-delay:3" aria-label="바로가기">
+            <a href="/school/calendar" class="op-tab"><i class="fa-solid fa-calendar-days"></i>캘린더</a>
+            <a href="/posts" class="op-tab"><i class="fa-solid fa-comments"></i>커뮤니티</a>
+            <a href="/mypage/points" class="op-tab"><i class="fa-solid fa-ranking-star"></i>포인트</a>
+            <a href="/mypage" class="op-tab"><i class="fa-solid fa-id-card"></i>마이페이지</a>
+        </nav>
     </div>
 </header>
 
-<!-- ══════════ 벤토 기능 그리드 ══════════ -->
-<section id="features" class="bento-section">
-    <div class="section-intro reveal-on-scroll">
-        <span class="section-kicker">FEATURES</span>
-        <h2 class="section-title">한눈에 보는 웹스쿨</h2>
-        <p class="section-sub">지금 바로 써볼 수 있는 기능들이에요</p>
+<!-- ══════════ 게시판 — 회전된 쪽지 카드 ══════════ -->
+<section id="board" class="board-section">
+    <div class="board-heading">
+        <span class="board-kicker reveal-on-scroll">FEATURES</span>
+        <h2 class="board-title reveal-on-scroll" style="--reveal-delay:1">기능 미리보기</h2>
     </div>
 
-    <div class="bento-grid">
-        <a href="/school/calendar" class="bento-card bento-card-lg bento-tilt reveal-on-scroll">
-            <div class="bento-icon"><i class="fa-solid fa-calendar-days"></i></div>
+    <div class="board">
+        <a href="/school/calendar" class="note note-lg note-rot-a reveal-on-scroll">
+            <span class="note-tape note-tape-brand"></span>
+            <i class="fa-solid fa-calendar-days note-icon"></i>
             <h3>시간표 · 학사일정</h3>
             <p>학년 · 반별로 매일 달라지는 시간표와 학사일정을 NEIS 데이터로 바로 확인하세요.</p>
-            <span class="bento-link">캘린더 열기 <i class="fa-solid fa-arrow-right"></i></span>
+            <span class="note-link">캘린더 열기 →</span>
         </a>
 
-        <a href="/school/calendar" class="bento-card bento-tilt reveal-on-scroll" style="--reveal-delay:1">
-            <div class="bento-icon bento-icon-sky"><i class="fa-solid fa-utensils"></i></div>
+        <a href="/school/calendar" class="note note-rot-b reveal-on-scroll" style="--reveal-delay:1">
+            <span class="note-tape note-tape-accent"></span>
+            <i class="fa-solid fa-utensils note-icon"></i>
             <h3>오늘의 급식</h3>
             <p>매일 바뀌는 급식 메뉴를 한 번에</p>
-            <span class="bento-link">확인하기 <i class="fa-solid fa-arrow-right"></i></span>
+            <span class="note-link">확인하기 →</span>
         </a>
 
-        <a href="/school/calendar" class="bento-card bento-tilt reveal-on-scroll" style="--reveal-delay:2">
-            <div class="bento-icon bento-icon-sky"><i class="fa-solid fa-comment-dots"></i></div>
+        <a href="/school/calendar" class="note note-rot-c reveal-on-scroll" style="--reveal-delay:2">
+            <span class="note-tape note-tape-brand"></span>
+            <i class="fa-solid fa-comment-dots note-icon"></i>
             <h3>오늘의 한마디</h3>
             <p>날짜별로 같은 반 친구들과 짧은 이야기 나누기</p>
-            <span class="bento-link">참여하기 <i class="fa-solid fa-arrow-right"></i></span>
+            <span class="note-link">참여하기 →</span>
         </a>
 
-        <a href="/posts" class="bento-card bento-tilt reveal-on-scroll" style="--reveal-delay:3">
-            <div class="bento-icon"><i class="fa-solid fa-fire"></i></div>
+        <a href="/posts" class="note note-rot-a reveal-on-scroll" style="--reveal-delay:3">
+            <span class="note-tape note-tape-accent"></span>
+            <i class="fa-solid fa-fire note-icon"></i>
             <h3>커뮤니티</h3>
             <p>자유 · 익명 · 질의응답 게시판에서 학교 이야기를 나눠보세요.</p>
-            <span class="bento-link">게시판 보기 <i class="fa-solid fa-arrow-right"></i></span>
+            <span class="note-link">게시판 보기 →</span>
         </a>
 
-        <a href="/mypage" class="bento-card bento-tilt reveal-on-scroll" style="--reveal-delay:4">
-            <div class="bento-icon"><i class="fa-solid fa-id-card"></i></div>
+        <a href="/mypage" class="note note-rot-b reveal-on-scroll" style="--reveal-delay:4">
+            <span class="note-tape note-tape-brand"></span>
+            <i class="fa-solid fa-id-card note-icon"></i>
             <h3>마이페이지</h3>
             <p>내 학교 · 학년 · 반과 프로필을 관리하세요.</p>
-            <span class="bento-link">내 정보 보기 <i class="fa-solid fa-arrow-right"></i></span>
+            <span class="note-link">내 정보 보기 →</span>
         </a>
 
-        <a href="/mypage/points" class="bento-card bento-tilt reveal-on-scroll" style="--reveal-delay:5">
-            <div class="bento-icon"><i class="fa-solid fa-ranking-star"></i></div>
+        <a href="/mypage/points" class="note note-rot-c reveal-on-scroll" style="--reveal-delay:5">
+            <span class="note-tape note-tape-accent"></span>
+            <i class="fa-solid fa-ranking-star note-icon"></i>
             <h3>포인트 / 티어</h3>
-            <p>출석·활동으로 포인트를 쌓아 등급을 올리고 상점에서 칭호·색상을 꾸며보세요.</p>
-            <span class="bento-link">포인트 내역 보기 <i class="fa-solid fa-arrow-right"></i></span>
+            <p>출석 · 활동으로 포인트를 쌓아 등급을 올리고 상점에서 칭호 · 색상을 꾸며보세요.</p>
+            <span class="note-link">포인트 내역 보기 →</span>
         </a>
     </div>
 </section>
 
-<!-- ══════════ 시작 방법 (3단계) ══════════ -->
-<section class="steps-section">
-    <div class="section-intro reveal-on-scroll">
-        <span class="section-kicker">HOW IT WORKS</span>
-        <h2 class="section-title">시작은 3단계면 충분해요</h2>
-        <p class="section-sub">가입 한 번이면, 그 다음부턴 로그인만 하면 됩니다</p>
-    </div>
-
-    <div class="steps-track">
-        <div class="steps-line"></div>
-
-        <div class="step-card reveal-on-scroll">
-            <div class="step-number">1</div>
-            <div class="step-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+<!-- ══════════ 시작 방법 — 진짜 교시표 칸 ══════════ -->
+<section class="period-section">
+    <div class="period-row">
+        <div class="period-cell reveal-on-scroll">
+            <span class="period-tag">1교시</span>
             <h4>우리 학교 검색</h4>
             <p>주소로 동명 학교까지 정확하게 구분해서 찾아요.</p>
         </div>
-
-        <div class="step-card reveal-on-scroll" style="--reveal-delay:1">
-            <div class="step-number">2</div>
-            <div class="step-icon"><i class="fa-solid fa-user-plus"></i></div>
+        <div class="period-cell reveal-on-scroll" style="--reveal-delay:1">
+            <span class="period-tag">2교시</span>
             <h4>회원가입 · 학년/반 설정</h4>
             <p>학교와 학년 · 반을 등록하면 자동으로 맞춰져요.</p>
         </div>
-
-        <div class="step-card reveal-on-scroll" style="--reveal-delay:2">
-            <div class="step-number">3</div>
-            <div class="step-icon"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="period-cell reveal-on-scroll" style="--reveal-delay:2">
+            <span class="period-tag">3교시</span>
             <h4>캘린더 · 커뮤니티 이용</h4>
             <p>시간표 확인부터 친구들과의 소통까지 바로 시작하세요.</p>
         </div>
     </div>
 </section>
 
-<!-- ══════════ CTA 밴드 ══════════ -->
-<section class="cta-band reveal-on-scroll">
-    <div class="cta-blob"></div>
-    <div class="cta-inner">
-        <h2 th:if="${loginUser == null}">지금 바로 웹스쿨을 시작해보세요</h2>
-        <h2 th:if="${loginUser != null}" th:text="${loginUser.nickname + '님, 오늘도 좋은 하루 보내세요'}">환영합니다</h2>
-        <p th:if="${loginUser == null}">가입은 1분이면 충분해요. 우리 학교 친구들이 기다리고 있어요.</p>
+<!-- ══════════ 스테이트먼트 밴드 — 반전 컬러 ══════════ -->
+<section class="statement-band reveal-on-scroll">
+    <div class="statement-inner">
+        <h2 th:if="${loginUser == null}">가입은 1분,<br>학교 생활은 오늘부터.</h2>
+        <h2 th:if="${loginUser != null}">
+            <span class="stmt-line" th:text="${loginUser.nickname + '님,'}">회원님,</span>
+            <span class="stmt-line">오늘도 좋은 하루 보내세요</span>
+        </h2>
+
+        <p th:if="${loginUser == null}">우리 학교 친구들이 먼저 와서 기다리고 있어요.</p>
         <p th:if="${loginUser != null}">오늘 시간표와 학사일정을 확인하고, 커뮤니티에서 이야기를 나눠보세요.</p>
 
-        <div class="cta-buttons">
-            <a th:if="${loginUser == null}" href="/register" class="cta-btn-primary">
-                <i class="fa-solid fa-user-plus"></i> 회원가입하기
-            </a>
-            <a th:if="${loginUser == null}" href="/login" class="cta-btn-secondary">로그인</a>
+        <div class="statement-actions">
+            <a th:if="${loginUser == null}" href="/register" class="statement-btn">회원가입하기 →</a>
+            <a th:if="${loginUser == null}" href="/login" class="statement-link">로그인</a>
 
-            <a th:if="${loginUser != null}" href="/school/calendar" class="cta-btn-primary">
-                <i class="fa-solid fa-calendar-days"></i> 캘린더로 이동
-            </a>
-            <a th:if="${loginUser != null}" href="/posts" class="cta-btn-secondary">커뮤니티 가기</a>
+            <a th:if="${loginUser != null}" href="/school/calendar" class="statement-btn">캘린더로 이동 →</a>
+            <a th:if="${loginUser != null}" href="/posts" class="statement-link">커뮤니티 가기</a>
         </div>
     </div>
 </section>
 
 <!-- ══════════ 푸터 ══════════ -->
-<footer class="site-footer">
-    <div class="footer-inner">
-        <div class="footer-brand">
-            <span class="footer-logo"><img th:src="@{/images/logo.svg}" alt="" width="28" height="28"> WebSchool</span>
-            <p>학교 일정을 확인하고 같은 학교 학생들끼리 소통하는 공간</p>
-        </div>
-
-        <div class="footer-links">
+<footer class="site-footer2">
+    <div class="footer2-inner">
+        <span class="footer2-word"><img th:src="@{/images/logo.svg}" alt="" width="30" height="30">WebSchool</span>
+        <nav class="footer2-links" aria-label="바로가기">
             <a href="/school/calendar">캘린더</a>
             <a href="/posts">커뮤니티</a>
             <a href="/mypage">마이페이지</a>
             <a href="/register">회원가입</a>
-        </div>
+        </nav>
     </div>
-    <div class="footer-bottom">
-        <small>&copy; 2026 WebSchool. All rights reserved. Powered by NEIS Open API.</small>
-    </div>
+    <div class="footer2-bottom">&copy; 2026 WebSchool. All rights reserved. Powered by NEIS Open API.</div>
 </footer>
 
 <button type="button" id="backToTop" class="back-to-top" aria-label="맨 위로">

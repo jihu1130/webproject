@@ -1,85 +1,84 @@
 /*
- * WebSchool 컬러 시스템 — "생활기록부/성적표" 리디자인 (디자인 블루프린트
- * https://claude.ai/code/artifact/7ff275a2-1e10-4ccc-b659-28ec6a39e242 반영)
- * 인디고-스카이 2색 그라데이션을 걷어내고 단일 네이비 브랜드색 + 성적표 도장
- * 배색(정상/대기/위험)으로 교체했다. 기존 변수 이름은 그대로 두고 값만
+ * WebSchool 컬러 시스템 — 2026-09 전면 리디자인 (설계 문서:
+ * docs/color-system.md). 네이비 단색 "성적표 도장" 브랜드에서 인디고 브랜드 +
+ * 틸(청록) 강조 2색 체계로 교체했다. 기존 변수 이름은 전부 그대로 두고 값만
  * 바꿨으므로(그라데이션류는 두 스탑을 같은 값으로 접어서 단색처럼 렌더링됨)
- * 이 파일 하나만 고치면 이 변수를 쓰는 모든 화면에 자동 반영된다.
+ * 이 파일 하나만 고치면 이 변수를 쓰는 모든 화면에 자동 반영된다. 각 토큰의
+ * 라이트/다크 값과 선정 근거(Tailwind 색상표 기준 명도 단계 매핑)는
+ * docs/color-system.md 표 참고 - 값을 다시 바꿀 땐 그 문서도 같이 갱신할 것.
  * 모든 페이지는 이 파일을 가장 먼저 불러온 뒤 각자의 css를 불러와야 한다.
  */
 :root {
-    --brand-1: #1e4fa3;   /* 교표 블루 - 그라데이션 없이 단일색으로만 씀 */
-    --brand-2: #1e4fa3;
-    --brand-1-dark: #163a7a;
-    --brand-2-dark: #163a7a;
+    --brand-1: #4f46e5;   /* indigo-600 - 그라데이션 없이 단일색으로만 씀 */
+    --brand-2: #4f46e5;
+    --brand-1-dark: #4338ca;  /* indigo-700 - hover */
+    --brand-2-dark: #4338ca;
 
-    /* 다크모드 버그 수정 - --brand-1/--brand-gradient(-dark)는 다크모드에서 "짙은 남색 →
-       밝은 하늘색"으로 뒤집힌다(아래 다크모드 블록 주석 참고, 다크 배경 위에 놓일 텍스트/아이콘용
+    /* 다크모드 버그 수정 - --brand-1/--brand-gradient(-dark)는 다크모드에서 "짙은 인디고 →
+       밝은 라벤더"로 뒤집힌다(아래 다크모드 블록 주석 참고, 다크 배경 위에 놓일 텍스트/아이콘용
        대비 보정). 문제는 이 색을 "흰 글자를 얹는 진한 배경"이나 "브랜드 밴드 배경"으로 쓰는
        컴포넌트(.btn-brand, .btn-nav-accent, CTA 밴드 등)가 여러 CSS 파일에 흩어져 있는데,
-       다크모드에서 배경이 밝은 하늘색으로 바뀌어도 글자는 여전히 흰색 그대로라 대비가
-       1.7~2.5:1까지 떨어져 거의 안 보였다(WCAG 최소 4.5:1). 이 토큰은 라이트/다크모드
-       어디서도 절대 안 바뀌는 고정 남색이라, "흰 글자를 얹는 진한 브랜드 배경"에는 --brand-1
-       대신 이걸 쓸 것 - 라이트모드에서는 --brand-1과 값이 같아 기존 화면이 그대로 보이고,
-       다크모드에서는 배경이 밝아지지 않아 흰 글자 대비가 계속 유지된다. */
-    --brand-fixed: #1e4fa3;
-    --brand-fixed-dark: #163a7a;
+       다크모드에서 배경이 밝은 라벤더로 바뀌어도 글자는 여전히 흰색 그대로라 대비가
+       무너진다(WCAG 최소 4.5:1). 이 토큰은 라이트/다크모드 어디서도 절대 안 바뀌는 고정
+       인디고라, "흰 글자를 얹는 진한 브랜드 배경"에는 --brand-1 대신 이걸 쓸 것 -
+       라이트모드에서는 --brand-1과 값이 같아 기존 화면이 그대로 보이고, 다크모드에서는
+       배경이 밝아지지 않아 흰 글자 대비가 계속 유지된다. */
+    --brand-fixed: #4f46e5;
+    --brand-fixed-dark: #4338ca;
     /* --danger도 같은 이유(다크모드에서 밝은 산호색으로 뒤집힘)로 흰 글자를 얹는 알림
-       배지(.site-nav-bell-badge) 배경에 쓰면 대비가 2.42:1까지 떨어졌다 - 고정 버전 추가. */
-    --danger-fixed: #b5342a;
-    /* --accent도 같은 이유(다크모드에서 밝은 노랑 #f0c15e로 뒤집힘)로 흰 글자를 얹는 곳(index.css
+       배지(.site-nav-bell-badge) 배경에 쓰면 대비가 무너진다 - 고정 버전 추가. */
+    --danger-fixed: #b91c1c;
+    /* --accent도 같은 이유(다크모드에서 밝은 민트로 뒤집힘)로 흰 글자를 얹는 곳(index.css
        .bento-icon-sky)에 쓰면 마찬가지로 대비가 무너진다 - 다크모드 대비 전수 감사(2026-09-09)로
        발견, 같은 고정 패턴 추가. */
-    --accent-fixed: #c98a1f;
+    --accent-fixed: #0d9488;
 
     --brand-gradient: var(--brand-1);
     --brand-gradient-dark: var(--brand-1-dark);
-    --brand-gradient-soft: rgba(30, 79, 163, 0.10);
-    --brand-gradient-tint-1: rgba(30, 79, 163, 0.06);
-    --brand-gradient-tint-2: rgba(30, 79, 163, 0.12);
-    --brand-gradient-tint-3: rgba(30, 79, 163, 0.05);
+    --brand-gradient-soft: rgba(79, 70, 229, 0.10);
+    --brand-gradient-tint-1: rgba(79, 70, 229, 0.06);
+    --brand-gradient-tint-2: rgba(79, 70, 229, 0.12);
+    --brand-gradient-tint-3: rgba(79, 70, 229, 0.05);
 
-    --nav-bg: #1b2430;
+    --nav-bg: #171923;
 
-    --ink: #1b2430;
-    --muted: #4b5563;
+    --ink: #0f172a;
+    --muted: #475569;
     --surface: #ffffff;
-    --bg: #f3f4ee;
-    --border: #c3c1b2;
+    --bg: #f4f6f9;
+    --border: #d8dee6;
 
-    /* 삭제/신고 등 위험 액션 전용 톤 - 성적표 도장 팔레트의 "위험" 색 */
-    --danger: #b5342a;
-    --danger-dark: #8f291f;
-    --danger-border: #e0b3ac;
-    --danger-soft: rgba(181, 52, 42, 0.08);
+    /* 삭제/신고 등 위험 액션 전용 톤 - red-700/800(Tailwind) 기준 */
+    --danger: #b91c1c;
+    --danger-dark: #991b1b;
+    --danger-border: #fca5a5;
+    --danger-soft: rgba(185, 28, 28, 0.08);
 
-    /* 성적표 도장 배지 팔레트 - 관리자 신고 상태/감사 로그/계정 상태 등
-       "상태는 반드시 하나의 배지 언어로만 말한다"는 규칙을 위한 공용 토큰.
-       accent는 강조 전용(버튼엔 안 씀), success/warn은 danger와 짝을 이루는
-       나머지 두 상태색. */
-    --accent: #c98a1f;
-    --accent-soft: rgba(201, 138, 31, 0.14);
-    --success: #2f7d4f;
-    --success-soft: rgba(47, 125, 79, 0.12);
-    --warn: #a3620f;
-    --warn-soft: rgba(163, 98, 15, 0.12);
+    /* 상태 배지 팔레트 - 관리자 신고 상태/감사 로그/계정 상태 등 "상태는 반드시 하나의
+       배지 언어로만 말한다"는 규칙을 위한 공용 토큰. accent는 강조 전용(버튼엔 안 씀),
+       success/warn은 danger와 짝을 이루는 나머지 두 상태색. accent를 틸(청록)로 분리해서
+       warn(호박색)과 색상환에서 확실히 구분되게 했다(기존엔 accent/warn이 둘 다 주황
+       계열이라 나란히 두면 구분이 애매했음 - docs/color-system.md 참고). */
+    --accent: #0d9488;
+    --accent-soft: rgba(13, 148, 136, 0.14);
+    --success: #15803d;
+    --success-soft: rgba(21, 128, 61, 0.12);
+    --warn: #b45309;
+    --warn-soft: rgba(180, 83, 9, 0.12);
 
-    /* 카드/입력창의 옅은 종이색 배경 - 흰 배경 위에서만 자연스러운 톤이라 다크모드에서는 아래
+    /* 카드/입력창의 옅은 배경 - 흰 배경 위에서만 자연스러운 톤이라 다크모드에서는 아래
        @media 블록에서 별도로 재정의한다. */
-    --surface-soft: #eceee5;
+    --surface-soft: #f8fafc;
 
-    /* 카드 그림자 - 예전엔 각 CSS 파일(post.css/admin.css/notification.css 9곳)마다
-       "0 14px 44px rgba(30, 27, 58, 0.08/0.10)"를 그대로 복붙해뒀다. 여기 토큰 하나로 모으고,
-       접촉 그림자(1~2px, 선명) + 은은한 확산 그림자(부드러움) 2겹으로 바꿔서 예전의 "붕 뜬"
-       느낌 대신 좀 더 차분하게 자리잡은 느낌을 준다. 색상 자체(짙은 남보라 rgba(30,27,58,*))는
-       브랜드 톤과 어울려서 그대로 유지. */
-    --shadow-card: 0 1px 2px rgba(30, 27, 58, 0.04), 0 8px 24px rgba(30, 27, 58, 0.06);
-    --shadow-card-lg: 0 2px 4px rgba(30, 27, 58, 0.05), 0 16px 40px rgba(30, 27, 58, 0.08);
+    /* 카드 그림자 - 색조를 인디고 계열로 맞춘 것 외 구조는 기존과 동일(접촉 그림자 1~2px +
+       은은한 확산 그림자 2겹). */
+    --shadow-card: 0 1px 2px rgba(30, 27, 75, 0.04), 0 8px 24px rgba(30, 27, 75, 0.06);
+    --shadow-card-lg: 0 2px 4px rgba(30, 27, 75, 0.05), 0 16px 40px rgba(30, 27, 75, 0.08);
 
-    /* 카드 라운드 반경 - 페이지 전반의 "큰 카드"(게시글 상세, 관리자 상세, 폼 카드 등)가
-       16/18/20px로 제각각이던 걸 하나로 통일. 버튼류(Bootstrap)는 bootstrap-theme.css의
-       --bs-border-radius(0.625rem=10px)를 그대로 쓰고, 이 토큰은 카드 전용. */
-    --radius-card: 16px;
+    /* 카드 라운드 반경 - index.html 리디자인에서 먼저 쓴 20~28px 카드 radius 방향을
+       site-wide 기본값에 반영(기존 16px에서 확대). 버튼류(Bootstrap)는
+       bootstrap-theme.css의 --bs-border-radius를 그대로 쓰고, 이 토큰은 카드 전용. */
+    --radius-card: 20px;
 }
 
 /* 다크모드 - 두 경로가 동시에 존재한다:
@@ -96,39 +95,39 @@
    손봐야 함 - 아래 각 CSS 파일의 다크모드 보강 참고, 이 파일과 동일한 이중 가드 패턴을 쓴다). */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-        --ink: #eeece2;
-        --muted: #a9b0bc;
-        --surface: #1b212b;
-        --surface-soft: #232a35;
-        --bg: #14181f;
-        --border: #3a4250;
+        --ink: #eef1f6;
+        --muted: #94a3b8;
+        --surface: #161b26;
+        --surface-soft: #1f2530;
+        --bg: #10141c;
+        --border: #333b49;
 
-        --nav-bg: #0d1520;
+        --nav-bg: #0b0d14;
 
         /* 다크 배경에서 채도를 그대로 두면 너무 가라앉아서 밝혀 대비를 맞춘다 */
-        --brand-1: #7ea6e6;
-        --brand-2: #7ea6e6;
-        --brand-1-dark: #a9c4ee;
-        --brand-2-dark: #a9c4ee;
+        --brand-1: #a5b4fc;
+        --brand-2: #a5b4fc;
+        --brand-1-dark: #c7d2fe;
+        --brand-2-dark: #c7d2fe;
 
         --brand-gradient: var(--brand-1);
         --brand-gradient-dark: var(--brand-1-dark);
-        --brand-gradient-soft: rgba(126, 166, 230, 0.14);
-        --brand-gradient-tint-1: rgba(126, 166, 230, 0.08);
-        --brand-gradient-tint-2: rgba(126, 166, 230, 0.16);
-        --brand-gradient-tint-3: rgba(126, 166, 230, 0.06);
+        --brand-gradient-soft: rgba(165, 180, 252, 0.14);
+        --brand-gradient-tint-1: rgba(165, 180, 252, 0.08);
+        --brand-gradient-tint-2: rgba(165, 180, 252, 0.16);
+        --brand-gradient-tint-3: rgba(165, 180, 252, 0.06);
 
-        --danger: #ef8b80;
-        --danger-dark: #f5b3ab;
-        --danger-border: #6b2b24;
-        --danger-soft: rgba(239, 139, 128, 0.16);
+        --danger: #fca5a5;
+        --danger-dark: #fecaca;
+        --danger-border: #7f1d1d;
+        --danger-soft: rgba(252, 165, 165, 0.16);
 
-        --accent: #f0c15e;
-        --accent-soft: rgba(240, 193, 94, 0.16);
-        --success: #7ecb9a;
-        --success-soft: rgba(126, 203, 154, 0.16);
-        --warn: #eab868;
-        --warn-soft: rgba(234, 184, 104, 0.16);
+        --accent: #5eead4;
+        --accent-soft: rgba(94, 234, 212, 0.16);
+        --success: #86efac;
+        --success-soft: rgba(134, 239, 172, 0.16);
+        --warn: #fcd34d;
+        --warn-soft: rgba(252, 211, 77, 0.16);
     }
 
     html:not([data-theme="light"]) body { background-color: var(--bg); color: var(--ink); }
@@ -156,38 +155,38 @@
 
 /* 위 @media 블록과 동일한 값 - 시스템 설정과 무관하게 사용자가 다크모드를 명시적으로 골랐을 때. */
 :root[data-theme="dark"] {
-    --ink: #eeece2;
-    --muted: #a9b0bc;
-    --surface: #1b212b;
-    --surface-soft: #232a35;
-    --bg: #14181f;
-    --border: #3a4250;
+    --ink: #eef1f6;
+    --muted: #94a3b8;
+    --surface: #161b26;
+    --surface-soft: #1f2530;
+    --bg: #10141c;
+    --border: #333b49;
 
-    --nav-bg: #0d1520;
+    --nav-bg: #0b0d14;
 
-    --brand-1: #7ea6e6;
-    --brand-2: #7ea6e6;
-    --brand-1-dark: #a9c4ee;
-    --brand-2-dark: #a9c4ee;
+    --brand-1: #a5b4fc;
+    --brand-2: #a5b4fc;
+    --brand-1-dark: #c7d2fe;
+    --brand-2-dark: #c7d2fe;
 
     --brand-gradient: var(--brand-1);
     --brand-gradient-dark: var(--brand-1-dark);
-    --brand-gradient-soft: rgba(126, 166, 230, 0.14);
-    --brand-gradient-tint-1: rgba(126, 166, 230, 0.08);
-    --brand-gradient-tint-2: rgba(126, 166, 230, 0.16);
-    --brand-gradient-tint-3: rgba(126, 166, 230, 0.06);
+    --brand-gradient-soft: rgba(165, 180, 252, 0.14);
+    --brand-gradient-tint-1: rgba(165, 180, 252, 0.08);
+    --brand-gradient-tint-2: rgba(165, 180, 252, 0.16);
+    --brand-gradient-tint-3: rgba(165, 180, 252, 0.06);
 
-    --danger: #ef8b80;
-    --danger-dark: #f5b3ab;
-    --danger-border: #6b2b24;
-    --danger-soft: rgba(239, 139, 128, 0.16);
+    --danger: #fca5a5;
+    --danger-dark: #fecaca;
+    --danger-border: #7f1d1d;
+    --danger-soft: rgba(252, 165, 165, 0.16);
 
-    --accent: #f0c15e;
-    --accent-soft: rgba(240, 193, 94, 0.16);
-    --success: #7ecb9a;
-    --success-soft: rgba(126, 203, 154, 0.16);
-    --warn: #eab868;
-    --warn-soft: rgba(234, 184, 104, 0.16);
+    --accent: #5eead4;
+    --accent-soft: rgba(94, 234, 212, 0.16);
+    --success: #86efac;
+    --success-soft: rgba(134, 239, 172, 0.16);
+    --warn: #fcd34d;
+    --warn-soft: rgba(252, 211, 77, 0.16);
 }
 
 html[data-theme="dark"] body { background-color: var(--bg); color: var(--ink); }

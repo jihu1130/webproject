@@ -22,13 +22,13 @@
 :root {
     /* ── 1) 루트 팔레트 — 유틸리티 클래스(.text-primary 등)가 자동으로 따라감 ── */
     --bs-primary: var(--brand-fixed);
-    --bs-primary-rgb: 30, 79, 163;
+    --bs-primary-rgb: 79, 70, 229;
     --bs-danger: var(--danger-fixed);
-    --bs-danger-rgb: 181, 52, 42;
+    --bs-danger-rgb: 185, 28, 28;
     --bs-success: var(--success);
-    --bs-success-rgb: 47, 125, 79;
+    --bs-success-rgb: 21, 128, 61;
     --bs-warning: var(--warn);
-    --bs-warning-rgb: 163, 98, 15;
+    --bs-warning-rgb: 180, 83, 9;
 
     /* alert/badge의 "subtle" 배경·테두리·강조 텍스트 색 — theme.css가 이미
        설계해둔 톤(danger-soft/danger-border/danger-dark 등)을 그대로 재사용.
@@ -48,9 +48,9 @@
     --bs-body-bg: var(--bg);
     --bs-body-color: var(--ink);
     --bs-link-color: var(--brand-1);
-    --bs-link-color-rgb: 30, 79, 163;
+    --bs-link-color-rgb: 79, 70, 229;
     --bs-link-hover-color: var(--brand-1-dark);
-    --bs-link-hover-color-rgb: 22, 58, 122;
+    --bs-link-hover-color-rgb: 67, 56, 202;
 
     --bs-border-color: var(--border);
     --bs-border-radius: 0.625rem;   /* 10px, 기존 8/9/10px 혼재를 하나로 통일 */
@@ -62,7 +62,7 @@
 
 /* ── 2) 컴포넌트 로컬 변수 — 위 루트 재정의가 안 먹는 곳만 직접 지정 ── */
 
-/* 주요 액션 버튼: btn-brand와 동일하게 "다크모드에서도 안 바뀌는 고정 남색"
+/* 주요 액션 버튼: btn-brand와 동일하게 "다크모드에서도 안 바뀌는 고정 인디고"
    배경 + 흰 글자를 쓴다(--brand-fixed, theme.css 상단 주석 참고). */
 .btn-primary {
     --bs-btn-color: #fff;
@@ -76,7 +76,7 @@
     --bs-btn-active-border-color: var(--brand-fixed-dark);
     --bs-btn-disabled-bg: var(--brand-fixed);
     --bs-btn-disabled-border-color: var(--brand-fixed);
-    --bs-btn-focus-shadow-rgb: 30, 79, 163;
+    --bs-btn-focus-shadow-rgb: 79, 70, 229;
 }
 
 .btn-outline-primary {
@@ -90,7 +90,7 @@
     --bs-btn-active-border-color: var(--brand-1);
     --bs-btn-disabled-color: var(--brand-1);
     --bs-btn-disabled-border-color: var(--brand-1);
-    --bs-btn-focus-shadow-rgb: 30, 79, 163;
+    --bs-btn-focus-shadow-rgb: 79, 70, 229;
 }
 
 .btn-danger {
@@ -105,7 +105,7 @@
     --bs-btn-active-border-color: var(--danger-dark);
     --bs-btn-disabled-bg: var(--danger-fixed);
     --bs-btn-disabled-border-color: var(--danger-fixed);
-    --bs-btn-focus-shadow-rgb: 181, 52, 42;
+    --bs-btn-focus-shadow-rgb: 185, 28, 28;
 }
 
 .btn-outline-danger {
@@ -119,7 +119,7 @@
     --bs-btn-active-border-color: var(--danger);
     --bs-btn-disabled-color: var(--danger);
     --bs-btn-disabled-border-color: var(--danger-border);
-    --bs-btn-focus-shadow-rgb: 181, 52, 42;
+    --bs-btn-focus-shadow-rgb: 185, 28, 28;
 }
 
 /* 폼 포커스 링/체크박스 — 기본 Bootstrap 파란색을 브랜드 색으로 */
