@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${summary.nickname} + ' 출석 현황 - 관리자 - WebSchool'">출석 현황 - 관리자 - WebSchool</title>
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
+
+<div class="admin-page">
+    <div class="admin-container admin-container-narrow">
+        <div class="page-heading admin-page-heading">
+            <a href="/admin/attendance" class="admin-table-title"><i class="fa-solid fa-arrow-left"></i> 출석 관리로</a>
+            <h1><i class="fa-solid fa-calendar-check"></i>
+                <span th:text="${summary.nickname}">닉네임</span>님의 출석 현황
+            </h1>
+            <p class="page-sub" th:text="'아이디: ' + ${summary.username}">아이디</p>
+        </div>
+
+        <div class="dash-kpis" style="margin-bottom: 20px;">
+            <div class="dash-kpi">
+                <div class="dash-kpi-label"><i class="fa-solid fa-calendar-days"></i> 총 출석일수</div>
+                <div class="dash-kpi-value" th:text="${summary.totalCheckIns}">0</div>
+            </div>
+            <div class="dash-kpi">
+                <div class="dash-kpi-label"><i class="fa-solid fa-fire"></i> 현재 스트릭</div>
+                <div class="dash-kpi-value" th:text="${summary.currentStreakDay} + '일'">0일</div>
+            </div>
+            <div class="dash-kpi">
+                <div class="dash-kpi-label"><i class="fa-solid fa-clock"></i> 최근 출석일</div>
+                <div class="dash-kpi-value" style="font-size: 1.1rem;"
+                     th:text="${summary.lastCheckInDate != null ? summary.lastCheckInDate : '없음'}">-</div>
+            </div>
+        </div>
+
+        <div class="admin-table-wrap" style="padding: 20px;">
+            <div class="list-toolbar">
+                <a th:href="@{'/admin/attendance/' + ${summary.userId}(year=${month == 1 ? year - 1 : year}, month=${month == 1 ? 12 : month - 1})}"
+                   class="btn btn-outline-primary"><i class="fa-solid fa-chevron-left"></i> 이전 달</a>
+                <strong th:text="${year} + '년 ' + ${month} + '월'">2026년 9월</strong>
+                <a th:href="@{'/admin/attendance/' + ${summary.userId}(year=${month == 12 ? year + 1 : year}, month=${month == 12 ? 1 : month + 1})}"
+                   class="btn btn-outline-primary">다음 달 <i class="fa-solid fa-chevron-right"></i></a>
+            </div>
+
+            <div class="admin-empty" th:if="${#lists.isEmpty(attendedDates)}">이 달엔 출석 기록이 없어요.</div>
+
+            <div th:unless="${#lists.isEmpty(attendedDates)}" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <span class="admin-status-badge admin-status-cleared" th:each="date : ${attendedDates}"
+                      th:text="${date}">2026-09-01</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>

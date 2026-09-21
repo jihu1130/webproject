@@ -14,6 +14,7 @@ import com.webschool.webschool.user.admin.dto.AdminUserProfilePostDto;
 import com.webschool.webschool.user.admin.dto.AdminUserSummaryDto;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
+import com.webschool.webschool.user.service.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,7 @@ public class AdminUserService {
     private final NotificationService notificationService;
     private final UserPenaltyService userPenaltyService;
     private final AdminActionLogService adminActionLogService;
+    private final UserPointService userPointService;
 
     // keyword: 아이디/닉네임/학교명 검색 - 다른 관리자 목록(AdminPostService 등)과 동일하게 DB 쿼리가
     // 아니라 메모리에서 필터링한다(계정 수가 적을 걸 가정). **버그 수정**: user-list.html엔 검색창이
@@ -114,7 +116,34 @@ public class AdminUserService {
                 .equippedTitle(user.getEquippedTitle())
                 .equippedAvatarColor(user.getEquippedAvatarColor())
                 .equippedEffect(user.getEquippedEffect())
+                .currentPoints(user.getPoints())
+                .tierLabel(user.getTier().getLabel())
+                .recentPointLogs(userPointService.getHistory(id, 0, 5).getContent())
                 .build();
+    }
+
+    // 포인트 지급/차감(관리자 페이지 재구성, 2026-09-21 추가) - AdminAccessInterceptor가
+    // canManageUsers + canManagePoints 둘 다 요구하는 민감한 액션. amount는 부호 있는 값
+    // (양수=지급, 음수=차감) - UserPointService.adjustByAdmin()이 실제 반영/로그 기록을 맡는다.
+    @Transactional
+    public void adjustPoints(Long id, int amount, String reason, String actingAdminUsername) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        // 본인 스스로에게 포인트를 지급하는 건 다른 self-action 금지(승격/탈퇴/정지 등)와 같은
+        // 이유로 막는다 - 안 막으면 canManagePoints 권한이 있는 관리자가 자기 자신에게 무제한
+        // 포인트를 줄 수 있게 된다.
+        if (user.getUsername().equals(actingAdminUsername)) {
+            throw new IllegalArgumentException("본인의 포인트는 스스로 조정할 수 없습니다.");
+        }
+        if (amount == 0) {
+            throw new IllegalArgumentException("0은 지급/차감할 수 없습니다.");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("사유를 입력해주세요.");
+        }
+        userPointService.adjustByAdmin(user, amount, reason.trim());
+        adminActionLogService.log("USER", id, "POINT_ADJUST",
+                user.getUsername() + " " + (amount > 0 ? "+" : "") + amount + "P (" + reason.trim() + ")");
     }
 
     @Transactional
@@ -174,7 +203,8 @@ public class AdminUserService {
                                    boolean canManageReports, boolean canManagePosts,
                                    boolean canManageScheduleComments, boolean canManageNotices,
                                    boolean canManageUsers, boolean canManageAdminPermissions,
-                                   boolean canViewAuditLog, boolean canManageShop, boolean canManagePolls) {
+                                   boolean canViewAuditLog, boolean canManageShop, boolean canManagePolls,
+                                   boolean canManageAttendance, boolean canManagePoints) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -195,11 +225,14 @@ public class AdminUserService {
         user.setCanViewAuditLog(canViewAuditLog);
         user.setCanManageShop(canManageShop);
         user.setCanManagePolls(canManagePolls);
+        user.setCanManageAttendance(canManageAttendance);
+        user.setCanManagePoints(canManagePoints);
         adminActionLogService.log("USER", id, "PERMISSIONS", user.getUsername()
                 + " (신고:" + canManageReports + " 게시글:" + canManagePosts
                 + " 한마디:" + canManageScheduleComments + " 공지:" + canManageNotices
                 + " 계정관리:" + canManageUsers + " 권한부여:" + canManageAdminPermissions
-                + " 감사로그:" + canViewAuditLog + " 상점:" + canManageShop + " 설문:" + canManagePolls + ")");
+                + " 감사로그:" + canViewAuditLog + " 상점:" + canManageShop + " 설문:" + canManagePolls
+                + " 출석:" + canManageAttendance + " 포인트:" + canManagePoints + ")");
     }
 
     // 수정사항.md #13 지적 - 총관리자가 잠기면(비밀번호 분실 등) 복구할 방법이 앱 안에 전혀 없었다.

@@ -142,6 +142,16 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean canManagePolls;
 
+    // 출석 관리 화면(관리자 페이지 재구성, 2026-09-21) 열람 권한 - 다른 canManage*와 동일한
+    // 위임 패턴.
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canManageAttendance;
+
+    // 포인트 관리 화면(전체 포인트 로그 열람 + 특정 사용자 포인트 수동 지급/차감) 권한 - 실제
+    // 포인트 잔액을 바꿀 수 있는 민감한 권한이라 계정 관리(canManageUsers)와 별개로 분리한다.
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canManagePoints;
+
     // 댓글/좋아요/답글 알림 개별 on-off(todo.md "고도화 후보" 항목) - 이 셋은 기존에 이미 항상
     // 켜져 있던 알림을 사용자가 끌 수 있게 여는 것이라 기본값을 true로 둔다(옵트아웃 - active
     // 필드와 동일한 이유로 Java 필드 초기값을 직접 줘야 신규
@@ -245,7 +255,7 @@ public class User {
         return isSuperAdmin()
                 || canManageReports || canManagePosts || canManageScheduleComments || canManageNotices
                 || canManageUsers || canManageAdminPermissions || canViewAuditLog || canManageShop
-                || canManagePolls;
+                || canManagePolls || canManageAttendance || canManagePoints;
     }
 
     public enum Role {

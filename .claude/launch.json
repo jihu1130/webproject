@@ -1,0 +1,10 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "webschool",
+      "url": "http://localhost:8888",
+      "port": 8888
+    }
+  ]
+}

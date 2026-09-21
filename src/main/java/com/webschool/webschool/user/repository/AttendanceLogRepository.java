@@ -8,9 +8,15 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Long> {
     boolean existsByUserIdAndAttendanceDate(Long userId, LocalDate attendanceDate);
+
+    // 출석 관리(관리자 페이지 재구성, 2026-09-21 추가) - 사용자별 총 출석일수/최근 출석일 조회용.
+    long countByUserId(Long userId);
+
+    Optional<AttendanceLog> findTopByUserIdOrderByAttendanceDateDesc(Long userId);
 
     // 연속 출석 스트릭 계산(AttendanceService) + 마이페이지 미니 캘린더 팝업 조회용 - 범위 안의
     // 출석 기록을 전부 가져와 서비스 단에서 날짜 Set으로 바꿔 처리한다(이 프로젝트에 날짜범위

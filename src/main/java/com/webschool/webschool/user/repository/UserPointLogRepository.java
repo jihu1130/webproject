@@ -17,6 +17,11 @@ public interface UserPointLogRepository extends JpaRepository<UserPointLog, Long
     // 포인트 내역 화면(todo.md 요구사항) - 최신순.
     List<UserPointLog> findByUser_IdOrderByCreatedAtDesc(Long userId);
 
+    // 포인트 관리(관리자 페이지 재구성, 2026-09-21 추가) - 사이트 전체 포인트 로그 감사 화면용.
+    // AdminActionLogRepository.findAllByOrderByCreatedAtDesc()와 동일한 관례(전체를 메모리에서
+    // 필터링/페이지네이션, PageUtils 참고).
+    List<UserPointLog> findAllByOrderByCreatedAtDesc();
+
     // 탈퇴 계정 하드 삭제(AccountHardDeleteService) - 포인트 내역은 개인 활동 흔적이라 함께 지운다.
     @Modifying
     @Query("DELETE FROM UserPointLog l WHERE l.user.id = :userId")

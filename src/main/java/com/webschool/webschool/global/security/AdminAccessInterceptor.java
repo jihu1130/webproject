@@ -36,6 +36,12 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
     private static final Pattern ADMIN_PERMISSION_ACTION_PATH =
             Pattern.compile("^/admin/users/\\d+/(promote|demote|permissions|promote-super)$");
 
+    // 계정 관리(canManageUsers) 권한이 있다고 해서 다른 사용자의 포인트 잔액을 바꿀 수 있게 하면
+    // 안 된다고 판단 - 포인트 지급/차감은 canManagePoints로 별도 게이팅한다(위 promote/demote 등이
+    // canManageAdminPermissions로 갈라지는 것과 같은 이유).
+    private static final Pattern POINT_ADJUST_ACTION_PATH =
+            Pattern.compile("^/admin/users/\\d+/points/adjust$");
+
     private final UserRepository userRepository;
 
     @Override
@@ -55,6 +61,16 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         if (uri.equals("/admin/users/admins") || ADMIN_PERMISSION_ACTION_PATH.matcher(uri).matches()) {
             if (!user.isCanManageAdminPermissions()) {
                 throw new AccessDeniedException("관리자 권한 부여 권한이 없습니다.");
+            }
+            return true;
+        }
+        if (POINT_ADJUST_ACTION_PATH.matcher(uri).matches()) {
+            // 이 액션은 계정 상세(canManageUsers로 게이팅된 /admin/users/{id}/profile) 화면 안의
+            // 폼이라 그 접근 권한은 그대로 요구하고, "실제 잔액을 바꾸는" 민감함 때문에 canManagePoints도
+            // 추가로 요구한다(둘 다 있어야 통과) - canManagePoints 하나만으로 이 경로에 들어와도
+            // 프로필 화면 자체(GET)는 여전히 canManageUsers 없이는 못 보므로 형식적 우회는 안 된다.
+            if (!user.isCanManageUsers() || !user.isCanManagePoints()) {
+                throw new AccessDeniedException("포인트 지급/차감 권한이 없습니다.");
             }
             return true;
         }
@@ -105,7 +121,11 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/admin/reports") && !user.isCanManageReports()) {
             throw new AccessDeniedException("신고 관리 권한이 없습니다.");
         }
-        if ((uri.startsWith("/admin/posts") || uri.startsWith("/admin/comments")) && !user.isCanManagePosts()) {
+        // 추천 게시글 관리(/admin/post-recommend, 관리자 페이지 재구성 2026-09-21 추가) - 게시글
+        // 관리 화면의 3번째 서브탭이라 별도 권한 플래그 없이 게시글 관리(canManagePosts)와 같은
+        // 조건으로 묶는다(댓글 관리가 그런 것과 동일한 판단).
+        if ((uri.startsWith("/admin/posts") || uri.startsWith("/admin/comments")
+                || uri.startsWith("/admin/post-recommend")) && !user.isCanManagePosts()) {
             throw new AccessDeniedException("게시글 관리 권한이 없습니다.");
         }
         if (uri.startsWith("/admin/schedule-comments") && !user.isCanManageScheduleComments()) {
@@ -119,6 +139,16 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         }
         if (uri.startsWith("/admin/polls") && !user.isCanManagePolls()) {
             throw new AccessDeniedException("설문 관리 권한이 없습니다.");
+        }
+        // 출석 관리(/admin/attendance, 관리자 페이지 재구성 2026-09-21 추가) - 신규 위임 권한.
+        if (uri.startsWith("/admin/attendance") && !user.isCanManageAttendance()) {
+            throw new AccessDeniedException("출석 관리 권한이 없습니다.");
+        }
+        // 포인트 관리(/admin/points, 사이트 전체 포인트 로그 열람) - 신규 위임 권한. 특정 사용자
+        // 포인트 지급/차감 액션(/admin/users/{id}/points/adjust)은 위에서 canManageUsers와 함께
+        // 별도로 더 엄격하게 게이팅된다.
+        if (uri.startsWith("/admin/points") && !user.isCanManagePoints()) {
+            throw new AccessDeniedException("포인트 관리 권한이 없습니다.");
         }
         return true;
     }

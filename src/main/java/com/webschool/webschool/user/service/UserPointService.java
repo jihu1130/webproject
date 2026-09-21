@@ -104,10 +104,10 @@ public class UserPointService {
         userPointLogRepository.save(log);
     }
 
-    // 포인트 소비(todo.md 요구사항, 상점 기능용) - 칭호/아바타 색상 등 실제 판매 아이템 카탈로그와
-    // 구매 화면은 아직 없고(스캐폴딩만 마련된 상태, ShopItem 참고), 이 메서드가 그 상점이 포인트를
-    // 실제로 차감할 때 쓸 진입점이다. deductForPenalty()와 달리 사용자가 스스로 하는 소비라 잔액이
-    // 부족하면 조용히 잘라주지 않고 예외로 실패시킨다.
+    // 포인트 소비(todo.md 요구사항, 상점 기능용) - ShopService.purchase()가 실제로 포인트를 차감할
+    // 때 쓰는 진입점이다(칭호/아바타 색상 카탈로그+구매 화면은 이미 완성돼 있음, ShopController
+    // 참고). deductForPenalty()와 달리 사용자가 스스로 하는 소비라 잔액이 부족하면 조용히
+    // 잘라주지 않고 예외로 실패시킨다.
     @Transactional
     public void spend(User user, int points, String reason) {
         if (points > user.getPoints()) {
@@ -119,6 +119,28 @@ public class UserPointService {
         log.setUser(user);
         log.setPoints(-points);
         log.setReason(reason);
+        userPointLogRepository.save(log);
+    }
+
+    // 관리자 수동 포인트 지급/차감(관리자 페이지 재구성, 2026-09-21 추가) - 지금까지 관리자가
+    // 특정 사용자의 포인트를 바꿀 방법이 제재로 인한 고정 차감(deductForPenalty)뿐이었다. 이벤트
+    // 보상/오적립 정정처럼 임의 금액(양수/음수 둘 다)을 조정해야 하는 경우를 위한 범용 진입점 -
+    // awardBonus()처럼 일일 획득 한도(DAILY_CAP)를 건너뛴다(관리자가 의도적으로 조정하는 것이라
+    // 사용자 활동 한도와 무관해야 함). 잔액이 조정량보다 적어도 음수로 내려가게 두지 않고
+    // 0에서 멈춘다(사용자가 스스로 소비하는 spend()와 달리 관리자 조작을 실패시킬 이유가 없음).
+    // 로그 사유에 "관리자 조정: " 접두어를 고정으로 붙여 일반 적립/소비 로그와 한눈에 구분되게 한다.
+    @Transactional
+    public void adjustByAdmin(User user, int signedAmount, String reason) {
+        int actual = signedAmount < 0 ? -Math.min(-signedAmount, user.getPoints()) : signedAmount;
+        if (actual == 0) {
+            return;
+        }
+        userRepository.addPoints(user.getId(), actual);
+
+        UserPointLog log = new UserPointLog();
+        log.setUser(user);
+        log.setPoints(actual);
+        log.setReason("관리자 조정: " + reason);
         userPointLogRepository.save(log);
     }
 

@@ -17,7 +17,7 @@
     <div class="admin-container">
         <div class="page-heading admin-page-heading">
             <h1><i class="fa-solid fa-user-shield"></i> 관리자 권한 관리</h1>
-            <p class="page-sub">부관리자마다 신고 / 게시글 / 한마디 / 공지사항 / 계정 관리 / 관리자 권한 부여 / 감사 로그 열람 권한을 개별로 켜고 끌 수 있어요. "관리자 권한 부여"는 다른 계정의 권한 자체를 바꿀 수 있는 민감한 권한이라, 본인 스스로에게는 어떤 권한도 변경할 수 없어요.</p>
+            <p class="page-sub">부관리자마다 신고 / 게시글 / 한마디 / 공지사항 / 계정 관리 / 관리자 권한 부여 / 감사 로그 열람 / 상점 / 설문 / 출석 / 포인트 관리 권한을 개별로 켜고 끌 수 있어요. "관리자 권한 부여"는 다른 계정의 권한 자체를 바꿀 수 있는 민감한 권한이라, 본인 스스로에게는 어떤 권한도 변경할 수 없어요.</p>
         </div>
 
         <div th:replace="~{admin/fragments/nav :: tabs('admins')}"></div>
@@ -30,7 +30,7 @@
                     <!-- 수정사항.md 지적 - 권한을 전부 꺼둔 부관리자도 목록에서 다른 부관리자와 구분이
                          안 갔다. 7개 canManage* 전부 false면 "권한 없음" 배지를 따로 표시한다. -->
                     <span class="admin-status-badge admin-status-blind"
-                          th:if="${admin.role == 'ROLE_ADMIN' and !admin.canManageReports and !admin.canManagePosts and !admin.canManageScheduleComments and !admin.canManageNotices and !admin.canManageUsers and !admin.canManageAdminPermissions and !admin.canViewAuditLog and !admin.canManageShop and !admin.canManagePolls}">권한 없음</span>
+                          th:if="${admin.role == 'ROLE_ADMIN' and !admin.canManageReports and !admin.canManagePosts and !admin.canManageScheduleComments and !admin.canManageNotices and !admin.canManageUsers and !admin.canManageAdminPermissions and !admin.canViewAuditLog and !admin.canManageShop and !admin.canManagePolls and !admin.canManageAttendance and !admin.canManagePoints}">권한 없음</span>
                     <span class="admin-permission-row-name" th:text="${admin.nickname} + ' (' + ${admin.username} + ')'">닉네임 (아이디)</span>
                     <span th:if="${admin.role == 'ROLE_ADMIN' and loginUser != null and loginUser.username == admin.username}"
                           class="admin-user-self-label">(본인 계정 - 권한 변경 불가)</span>
@@ -92,6 +92,14 @@
                     <label class="admin-permission-toggle">
                         <input type="checkbox" name="canManagePolls" value="true" th:checked="${admin.canManagePolls}">
                         <span>설문 관리</span>
+                    </label>
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canManageAttendance" value="true" th:checked="${admin.canManageAttendance}">
+                        <span>출석 관리</span>
+                    </label>
+                    <label class="admin-permission-toggle">
+                        <input type="checkbox" name="canManagePoints" value="true" th:checked="${admin.canManagePoints}">
+                        <span>포인트 관리</span>
                     </label>
                 </form>
 

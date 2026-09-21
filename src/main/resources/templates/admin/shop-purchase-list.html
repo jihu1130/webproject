@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 상점 구매 내역 - WebSchool</title>
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-store"></i> 상점 관리</h1>
+            <p class="page-sub">누가 어떤 상품을 언제 구매했는지 확인해요 (조회 전용)</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('shop-items')}"></div>
+
+        <div class="post-category-tabs admin-content-subtabs">
+            <a href="/admin/shop-items" class="post-category-tab">
+                <i class="fa-solid fa-store"></i> 카탈로그
+            </a>
+            <a href="/admin/shop-items/purchases" class="post-category-tab active">
+                <i class="fa-solid fa-receipt"></i> 구매 내역
+            </a>
+        </div>
+
+        <div class="list-toolbar">
+            <form th:action="@{/admin/shop-items/purchases}" method="get" class="admin-search-form">
+                <input type="text" name="keyword" placeholder="구매자 아이디/닉네임/상품명 검색" th:value="${keyword}">
+                <button type="submit" aria-label="검색"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+
+        <div class="admin-empty" th:if="${#lists.isEmpty(purchases)}">조건에 맞는 구매 내역이 없어요.</div>
+
+        <div class="admin-table-wrap" th:unless="${#lists.isEmpty(purchases)}">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>구매자</th>
+                    <th>종류</th>
+                    <th>상품명</th>
+                    <th>가격</th>
+                    <th>구매일시</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="purchase : ${purchases}">
+                    <td th:text="${purchase.buyerNickname} + ' (' + ${purchase.buyerUsername} + ')'">닉네임 (아이디)</td>
+                    <td th:text="${purchase.itemType == 'TITLE'} ? '칭호' : '아바타 색상'">종류</td>
+                    <td th:text="${purchase.itemLabel}">상품명</td>
+                    <td th:text="${purchase.price > 0} ? (${purchase.price} + 'P') : '무료'">가격</td>
+                    <td th:text="${#temporals.format(purchase.purchasedAt, 'yyyy-MM-dd HH:mm')}">2026-09-21 12:00</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>

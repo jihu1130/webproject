@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 추천 게시글 일별 1위 이력 - WebSchool</title>
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-clock-rotate-left"></i> 추천 게시글 일별 1위 이력</h1>
+            <p class="page-sub">매일 자정 마감된 추천 게시글 1위 결과예요</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('posts')}"></div>
+        <div th:replace="~{admin/fragments/nav :: contentSubTabs('post-recommend')}"></div>
+
+        <a href="/admin/post-recommend" class="btn btn-outline-primary" style="margin-bottom: 16px; display: inline-flex;">
+            <i class="fa-solid fa-arrow-left"></i> 랭킹으로
+        </a>
+
+        <div class="admin-empty" th:if="${results.empty}">아직 마감된 날짜가 없어요.</div>
+
+        <div class="contest-entry-list">
+            <div class="contest-entry" th:each="result : ${results}">
+                <span class="contest-history-date" th:text="${result.resultDate}">2026-01-01</span>
+                <div class="contest-entry-body">
+                    <a th:href="@{'/posts/' + ${result.postUuid}}" class="contest-entry-title" th:text="${result.postTitle}">제목</a>
+                    <span class="contest-entry-author" th:text="${result.authorNickname}">작성자</span>
+                </div>
+                <span class="contest-entry-votes" th:text="${result.recommendCount} + '표'">0표</span>
+                <span class="contest-entry-prize" th:text="'+' + ${result.prizePoints} + 'P'">+0P</span>
+            </div>
+        </div>
+
+        <div class="post-pagination" th:if="${results.totalPages > 1}">
+            <a th:if="${results.hasPrevious()}" th:href="@{/admin/post-recommend/history(page=${results.number - 1})}" class="post-page-link" aria-label="이전 페이지">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, results.totalPages - 1)}"
+               th:href="@{/admin/post-recommend/history(page=${i})}" th:text="${i + 1}"
+               th:classappend="${i == results.number} ? ' active' : ''"
+               class="post-page-link"></a>
+            <a th:if="${results.hasNext()}" th:href="@{/admin/post-recommend/history(page=${results.number + 1})}" class="post-page-link" aria-label="다음 페이지">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>

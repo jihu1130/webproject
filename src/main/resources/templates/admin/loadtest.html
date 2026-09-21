@@ -18,9 +18,11 @@
             <h1><i class="fa-solid fa-gauge-high"></i> 부하테스트 결과</h1>
             <p class="page-sub">
                 <code>k6 run --summary-export=loadtest/results/파일명.json loadtest/시나리오.js</code>로 남긴
-                결과를 보여줘요 (총관리자 전용) - <a href="/admin/dashboard">대시보드로</a>
+                결과를 보여줘요 (총관리자 전용)
             </p>
         </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('loadtest')}"></div>
 
         <div th:if="${#lists.isEmpty(runs)}" class="loadtest-empty">
             아직 실행된 부하테스트가 없어요. <code>loadtest/</code> 아래 스크립트를

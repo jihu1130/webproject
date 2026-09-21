@@ -26,6 +26,19 @@
 
         <div th:replace="~{admin/fragments/nav :: tabs('shop-items')}"></div>
 
+        <!-- 상점 관리 자체 2차 탭(카탈로그/구매 내역, 2026-09-21 추가) - post-category-tabs 클래스를
+             그대로 재사용해 콘텐츠 관리의 contentSubTabs와 시각적으로 통일한다(새 CSS 없음). 이
+             화면 전용이라 nav.html 공용 fragment로 뽑지 않았다(게시글/설문처럼 여러 컨트롤러가
+             공유하는 서브탭이 아니라 상점 관리 안에서만 쓰임). -->
+        <div class="post-category-tabs admin-content-subtabs">
+            <a href="/admin/shop-items" class="post-category-tab active">
+                <i class="fa-solid fa-store"></i> 카탈로그
+            </a>
+            <a href="/admin/shop-items/purchases" class="post-category-tab">
+                <i class="fa-solid fa-receipt"></i> 구매 내역
+            </a>
+        </div>
+
         <div class="list-toolbar">
             <form th:action="@{/admin/shop-items}" method="get" class="admin-search-form">
                 <input type="text" name="keyword" placeholder="상품명 검색" th:value="${keyword}">
@@ -55,6 +68,7 @@
                     <th>적용값</th>
                     <th>효과</th>
                     <th>가격</th>
+                    <th>판매 수량</th>
                     <th>관리</th>
                 </tr>
                 </thead>
@@ -69,6 +83,7 @@
                     <td th:text="${item.value}">값</td>
                     <td th:text="${item.effect == 'SPARKLE'} ? '반짝임' : (${item.effect == 'RAINBOW'} ? '무지개' : '-')">효과</td>
                     <td th:text="${item.price > 0} ? (${item.price} + 'P') : '무료'">가격</td>
+                    <td th:text="${item.salesCount} + '개'">0개</td>
                     <td>
                         <a th:href="@{'/admin/shop-items/' + ${item.id} + '/edit'}" class="btn btn-outline-primary" style="padding: 4px 10px; font-size: 0.82rem;">수정</a>
                         <form th:action="@{'/admin/shop-items/' + ${item.id} + '/active'}" method="post" style="display:inline;">

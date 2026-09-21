@@ -5,6 +5,7 @@ import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.domain.UserShopItem;
 import com.webschool.webschool.user.dto.ShopCatalogDto;
 import com.webschool.webschool.user.dto.ShopItemDto;
+import com.webschool.webschool.user.dto.ShopPurchaseDto;
 import com.webschool.webschool.user.repository.ShopItemRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.repository.UserShopItemRepository;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,7 +47,7 @@ public class ShopService {
                 .sorted((a, b) -> a.getType() == b.getType()
                         ? Integer.compare(a.getPrice(), b.getPrice())
                         : a.getType().compareTo(b.getType()))
-                .map(item -> toDto(item, false, false))
+                .map(item -> toDto(item, false, false, countSales(item.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -82,6 +84,37 @@ public class ShopService {
         item.setActive(active);
     }
 
+    // 상점 구매 내역(관리자 페이지 재구성, 2026-09-21 추가) - AdminShopItemController가 카탈로그
+    // CRUD만 하고 "누가 뭘 샀는지"는 전혀 안 보이던 것을 메꾼다. 다른 관리자 화면과 동일하게
+    // 메모리에서 최신순 정렬 후 필터링(데이터 규모가 작다고 가정하는 기존 관례 그대로).
+    public List<ShopPurchaseDto> getPurchaseHistory(String keyword) {
+        return userShopItemRepository.findAll().stream()
+                .sorted(Comparator.comparing(UserShopItem::getPurchasedAt).reversed())
+                .map(this::toPurchaseDto)
+                .filter(dto -> keyword == null || keyword.isBlank()
+                        || dto.getBuyerUsername().toLowerCase().contains(keyword.toLowerCase())
+                        || dto.getBuyerNickname().toLowerCase().contains(keyword.toLowerCase())
+                        || dto.getItemLabel().toLowerCase().contains(keyword.toLowerCase()))
+                .collect(Collectors.toList());
+    }
+
+    // 카탈로그 목록에 상품별 판매 수량 배지를 보여주기 위한 카운트.
+    public long countSales(Long shopItemId) {
+        return userShopItemRepository.countByShopItem_Id(shopItemId);
+    }
+
+    private ShopPurchaseDto toPurchaseDto(UserShopItem owned) {
+        User buyer = owned.getUser();
+        return ShopPurchaseDto.builder()
+                .buyerUsername(buyer.getUsername())
+                .buyerNickname(buyer.getNickname())
+                .itemLabel(owned.getShopItem().getLabel())
+                .itemType(owned.getShopItem().getType().name())
+                .price(owned.getShopItem().getPrice())
+                .purchasedAt(owned.getPurchasedAt())
+                .build();
+    }
+
     private void validate(String label, String value, int price) {
         if (label == null || label.isBlank()) {
             throw new IllegalArgumentException("이름을 입력해주세요.");
@@ -104,11 +137,11 @@ public class ShopService {
         List<ShopItem> active = shopItemRepository.findByActiveTrue();
         List<ShopItemDto> titles = active.stream()
                 .filter(i -> i.getType() == ShopItem.Type.TITLE)
-                .map(i -> toDto(i, ownedItemIds.contains(i.getId()), i.getValue().equals(user.getEquippedTitle())))
+                .map(i -> toDto(i, ownedItemIds.contains(i.getId()), i.getValue().equals(user.getEquippedTitle()), 0))
                 .collect(Collectors.toList());
         List<ShopItemDto> colors = active.stream()
                 .filter(i -> i.getType() == ShopItem.Type.AVATAR_COLOR)
-                .map(i -> toDto(i, ownedItemIds.contains(i.getId()), i.getId().equals(user.getEquippedAvatarColorItemId())))
+                .map(i -> toDto(i, ownedItemIds.contains(i.getId()), i.getId().equals(user.getEquippedAvatarColorItemId()), 0))
                 .collect(Collectors.toList());
 
         return ShopCatalogDto.builder().titles(titles).colors(colors).build();
@@ -170,7 +203,7 @@ public class ShopService {
         }
     }
 
-    private ShopItemDto toDto(ShopItem item, boolean owned, boolean equipped) {
+    private ShopItemDto toDto(ShopItem item, boolean owned, boolean equipped, long salesCount) {
         return ShopItemDto.builder()
                 .id(item.getId())
                 .type(item.getType().name())
@@ -181,6 +214,7 @@ public class ShopService {
                 .active(item.isActive())
                 .owned(owned)
                 .equipped(equipped)
+                .salesCount(salesCount)
                 .build();
     }
 }

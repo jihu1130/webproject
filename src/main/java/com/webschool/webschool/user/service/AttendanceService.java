@@ -85,6 +85,22 @@ public class AttendanceService {
         return countConsecutiveDaysEnding(recentDates, today.minusDays(1)) + 1;
     }
 
+    // 관리자 출석 관리 화면(2026-09-21 추가) 전용 - getCurrentStreakDay()는 "지금 체크인하면
+    // 며칠째가 되는지" 미리보기라 한 번도 출석 안 한 사용자도 1을 반환해서 관리자 목록에 오해를
+    // 준다. 여기서는 "실제로 지금 스트릭이 살아있는가"를 본다 - 마지막 출석일이 오늘도 어제도
+    // 아니면 이미 끊긴 것이라 0을 반환한다.
+    public int getEffectiveStreak(Long userId) {
+        LocalDate today = LocalDate.now();
+        Set<LocalDate> recentDates = loadRecentDates(userId, today);
+        if (recentDates.contains(today)) {
+            return countConsecutiveDaysEnding(recentDates, today);
+        }
+        if (recentDates.contains(today.minusDays(1))) {
+            return countConsecutiveDaysEnding(recentDates, today.minusDays(1));
+        }
+        return 0;
+    }
+
     public int pointsForStreakDay(int streakDay) {
         if (streakDay <= STREAK_POINTS.length) {
             return STREAK_POINTS[streakDay - 1];

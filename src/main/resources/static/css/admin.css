@@ -697,8 +697,9 @@
    자동 대응되어 이 블록이 더 필요 없다(.admin-status-* 배지도 이미 --warn/--danger/
    --success/--muted를 직접 쓰는 중이라 마찬가지). */
 
-/* 11개 탭을 성격별 3그룹(콘텐츠 관리/계정·권한/운영)으로 묶는 컨테이너 - admin/fragments/nav.html
-   참고. 그룹 안에서는 줄바꿈을 막아(flex-wrap: nowrap) 관련 탭끼리 항상 붙어 다니게 하고,
+/* 16개 탭을 성격별 6그룹(개요/콘텐츠 관리/신고·모더레이션/포인트·활동/계정·권한/로그·운영,
+   2026-09-21 2차 재편)으로 묶는 컨테이너 - admin/fragments/nav.html 참고. 그룹 안에서는
+   줄바꿈을 막아(flex-wrap: nowrap) 관련 탭끼리 항상 붙어 다니게 하고,
    화면이 좁아 줄바꿈이 필요하면 부모(.admin-main-tabs)의 flex-wrap이 그룹 "경계"에서만
    끊어준다 - 예전처럼 8+3으로 낱개 탭이 어중간하게 갈라지지 않는다. */
 .admin-tabs-group {
@@ -716,8 +717,8 @@
 
 .post-category-tab i { margin-right: 2px; }
 
-/* 수정사항.md 지적 - 관리자 8단계 탭(admin/fragments/nav.html)이 사이트 상단 내비게이션과
-   달리 모바일에서 안 접혀서, 매번 8줄짜리 목록이 화면 위쪽을 다 차지했다. 접이식 메뉴 대신
+/* 수정사항.md 지적 - 관리자 탭(admin/fragments/nav.html)이 사이트 상단 내비게이션과
+   달리 모바일에서 안 접혀서, 매번 여러 줄짜리 목록이 화면 위쪽을 다 차지했다. 접이식 메뉴 대신
    가로 스크롤 탭바로 바꾼다 - 새 토글 컴포넌트 없이 한 줄로 줄어들고, 현재 탭(.active)이 항상
    시야에 들어오도록 자동 스크롤도 붙인다. */
 @media (max-width: 560px) {
@@ -728,7 +729,7 @@
         padding-bottom: 4px;
         scrollbar-width: thin;
         /* 수정사항.md 지적(#8) - 가로 스크롤이 되는 건 알아도 "더 있다"는 힌트가 없어서 오른쪽으로
-           더 밀어야 뒤쪽 탭(8. 감사 로그 등)이 있다는 걸 처음엔 알아채기 어려웠다. 새 오버레이
+           더 밀어야 뒤쪽 탭(로그·운영 그룹 등)이 있다는 걸 처음엔 알아채기 어려웠다. 새 오버레이
            엘리먼트를 추가하면 flex 아이템으로 끼어들어 레이아웃이 밀리므로, 대신 컨테이너 자체에
            마스크를 씌워 오른쪽 끝이 항상 옅게 페이드되도록 한다 - 엘리먼트/JS 추가 없이 스크롤
            가능하다는 시각적 신호가 됨(끝까지 스크롤해도 마지막 탭이 살짝 페이드된 채 남는 정도의
@@ -823,54 +824,9 @@
     margin: 0 0 12px;
 }
 
-.dash-chart { width: 100%; }
-.dash-chart svg { width: 100%; height: auto; display: block; }
-.dash-chart-line { fill: none; stroke: var(--brand-1); stroke-width: 2; }
-.dash-chart-area { fill: var(--brand-gradient-tint-2); stroke: none; }
-.dash-chart-dot { fill: var(--surface); stroke: var(--brand-1); stroke-width: 2; }
-.dash-chart-dot--last { fill: var(--brand-1); }
-.dash-chart-gridline { stroke: var(--border); stroke-width: 1; }
-.dash-chart-axis-label { fill: var(--muted); font-size: 9px; font-family: inherit; }
-.dash-chart-value-label { fill: var(--ink); font-size: 10px; font-weight: 700; font-family: inherit; }
-
-.dash-tier-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.dash-tier-row {
-    display: grid;
-    grid-template-columns: 52px 1fr 34px;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.82rem;
-}
-
-.dash-tier-name { color: var(--ink); font-weight: 600; }
-
-.dash-tier-track {
-    background: var(--surface-soft);
-    border-radius: 999px;
-    height: 10px;
-    overflow: hidden;
-}
-
-.dash-tier-fill {
-    /* <span>은 기본 display:inline이라 width가 있어도 실제로는 렌더링에 반영되지 않는다(브라우저가
-       인라인 요소의 width를 무시함) - block으로 바꿔야 style="width:N%"가 실제 그려진다. */
-    display: block;
-    height: 100%;
-    border-radius: 999px;
-    background: var(--accent);
-    transition: width 0.4s ease;
-}
-
-.dash-tier-count {
-    text-align: right;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-}
+/* Chart.js 캔버스 컨테이너 - responsive:true + maintainAspectRatio:false로 이 박스에 맞춰
+   그려지므로, 실제 크기는 이 컨테이너의 명시적 height가 결정한다(Chart.js 공식 권장 패턴). */
+.dash-chart { position: relative; width: 100%; height: 240px; }
 
 /* 서버 상태 KPI 행 앞에 붙는 소제목 - .dash-card h2와 같은 스타일이지만 .dash-card 밖(.dash-grid
    바로 아래)에 놓이는 .dash-kpis 앞이라 별도 클래스로 뺐다. */

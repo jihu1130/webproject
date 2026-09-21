@@ -2,80 +2,100 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<!-- 관리자 10단계 대분류 탭: 1)신고 관리 2)게시글 관리 3)댓글 관리 4)한마디 관리 5)공지사항 관리
-     6)계정 관리 7)관리자 권한 8)감사 로그 9)문의 관리 10)상점 관리 (이 순서 고정). 총관리자(loginUser.role.name() ==
-     'ROLE_SUPER_ADMIN')는 전부 보이고, 부관리자는 총관리자가 켜준 권한에 해당하는 탭만 보인다.
-     "3. 댓글 관리"(/admin/comments, 2026-08-10(4차) 추가)는 게시글에 종속된 하위 리소스라 별도 권한
-     플래그 없이 게시글 관리(canManagePosts)와 같은 조건으로 노출한다(AdminAccessInterceptor도 동일하게
-     묶어서 검사). "5. 공지사항 관리"(/admin/notices, todo.md 요구사항 - 예전 Post.Category.NOTICE
-     방식을 완전히 대체)는 canManageNotices 권한으로 별도 게이팅한다. "6. 계정 관리"/"7. 관리자 권한"/
-     "8. 감사 로그"는 수정사항.md #12 지적으로 예전엔 총관리자 전용으로 하드코딩돼 있었지만, 이제 다른
-     탭과 동일하게 canManageUsers/canManageAdminPermissions/canViewAuditLog 플래그로 위임 가능하다.
-     "9. 문의 관리"(/admin/bug-reports, 2026-08-24 추가, 옛 "버그 리포트")만 위임 권한 슬롯을 새로 만들지 않고 처음부터
-     총관리자 전용으로 고정했다(사용자 확정, 이번 라운드 범위 밖). "10. 상점 관리"(/admin/shop-items,
-     todo.md "포인트 소비" 요구사항)는 다른 위임 탭과 동일하게 canManageShop 플래그로 게이팅한다.
-     설문 관리(/admin/polls)는 2026-09-06부터 최상위 탭에서 빠지고 "2. 게시글 관리" 산하 2차 탭으로
-     이동했다(사용자 요청 - 아래 contentSubTabs fragment 참고) - 권한 체계 자체는 안 바뀌었고
-     여전히 canManagePolls로 독립 게이팅된다(poll 패키지가 post/school 어느 쪽에도 속하지 않는 것과
-     같은 이유, AdminAccessInterceptor도 그대로 유지), UI 위치만 옮긴 것.
-     "대시보드"(/admin/dashboard, 디자인 개선 계획 우선순위 "상" 1번으로 2026-09-09 추가)는 이
-     고정 순서(1~10)에 포함되지 않는 별도 항목이라 번호를 붙이지 않았다 - 특정 관리 기능이 아니라
-     여러 기능에 걸친 KPI 개요라 성격이 다르고, 총관리자 전용(AdminAccessInterceptor 참고)이라
-     위임 권한 플래그로 게이팅하지도 않는다. 항상 첫 그룹 맨 앞에 둔다.
-     "보안 로그"(/admin/security-log)/"에러 로그"(/admin/error-log, 둘 다 2026-09-09 추가, 사용자
-     요청 - 기존 "8. 감사 로그"가 일반 활동까지 섞여 있어 "사용로그" 같다는 지적)도 같은 이유로
-     번호를 안 붙였다. "보안 로그"는 감사 로그와 같은 canViewAuditLog로 위임 가능(같은 테이블을
-     걸러 보여주는 화면일 뿐이라 새 정보가 없음), "에러 로그"는 스택 트레이스 노출 우려로 대시보드와
-     동일하게 총관리자 전용 고정. 성격이 감사 로그와 가장 가까워서 8번 바로 뒤에 둔다.
+<!-- 관리자 탭 재편 2차(2026-09-21, 사용자 요청 - "일반 사용자가 할 수 있는 모든 것"을 기준으로
+     관리자가 놓친 영역 전수 조사 후 재구성). 1차 재편(같은 날 앞서)에서 5개 그룹으로 나눴던 것에
+     "④ 포인트·활동" 그룹을 새로 추가해 6개 그룹이 됐다: 개요 / 콘텐츠 관리 / 신고·모더레이션 /
+     포인트·활동 / 계정·권한 / 로그·운영. 총관리자(loginUser.role.name() == 'ROLE_SUPER_ADMIN')는
+     전부 보이고, 부관리자는 총관리자가 켜준 권한에 해당하는 탭만 보인다.
      주의: loginUser는 DTO가 아니라 실제 User 엔티티라 role이 String이 아니라 User.Role enum이다.
      다른 관리자 화면(AdminUserSummaryDto 등)은 서비스 단에서 role을 미리 .name()으로 문자열
      변환해두지만, 여기서는 엔티티를 그대로 쓰므로 반드시 .name()을 붙여 문자열로 비교해야 한다
-     (enum과 문자열을 바로 == 비교하면 항상 false로 평가되어 탭이 전부 숨는 버그가 났었음). -->
+     (enum과 문자열을 바로 == 비교하면 항상 false로 평가되어 탭이 전부 숨는 버그가 났었음).
+
+     - **개요**: 대시보드 + 부하테스트 결과. 특정 관리 기능이 아니라 여러 기능에 걸친 KPI/서버
+       상태 개요라 성격이 다르고 둘 다 총관리자 전용(AdminAccessInterceptor 참고).
+     - **콘텐츠 관리**: 게시글(설문/추천 게시글은 이 아래 2차 탭, contentSubTabs fragment 참고)/
+       댓글/한마디/공지사항 - 전부 "콘텐츠를 만들고 고치는" 화면. 댓글 관리(/admin/comments)는
+       게시글에 종속된 하위 리소스라 별도 권한 플래그 없이 게시글 관리(canManagePosts)와 같은
+       조건으로 노출한다.
+     - **신고·모더레이션**: 신고 관리(canManageReports) - "콘텐츠를 만드는" 것과 "신고된 콘텐츠를
+       판정하는" 것은 성격이 달라 콘텐츠 관리에 합치지 않고 독립 그룹으로 둔다(사용자 확정).
+     - **포인트·활동**(신규 그룹, 2026-09-21) - 출석체크(`/mypage/attendance*`)·포인트
+       획득/소비(`UserPointService`)·상점 구매(`ShopController`)는 사용자 쪽엔 전부 완성돼
+       있었는데 관리자가 조회/조정할 화면이 하나도 없었다(전수 조사로 발견). 상점 관리는 원래
+       로그·운영 그룹에 있었는데, 이 그룹이 새로 생기면서 성격이 같은 "사용자 활동·재화" 축으로
+       재배치했다(1차 재편 때는 로그·운영 유지를 택했었지만, 이번 2차 재편으로 판단이 바뀜):
+         - 출석 관리(canManageAttendance, 신규 권한) - 사용자별 출석 현황/스트릭 조회
+         - 포인트 관리(canManagePoints, 신규 권한) - 사이트 전체 포인트 로그 감사. 특정 사용자
+           포인트 지급/차감 액션 자체는 이 탭이 아니라 계정 관리의 사용자 프로필 화면에 있고,
+           AdminAccessInterceptor가 canManageUsers + canManagePoints 둘 다 요구한다(민감한
+           액션이라 이중 게이팅).
+         - 상점 관리(canManageShop, 기존 카탈로그 CRUD + 이번에 구매 내역 조회 서브탭 추가)
+     - **계정·권한**: 계정 관리(canManageUsers)/관리자 권한(canManageAdminPermissions).
+     - **로그·운영**: 감사 로그/보안 로그(둘 다 canViewAuditLog)/에러 로그(총관리자 전용)/
+       문의 관리(총관리자 전용, 옛 "버그 리포트").
+     설문 관리(/admin/polls)·추천 게시글 관리(/admin/post-recommend, 신규)는 최상위 탭이 아니라
+     "콘텐츠 관리 > 게시글" 산하 2차 탭이다(아래 contentSubTabs fragment 참고) - 각각
+     canManagePolls/canManagePosts로 독립 게이팅. -->
 <!-- th:fragment는 nav 태그 하나에만 붙어있으면 그 태그만 잘려서 포함되므로, 스크롤 보정용
      스크립트도 같이 실려 나가도록 th:block으로 둘을 함께 묶는다(예전엔 nav 밖에 있어서 스크립트가
      아예 렌더링되지 않는 채로 조용히 무시되고 있었다). -->
 <th:block th:fragment="tabs(active)">
-<!-- 수정사항.md/사용자 지적 - 11개 탭이 데스크톱에서도 flex-wrap으로 8+3처럼 어중간하게
-     줄바꿈돼서 스캔하기 불편했다. 순서(주석 상단 "이 순서 고정")는 그대로 두고, 성격이
-     비슷한 탭끼리 3개 그룹(콘텐츠 관리 / 계정·권한 / 운영)으로 묶어 그룹 사이에만 얇은
-     구분선을 넣는다 - 그룹을 각자 flex-wrap:nowrap 컨테이너로 감싸서, 화면이 좁아 줄바꿈이
-     일어나도 그룹 "중간"이 아니라 그룹 "경계"에서만 끊기게 한다(개별 탭이 낱개로 이 줄
-     저 줄 흩어지는 대신, 관련 탭끼리는 항상 붙어 다님). 아이콘을 붙여 각 탭을 더 빠르게
-     구분할 수 있게 했다. -->
+<!-- 수정사항.md/사용자 지적 - 탭이 데스크톱에서도 flex-wrap으로 어중간하게 줄바꿈돼서
+     스캔하기 불편했다. 성격이 비슷한 탭끼리 5개 그룹(개요 / 콘텐츠 관리 / 신고·모더레이션 /
+     계정·권한 / 로그·운영, 위 주석 참고)으로 묶어 그룹 사이에만 얇은 구분선을 넣는다 - 그룹을
+     각자 flex-wrap:nowrap 컨테이너로 감싸서, 화면이 좁아 줄바꿈이 일어나도 그룹 "중간"이 아니라
+     그룹 "경계"에서만 끊기게 한다(개별 탭이 낱개로 이 줄 저 줄 흩어지는 대신, 관련 탭끼리는
+     항상 붙어 다님). 아이콘을 붙여 각 탭을 더 빠르게 구분할 수 있게 했다. -->
 <nav class="post-category-tabs admin-main-tabs">
     <span class="admin-tabs-group">
         <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
            href="/admin/dashboard" class="post-category-tab" th:classappend="${active == 'dashboard'} ? ' active' : ''"><i class="fa-solid fa-gauge-high"></i> 대시보드</a>
-        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageReports)}"
-           href="/admin/reports" class="post-category-tab" th:classappend="${active == 'reports'} ? ' active' : ''"><i class="fa-solid fa-flag"></i> 1. 신고 관리</a>
+        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+           href="/admin/loadtest" class="post-category-tab" th:classappend="${active == 'loadtest'} ? ' active' : ''"><i class="fa-solid fa-bolt"></i> 부하테스트 결과</a>
+    </span>
+    <span class="admin-tabs-divider" aria-hidden="true"></span>
+    <span class="admin-tabs-group">
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePosts)}"
-           href="/admin/posts" class="post-category-tab" th:classappend="${active == 'posts'} ? ' active' : ''"><i class="fa-solid fa-file-lines"></i> 2. 게시글 관리</a>
+           href="/admin/posts" class="post-category-tab" th:classappend="${active == 'posts'} ? ' active' : ''"><i class="fa-solid fa-file-lines"></i> 게시글 관리</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePosts)}"
-           href="/admin/comments" class="post-category-tab" th:classappend="${active == 'comments'} ? ' active' : ''"><i class="fa-solid fa-comment"></i> 3. 댓글 관리</a>
+           href="/admin/comments" class="post-category-tab" th:classappend="${active == 'comments'} ? ' active' : ''"><i class="fa-solid fa-comment"></i> 댓글 관리</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageScheduleComments)}"
-           href="/admin/schedule-comments" class="post-category-tab" th:classappend="${active == 'schedule-comments'} ? ' active' : ''"><i class="fa-solid fa-message"></i> 4. 한마디 관리</a>
+           href="/admin/schedule-comments" class="post-category-tab" th:classappend="${active == 'schedule-comments'} ? ' active' : ''"><i class="fa-solid fa-message"></i> 한마디 관리</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageNotices)}"
-           href="/admin/notices" class="post-category-tab" th:classappend="${active == 'notices'} ? ' active' : ''"><i class="fa-solid fa-bullhorn"></i> 5. 공지사항 관리</a>
+           href="/admin/notices" class="post-category-tab" th:classappend="${active == 'notices'} ? ' active' : ''"><i class="fa-solid fa-bullhorn"></i> 공지사항 관리</a>
+    </span>
+    <span class="admin-tabs-divider" aria-hidden="true"></span>
+    <span class="admin-tabs-group">
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageReports)}"
+           href="/admin/reports" class="post-category-tab" th:classappend="${active == 'reports'} ? ' active' : ''"><i class="fa-solid fa-flag"></i> 신고 관리</a>
+    </span>
+    <span class="admin-tabs-divider" aria-hidden="true"></span>
+    <span class="admin-tabs-group">
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageAttendance)}"
+           href="/admin/attendance" class="post-category-tab" th:classappend="${active == 'attendance'} ? ' active' : ''"><i class="fa-solid fa-calendar-check"></i> 출석 관리</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePoints)}"
+           href="/admin/points" class="post-category-tab" th:classappend="${active == 'points'} ? ' active' : ''"><i class="fa-solid fa-coins"></i> 포인트 관리</a>
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageShop)}"
+           href="/admin/shop-items" class="post-category-tab" th:classappend="${active == 'shop-items'} ? ' active' : ''"><i class="fa-solid fa-store"></i> 상점 관리</a>
     </span>
     <span class="admin-tabs-divider" aria-hidden="true"></span>
     <span class="admin-tabs-group">
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageUsers)}"
-           href="/admin/users" class="post-category-tab" th:classappend="${active == 'users'} ? ' active' : ''"><i class="fa-solid fa-users"></i> 6. 계정 관리</a>
+           href="/admin/users" class="post-category-tab" th:classappend="${active == 'users'} ? ' active' : ''"><i class="fa-solid fa-users"></i> 계정 관리</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageAdminPermissions)}"
-           href="/admin/users/admins" class="post-category-tab" th:classappend="${active == 'admins'} ? ' active' : ''"><i class="fa-solid fa-user-shield"></i> 7. 관리자 권한</a>
+           href="/admin/users/admins" class="post-category-tab" th:classappend="${active == 'admins'} ? ' active' : ''"><i class="fa-solid fa-user-shield"></i> 관리자 권한</a>
     </span>
     <span class="admin-tabs-divider" aria-hidden="true"></span>
     <span class="admin-tabs-group">
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewAuditLog)}"
-           href="/admin/audit-log" class="post-category-tab" th:classappend="${active == 'audit-log'} ? ' active' : ''"><i class="fa-solid fa-clipboard-list"></i> 8. 감사 로그</a>
+           href="/admin/audit-log" class="post-category-tab" th:classappend="${active == 'audit-log'} ? ' active' : ''"><i class="fa-solid fa-clipboard-list"></i> 감사 로그</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewAuditLog)}"
            href="/admin/security-log" class="post-category-tab" th:classappend="${active == 'security-log'} ? ' active' : ''"><i class="fa-solid fa-shield-halved"></i> 보안 로그</a>
         <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
            href="/admin/error-log" class="post-category-tab" th:classappend="${active == 'error-log'} ? ' active' : ''"><i class="fa-solid fa-triangle-exclamation"></i> 에러 로그</a>
         <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
-           href="/admin/bug-reports" class="post-category-tab" th:classappend="${active == 'bug-reports'} ? ' active' : ''"><i class="fa-solid fa-comment-dots"></i> 9. 문의 관리</a>
-        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageShop)}"
-           href="/admin/shop-items" class="post-category-tab" th:classappend="${active == 'shop-items'} ? ' active' : ''"><i class="fa-solid fa-store"></i> 10. 상점 관리</a>
+           href="/admin/bug-reports" class="post-category-tab" th:classappend="${active == 'bug-reports'} ? ' active' : ''"><i class="fa-solid fa-comment-dots"></i> 문의 관리</a>
     </span>
 </nav>
 
@@ -105,6 +125,10 @@
     <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePolls)}"
        href="/admin/polls" class="post-category-tab" th:classappend="${active == 'polls'} ? ' active' : ''">
         <i class="fa-solid fa-square-poll-vertical"></i> 설문
+    </a>
+    <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManagePosts)}"
+       href="/admin/post-recommend" class="post-category-tab" th:classappend="${active == 'post-recommend'} ? ' active' : ''">
+        <i class="fa-solid fa-star"></i> 추천 게시글
     </a>
 </div>
 </th:block>

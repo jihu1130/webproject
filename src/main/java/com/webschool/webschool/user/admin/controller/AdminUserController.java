@@ -92,11 +92,14 @@ public class AdminUserController {
                                @RequestParam(defaultValue = "false") boolean canViewAuditLog,
                                @RequestParam(defaultValue = "false") boolean canManageShop,
                                @RequestParam(defaultValue = "false") boolean canManagePolls,
+                               @RequestParam(defaultValue = "false") boolean canManageAttendance,
+                               @RequestParam(defaultValue = "false") boolean canManagePoints,
                                Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
             adminUserService.updatePermissions(id, authentication.getName(),
                     canManageReports, canManagePosts, canManageScheduleComments, canManageNotices,
-                    canManageUsers, canManageAdminPermissions, canViewAuditLog, canManageShop, canManagePolls);
+                    canManageUsers, canManageAdminPermissions, canViewAuditLog, canManageShop, canManagePolls,
+                    canManageAttendance, canManagePoints);
             redirectAttributes.addFlashAttribute("flashSuccess", "권한이 저장되었습니다.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("flashError", e.getMessage());
@@ -212,6 +215,20 @@ public class AdminUserController {
         try {
             userPenaltyService.revoke(penaltyId);
         } catch (IllegalArgumentException ignored) {
+        }
+        return "redirect:/admin/users/" + id + "/profile";
+    }
+
+    // 포인트 지급/차감(관리자 페이지 재구성, 2026-09-21 추가) - AdminAccessInterceptor의
+    // POINT_ADJUST_ACTION_PATH가 canManageUsers + canManagePoints를 둘 다 요구한다.
+    @PostMapping("/{id}/points/adjust")
+    public String adjustPoints(@PathVariable Long id, @RequestParam int amount, @RequestParam String reason,
+                                Authentication authentication, RedirectAttributes redirectAttributes) {
+        try {
+            adminUserService.adjustPoints(id, amount, reason, authentication.getName());
+            redirectAttributes.addFlashAttribute("flashSuccess", "포인트를 조정했습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
         }
         return "redirect:/admin/users/" + id + "/profile";
     }

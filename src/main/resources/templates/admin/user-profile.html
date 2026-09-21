@@ -92,6 +92,12 @@
                     <strong th:text="${profile.commentCount}">0</strong>
                     <span>작성 댓글</span>
                 </a>
+                <!-- 포인트 관리(관리자 페이지 재구성, 2026-09-21 추가) - 다른 통계와 동일한
+                     admin-profile-stat 카드로 노출, #point-history로 아래 내역 섹션 앵커. -->
+                <a class="admin-profile-stat" href="#point-history">
+                    <strong th:text="${profile.currentPoints}">0</strong>
+                    <span th:text="'보유 포인트 (' + ${profile.tierLabel} + ')'">보유 포인트</span>
+                </a>
             </div>
 
             <!-- 수정사항.md #11과 세트 - 감사 로그 쪽에서도 관리자 이름을 이 프로필로 연결하는 작업이
@@ -119,6 +125,42 @@
                 <textarea name="reason" maxlength="300" placeholder="제재 사유를 입력하세요" required></textarea>
                 <button type="submit" class="btn btn-outline-primary">제재 부여</button>
             </form>
+        </div>
+
+        <!-- 포인트 지급/차감(관리자 페이지 재구성, 2026-09-21 추가) - 제재 부여 폼과 같은 구조.
+             AdminAccessInterceptor의 POINT_ADJUST_ACTION_PATH가 실제로 canManageUsers +
+             canManagePoints 둘 다 요구하므로, 여기서도 그 조건과 정확히 맞춰 폼을 보여준다(총관리자는
+             항상 통과). 본인 계정에는 못 쓰게(AdminUserService.adjustPoints() 자기 자신 체크와
+             동일한 이유) 이 프로필이 로그인한 본인 계정일 때도 숨긴다. -->
+        <div class="admin-report-section"
+             th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or (loginUser.canManageUsers and loginUser.canManagePoints)) and (loginUser.username != profile.username)}"
+             style="margin-bottom: 20px;">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-coins"></i> 포인트 지급/차감</h3>
+            <form th:action="@{'/admin/users/' + ${profile.id} + '/points/adjust'}" method="post" class="admin-penalty-form"
+                  data-confirm="포인트를 조정할까요?">
+                <input type="number" name="amount" placeholder="지급: 양수, 차감: 음수" required>
+                <textarea name="reason" maxlength="300" placeholder="지급/차감 사유를 입력하세요" required></textarea>
+                <button type="submit" class="btn btn-outline-primary">포인트 조정</button>
+            </form>
+        </div>
+
+        <div class="admin-report-section" id="point-history" style="margin-bottom: 20px;">
+            <h3 class="post-comment-heading"><i class="fa-solid fa-coins"></i> 최근 포인트 내역</h3>
+
+            <div th:if="${#lists.isEmpty(profile.recentPointLogs)}" class="post-comment-empty">포인트 내역이 없어요.</div>
+
+            <div class="admin-report-list" th:unless="${#lists.isEmpty(profile.recentPointLogs)}">
+                <div class="admin-report-item" th:each="log : ${profile.recentPointLogs}">
+                    <div class="admin-report-item-header">
+                        <span class="admin-status-badge admin-status-cleared" th:if="${log.points > 0}"
+                              th:text="'+' + ${log.points} + 'P'">+0P</span>
+                        <span class="admin-status-badge admin-status-blind" th:if="${log.points < 0}"
+                              th:text="${log.points} + 'P'">-0P</span>
+                        <span class="post-comment-time" th:text="${log.createdAt}">일시</span>
+                    </div>
+                    <div th:text="${log.reason}">사유</div>
+                </div>
+            </div>
         </div>
 
         <div class="admin-report-section" th:if="${!#lists.isEmpty(profile.penalties)}" style="margin-bottom: 20px;">

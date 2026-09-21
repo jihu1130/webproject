@@ -102,4 +102,14 @@ public class AdminShopItemController {
         }
         return "redirect:/admin/shop-items";
     }
+
+    // 구매 내역(관리자 페이지 재구성, 2026-09-21 추가) - 카탈로그 CRUD만 있고 "누가 뭘 샀는지"는
+    // 전혀 안 보이던 것을 메꾼다. AdminAccessInterceptor가 "/admin/shop-items"로 시작하는 전체를
+    // canManageShop으로 이미 게이팅하므로 이 경로도 자동으로 같은 권한이 적용된다.
+    @GetMapping("/purchases")
+    public String purchases(@RequestParam(required = false) String keyword, Model model) {
+        model.addAttribute("purchases", shopService.getPurchaseHistory(keyword));
+        model.addAttribute("keyword", keyword);
+        return "admin/shop-purchase-list";
+    }
 }

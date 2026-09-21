@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 추천 게시글 관리 - WebSchool</title>
+        <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('admin')}"></div>
+<div th:replace="~{fragments/flash :: flash}"></div>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <div class="page-heading admin-page-heading">
+            <h1><i class="fa-solid fa-star"></i> 추천 게시글 관리</h1>
+            <p class="page-sub">자유 게시판 전체 공개 글의 추천 랭킹이에요 (조회 전용 - 매일 자정 1위 작성자에게 포인트 지급)</p>
+        </div>
+
+        <div th:replace="~{admin/fragments/nav :: tabs('posts')}"></div>
+        <div th:replace="~{admin/fragments/nav :: contentSubTabs('post-recommend')}"></div>
+
+        <div class="list-toolbar">
+            <div class="contest-period-tabs">
+                <a th:href="@{/admin/post-recommend(period='DAILY')}" class="contest-period-tab" th:classappend="${period.name() == 'DAILY'} ? ' active' : ''">일간</a>
+                <a th:href="@{/admin/post-recommend(period='WEEKLY')}" class="contest-period-tab" th:classappend="${period.name() == 'WEEKLY'} ? ' active' : ''">이번 주</a>
+                <a th:href="@{/admin/post-recommend(period='MONTHLY')}" class="contest-period-tab" th:classappend="${period.name() == 'MONTHLY'} ? ' active' : ''">이번 달</a>
+                <a th:href="@{/admin/post-recommend(period='ALL_TIME')}" class="contest-period-tab" th:classappend="${period.name() == 'ALL_TIME'} ? ' active' : ''">전체</a>
+            </div>
+            <a href="/admin/post-recommend/history" class="btn btn-outline-primary"><i class="fa-solid fa-clock-rotate-left"></i> 일별 1위 이력</a>
+        </div>
+
+        <div class="admin-empty" th:if="${ranking.empty}">아직 이 기간에 추천받은 글이 없어요.</div>
+
+        <div class="contest-entry-list">
+            <div class="contest-entry" th:each="entry : ${ranking}">
+                <span class="contest-entry-rank" th:text="${entry.rank}">1</span>
+                <div class="contest-entry-body">
+                    <!-- PostRecommendRankDto엔 uuid만 있고 관리자 상세(/admin/posts/{id})가 쓰는
+                         숫자 id가 없다 - 공개 상세 페이지로 링크한다(PRIVATE 게시글도 관리자는
+                         PostService.getDetail()에서 열람 허용되므로 접근에 문제없음). -->
+                    <a th:href="@{'/posts/' + ${entry.postUuid}}" class="contest-entry-title" th:text="${entry.postTitle}">제목</a>
+                    <span class="contest-entry-author" th:text="${entry.authorNickname}">작성자</span>
+                </div>
+                <span class="contest-entry-votes" th:text="${entry.recommendCount} + '표'">0표</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
+</body>
+</html>
