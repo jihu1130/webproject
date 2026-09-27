@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.CommentBookmark;
@@ -32,9 +34,9 @@ public class CommentReactionService {
     @Transactional
     public Map<String, Object> toggleLike(Long commentId, String username) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var existing = commentLikeRepository.findByComment_IdAndUser_Id(commentId, user.getId());
         boolean liked;
@@ -63,9 +65,9 @@ public class CommentReactionService {
     @Transactional
     public boolean toggleBookmark(Long commentId, String username) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var existing = commentBookmarkRepository.findByComment_IdAndUser_Id(commentId, user.getId());
         if (existing.isPresent()) {
@@ -84,7 +86,7 @@ public class CommentReactionService {
     @Transactional
     public void removeBookmark(Long commentId, String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         commentBookmarkRepository.findByComment_IdAndUser_Id(commentId, user.getId())
                 .ifPresent(commentBookmarkRepository::delete);
     }
@@ -93,9 +95,9 @@ public class CommentReactionService {
     @Transactional
     public void removeLike(Long commentId, String username) {
         postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         commentLikeRepository.findByComment_IdAndUser_Id(commentId, user.getId()).ifPresent(like -> {
             commentLikeRepository.delete(like);
             postCommentRepository.decrementLikeCount(commentId);

@@ -1,5 +1,7 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.mail.MailService;
 import com.webschool.webschool.post.util.BannedWordFilter;
@@ -32,7 +34,7 @@ public class UserService {
 
     public User getByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
     @Transactional

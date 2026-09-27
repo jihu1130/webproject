@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 // 캘린더 페이지와 NEIS 기반 조회 API(학교 검색/반 목록/시간표/급식/학사일정/방학 D-Day).
 // 2026-09-28 파일 정리 때 "오늘의 한마디"(/school/comments/**, /school/api/comments/**)는
@@ -135,11 +134,5 @@ public class SchoolController {
 
         VacationDdayDto dday = schoolService.getVacationDday(atptCode, schoolCode);
         return dday != null ? ResponseEntity.ok(dday) : ResponseEntity.notFound().build();
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }

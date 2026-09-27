@@ -1,4 +1,6 @@
 package com.webschool.webschool.user.admin.service;
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.user.service.UserPenaltyService;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
@@ -244,7 +246,7 @@ public class AdminUserService {
     @Transactional
     public void promoteToSuperAdmin(Long id, String actingAdminUsername) {
         User actingAdmin = userRepository.findByUsername(actingAdminUsername)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         if (!actingAdmin.isSuperAdmin()) {
             throw new IllegalArgumentException("총관리자만 다른 계정을 총관리자로 승격할 수 있습니다.");
         }

@@ -7,7 +7,6 @@ import com.webschool.webschool.post.service.CommentReportService;
 import com.webschool.webschool.post.service.PostCommentService;
 import com.webschool.webschool.post.service.PostService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -96,11 +95,5 @@ public class PostCommentController {
             return null;
         }
         return authentication.getName();
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }

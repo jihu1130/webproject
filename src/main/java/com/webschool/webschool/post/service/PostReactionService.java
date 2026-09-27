@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.Post;
@@ -36,9 +38,9 @@ public class PostReactionService {
     @Transactional
     public Map<String, Object> toggleLike(Long id, String username) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var existing = postLikeRepository.findByPost_IdAndUser_Id(id, user.getId());
         boolean liked;
@@ -69,9 +71,9 @@ public class PostReactionService {
     @Transactional
     public boolean toggleBookmark(Long id, String username) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var existing = postBookmarkRepository.findByPost_IdAndUser_Id(id, user.getId());
         if (existing.isPresent()) {
@@ -91,7 +93,7 @@ public class PostReactionService {
     @Transactional
     public void removeBookmark(Long id, String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         postBookmarkRepository.findByPost_IdAndUser_Id(id, user.getId())
                 .ifPresent(postBookmarkRepository::delete);
     }
@@ -101,9 +103,9 @@ public class PostReactionService {
     @Transactional
     public void removeLike(Long id, String username) {
         postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         postLikeRepository.findByPost_IdAndUser_Id(id, user.getId()).ifPresent(like -> {
             postLikeRepository.delete(like);
             postRepository.decrementLikeCount(id);

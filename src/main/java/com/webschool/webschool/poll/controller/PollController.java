@@ -9,7 +9,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 // 설문 위젯(post/detail.html, 캘린더 한마디)이 자기 데이터를 스스로 불러오는 전용 API - 알림
 // 읽지않음 카운트(/notifications/unread-count)와 동일한 "위젯이 별도 API로 자기 상태를 조회하는"
@@ -51,11 +50,5 @@ public class PollController {
                                Authentication authentication) {
         pollService.vote(id, request.getOptionIds(), request.getCustomOptionText(), authentication.getName());
         return pollService.getResult(id, authentication.getName());
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }

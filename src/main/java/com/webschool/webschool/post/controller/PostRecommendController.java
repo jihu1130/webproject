@@ -12,7 +12,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 // 추천 게시글 랭킹(2026-09-16, 기존 PostContestController를 대체) - 목록(/posts/contest)은
 // 일간/주간/월간/전체 4개 탭을 전부 permitAll로 열어둔다(/posts, /posts/*와 동일한 열람 원칙),
@@ -46,11 +45,5 @@ public class PostRecommendController {
     public ResponseEntity<Void> recommend(@PathVariable String uuid, Authentication authentication) {
         postRecommendService.recommend(uuid, authentication.getName());
         return ResponseEntity.ok().build();
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }

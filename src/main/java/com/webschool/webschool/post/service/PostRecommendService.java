@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.Post;
@@ -62,9 +64,9 @@ public class PostRecommendService {
     @Transactional
     public void recommend(String postUuid, String username) {
         Post post = postRepository.findByUuid(postUuid)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         User voter = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (post.isDeleted() || post.isBlind()) {
             throw new IllegalArgumentException("이 게시물은 추천할 수 없습니다.");

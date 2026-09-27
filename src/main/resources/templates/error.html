@@ -15,9 +15,14 @@
     <div class="admin-container admin-container-narrow">
         <div class="admin-empty">
             <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.6rem; margin-bottom: 10px; display: block;"></i>
-            <span th:if="${status == 404}">요청하신 페이지를 찾을 수 없어요.</span>
-            <span th:if="${status == 403}">이 페이지에 접근할 권한이 없어요.</span>
-            <span th:unless="${status == 404 or status == 403}">일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.</span>
+            <!-- errorMessage: GlobalExceptionHandler가 4xx일 때만 넘기는 구체적인 안내 문구(없으면 상태별 기본 문구) -->
+            <span th:if="${errorMessage != null}" th:text="${errorMessage}"></span>
+            <th:block th:if="${errorMessage == null}">
+                <span th:if="${status == 404}">요청하신 페이지를 찾을 수 없어요.</span>
+                <span th:if="${status == 403}">이 페이지에 접근할 권한이 없어요.</span>
+                <span th:if="${status == 400}">요청을 처리할 수 없어요. 입력 내용을 확인해주세요.</span>
+                <span th:unless="${status == 404 or status == 403 or status == 400}">일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.</span>
+            </th:block>
             <br>
             <a href="/">홈으로 돌아가기</a>
         </div>

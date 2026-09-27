@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
@@ -31,10 +33,10 @@ public class CommentReportService {
     @Transactional
     public CommentReportResultDto reportComment(Long commentId, String username, String reason) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
         }
 
         if (comment.isReportCleared()) {
@@ -50,7 +52,7 @@ public class CommentReportService {
         }
 
         User reporter = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         String trimmedReason = reason == null || reason.isBlank() ? null : reason.trim();
         if (trimmedReason != null && trimmedReason.length() > 300) {

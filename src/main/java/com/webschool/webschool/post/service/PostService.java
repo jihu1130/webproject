@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.dto.PostDetailDto;
@@ -80,19 +82,19 @@ public class PostService {
     // 공개 URL(/posts/{uuid})을 내부 PK로 변환 - 컨트롤러가 요청을 받자마자 제일 먼저 호출한다
     public Long resolveIdByUuid(String uuid) {
         return postRepository.findByUuid(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."))
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND))
                 .getId();
     }
 
     @Transactional
     public PostDetailDto getDetail(Long id, String currentUsername, boolean countView) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         // 소프트 삭제된 게시물은 일반 사용자 화면에서는 완전히 사라진 것처럼 처리 (작성자 본인도 예외 없음).
         // 관리자가 삭제된 글을 봐야 하면 AdminPostService의 별도 경로를 사용한다.
         if (post.isDeleted()) {
-            throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         boolean mine = currentUsername != null && post.getAuthor() != null
@@ -100,7 +102,7 @@ public class PostService {
 
         // 블라인드 처리된 게시물은 작성자 본인과 관리자만 열람 가능 (그 외에는 존재하지 않는 것처럼 처리)
         if (post.isBlind() && !mine && !isAdmin(currentUsername)) {
-            throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         // 공개범위 PRIVATE(비공개) - 링크(uuid)를 알아도 작성자 본인과 관리자 외에는 못 연다.
@@ -109,7 +111,7 @@ public class PostService {
         // 자체를 막는다. 블라인드와 동일하게 "없는 글"처럼 처리해서 uuid로 존재 여부를 떠보는 것도
         // 막는다(존재하면 403, 없으면 404처럼 응답이 갈리면 그 자체가 정보 노출이라서).
         if (post.getVisibility() == Post.Visibility.PRIVATE && !mine && !isAdmin(currentUsername)) {
-            throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         // 원자적 벌크 UPDATE로 조회수 증가(PostRepository.incrementViewCount() 참고) - 엔티티
@@ -131,7 +133,7 @@ public class PostService {
         Post.Category category = parseCategory(form.getCategory());
 
         User author = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         userPenaltyService.assertCanCreatePost(author);
 
@@ -153,10 +155,10 @@ public class PostService {
 
     public PostFormDto getForEdit(Long id, String username) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (post.isDeleted()) {
-            throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
@@ -178,10 +180,10 @@ public class PostService {
         Post.Category category = parseCategory(form.getCategory());
 
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (post.isDeleted()) {
-            throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
@@ -208,10 +210,10 @@ public class PostService {
     @Transactional
     public void deletePost(Long id, String username) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (post.isDeleted()) {
-            throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {

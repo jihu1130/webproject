@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.global.upload.FileStorageService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostImage;
@@ -90,7 +92,7 @@ public class PostImageService {
         }
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물에만 이미지를 추가할 수 있습니다.");
         }
@@ -130,7 +132,7 @@ public class PostImageService {
         }
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
             throw new IllegalArgumentException("본인이 작성한 게시물의 이미지만 삭제할 수 있습니다.");
         }

@@ -2,7 +2,6 @@ package com.webschool.webschool.user.controller;
 
 import com.webschool.webschool.user.service.UserBlockService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -34,11 +33,5 @@ public class UserBlockController {
         } catch (IllegalArgumentException ignored) {
         }
         return "redirect:/mypage/activity?tab=blocks";
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }

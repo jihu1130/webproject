@@ -1,4 +1,6 @@
 package com.webschool.webschool.post.admin.service;
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.post.service.PostImageService;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
@@ -141,7 +143,7 @@ public class AdminPostService {
     // 소프트 삭제된 게시물도 id로 직접 조회 가능 (postRepository.findById()는 deleted 여부를 필터링하지 않음)
     public AdminPostDetailDto getPostDetail(Long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         List<AdminReportItemDto> reports = postReportRepository.findByPost_IdOrderByCreatedAtDesc(id).stream()
                 .map(this::toReportItemDto)
@@ -176,7 +178,7 @@ public class AdminPostService {
     @Transactional
     public void setBlind(Long id, boolean blind) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         post.setBlind(blind);
         if (blind) {
             // 다시 블라인드 처리한다는 건 "문제없음" 판결을 뒤집는 것과 같다
@@ -198,7 +200,7 @@ public class AdminPostService {
     @Transactional
     public void clearReport(Long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         post.setReportCleared(true);
         post.setBlind(false);
         notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
@@ -212,7 +214,7 @@ public class AdminPostService {
     @Transactional
     public void unclearReport(Long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         post.setReportCleared(false);
         adminActionLogService.log("POST", id, "REPORT_UNCLEAR", truncate(post.getTitle()));
     }
@@ -221,7 +223,7 @@ public class AdminPostService {
     @Transactional
     public void clearCommentReport(Long commentId) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         comment.setReportCleared(true);
         comment.setBlind(false);
         notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
@@ -234,7 +236,7 @@ public class AdminPostService {
     @Transactional
     public void unclearCommentReport(Long commentId) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         comment.setReportCleared(false);
         adminActionLogService.log("COMMENT", commentId, "REPORT_UNCLEAR", null);
     }
@@ -245,7 +247,7 @@ public class AdminPostService {
     @Transactional
     public void setCommentBlind(Long commentId, boolean blind) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         comment.setBlind(blind);
         if (blind) {
             comment.setReportCleared(false);
@@ -264,7 +266,7 @@ public class AdminPostService {
     @Transactional
     public void deleteComment(Long commentId) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         comment.setDeleted(true);
         comment.setDeletedAt(LocalDateTime.now());
         adminActionLogService.log("COMMENT", commentId, "DELETE", null);
@@ -273,7 +275,7 @@ public class AdminPostService {
     @Transactional
     public void restoreComment(Long commentId) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         comment.setDeleted(false);
         comment.setDeletedAt(null);
         adminActionLogService.log("COMMENT", commentId, "RESTORE", null);
@@ -284,7 +286,7 @@ public class AdminPostService {
     @Transactional
     public void deletePost(Long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         post.setDeleted(true);
         post.setDeletedAt(LocalDateTime.now());
         adminActionLogService.log("POST", id, "DELETE", truncate(post.getTitle()));
@@ -294,7 +296,7 @@ public class AdminPostService {
     @Transactional
     public void restorePost(Long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         post.setDeleted(false);
         post.setDeletedAt(null);
         adminActionLogService.log("POST", id, "RESTORE", truncate(post.getTitle()));

@@ -1,5 +1,7 @@
 package com.webschool.webschool.school.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.school.domain.PersonalEvent;
 import com.webschool.webschool.school.dto.PersonalEventDto;
 import com.webschool.webschool.school.repository.PersonalEventRepository;
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 // 캘린더에 본인만 볼 수 있게 추가하는 개인 일정 - ScheduleCommentService와 동일한 소유권 검증
-// 패턴(IllegalArgumentException, SchoolController의 공용 @ExceptionHandler가 그대로 처리).
+// 패턴(IllegalArgumentException, global.error.GlobalExceptionHandler가 400으로 처리).
 @Service
 @RequiredArgsConstructor
 public class PersonalEventService {
@@ -84,7 +86,7 @@ public class PersonalEventService {
 
     private User getUser(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
     private String validateTitle(String title) {

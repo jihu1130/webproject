@@ -4,7 +4,6 @@ import com.webschool.webschool.school.dto.PersonalEventDto;
 import com.webschool.webschool.school.service.PersonalEventService;
 import com.webschool.webschool.school.service.SchoolService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -61,11 +60,5 @@ public class PersonalEventController {
 
     private LocalDate parseDate(String date) {
         return SchoolService.parseYmd(date);
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }

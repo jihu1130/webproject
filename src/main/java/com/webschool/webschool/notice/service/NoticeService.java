@@ -1,5 +1,7 @@
 package com.webschool.webschool.notice.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.notice.domain.Notice;
@@ -46,7 +48,7 @@ public class NoticeService {
     @Transactional
     public synchronized void createNotice(String username, String title, String content) {
         User author = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (!author.isSuperAdmin() && !author.isCanManageNotices()) {
             throw new IllegalArgumentException("공지사항 작성 권한이 없습니다.");
@@ -103,7 +105,7 @@ public class NoticeService {
     @Transactional
     public void updateNotice(Long id, String username, String title, String content) {
         User actor = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         if (!actor.isSuperAdmin() && !actor.isCanManageNotices()) {
             throw new IllegalArgumentException("공지사항 수정 권한이 없습니다.");
         }
@@ -126,7 +128,7 @@ public class NoticeService {
     @Transactional
     public void deleteNotice(Long id, String username) {
         User actor = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         if (!actor.isSuperAdmin() && !actor.isCanManageNotices()) {
             throw new IllegalArgumentException("공지사항 삭제 권한이 없습니다.");
         }

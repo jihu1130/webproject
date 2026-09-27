@@ -1,5 +1,7 @@
 package com.webschool.webschool.school.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.school.domain.School;
 import com.webschool.webschool.school.domain.ScheduleComment;
@@ -76,7 +78,7 @@ public class ScheduleCommentService {
 
         School school = findOrCreateSchool(atptCode, schoolCode);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         userPenaltyService.assertCanComment(user);
 
@@ -98,10 +100,10 @@ public class ScheduleCommentService {
         String trimmed = validateContent(content, false);
 
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
         }
 
         if (comment.getUser() == null || !comment.getUser().getUsername().equals(username)) {
@@ -124,10 +126,10 @@ public class ScheduleCommentService {
     @Transactional
     public void deleteComment(Long id, String username) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
         }
 
         if (comment.getUser() == null || !comment.getUser().getUsername().equals(username)) {
@@ -143,10 +145,10 @@ public class ScheduleCommentService {
     @Transactional
     public ScheduleCommentReportResultDto reportComment(Long id, String username, String reason) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
         }
 
         if (comment.isReportCleared()) {
@@ -162,7 +164,7 @@ public class ScheduleCommentService {
         }
 
         User reporter = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         String trimmedReason = reason == null || reason.isBlank() ? null : reason.trim();
         if (trimmedReason != null && trimmedReason.length() > 300) {
@@ -205,7 +207,7 @@ public class ScheduleCommentService {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var existing = scheduleCommentLikeRepository.findByComment_IdAndUser_Id(id, user.getId());
         boolean liked;
@@ -235,7 +237,7 @@ public class ScheduleCommentService {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var existing = scheduleCommentBookmarkRepository.findByComment_IdAndUser_Id(id, user.getId());
         if (existing.isPresent()) {
@@ -254,7 +256,7 @@ public class ScheduleCommentService {
     @Transactional
     public void removeBookmark(Long id, String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         scheduleCommentBookmarkRepository.findByComment_IdAndUser_Id(id, user.getId())
                 .ifPresent(scheduleCommentBookmarkRepository::delete);
     }
@@ -266,7 +268,7 @@ public class ScheduleCommentService {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         scheduleCommentLikeRepository.findByComment_IdAndUser_Id(id, user.getId()).ifPresent(like -> {
             scheduleCommentLikeRepository.delete(like);
             scheduleCommentRepository.decrementLikeCount(id);

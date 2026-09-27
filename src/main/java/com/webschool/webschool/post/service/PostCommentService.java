@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
@@ -85,18 +87,18 @@ public class PostCommentService {
         String trimmed = validateContent(content);
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         if (post.isDeleted()) {
-            throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
         // 비공개(PRIVATE) 게시물은 작성자 본인 외에는 상세 페이지 자체가 안 열리므로(PostService.
         // getDetail()) 댓글 폼을 볼 수도 없지만, 이 엔드포인트를 직접 호출하는 경로까지 막아둔다.
         if (post.getVisibility() == Post.Visibility.PRIVATE
                 && (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username))) {
-            throw new IllegalArgumentException("게시물을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
         User author = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         userPenaltyService.assertCanComment(author);
 
@@ -162,10 +164,10 @@ public class PostCommentService {
         String trimmed = validateContent(content);
 
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
         }
 
         if (comment.getAuthor() == null || !comment.getAuthor().getUsername().equals(username)) {
@@ -186,10 +188,10 @@ public class PostCommentService {
     @Transactional
     public void deleteComment(Long commentId, String username) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
         }
 
         if (comment.getAuthor() == null || !comment.getAuthor().getUsername().equals(username)) {
@@ -216,9 +218,9 @@ public class PostCommentService {
     @Transactional
     public boolean acceptAnswer(Long commentId, String username) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
         }
 
         if (comment.getParentComment() != null) {

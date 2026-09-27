@@ -58,7 +58,7 @@ public class SchoolService {
             DateTimeFormatter.ofPattern("uuuuMMdd").withResolverStyle(ResolverStyle.STRICT);
 
     // 캘린더 API들이 받는 yyyyMMdd 문자열을 검증해서 파싱한다. 형식이 틀리거나 달력에 없는
-    // 날짜면 IllegalArgumentException - SchoolController의 공용 @ExceptionHandler가 400으로
+    // 날짜면 IllegalArgumentException - global.error.GlobalExceptionHandler가 400으로
     // 응답한다(예전엔 DateTimeParseException이 그대로 올라가 500이 났음, todo.md #24 부하
     // 테스트 중 발견).
     public static LocalDate parseYmd(String dateStr) {

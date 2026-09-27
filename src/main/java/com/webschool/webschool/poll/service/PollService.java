@@ -1,5 +1,7 @@
 package com.webschool.webschool.poll.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.poll.domain.Poll;
 import com.webschool.webschool.poll.domain.PollOption;
 import com.webschool.webschool.poll.domain.PollVote;
@@ -72,9 +74,9 @@ public class PollService {
         validateQuestion(req.getQuestion());
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         User creator = userRepository.findByUsername(creatorUsername)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         Poll poll = buildPoll(creator, req);
         poll.setPost(post);
@@ -92,7 +94,7 @@ public class PollService {
         ScheduleComment comment = scheduleCommentRepository.findById(scheduleCommentId)
                 .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
         User creator = userRepository.findByUsername(creatorUsername)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         Poll poll = buildPoll(creator, req);
         poll.setScheduleComment(comment);
@@ -151,7 +153,7 @@ public class PollService {
                 .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
         User voter = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (!canAccess(poll, voter)) {
             throw new IllegalArgumentException("이 설문에 참여할 수 없습니다.");

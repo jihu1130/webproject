@@ -1,5 +1,7 @@
 package com.webschool.webschool.notification.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.dto.NotificationDto;
 import com.webschool.webschool.notification.repository.NotificationRepository;
@@ -74,7 +76,7 @@ public class NotificationService {
 
     public Page<NotificationDto> getPage(String username, int page, int size) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         return notificationRepository
                 .findByRecipient_IdOrderByCreatedAtDesc(user.getId(), PageRequest.of(Math.max(page, 0), size))
                 .map(this::toDto);
@@ -120,7 +122,7 @@ public class NotificationService {
     @Transactional
     public void markAllRead(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         notificationRepository.findByRecipient_IdAndReadFalse(user.getId())
                 .forEach(n -> n.setRead(true));
     }

@@ -1,5 +1,7 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.domain.UserBlock;
 import com.webschool.webschool.user.dto.UserBlockDto;
@@ -34,7 +36,7 @@ public class UserBlockService {
 
     public List<UserBlockDto> getMyBlocks(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         return userBlockRepository.findActiveByBlocker_IdOrderByCreatedAtDesc(user.getId(), LocalDateTime.now()).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -44,7 +46,7 @@ public class UserBlockService {
     @Transactional
     public void block(String username, Long targetId, Integer durationDays) {
         User blocker = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         User target = userRepository.findById(targetId)
                 .orElseThrow(() -> new IllegalArgumentException("차단할 사용자를 찾을 수 없습니다."));
 

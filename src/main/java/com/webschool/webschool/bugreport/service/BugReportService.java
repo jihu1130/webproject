@@ -1,5 +1,7 @@
 package com.webschool.webschool.bugreport.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.bugreport.domain.BugReport;
 import com.webschool.webschool.bugreport.domain.BugReportAttachment;
@@ -277,7 +279,7 @@ public class BugReportService {
 
     private void requireSuperAdmin(String actorUsername) {
         User actor = userRepository.findByUsername(actorUsername)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         if (!actor.isSuperAdmin()) {
             throw new IllegalArgumentException("버그 리포트 관리 권한이 없습니다.");
         }

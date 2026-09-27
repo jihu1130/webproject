@@ -1,5 +1,7 @@
 package com.webschool.webschool.post.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
@@ -32,7 +34,7 @@ public class PostReportService {
     @Transactional
     public PostReportResultDto reportPost(Long id, String username, String reason) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (post.isReportCleared()) {
             throw new IllegalArgumentException("이미 검토되어 문제없다고 판정된 게시물입니다.");
@@ -47,7 +49,7 @@ public class PostReportService {
         }
 
         User reporter = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         String trimmedReason = reason == null || reason.isBlank() ? null : reason.trim();
         if (trimmedReason != null && trimmedReason.length() > 300) {

@@ -8,7 +8,6 @@ import com.webschool.webschool.school.dto.ScheduleCommentReportResultDto;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.school.service.SchoolService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -81,8 +80,8 @@ public class ScheduleCommentController {
 
     // 페이지 폼 제출 - JSON을 돌려주는 6번 API(createComment)와 달리 성공 시 새로 만든 한마디의
     // 퍼머링크(/school/comments/{id})로 리다이렉트해서(위 4-4) 캘린더로 되돌아가며 방금 쓴 한마디가
-    // 자동으로 하이라이트되게 한다. 검증 실패는 클래스 하단의 JSON용 @ExceptionHandler로 보내면 안
-    // 되므로(페이지 요청인데 JSON이 내려가 버림) 여기서 직접 잡아서 같은 폼을 에러와 함께 다시 그린다.
+    // 자동으로 하이라이트되게 한다. 검증 실패를 그냥 흘려보내면 GlobalExceptionHandler가 에러 화면으로
+    // 보내버리므로(입력하던 내용이 날아감) 여기서 직접 잡아서 같은 폼을 에러와 함께 다시 그린다.
     @PostMapping("/comments")
     public String createCommentPage(@RequestParam(defaultValue = "N10") String atptCode,
                                      @RequestParam(defaultValue = "8181104") String schoolCode,
@@ -298,11 +297,5 @@ public class ScheduleCommentController {
         req.setSameSchoolOnly(sameSchoolOnly);
         req.setExpiresAt(expiresAt);
         return req;
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }
