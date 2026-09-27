@@ -398,7 +398,7 @@ public class SchoolController {
     }
 
     private LocalDate parseDate(String date) {
-        return LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyyMMdd"));
+        return SchoolService.parseYmd(date);
     }
 
     // 11. 개인 전용 일정 - 나만 볼 수 있는 캘린더 메모(학교/학년/반과 무관). 항상 로그인 필요

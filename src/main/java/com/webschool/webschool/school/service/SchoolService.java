@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -48,6 +50,27 @@ public class SchoolService {
     // 시간표/급식 DB 캐시가 한번 저장되면 영구 반환되던 문제 - updatedAt 기준
     // 이 시간이 지나면 캐시를 버리고 NEIS를 다시 조회한다.
     private static final long CACHE_TTL_HOURS = 24;
+    // STRICT여야 "20260230"처럼 달력에 없는 날짜를 거부한다 - 기본값(SMART)은 이런 값을
+    // 조용히 그 달 마지막 날(2월 28일)로 보정해버려서, 캐시는 2월 28일로 저장되는데 NEIS에는
+    // 원래 문자열 그대로 조회하는 불일치가 생긴다. STRICT에선 yyyy(연대 기준)가 아니라
+    // uuuu(연도)를 써야 파싱 자체가 된다.
+    private static final DateTimeFormatter STRICT_YMD =
+            DateTimeFormatter.ofPattern("uuuuMMdd").withResolverStyle(ResolverStyle.STRICT);
+
+    // 캘린더 API들이 받는 yyyyMMdd 문자열을 검증해서 파싱한다. 형식이 틀리거나 달력에 없는
+    // 날짜면 IllegalArgumentException - SchoolController의 공용 @ExceptionHandler가 400으로
+    // 응답한다(예전엔 DateTimeParseException이 그대로 올라가 500이 났음, todo.md #24 부하
+    // 테스트 중 발견).
+    public static LocalDate parseYmd(String dateStr) {
+        if (dateStr == null) {
+            throw new IllegalArgumentException("날짜가 필요합니다.");
+        }
+        try {
+            return LocalDate.parse(dateStr, STRICT_YMD);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("올바르지 않은 날짜입니다: " + dateStr);
+        }
+    }
 
     @Transactional
     public SchoolCalendarDto getCalendarDetails(String atptCode, String schoolCode, String dateStr, Integer grade, String classNm) {
@@ -56,7 +79,7 @@ public class SchoolService {
 
     @Transactional
     public SchoolCalendarDto getCalendarDetails(String atptCode, String schoolCode, String dateStr, Integer grade, String classNm, String schoolKind) {
-        LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+        LocalDate date = parseYmd(dateStr);
 
         // 1. 학교 엔티티 조회 (없으면 기본 생성 및 저장)
         School school = schoolRepository.findBySdSchulCode(schoolCode)
