@@ -2,6 +2,7 @@ package com.webschool.webschool.global.error;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.test.web.servlet.MockMvc;
@@ -9,6 +10,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -67,6 +70,14 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void notAcceptableJsonRequestIs406WithoutSecondaryFailure() throws Exception {
+        // JSON만 만들 수 있는 핸들러에 text/html만 받겠다는 요청 - 에러 본문을 쓰려다 다시 실패하지 않고 406
+        // (String 반환은 text/html로도 쓸 수 있어 406이 안 나므로, 실제 API처럼 객체를 돌려주는 핸들러로 확인)
+        mockMvc.perform(get("/api/object").accept(MediaType.TEXT_HTML))
+                .andExpect(status().isNotAcceptable());
+    }
+
+    @Test
     void unexpectedExceptionIs500WithoutLeakingMessage() throws Exception {
         mockMvc.perform(get("/api/boom"))
                 .andExpect(status().isInternalServerError())
@@ -112,6 +123,12 @@ class GlobalExceptionHandlerTest {
         @ResponseBody
         String number(@RequestParam int n) {
             return "ok " + n;
+        }
+
+        @GetMapping("/api/object")
+        @ResponseBody
+        Map<String, Object> object() {
+            return Map.of("ok", true);
         }
 
         @GetMapping("/api/boom")

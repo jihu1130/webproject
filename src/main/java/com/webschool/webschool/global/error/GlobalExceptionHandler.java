@@ -8,10 +8,12 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.ErrorResponse;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -82,6 +84,11 @@ public class GlobalExceptionHandler {
         if (e instanceof AsyncRequestNotUsableException || isClientAbort(e)) {
             log.debug("Client aborted: {} {}", request.getMethod(), request.getRequestURI());
             return null;
+        }
+        // 클라이언트가 받을 수 없는 형식만 요청한 경우(예: JSON API에 Accept: text/html) - 에러 본문을
+        // 쓰려 해도 같은 이유로 또 실패하므로 본문 없이 상태만 돌려준다(Spring 기본 처리와 동일한 406).
+        if (e instanceof HttpMediaTypeNotAcceptableException) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
         }
         // Spring MVC 내장 예외(필수 파라미터 누락/타입 불일치 400, 없는 경로 404, 지원 안 하는 메서드
         // 405 등)는 ErrorResponse로 상태를 알려준다 - 사용자 요청 쪽 문제라 ERROR 로그는 남기지 않는다.
