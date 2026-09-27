@@ -1,9 +1,9 @@
 # 운영 서버(EC2) 전용 - todo.md #24 "Docker 도입 2단계". 로컬 docker-compose.yml과
-# 별개 파일인 이유: 운영 DB는 아직 베어메탈 MySQL(EC2 로컬 설치, todo.md #24 2단계
-# 완료 전까지 유지)이라 db 컨테이너가 없고, app 컨테이너가 host 네트워크로 그
-# 베어메탈 MySQL(localhost:3306)에 기존과 동일하게 접속한다.
+# 별개 파일인 이유: app 컨테이너가 host 네트워크로 localhost:3306에 접속하는 구조라
+# (2026-09-16 앱 전환 당시 DB가 베어메탈 MySQL이었던 것을 그대로 유지하기 위함)
+# 로컬 compose(브리지 네트워크, db 서비스명으로 접속)와 접속 방식이 다르다.
 #
-# 시크릿 관리 - .env/docker profile을 쓰지 않고 기존 /opt/webschool/application.yml을
+# 시크릿 관리 - app은 .env/docker profile을 쓰지 않고 기존 /opt/webschool/application.yml을
 # 그대로 bind mount한다(read-only). 이유: 이 파일에 이미 운영 DB 비밀번호/NEIS 키/
 # jwt.secret/구글 OAuth/SMTP 자격증명이 전부 들어있고(지금까지 베어메탈 jar가 써온
 # 바로 그 파일), Spring Boot가 작업 디렉터리(WORKDIR /app)의 application.yml을
@@ -11,6 +11,10 @@
 # 재입력 없이 기존 설정을 그대로 재사용할 수 있다 - 전환 중 실수로 시크릿을
 # 잘못 옮겨적을 위험 자체를 없앤다(오늘 jwt.secret 관련 장애 참고, 같은 실수를
 # 반복하지 않기 위한 설계).
+#
+# 이 파일은 서버의 /opt/webschool/docker-compose.prod.yml과 같은 내용으로 유지한다 -
+# CI 배포는 서버 쪽 파일을 쓰므로 이 파일을 고쳐도 서버에 자동 반영되지 않는다
+# (바꿀 땐 서버 파일도 SSM으로 직접 교체할 것).
 services:
   app:
     image: 938436186735.dkr.ecr.ap-northeast-2.amazonaws.com/webschool:latest
@@ -21,3 +25,30 @@ services:
     volumes:
       - /opt/webschool/application.yml:/app/application.yml:ro
       - /opt/webschool/logs:/app/logs
+
+  # 운영 DB 컨테이너 (2026-09-27 호스트 mysqld 8.0.46에서 컷오버, AWS.md 8단계 3번).
+  # 호스트 mysqld와 같은 127.0.0.1:3306 + 같은 root 비밀번호(서버의 /opt/webschool/.env,
+  # 권한 600, git 추적 안 함)라서 app(host 네트워크)의 application.yml 접속 정보는
+  # 그대로다. app에 depends_on을 일부러 안 넣음 - 롤백(컨테이너 내리고 호스트 mysqld
+  # 다시 켜기) 때 app만 따로 띄울 수 있어야 해서.
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: webschool
+      TZ: UTC
+    # t3.micro(1GB) 메모리 절약 - 호스트 my.cnf엔 튜닝 값이 없었음(기본 buffer pool 128M)
+    command: ["--innodb-buffer-pool-size=128M", "--performance-schema=OFF"]
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysqladmin ping -uroot -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql-data:
