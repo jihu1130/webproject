@@ -12,6 +12,8 @@ import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.post.service.PostRecommendService;
 import com.webschool.webschool.post.service.PostImageService;
+import com.webschool.webschool.post.service.PostReactionService;
+import com.webschool.webschool.post.service.PostReportService;
 import com.webschool.webschool.post.service.PostService;
 import com.webschool.webschool.post.service.PostViewService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,6 +50,8 @@ public class PostController {
     }
 
     private final PostService postService;
+    private final PostReportService postReportService;
+    private final PostReactionService postReactionService;
     private final PostImageService postImageService;
     private final NoticeService noticeService;
     private final PostViewService postViewService;
@@ -221,7 +225,7 @@ public class PostController {
                                        @RequestParam(required = false) String reason,
                                        Authentication authentication) {
         Long id = postService.resolveIdByUuid(uuid);
-        PostReportResultDto result = postService.reportPost(id, authentication.getName(), reason);
+        PostReportResultDto result = postReportService.reportPost(id, authentication.getName(), reason);
         return Map.of("success", true, "reportCount", result.reportCount(), "blind", result.blind());
     }
 
@@ -229,14 +233,14 @@ public class PostController {
     @ResponseBody
     public Map<String, Object> like(@PathVariable String uuid, Authentication authentication) {
         Long id = postService.resolveIdByUuid(uuid);
-        return postService.toggleLike(id, authentication.getName());
+        return postReactionService.toggleLike(id, authentication.getName());
     }
 
     @PostMapping("/{uuid}/bookmark")
     @ResponseBody
     public Map<String, Object> bookmark(@PathVariable String uuid, Authentication authentication) {
         Long id = postService.resolveIdByUuid(uuid);
-        boolean bookmarked = postService.toggleBookmark(id, authentication.getName());
+        boolean bookmarked = postReactionService.toggleBookmark(id, authentication.getName());
         return Map.of("bookmarked", bookmarked);
     }
 

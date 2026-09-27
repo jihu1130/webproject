@@ -3,12 +3,8 @@ package com.webschool.webschool.post.service;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
-import com.webschool.webschool.post.domain.CommentBookmark;
-import com.webschool.webschool.post.domain.CommentLike;
-import com.webschool.webschool.post.domain.CommentReport;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostComment;
-import com.webschool.webschool.post.dto.CommentReportResultDto;
 import com.webschool.webschool.post.dto.PostCommentDto;
 import com.webschool.webschool.post.repository.CommentBookmarkRepository;
 import com.webschool.webschool.post.repository.CommentLikeRepository;
@@ -30,18 +26,18 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+// 게시글 댓글 목록/작성/수정/삭제/QNA 답변 채택. 2026-09-28 파일 정리 때 신고(CommentReportService)와
+// 좋아요·북마크(CommentReactionService)를 분리했다 - PostService와 같은 축.
 @Service
 @RequiredArgsConstructor
 public class PostCommentService {
 
     private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("MM.dd HH:mm");
     private static final int MAX_CONTENT_LENGTH = 500;
-    private static final int BLIND_THRESHOLD = 3; // 서로 다른 사용자 3명이 신고하면 자동 블라인드 (PostService와 동일)
     private static final String BLIND_PLACEHOLDER = "신고 누적으로 블라인드 처리된 댓글입니다.";
 
     private final PostCommentRepository postCommentRepository;
@@ -214,119 +210,6 @@ public class PostCommentService {
         adminActionLogService.log("COMMENT", comment.getId(), "DELETE", truncate(comment.getContent()));
     }
 
-    @Transactional
-    public CommentReportResultDto reportComment(Long commentId, String username, String reason) {
-        PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
-
-        if (comment.isDeleted()) {
-            throw new IllegalArgumentException("댓글을 찾을 수 없습니다.");
-        }
-
-        if (comment.isReportCleared()) {
-            throw new IllegalArgumentException("이미 검토되어 문제없다고 판정된 댓글입니다.");
-        }
-
-        if (comment.getAuthor() != null && comment.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 댓글은 신고할 수 없습니다.");
-        }
-
-        if (commentReportRepository.existsByComment_IdAndReporter_Username(commentId, username)) {
-            throw new IllegalArgumentException("이미 신고한 댓글입니다.");
-        }
-
-        User reporter = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
-
-        String trimmedReason = reason == null || reason.isBlank() ? null : reason.trim();
-        if (trimmedReason != null && trimmedReason.length() > 300) {
-            trimmedReason = trimmedReason.substring(0, 300);
-        }
-        BannedWordFilter.validate(trimmedReason);
-
-        CommentReport report = new CommentReport();
-        report.setComment(comment);
-        report.setReporter(reporter);
-        report.setReason(trimmedReason);
-        commentReportRepository.save(report);
-        adminActionLogService.log("COMMENT", commentId, "REPORT", trimmedReason != null ? truncate(trimmedReason) : truncate(comment.getContent()));
-
-        boolean wasBlind = comment.isBlind();
-        postCommentRepository.incrementReportCount(commentId);
-        int displayReportCount = comment.getReportCount() + 1;
-        boolean nowBlind = wasBlind;
-        if (!wasBlind && displayReportCount >= BLIND_THRESHOLD) {
-            comment.setBlind(true);
-            nowBlind = true;
-            notificationService.notify(comment.getAuthor(), Notification.Type.REPORT_ACTION,
-                    "작성하신 댓글이 신고 누적으로 블라인드 처리되었습니다.",
-                    "/posts/" + comment.getPost().getUuid());
-        }
-
-        return new CommentReportResultDto(displayReportCount, nowBlind);
-    }
-
-    // 신고 취소 - PostService.cancelReport()와 동일한 이유/패턴(자동 언블라인드는 하지 않음).
-    @Transactional
-    public void cancelReport(Long commentId, String username) {
-        commentReportRepository.findByComment_IdAndReporter_Username(commentId, username).ifPresent(report -> {
-            commentReportRepository.delete(report);
-            postCommentRepository.decrementReportCount(commentId);
-            adminActionLogService.log("COMMENT", commentId, "REPORT_CANCEL", truncate(report.getComment().getContent()));
-        });
-    }
-
-    // PostService.toggleLike()/toggleBookmark()와 동일한 패턴
-    @Transactional
-    public Map<String, Object> toggleLike(Long commentId, String username) {
-        PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
-
-        var existing = commentLikeRepository.findByComment_IdAndUser_Id(commentId, user.getId());
-        boolean liked;
-        int displayLikeCount;
-        if (existing.isPresent()) {
-            commentLikeRepository.delete(existing.get());
-            postCommentRepository.decrementLikeCount(commentId);
-            displayLikeCount = Math.max(0, comment.getLikeCount() - 1);
-            liked = false;
-        } else {
-            CommentLike like = new CommentLike();
-            like.setComment(comment);
-            like.setUser(user);
-            commentLikeRepository.save(like);
-            postCommentRepository.incrementLikeCount(commentId);
-            displayLikeCount = comment.getLikeCount() + 1;
-            liked = true;
-            notificationService.notifyIfNotSelf(comment.getAuthor(), username, Notification.Type.LIKE,
-                    user.getNickname() + "님이 회원님의 댓글을 좋아합니다.",
-                    "/posts/" + comment.getPost().getUuid());
-            userPointService.award(comment.getAuthor(), UserPointService.LIKE_RECEIVED, "댓글 좋아요 받음");
-        }
-        return Map.of("liked", liked, "likeCount", displayLikeCount);
-    }
-
-    @Transactional
-    public boolean toggleBookmark(Long commentId, String username) {
-        PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
-
-        var existing = commentBookmarkRepository.findByComment_IdAndUser_Id(commentId, user.getId());
-        if (existing.isPresent()) {
-            commentBookmarkRepository.delete(existing.get());
-            return false;
-        }
-        CommentBookmark bookmark = new CommentBookmark();
-        bookmark.setComment(comment);
-        bookmark.setUser(user);
-        commentBookmarkRepository.save(bookmark);
-        return true;
-    }
-
     // QNA 답변 채택(네이버 지식인 스타일, 2026-08-19 추가) - 질문 작성자만 채택할 수 있고, 새로
     // 채택하면 기존에 채택돼 있던 답변은 자동으로 해제된다(공지사항 "활성 공지 항상 1개" 패턴과
     // 동일하게 "채택 항상 최대 1개"). 이미 채택된 답변을 다시 누르면 채택이 취소된다(토글).
@@ -370,29 +253,6 @@ public class PostCommentService {
         userPointService.award(comment.getAuthor(), UserPointService.ANSWER_ACCEPTED, "답변 채택됨");
         adminActionLogService.log("COMMENT", comment.getId(), "ACCEPT_ANSWER", "채택: " + truncate(post.getTitle()));
         return true;
-    }
-
-    // 마이페이지 "북마크" 탭(댓글 서브탭)의 "해제" 버튼 전용 - PostService.removeBookmark()와 동일한
-    // 이유로 토글이 아닌 항상 "제거"만 하는 멱등 동작으로 분리.
-    @Transactional
-    public void removeBookmark(Long commentId, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
-        commentBookmarkRepository.findByComment_IdAndUser_Id(commentId, user.getId())
-                .ifPresent(commentBookmarkRepository::delete);
-    }
-
-    // 마이페이지 "좋아요" 탭(댓글 서브탭)의 "취소" 버튼 전용 - PostService.removeLike()와 동일한 패턴.
-    @Transactional
-    public void removeLike(Long commentId, String username) {
-        PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
-        commentLikeRepository.findByComment_IdAndUser_Id(commentId, user.getId()).ifPresent(like -> {
-            commentLikeRepository.delete(like);
-            postCommentRepository.decrementLikeCount(commentId);
-        });
     }
 
     // PostService.isAdmin()과 동일한 버그 수정 - 총관리자도 블라인드된 댓글 원본을 볼 수 있어야 한다

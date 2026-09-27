@@ -16,7 +16,10 @@ import com.webschool.webschool.post.repository.PostLikeRepository;
 import com.webschool.webschool.post.repository.PostRecommendRepository;
 import com.webschool.webschool.post.repository.PostReportRepository;
 import com.webschool.webschool.post.repository.PostRepository;
+import com.webschool.webschool.post.service.CommentReportService;
 import com.webschool.webschool.post.service.PostCommentService;
+import com.webschool.webschool.post.service.PostReactionService;
+import com.webschool.webschool.post.service.PostReportService;
 import com.webschool.webschool.post.service.PostService;
 import com.webschool.webschool.school.domain.School;
 import com.webschool.webschool.school.repository.ScheduleCommentBookmarkRepository;
@@ -240,6 +243,15 @@ class TestDataSeeder {
 
     @Autowired
     private PostService postService;
+
+    @Autowired
+    private PostReportService postReportService;
+
+    @Autowired
+    private PostReactionService postReactionService;
+
+    @Autowired
+    private CommentReportService commentReportService;
 
     @Autowired
     private PostRepository postRepository;
@@ -632,7 +644,7 @@ class TestDataSeeder {
             if (postReportRepository.existsByPost_IdAndReporter_Username(postId, reporter)) {
                 continue;
             }
-            postService.reportPost(postId, reporter, reason);
+            postReportService.reportPost(postId, reporter, reason);
         }
     }
 
@@ -644,7 +656,7 @@ class TestDataSeeder {
             if (commentReportRepository.existsByComment_IdAndReporter_Username(commentId, reporter)) {
                 continue;
             }
-            postCommentService.reportComment(commentId, reporter, reason);
+            commentReportService.reportComment(commentId, reporter, reason);
         }
     }
 
@@ -669,7 +681,7 @@ class TestDataSeeder {
             if (postLikeRepository.existsByPost_IdAndUser_Username(postId, liker)) {
                 continue;
             }
-            postService.toggleLike(postId, liker);
+            postReactionService.toggleLike(postId, liker);
         }
     }
 
@@ -681,7 +693,7 @@ class TestDataSeeder {
             if (postBookmarkRepository.existsByPost_IdAndUser_Username(postId, bookmarker)) {
                 continue;
             }
-            postService.toggleBookmark(postId, bookmarker);
+            postReactionService.toggleBookmark(postId, bookmarker);
         }
     }
 

@@ -2,6 +2,8 @@ package com.webschool.webschool.post.controller;
 
 import com.webschool.webschool.post.dto.CommentReportResultDto;
 import com.webschool.webschool.post.dto.PostCommentDto;
+import com.webschool.webschool.post.service.CommentReactionService;
+import com.webschool.webschool.post.service.CommentReportService;
 import com.webschool.webschool.post.service.PostCommentService;
 import com.webschool.webschool.post.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,8 @@ import java.util.Map;
 public class PostCommentController {
 
     private final PostCommentService postCommentService;
+    private final CommentReportService commentReportService;
+    private final CommentReactionService commentReactionService;
     private final PostService postService;
 
     @GetMapping
@@ -57,7 +61,7 @@ public class PostCommentController {
     public Map<String, Object> report(@PathVariable String postUuid, @PathVariable Long commentId,
                                        @RequestParam(required = false) String reason,
                                        Authentication authentication) {
-        CommentReportResultDto result = postCommentService.reportComment(commentId, authentication.getName(), reason);
+        CommentReportResultDto result = commentReportService.reportComment(commentId, authentication.getName(), reason);
         return Map.of("success", true, "reportCount", result.reportCount(), "blind", result.blind());
     }
 
@@ -65,14 +69,14 @@ public class PostCommentController {
     @ResponseBody
     public Map<String, Object> like(@PathVariable String postUuid, @PathVariable Long commentId,
                                      Authentication authentication) {
-        return postCommentService.toggleLike(commentId, authentication.getName());
+        return commentReactionService.toggleLike(commentId, authentication.getName());
     }
 
     @PostMapping("/{commentId}/bookmark")
     @ResponseBody
     public Map<String, Object> bookmark(@PathVariable String postUuid, @PathVariable Long commentId,
                                          Authentication authentication) {
-        boolean bookmarked = postCommentService.toggleBookmark(commentId, authentication.getName());
+        boolean bookmarked = commentReactionService.toggleBookmark(commentId, authentication.getName());
         return Map.of("bookmarked", bookmarked);
     }
 

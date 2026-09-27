@@ -1,6 +1,10 @@
 package com.webschool.webschool.user.controller;
 
+import com.webschool.webschool.post.service.CommentReactionService;
+import com.webschool.webschool.post.service.CommentReportService;
 import com.webschool.webschool.post.service.PostCommentService;
+import com.webschool.webschool.post.service.PostReactionService;
+import com.webschool.webschool.post.service.PostReportService;
 import com.webschool.webschool.post.service.PostService;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.user.dto.MyCommentSummaryDto;
@@ -33,6 +37,10 @@ public class MyActivityController {
     private final MyActivityService myActivityService;
     private final PostService postService;
     private final PostCommentService postCommentService;
+    private final PostReactionService postReactionService;
+    private final PostReportService postReportService;
+    private final CommentReactionService commentReactionService;
+    private final CommentReportService commentReportService;
     private final ScheduleCommentService scheduleCommentService;
     private final UserBlockService userBlockService;
 
@@ -148,7 +156,7 @@ public class MyActivityController {
                                   @RequestParam(required = false) String keyword,
                                   Authentication authentication) {
         try {
-            postService.removeBookmark(postService.resolveIdByUuid(uuid), authentication.getName());
+            postReactionService.removeBookmark(postService.resolveIdByUuid(uuid), authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("bookmarks", "post", keyword, page);
@@ -170,7 +178,7 @@ public class MyActivityController {
                               @RequestParam(required = false) String keyword,
                               Authentication authentication) {
         try {
-            postService.removeLike(postService.resolveIdByUuid(uuid), authentication.getName());
+            postReactionService.removeLike(postService.resolveIdByUuid(uuid), authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("likes", "post", keyword, page);
@@ -192,7 +200,7 @@ public class MyActivityController {
                                          @RequestParam(required = false) String keyword,
                                          Authentication authentication) {
         try {
-            postCommentService.removeBookmark(id, authentication.getName());
+            commentReactionService.removeBookmark(id, authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("bookmarks", "comment", keyword, page);
@@ -203,7 +211,7 @@ public class MyActivityController {
                                      @RequestParam(required = false) String keyword,
                                      Authentication authentication) {
         try {
-            postCommentService.removeLike(id, authentication.getName());
+            commentReactionService.removeLike(id, authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("likes", "comment", keyword, page);
@@ -214,7 +222,7 @@ public class MyActivityController {
                                 @RequestParam(required = false) String keyword,
                                 Authentication authentication) {
         try {
-            postService.cancelReport(postService.resolveIdByUuid(uuid), authentication.getName());
+            postReportService.cancelReport(postService.resolveIdByUuid(uuid), authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("reports", "post", keyword, page);
@@ -236,7 +244,7 @@ public class MyActivityController {
                                        @RequestParam(required = false) String keyword,
                                        Authentication authentication) {
         try {
-            postCommentService.cancelReport(id, authentication.getName());
+            commentReportService.cancelReport(id, authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("reports", "comment", keyword, page);
