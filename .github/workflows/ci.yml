@@ -166,13 +166,19 @@ jobs:
           docker push "$ECR_REPO:${{ github.sha }}"
           docker push "$ECR_REPO:latest"
 
+      # pull 전에 docker image prune -f로 태그 없는(dangling) 옛 이미지를 지운다 - latest를
+      # 새로 pull할 때마다 이전 이미지(약 380MB)가 <none>으로 남아 쌓여서, 2026-09-27 확인 시
+      # 8GB 디스크의 81%가 차 있었다(옛 이미지 6개가 1.24GB). pull "앞"에서 지우는 이유:
+      # 방금까지 실행 중이던 이미지 한 세대는 이번 pull 뒤에야 dangling이 되므로 다음 배포
+      # 전까지 서버에 남아 빠른 롤백용으로 쓸 수 있고, up -d가 여전히 마지막 명령이라
+      # AWS-RunShellScript의 성공/실패 판정(마지막 명령의 종료 코드)도 그대로 유지된다.
       - name: Deploy via SSM
         if: steps.instance.outputs.state == 'running'
         run: |
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --parameters 'commands=["aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 938436186735.dkr.ecr.ap-northeast-2.amazonaws.com","docker-compose -f /opt/webschool/docker-compose.prod.yml pull","docker-compose -f /opt/webschool/docker-compose.prod.yml up -d"]' \
+            --parameters 'commands=["aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 938436186735.dkr.ecr.ap-northeast-2.amazonaws.com","docker image prune -f","docker-compose -f /opt/webschool/docker-compose.prod.yml pull","docker-compose -f /opt/webschool/docker-compose.prod.yml up -d"]' \
             --query "Command.CommandId" --output text)
           echo "Command ID: $COMMAND_ID"
 
