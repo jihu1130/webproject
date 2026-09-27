@@ -84,7 +84,7 @@ NEIS(교육정보 개방 포털) API로 시간표·급식·학사일정을 실�
 | View | Thymeleaf, Bootstrap 5.3, FontAwesome, Pretendard, FullCalendar, Quill(리치 에디터) |
 | External API | NEIS Open API (`java.net.http.HttpClient` 직접 연동) |
 | Build | Gradle |
-| Infra / CI·CD | AWS EC2 · S3(파일 저장) · SSM, GitHub Actions (OIDC 기반 배포), Docker Compose(로컬) |
+| Infra / CI·CD | AWS EC2 · ECR · S3(파일 저장) · SSM, GitHub Actions (OIDC 기반 배포), Docker / Docker Compose |
 | Monitoring | Prometheus · Grafana(지표), UptimeRobot(가동 확인), k6(부하 테스트) |
 
 ## 🗂️ 패키지 구조
@@ -138,14 +138,15 @@ flowchart LR
     App -->|이메일 인증/비밀번호 찾기| SMTP
     App -->|/actuator/prometheus| Prom --> Grafana
     Uptime -.->|가동 확인| Nginx
-    GHA -->|OIDC 자격증명으로 S3 업로드 + SSM 재시작| App
+    GHA -->|OIDC 자격증명으로 ECR push + SSM으로 pull/재기동| App
 ```
 
 - **배포**: nginx가 HTTPS를 종단하고 Spring Boot 앱(8888)으로 리버스 프록시,
-  앱은 systemd 서비스(또는 Docker Compose)로 EC2에서 실행됩니다.
+  앱은 EC2에서 Docker 컨테이너(`docker-compose.prod.yml`)로 실행됩니다
+  (운영 DB는 아직 호스트에 직접 설치된 MySQL).
 - **CI/CD**: `main` push → GitHub Actions가 MySQL 서비스 컨테이너 위에서
-  빌드/테스트 → OIDC로 발급받은 임시 AWS 자격증명으로 jar를 S3에 업로드 →
-  SSH 없이 SSM으로 EC2에 전달 및 재시작.
+  빌드/테스트 → OIDC로 발급받은 임시 AWS 자격증명으로 Docker 이미지를 ECR에
+  push → SSH 없이 SSM으로 EC2에서 새 이미지를 pull 후 컨테이너 재기동.
   자세한 내용은 [배포](#-배포) 참고.
   - **로컬 대안**: Docker Compose로 앱 + MySQL + Prometheus + Grafana를
     한 번에 띄울 수 있습니다([시작하기](#-시작하기) 참고).
@@ -533,8 +534,9 @@ Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, 
 - **서비스 주소**: [https://webschool.kro.kr/](https://webschool.kro.kr/)
 - `main` 브랜치에 push되면 GitHub Actions가 빌드 → 테스트 → 배포를 자동으로 수행합니다.
   - **Build/Test**: MySQL 8 서비스 컨테이너 위에서 `./gradlew build`
-  - **Deploy**: OIDC로 발급받은 임시 AWS 자격증명으로 jar를 S3에 업로드하고, SSH 없이
-    SSM(`AWS-RunShellScript`)으로 EC2 인스턴스에 전달·재시작
+  - **Deploy**: OIDC로 발급받은 임시 AWS 자격증명으로 Docker 이미지를 빌드해 ECR에
+    push(커밋 SHA + `latest` 태그)하고, SSH 없이 SSM(`AWS-RunShellScript`)으로 EC2에서
+    `docker-compose pull` + `up -d`
   - **Health check**: 재배포 후 `/actuator/health`가 200을 반환할 때까지 확인
 - 비용 절감을 위해 EC2 인스턴스를 상시 가동하지 않습니다. 인스턴스가 꺼져 있을 때
   push되면 배포 단계는 실패 대신 건너뛰도록 처리되어 있습니다.

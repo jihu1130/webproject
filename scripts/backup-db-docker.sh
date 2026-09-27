@@ -11,6 +11,7 @@
 # 떠 있어야 동작한다. 컷오버 완료 후 crontab을 이 스크립트로 교체할 것.
 #
 # 사용법(컷오버 후, docker-compose.yml이 있는 디렉터리에서): ./backup-db-docker.sh
+# S3 업로드(BACKUP_S3_BUCKET/db/)도 backup-db.sh와 동일하게 동작한다.
 
 set -euo pipefail
 
@@ -19,6 +20,8 @@ KEEP_COUNT=14
 COMPOSE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKUP_DIR="$COMPOSE_DIR/backups"
 ENV_FILE="$COMPOSE_DIR/.env"
+BACKUP_S3_BUCKET="${BACKUP_S3_BUCKET-webschool-backups-938436186735}"
+AWS_REGION="${AWS_REGION:-ap-northeast-2}"
 
 if [ ! -f "$ENV_FILE" ]; then
     echo ".env를 찾을 수 없음: $ENV_FILE (.env.example을 복사해서 MYSQL_ROOT_PASSWORD를 채울 것)" >&2
@@ -42,6 +45,17 @@ docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T db \
 
 echo "백업 완료: $OUT_FILE"
 
+UPLOAD_FAILED=0
+if [ -n "$BACKUP_S3_BUCKET" ]; then
+    S3_URI="s3://$BACKUP_S3_BUCKET/db/$(basename "$OUT_FILE")"
+    if aws s3 cp "$OUT_FILE" "$S3_URI" --region "$AWS_REGION" --only-show-errors; then
+        echo "S3 업로드 완료: $S3_URI"
+    else
+        echo "S3 업로드 실패: $S3_URI (로컬 백업은 정상 생성됨)" >&2
+        UPLOAD_FAILED=1
+    fi
+fi
+
 # 오래된 백업 정리 - 최근 $KEEP_COUNT개만 보관 (backup-db.sh와 동일한 원칙)
 mapfile -t BACKUPS < <(ls -1t "$BACKUP_DIR"/webschool_*.sql 2>/dev/null)
 if [ "${#BACKUPS[@]}" -gt "$KEEP_COUNT" ]; then
@@ -50,3 +64,5 @@ if [ "${#BACKUPS[@]}" -gt "$KEEP_COUNT" ]; then
         echo "오래된 백업 삭제: $(basename "$old")"
     done
 fi
+
+exit "$UPLOAD_FAILED"

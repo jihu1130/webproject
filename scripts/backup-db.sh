@@ -10,6 +10,13 @@
 # 사용법: ./backup-db.sh
 # 복구는 restore-db.sh를 쓰거나 직접:
 #   mysql --defaults-file="$HOME/.my.cnf" webschool < backups/webschool_20260827_030000.sql
+#
+# 로컬 디스크 백업은 인스턴스 자체가 유실되면 같이 사라지므로, 덤프 후 S3
+# (BACKUP_S3_BUCKET/db/)에도 한 부 올린다(AWS.md "2단계" 참고). EC2 역할엔 이
+# 경로에 대한 PutObject 권한만 있어서(읽기/삭제 불가) 서버가 털려도 기존 백업을
+# 지우거나 덮어쓸 수 없다 - S3 쪽 보관기간은 버킷 수명주기 규칙이 관리한다.
+# S3 업로드가 실패해도 로컬 백업/정리는 그대로 진행하고, 마지막에 exit 1로
+# 실패를 알린다(cron 로그에서 확인). BACKUP_S3_BUCKET을 빈 값으로 주면 업로드 생략.
 
 set -euo pipefail
 
@@ -17,6 +24,8 @@ DB_NAME="webschool"
 KEEP_COUNT=14
 DEFAULTS_FILE="${MYSQL_DEFAULTS_FILE:-${HOME:-/root}/.my.cnf}"
 BACKUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/backups"
+BACKUP_S3_BUCKET="${BACKUP_S3_BUCKET-webschool-backups-938436186735}"
+AWS_REGION="${AWS_REGION:-ap-northeast-2}"
 
 if [ ! -f "$DEFAULTS_FILE" ]; then
     echo "MySQL 옵션파일을 찾을 수 없음: $DEFAULTS_FILE (AWS.md \"2단계\" 참고 - [client] 섹션에 user/password 설정 필요)" >&2
@@ -32,6 +41,17 @@ mysqldump --defaults-file="$DEFAULTS_FILE" --routines --single-transaction "$DB_
 
 echo "백업 완료: $OUT_FILE"
 
+UPLOAD_FAILED=0
+if [ -n "$BACKUP_S3_BUCKET" ]; then
+    S3_URI="s3://$BACKUP_S3_BUCKET/db/$(basename "$OUT_FILE")"
+    if aws s3 cp "$OUT_FILE" "$S3_URI" --region "$AWS_REGION" --only-show-errors; then
+        echo "S3 업로드 완료: $S3_URI"
+    else
+        echo "S3 업로드 실패: $S3_URI (로컬 백업은 정상 생성됨)" >&2
+        UPLOAD_FAILED=1
+    fi
+fi
+
 # 오래된 백업 정리 - 최근 $KEEP_COUNT개만 보관
 mapfile -t BACKUPS < <(ls -1t "$BACKUP_DIR"/webschool_*.sql 2>/dev/null)
 if [ "${#BACKUPS[@]}" -gt "$KEEP_COUNT" ]; then
@@ -40,3 +60,5 @@ if [ "${#BACKUPS[@]}" -gt "$KEEP_COUNT" ]; then
         echo "오래된 백업 삭제: $(basename "$old")"
     done
 fi
+
+exit "$UPLOAD_FAILED"
