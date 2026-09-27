@@ -1,0 +1,12 @@
+# 운영(EC2) Grafana 데이터소스 프로비저닝 - 로컬용 grafana-datasource.yml과 같고 주소만
+# 다르다(운영은 grafana/prometheus가 host 네트워크라 127.0.0.1:9090). uid를 고정해야
+# monitoring/dashboards/*.json의 패널들이 이 데이터소스를 찾는다.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://127.0.0.1:9090
+    isDefault: true

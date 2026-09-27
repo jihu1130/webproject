@@ -115,22 +115,23 @@ com.webschool.webschool
 flowchart LR
     Browser["🖥️ 브라우저"]
 
-    subgraph EC2["AWS EC2"]
+    subgraph EC2["AWS EC2 (Docker Compose)"]
         Nginx["Nginx<br/>(HTTPS 리버스 프록시)"]
         App["Spring Boot 4.1<br/>:8888"]
+        MySQL[("MySQL 8")]
+        Prom["Prometheus<br/>(내부 전용)"]
+        Grafana["Grafana<br/>/grafana"]
     end
 
-    MySQL[("MySQL 8")]
-    S3[("AWS S3<br/>(업로드 파일)")]
+    S3[("AWS S3<br/>(업로드 파일 · DB 백업)")]
     NEIS["NEIS Open API"]
     Google["Google OAuth2"]
     SMTP["Gmail SMTP"]
-    Prom["Prometheus<br/>:9090"]
-    Grafana["Grafana<br/>:3000"]
     GHA["GitHub Actions<br/>(build → test → deploy)"]
     Uptime["UptimeRobot"]
 
     Browser -->|HTTPS| Nginx --> App
+    Nginx -->|/grafana, 로그인 필요| Grafana
     App --> MySQL
     App --> S3
     App -->|시간표/급식/학사일정| NEIS
@@ -144,6 +145,10 @@ flowchart LR
 - **배포**: nginx가 HTTPS를 종단하고 Spring Boot 앱(8888)으로 리버스 프록시,
   앱과 MySQL 모두 EC2에서 Docker 컨테이너(`docker-compose.prod.yml`)로 실행됩니다.
   DB는 매일 새벽 덤프해서 S3(쓰기 전용 권한, 30일 보관)에도 사본을 남깁니다.
+- **모니터링**: 같은 서버의 Prometheus가 앱 지표(`/actuator/prometheus`, 외부에선 nginx가
+  차단)를 서버 내부에서 수집하고, Grafana 대시보드(요청 수·응답 시간·5xx·ERROR 로그·
+  JVM 힙·CPU·DB 커넥션)를 `https://webschool.kro.kr/grafana/`에서 관리자 로그인 후 볼 수
+  있습니다. 리소스/에러 로그 알람은 CloudWatch가 별도로 담당합니다.
 - **CI/CD**: `main` push → GitHub Actions가 MySQL 서비스 컨테이너 위에서
   빌드/테스트 → OIDC로 발급받은 임시 AWS 자격증명으로 Docker 이미지를 ECR에
   push → SSH 없이 SSM으로 EC2에서 새 이미지를 pull 후 컨테이너 재기동.
@@ -514,7 +519,7 @@ docker compose up --build   # http://localhost:8888
 같은 `docker compose up`으로 애플리케이션 지표(요청 처리량/응답시간/JVM 등) 모니터링용
 Prometheus([http://localhost:9090](http://localhost:9090))와
 Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, Prometheus
-데이터소스 자동 연결됨)도 함께 뜹니다.
+데이터소스와 `webschool 개요` 대시보드 자동 등록)도 함께 뜹니다.
 
 ### 5) 테스트 데이터 심기 (선택)
 

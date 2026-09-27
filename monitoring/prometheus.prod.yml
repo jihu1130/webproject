@@ -1,0 +1,13 @@
+# 운영(EC2) Prometheus 스크레이프 설정 - docker-compose.prod.yml의 prometheus 서비스가
+# 서버의 /opt/webschool/monitoring/prometheus.prod.yml을 마운트한다. 로컬용
+# prometheus.yml과 다른 점은 대상 주소뿐: 운영은 app/prometheus가 둘 다 host 네트워크라
+# 서비스명("app") 대신 127.0.0.1로 붙는다. /actuator/prometheus는 nginx에서 외부 접근을
+# 막아두고(404) 여기서만 서버 내부로 직접 수집한다.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: webschool
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["127.0.0.1:8888"]

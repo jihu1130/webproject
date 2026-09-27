@@ -1,0 +1,113 @@
+{
+  "uid": "webschool-overview",
+  "title": "webschool 개요",
+  "tags": ["webschool"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "가동 시간",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "refId": "A", "expr": "process_uptime_seconds{job=\"webschool\"}" }]
+    },
+    {
+      "id": 2, "type": "stat", "title": "요청 수 (req/s, 5분 평균)",
+      "gridPos": { "x": 4, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 2 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "refId": "A", "expr": "sum(rate(http_server_requests_seconds_count{job=\"webschool\",uri!~\"/actuator.*\"}[5m]))" }]
+    },
+    {
+      "id": 3, "type": "stat", "title": "5xx 에러 (최근 1시간)",
+      "gridPos": { "x": 9, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0,
+        "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } }, "overrides": [] },
+      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "refId": "A", "expr": "sum(increase(http_server_requests_seconds_count{job=\"webschool\",status=~\"5..\"}[1h])) or vector(0)" }]
+    },
+    {
+      "id": 4, "type": "stat", "title": "ERROR 로그 (최근 1시간)",
+      "gridPos": { "x": 14, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0,
+        "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } }, "overrides": [] },
+      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "refId": "A", "expr": "sum(increase(logback_events_total{job=\"webschool\",level=\"error\"}[1h])) or vector(0)" }]
+    },
+    {
+      "id": 5, "type": "stat", "title": "DB 커넥션 사용 중",
+      "gridPos": { "x": 19, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "refId": "A", "expr": "sum(hikaricp_connections_active{job=\"webschool\"})" }]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "요청 수 (상태 코드별, req/s)",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "sum by (status) (rate(http_server_requests_seconds_count{job=\"webschool\",uri!~\"/actuator.*\"}[5m]))", "legendFormat": "{{status}}" }]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "평균 응답 시간 (URI별 상위 8개)",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "topk(8, sum by (uri) (rate(http_server_requests_seconds_sum{job=\"webschool\",uri!~\"/actuator.*\"}[5m])) / sum by (uri) (rate(http_server_requests_seconds_count{job=\"webschool\",uri!~\"/actuator.*\"}[5m])))", "legendFormat": "{{uri}}" }]
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "JVM 힙 메모리",
+      "gridPos": { "x": 0, "y": 12, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "sum(jvm_memory_used_bytes{job=\"webschool\",area=\"heap\"})", "legendFormat": "사용" },
+        { "refId": "B", "expr": "sum(jvm_memory_max_bytes{job=\"webschool\",area=\"heap\"})", "legendFormat": "최대" }
+      ]
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "CPU 사용률",
+      "gridPos": { "x": 8, "y": 12, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "process_cpu_usage{job=\"webschool\"}", "legendFormat": "앱(JVM)" },
+        { "refId": "B", "expr": "system_cpu_usage{job=\"webschool\"}", "legendFormat": "서버 전체" }
+      ]
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "DB 커넥션 풀",
+      "gridPos": { "x": 16, "y": 12, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "sum(hikaricp_connections_active{job=\"webschool\"})", "legendFormat": "사용 중" },
+        { "refId": "B", "expr": "sum(hikaricp_connections_idle{job=\"webschool\"})", "legendFormat": "대기" },
+        { "refId": "C", "expr": "sum(hikaricp_connections_pending{job=\"webschool\"})", "legendFormat": "대기열" }
+      ]
+    },
+    {
+      "id": 11, "type": "timeseries", "title": "GC 일시정지 (초/초)",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "sum by (gc) (rate(jvm_gc_pause_seconds_sum{job=\"webschool\"}[5m]))", "legendFormat": "{{gc}}" }]
+    },
+    {
+      "id": 12, "type": "timeseries", "title": "로그 레벨별 발생 수 (5분)",
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "sum by (level) (increase(logback_events_total{job=\"webschool\",level=~\"error|warn\"}[5m]))", "legendFormat": "{{level}}" }]
+    }
+  ]
+}
