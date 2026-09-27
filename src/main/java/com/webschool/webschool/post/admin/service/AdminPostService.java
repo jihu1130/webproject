@@ -196,7 +196,7 @@ public class AdminPostService {
     }
 
     // 신고된 게시물을 검토해서 "문제없음"으로 판결 - 재신고해도 카운트/블라인드가 더 이상 발생하지 않고
-    // 게시물이 수정되기 전까지 안내 문구만 나간다(PostService.reportPost() 참고)
+    // 게시물이 수정되기 전까지 안내 문구만 나간다(PostReportService.reportPost() 참고)
     @Transactional
     public void clearReport(Long id) {
         Post post = postRepository.findById(id)

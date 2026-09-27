@@ -1,4 +1,4 @@
-package com.webschool.webschool;
+package com.webschool.webschool.devseed;
 
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;

@@ -87,7 +87,7 @@ public class User {
 
     private LocalDateTime deletedAt; // 탈퇴한 경우에만 값이 채워짐
 
-    // 이 삭제가 본인 탈퇴(UserService.deleteAccount())가 아니라 관리자 강제 탈퇴
+    // 이 삭제가 본인 탈퇴(MyPageService.deleteAccount())가 아니라 관리자 강제 탈퇴
     // (AdminUserService.deleteUser())인지 구분하는 플래그(2026-09-02 추가). deleted 하나만으로는
     // 둘을 구분할 수 없어서, CustomOAuth2UserService의 "탈퇴했던 구글 계정 재로그인 시 자동 복구"
     // 기능이 본인 탈퇴와 관리자 강제 탈퇴를 구분하지 못하고 관리자가 강제 탈퇴시킨 계정까지

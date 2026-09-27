@@ -49,7 +49,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 }
 
-// TestDataSeeder/SuperAdminSeeder는 진짜 테스트가 아니라 개발 DB에 데이터를 심는
+// devseed 패키지의 TestDataSeeder/SuperAdminSeeder는 진짜 테스트가 아니라 개발 DB에 데이터를 심는
 // 실행용 스크립트라(CLAUDE.md 참고), CI처럼 빈 DB에서 ./gradlew build/test를 그냥
 // 돌리면 실패한다(SuperAdminSeeder가 admin 계정이 없다고 죽음 - 실제로 CD 붙이면서
 // 겪음). 그렇다고 file 기반 exclude()를 쓰면 --tests로 콕 집어 실행하는 문서화된
@@ -62,8 +62,8 @@ tasks.named('test') {
 	useJUnitPlatform()
 	doFirst {
 		if (filter.commandLineIncludePatterns.isEmpty()) {
-			filter.excludeTestsMatching('com.webschool.webschool.TestDataSeeder')
-			filter.excludeTestsMatching('com.webschool.webschool.SuperAdminSeeder')
+			// devseed 패키지 전체(TestDataSeeder, SuperAdminSeeder, 이후 추가될 시더) - 2026-09-28 이동
+			filter.excludeTestsMatching('com.webschool.webschool.devseed.*')
 		}
 	}
 }

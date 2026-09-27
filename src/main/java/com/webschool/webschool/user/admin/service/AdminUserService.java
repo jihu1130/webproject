@@ -269,7 +269,7 @@ public class AdminUserService {
         adminActionLogService.log("USER", id, "PROMOTE_SUPER_ADMIN", user.getUsername() + " -> ROLE_SUPER_ADMIN");
     }
 
-    // 관리자 강제 탈퇴 처리 - 본인 확인(비밀번호) 없이 소프트 삭제한다는 점만 UserService.deleteAccount()와 다름
+    // 관리자 강제 탈퇴 처리 - 본인 확인(비밀번호) 없이 소프트 삭제한다는 점만 MyPageService.deleteAccount()와 다름
     @Transactional
     public void deleteUser(Long id, String actingAdminUsername) {
         User user = userRepository.findById(id)

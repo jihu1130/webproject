@@ -1,4 +1,4 @@
-package com.webschool.webschool;
+package com.webschool.webschool.devseed;
 
 import com.webschool.webschool.bugreport.domain.BugReport;
 import com.webschool.webschool.bugreport.repository.BugReportRepository;

@@ -191,7 +191,7 @@ public class ScheduleCommentService {
         return new ScheduleCommentReportResultDto(displayReportCount, nowBlind);
     }
 
-    // 신고 취소 - PostService.cancelReport()와 동일한 이유/패턴(자동 언블라인드는 하지 않음).
+    // 신고 취소 - PostReportService.cancelReport()와 동일한 이유/패턴(자동 언블라인드는 하지 않음).
     @Transactional
     public void cancelReport(Long id, String username) {
         scheduleCommentReportRepository.findByComment_IdAndReporter_Username(id, username).ifPresent(report -> {
@@ -201,7 +201,7 @@ public class ScheduleCommentService {
         });
     }
 
-    // PostService.toggleLike()/toggleBookmark()와 동일한 패턴
+    // PostReactionService.toggleLike()/toggleBookmark()와 동일한 패턴
     @Transactional
     public Map<String, Object> toggleLike(Long id, String username) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
@@ -251,7 +251,7 @@ public class ScheduleCommentService {
         return true;
     }
 
-    // 마이페이지 "북마크" 탭(한마디)의 "해제" 버튼 전용 - PostService.removeBookmark()와 동일한 이유로
+    // 마이페이지 "북마크" 탭(한마디)의 "해제" 버튼 전용 - PostReactionService.removeBookmark()와 동일한 이유로
     // 토글이 아닌 항상 "제거"만 하는 멱등 동작으로 분리.
     @Transactional
     public void removeBookmark(Long id, String username) {
@@ -261,7 +261,7 @@ public class ScheduleCommentService {
                 .ifPresent(scheduleCommentBookmarkRepository::delete);
     }
 
-    // 마이페이지 "좋아요" 탭(한마디)의 "취소" 버튼 전용 - PostService.removeLike()와 동일한 이유로
+    // 마이페이지 "좋아요" 탭(한마디)의 "취소" 버튼 전용 - PostReactionService.removeLike()와 동일한 이유로
     // 토글이 아닌 항상 "제거"만 하는 멱등 동작으로 분리.
     @Transactional
     public void removeLike(Long id, String username) {
@@ -284,7 +284,7 @@ public class ScheduleCommentService {
     }
 
     // 게시글 본문에 삽입된 "한마디로 바로가기" 임베드 카드가 가리키는 대상 조회용
-    // (SchoolController.openComment()에서 캘린더 화면으로 리다이렉트하는 데 필요한 정보를 얻는다).
+    // (ScheduleCommentController.openComment()에서 캘린더 화면으로 리다이렉트하는 데 필요한 정보를 얻는다).
     public ScheduleComment findForPermalink(Long id) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));

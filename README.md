@@ -526,8 +526,8 @@ Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, 
 빈 DB로 시작하면 둘러볼 데이터가 없으니, 아래 시더로 예시 계정/게시글을 채울 수 있습니다.
 
 ```bash
-./gradlew test --tests "com.webschool.webschool.TestDataSeeder"
-./gradlew test --tests "com.webschool.webschool.SuperAdminSeeder"
+./gradlew test --tests "com.webschool.webschool.devseed.TestDataSeeder"
+./gradlew test --tests "com.webschool.webschool.devseed.SuperAdminSeeder"
 ```
 
 `test1`~`test5`(아이디=비밀번호) 일반 계정과 예시 게시글/한마디, `admin`/`admin`

@@ -224,7 +224,7 @@ public class AdminActionLogService {
     // 관리 화면으로 가서 이름·번호로 찾아야 했다. targetType별로 이미 있는 관리자 상세 라우트로
     // 바로 연결한다. 소프트 삭제 사이트라 삭제/블라인드된 대상도 관리자는 이 URL로 그대로 열람
     // 가능하다(comment-list.html이 이미 쓰는 "/admin/posts/{postId}#comment-{id}" 앵커 패턴과
-    // school 패키지의 한마디 퍼머링크(SchoolController.openComment)를 그대로 재사용).
+    // school 패키지의 한마디 퍼머링크(ScheduleCommentController.openComment)를 그대로 재사용).
     private String resolveTargetUrl(String targetType, Long targetId) {
         return switch (targetType) {
             case "POST" -> "/admin/posts/" + targetId;
