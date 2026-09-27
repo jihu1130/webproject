@@ -142,8 +142,8 @@ flowchart LR
 ```
 
 - **배포**: nginx가 HTTPS를 종단하고 Spring Boot 앱(8888)으로 리버스 프록시,
-  앱은 EC2에서 Docker 컨테이너(`docker-compose.prod.yml`)로 실행됩니다
-  (운영 DB는 아직 호스트에 직접 설치된 MySQL).
+  앱과 MySQL 모두 EC2에서 Docker 컨테이너(`docker-compose.prod.yml`)로 실행됩니다.
+  DB는 매일 새벽 덤프해서 S3(쓰기 전용 권한, 30일 보관)에도 사본을 남깁니다.
 - **CI/CD**: `main` push → GitHub Actions가 MySQL 서비스 컨테이너 위에서
   빌드/테스트 → OIDC로 발급받은 임시 AWS 자격증명으로 Docker 이미지를 ECR에
   push → SSH 없이 SSM으로 EC2에서 새 이미지를 pull 후 컨테이너 재기동.
