@@ -81,7 +81,7 @@ NEIS(교육정보 개방 포털) API로 시간표·급식·학사일정을 실�
 | Framework | Spring Boot 4.1.0 (Web MVC, Data JPA, Security, Thymeleaf, Actuator) |
 | ORM / DB | Hibernate 7.4.1, MySQL 8 |
 | Auth | Spring Security, OAuth2 Client (Google Login) |
-| View | Thymeleaf, Bootstrap 5.3, FontAwesome, Pretendard, FullCalendar, Quill(리치 에디터) |
+| View | Thymeleaf, Bootstrap 5.3, FontAwesome, Pretendard, FullCalendar, Quill(리치 에디터), Chart.js(관리자 대시보드 그래프) |
 | External API | NEIS Open API (`java.net.http.HttpClient` 직접 연동) |
 | Build | Gradle |
 | Infra / CI·CD | AWS EC2 · ECR · S3(파일 저장) · SSM, GitHub Actions (OIDC 기반 배포), Docker / Docker Compose |
@@ -460,6 +460,10 @@ git clone https://github.com/jihu1130/webproject.git
 cd webproject
 ```
 
+> **Windows 개발 PC라면**: 관리자 권한 PowerShell에서
+> `powershell -ExecutionPolicy Bypass -File scripts\setup-dev-windows.ps1`를 실행하면
+> WSL2·Docker Desktop·AWS CLI v2·Session Manager 플러그인·JDK 21을 한 번에 설치해줍니다.
+
 ### 2) API 키 발급
 
 | 항목 | 필수 여부 | 발급처 | 비워두면 |
@@ -567,6 +571,10 @@ Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, 
   구글 계정 탈퇴는 같은 계정 재로그인 시 자기 복구되지만 관리자가 강제
   탈퇴시킨 경우는 예외
 - 업로드 파일은 위험 확장자(실행 파일, 스크립트 삽입 가능한 SVG 등) 차단
+- 에러 처리는 `ErrorCode` enum + `BusinessException` + 전역 예외 핸들러
+  (`GlobalExceptionHandler`)로 중앙화 — 서비스는 `BusinessException(ErrorCode, 메시지)`만
+  던지면 되고, JSON API/화면 요청 여부에 따라 응답 형식(JSON 에러 바디 vs `error.html`)을
+  자동으로 맞춰줌
 
 ---
 
