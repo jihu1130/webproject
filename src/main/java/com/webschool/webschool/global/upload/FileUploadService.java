@@ -32,12 +32,15 @@ public class FileUploadService {
     // 모드(별도 오리진)에서도 피싱 등에 악용될 수 있다. 앱 자체가 쓰는
     // static/images/default-avatar.svg처럼 개발자가 직접 배치하는 정적 리소스는 이 업로드
     // 경로를 타지 않으므로 영향 없다.
+    // html/htm도 정확히 같은 이유로 여기 포함(2026-09-28, 보안 점검 중 발견 - "📎 파일" 버튼은
+    // accept="*/*"라 클라이언트 제한이 없는데 서버도 안 막아서, 업로드한 .html을 직접 열면
+    // 스크립트가 그대로 실행되는 걸 실제로 재현해 확인함).
     private static final Set<String> DANGEROUS_EXTENSIONS = Set.of(
             "exe", "bat", "cmd", "com", "msi", "msp", "scr", "pif", "gadget",
             "sh", "bash", "run", "app", "pkg", "deb", "rpm", "apk", "ipa",
             "jar", "js", "jse", "vbs", "vbe", "wsf", "wsh", "ps1", "psm1",
             "jsp", "jspx", "php", "php3", "php4", "php5", "phtml", "asp", "aspx",
-            "cgi", "dll", "so", "action", "reg", "hta", "svg"
+            "cgi", "dll", "so", "action", "reg", "hta", "svg", "html", "htm"
     );
 
     private static final Set<String> IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp", "bmp", "avif");
