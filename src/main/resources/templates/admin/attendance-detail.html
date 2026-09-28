@@ -20,7 +20,10 @@
             <h1><i class="fa-solid fa-calendar-check"></i>
                 <span th:text="${summary.nickname}">닉네임</span>님의 출석 현황
             </h1>
-            <p class="page-sub" th:text="'아이디: ' + ${summary.username}">아이디</p>
+            <p class="page-sub">
+                <a th:href="@{'/admin/profiles/' + ${summary.userId}}" class="admin-table-title"
+                   th:text="'아이디: ' + ${summary.username} + ' · 프로필 보기'">아이디</a>
+            </p>
         </div>
 
         <div class="dash-kpis" style="margin-bottom: 20px;">
@@ -48,16 +51,41 @@
                    class="btn btn-outline-primary">다음 달 <i class="fa-solid fa-chevron-right"></i></a>
             </div>
 
-            <div class="admin-empty" th:if="${#lists.isEmpty(attendedDates)}">이 달엔 출석 기록이 없어요.</div>
-
-            <div th:unless="${#lists.isEmpty(attendedDates)}" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                <span class="admin-status-badge admin-status-cleared" th:each="date : ${attendedDates}"
-                      th:text="${date}">2026-09-01</span>
+            <div class="admin-attend-cal-dow">
+                <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+            </div>
+            <div class="admin-attend-cal-grid">
+                <div class="admin-attend-cal-cell" th:each="cell : ${dayGrid}"
+                     th:classappend="${cell.date == null} ? ' admin-attend-cal-cell-empty'
+                                     : (${cell.attended} ? ' admin-attend-cal-cell-attended' : '')">
+                    <th:block th:if="${cell.date != null}">
+                        <span class="admin-attend-cal-day" th:text="${cell.date.dayOfMonth}">1</span>
+                        <form th:if="${!cell.attended and !cell.future}"
+                              th:action="@{'/admin/attendance/' + ${summary.userId} + '/grant'}"
+                              method="post" class="admin-attend-cal-action"
+                              th:attr="data-confirm=${cell.date} + ' 출석을 인정 처리할까요?'">
+                            <input type="hidden" name="date" th:value="${cell.date}">
+                            <input type="hidden" name="year" th:value="${year}">
+                            <input type="hidden" name="month" th:value="${month}">
+                            <button type="submit">인정</button>
+                        </form>
+                        <form th:if="${cell.attended and !cell.future}"
+                              th:action="@{'/admin/attendance/' + ${summary.userId} + '/revoke'}"
+                              method="post" class="admin-attend-cal-action"
+                              th:attr="data-confirm=${cell.date} + ' 출석을 취소할까요?'" data-confirm-danger="true">
+                            <input type="hidden" name="date" th:value="${cell.date}">
+                            <input type="hidden" name="year" th:value="${year}">
+                            <input type="hidden" name="month" th:value="${month}">
+                            <button type="submit">취소</button>
+                        </form>
+                    </th:block>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<script th:src="@{/js/modal.js}"></script>
 <th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
 </body>
 </html>

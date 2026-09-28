@@ -2,6 +2,7 @@ package com.webschool.webschool.post.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.Post;
@@ -59,7 +60,7 @@ public class PostReactionService {
             displayLikeCount = post.getLikeCount() + 1;
             liked = true;
             notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.LIKE,
-                    user.getNickname() + "님이 회원님의 글 '" + truncate(post.getTitle()) + "'을(를) 좋아합니다.",
+                    user.getNickname() + "님이 회원님의 글 '" + TextUtils.truncate(post.getTitle()) + "'을(를) 좋아합니다.",
                     "/posts/" + post.getUuid());
             userPointService.award(post.getAuthor(), UserPointService.LIKE_RECEIVED, "게시글 좋아요 받음");
         }
@@ -113,8 +114,4 @@ public class PostReactionService {
     }
 
     // 알림 메시지에 제목을 넣을 때 너무 길어지지 않도록 자르는 용도 (Notification.message는 200자 제한)
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
-    }
 }

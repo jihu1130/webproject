@@ -1,5 +1,6 @@
 package com.webschool.webschool.global.advice;
 
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
@@ -17,8 +18,7 @@ public class GlobalModelAdvice {
 
     @ModelAttribute("loginUser")
     public User loginUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()
-                || "anonymousUser".equals(authentication.getPrincipal())) {
+        if (!AuthenticationUtils.isLoggedIn(authentication)) {
             return null;
         }
         return userRepository.findByUsername(authentication.getName()).orElse(null);
@@ -28,8 +28,7 @@ public class GlobalModelAdvice {
     // notification.js가 /notifications/unread-count를 폴링해서 갱신한다.
     @ModelAttribute("unreadNotificationCount")
     public long unreadNotificationCount(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()
-                || "anonymousUser".equals(authentication.getPrincipal())) {
+        if (!AuthenticationUtils.isLoggedIn(authentication)) {
             return 0;
         }
         return notificationService.getUnreadCount(authentication.getName());

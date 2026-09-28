@@ -2,6 +2,7 @@ package com.webschool.webschool.school.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.school.domain.School;
 import com.webschool.webschool.school.domain.ScheduleComment;
@@ -84,7 +85,7 @@ public class ScheduleCommentService {
         comment.setContent(trimmed);
 
         scheduleCommentRepository.save(comment);
-        adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "CREATE", truncate(HtmlSanitizer.toPlainText(comment.getContent())));
+        adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "CREATE", TextUtils.truncate(HtmlSanitizer.toPlainText(comment.getContent())));
         return toDto(comment, username);
     }
 
@@ -110,7 +111,7 @@ public class ScheduleCommentService {
             comment.setUpdatedAt(java.time.LocalDateTime.now());
             // 내용이 바뀌었으니 예전 "문제없음" 판결은 더 이상 유효하지 않다 - 다시 검토가 필요함
             comment.setReportCleared(false);
-            adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "UPDATE", truncate(HtmlSanitizer.toPlainText(trimmed)));
+            adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "UPDATE", TextUtils.truncate(HtmlSanitizer.toPlainText(trimmed)));
         }
 
         return toDto(comment, username);
@@ -132,7 +133,7 @@ public class ScheduleCommentService {
         // 소프트 딜리트: 물리적으로 지우지 않고 상태만 변경 (관리자 페이지에서 계속 조회/복구 가능, PostComment와 동일 패턴)
         comment.setDeleted(true);
         comment.setDeletedAt(java.time.LocalDateTime.now());
-        adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "DELETE", truncate(HtmlSanitizer.toPlainText(comment.getContent())));
+        adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "DELETE", TextUtils.truncate(HtmlSanitizer.toPlainText(comment.getContent())));
     }
 
     // 공개 URL(/school/comments/{uuid})의 uuid를 내부 Long id로 변환 - PostService.resolveIdByUuid()와
@@ -178,12 +179,6 @@ public class ScheduleCommentService {
         return userRepository.findByUsername(username)
                 .map(User::isAdmin)
                 .orElse(false);
-    }
-
-    // PostService.truncate()와 동일한 용도 - 감사 로그 detail(VARCHAR 300)에 넣기 전 요약.
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     // PostService.validateContent()와 동일한 정제 로직 - th:utext로 그대로 렌더링하므로 이 단계가

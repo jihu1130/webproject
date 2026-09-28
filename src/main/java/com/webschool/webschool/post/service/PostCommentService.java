@@ -2,6 +2,7 @@ package com.webschool.webschool.post.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
@@ -133,12 +134,12 @@ public class PostCommentService {
         comment.setParentComment(parentComment);
 
         postCommentRepository.save(comment);
-        adminActionLogService.log("COMMENT", comment.getId(), parentComment != null ? "REPLY" : "CREATE", truncate(trimmed));
+        adminActionLogService.log("COMMENT", comment.getId(), parentComment != null ? "REPLY" : "CREATE", TextUtils.truncate(trimmed));
 
         String label = post.getCategory() == Post.Category.ANONYMOUS ? "답변" : "댓글";
         if (parentComment != null) {
             notificationService.notifyIfNotSelf(parentComment.getAuthor(), username, Notification.Type.REPLY,
-                    author.getNickname() + "님이 회원님의 " + label + "에 답글을 남겼어요: " + truncate(post.getTitle()),
+                    author.getNickname() + "님이 회원님의 " + label + "에 답글을 남겼어요: " + TextUtils.truncate(post.getTitle()),
                     "/posts/" + post.getUuid());
             // 게시글 작성자에게도 알림(중복 방지: 답글 대상이 곧 게시글 작성자면 위에서 이미 알림을 보냈다)
             // - 둘 중 하나가 하드 삭제로 null일 수 있어 Objects.equals로 비교(notify 자체는 null-safe).
@@ -146,12 +147,12 @@ public class PostCommentService {
             Long parentAuthorId = parentComment.getAuthor() != null ? parentComment.getAuthor().getId() : null;
             if (!Objects.equals(postAuthorId, parentAuthorId)) {
                 notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.COMMENT,
-                        author.getNickname() + "님이 회원님의 글에 답글을 남겼어요: " + truncate(post.getTitle()),
+                        author.getNickname() + "님이 회원님의 글에 답글을 남겼어요: " + TextUtils.truncate(post.getTitle()),
                         "/posts/" + post.getUuid());
             }
         } else {
             notificationService.notifyIfNotSelf(post.getAuthor(), username, Notification.Type.COMMENT,
-                    author.getNickname() + "님이 회원님의 글에 " + label + "을 남겼어요: " + truncate(post.getTitle()),
+                    author.getNickname() + "님이 회원님의 글에 " + label + "을 남겼어요: " + TextUtils.truncate(post.getTitle()),
                     "/posts/" + post.getUuid());
         }
         userPointService.award(author, UserPointService.COMMENT_CREATE, label + " 작성");
@@ -179,7 +180,7 @@ public class PostCommentService {
             comment.setUpdatedAt(LocalDateTime.now());
             // 내용이 바뀌었으니 예전 "문제없음" 판결은 더 이상 유효하지 않다 - 다시 검토가 필요함
             comment.setReportCleared(false);
-            adminActionLogService.log("COMMENT", comment.getId(), "UPDATE", truncate(trimmed));
+            adminActionLogService.log("COMMENT", comment.getId(), "UPDATE", TextUtils.truncate(trimmed));
         }
 
         return toDto(comment, username);
@@ -209,7 +210,7 @@ public class PostCommentService {
         // 소프트 딜리트: 물리적으로 지우지 않고 상태만 변경 (관리자 페이지에서 계속 조회 가능, 6-6 항목 참고)
         comment.setDeleted(true);
         comment.setDeletedAt(LocalDateTime.now());
-        adminActionLogService.log("COMMENT", comment.getId(), "DELETE", truncate(comment.getContent()));
+        adminActionLogService.log("COMMENT", comment.getId(), "DELETE", TextUtils.truncate(comment.getContent()));
     }
 
     // QNA 답변 채택(네이버 지식인 스타일, 2026-08-19 추가) - 질문 작성자만 채택할 수 있고, 새로
@@ -250,10 +251,10 @@ public class PostCommentService {
                 .ifPresent(prev -> prev.setAccepted(false));
         comment.setAccepted(true);
         notificationService.notifyIfNotSelf(comment.getAuthor(), username, Notification.Type.ACCEPTED,
-                "회원님의 답변이 채택됐어요: " + truncate(post.getTitle()),
+                "회원님의 답변이 채택됐어요: " + TextUtils.truncate(post.getTitle()),
                 "/posts/" + post.getUuid());
         userPointService.award(comment.getAuthor(), UserPointService.ANSWER_ACCEPTED, "답변 채택됨");
-        adminActionLogService.log("COMMENT", comment.getId(), "ACCEPT_ANSWER", "채택: " + truncate(post.getTitle()));
+        adminActionLogService.log("COMMENT", comment.getId(), "ACCEPT_ANSWER", "채택: " + TextUtils.truncate(post.getTitle()));
         return true;
     }
 
@@ -265,11 +266,6 @@ public class PostCommentService {
         return userRepository.findByUsername(username)
                 .map(User::isAdmin)
                 .orElse(false);
-    }
-
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     private String validateContent(String content) {

@@ -2,6 +2,7 @@ package com.webschool.webschool.notice.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.notice.domain.Notice;
@@ -67,7 +68,7 @@ public class NoticeService {
         Notice saved = noticeRepository.save(notice);
 
         notificationService.broadcastAnnouncement("[공지] " + validTitle, "/notices", username);
-        adminActionLogService.log("NOTICE", saved.getId(), "CREATE", truncate(validTitle));
+        adminActionLogService.log("NOTICE", saved.getId(), "CREATE", TextUtils.truncate(validTitle));
     }
 
     // 사용자 화면 고정 노출용 - 활성 공지가 하나도 없으면 빈 값
@@ -119,7 +120,7 @@ public class NoticeService {
         notice.setTitle(validateTitle(title));
         notice.setContent(validateContent(content));
         notice.setUpdatedAt(LocalDateTime.now());
-        adminActionLogService.log("NOTICE", notice.getId(), "UPDATE", truncate(notice.getTitle()));
+        adminActionLogService.log("NOTICE", notice.getId(), "UPDATE", TextUtils.truncate(notice.getTitle()));
     }
 
     // 공지 삭제 - Post/PostComment와 동일한 소프트 삭제 패턴(물리적으로 지우지 않음). 활성 공지를
@@ -137,7 +138,7 @@ public class NoticeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공지사항을 찾을 수 없습니다."));
         notice.setDeleted(true);
         notice.setDeletedAt(LocalDateTime.now());
-        adminActionLogService.log("NOTICE", notice.getId(), "DELETE", truncate(notice.getTitle()));
+        adminActionLogService.log("NOTICE", notice.getId(), "DELETE", TextUtils.truncate(notice.getTitle()));
     }
 
     private String validateTitle(String title) {
@@ -162,11 +163,6 @@ public class NoticeService {
         String trimmed = content.trim();
         BannedWordFilter.validate(trimmed);
         return trimmed;
-    }
-
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     private NoticeDto toDto(Notice n) {

@@ -2,6 +2,7 @@ package com.webschool.webschool.post.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
@@ -62,7 +63,7 @@ public class PostReportService {
         report.setReporter(reporter);
         report.setReason(trimmedReason);
         postReportRepository.save(report);
-        adminActionLogService.log("POST", id, "REPORT", trimmedReason != null ? truncate(trimmedReason) : truncate(post.getTitle()));
+        adminActionLogService.log("POST", id, "REPORT", trimmedReason != null ? TextUtils.truncate(trimmedReason) : TextUtils.truncate(post.getTitle()));
 
         boolean wasBlind = post.isBlind();
         postRepository.incrementReportCount(id);
@@ -72,7 +73,7 @@ public class PostReportService {
             post.setBlind(true);
             nowBlind = true;
             notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
-                    "'" + truncate(post.getTitle()) + "' 글이 신고 누적으로 블라인드 처리되었습니다.",
+                    "'" + TextUtils.truncate(post.getTitle()) + "' 글이 신고 누적으로 블라인드 처리되었습니다.",
                     "/posts/" + post.getUuid());
         }
 
@@ -88,13 +89,9 @@ public class PostReportService {
         postReportRepository.findByPost_IdAndReporter_Username(id, username).ifPresent(report -> {
             postReportRepository.delete(report);
             postRepository.decrementReportCount(id);
-            adminActionLogService.log("POST", id, "REPORT_CANCEL", truncate(report.getPost().getTitle()));
+            adminActionLogService.log("POST", id, "REPORT_CANCEL", TextUtils.truncate(report.getPost().getTitle()));
         });
     }
 
     // 알림 메시지에 제목을 넣을 때 너무 길어지지 않도록 자르는 용도 (Notification.message는 200자 제한)
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
-    }
 }

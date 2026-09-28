@@ -8,6 +8,7 @@ import com.webschool.webschool.post.dto.PostDetailDto;
 import com.webschool.webschool.post.dto.PostFormDto;
 import com.webschool.webschool.post.dto.PostListItemDto;
 import com.webschool.webschool.post.dto.PostReportResultDto;
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.post.service.PostRecommendService;
@@ -147,7 +148,7 @@ public class PostController {
         try {
             Long id = postService.resolveIdByUuid(uuid);
             boolean countView = shouldCountView(session, id, ClientIpUtils.getClientIp(request));
-            String username = extractUsername(authentication);
+            String username = AuthenticationUtils.usernameOrNull(authentication);
             PostDetailDto post = postService.getDetail(id, username, countView);
             model.addAttribute("post", post);
             model.addAttribute("postRecommend", postRecommendService.getRecommendInfo(id, username));
@@ -274,11 +275,4 @@ public class PostController {
         return true;
     }
 
-    private String extractUsername(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()
-                || "anonymousUser".equals(authentication.getPrincipal())) {
-            return null;
-        }
-        return authentication.getName();
-    }
 }

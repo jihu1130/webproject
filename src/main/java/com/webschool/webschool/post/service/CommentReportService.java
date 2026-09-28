@@ -2,6 +2,7 @@ package com.webschool.webschool.post.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
@@ -65,7 +66,7 @@ public class CommentReportService {
         report.setReporter(reporter);
         report.setReason(trimmedReason);
         commentReportRepository.save(report);
-        adminActionLogService.log("COMMENT", commentId, "REPORT", trimmedReason != null ? truncate(trimmedReason) : truncate(comment.getContent()));
+        adminActionLogService.log("COMMENT", commentId, "REPORT", trimmedReason != null ? TextUtils.truncate(trimmedReason) : TextUtils.truncate(comment.getContent()));
 
         boolean wasBlind = comment.isBlind();
         postCommentRepository.incrementReportCount(commentId);
@@ -88,12 +89,8 @@ public class CommentReportService {
         commentReportRepository.findByComment_IdAndReporter_Username(commentId, username).ifPresent(report -> {
             commentReportRepository.delete(report);
             postCommentRepository.decrementReportCount(commentId);
-            adminActionLogService.log("COMMENT", commentId, "REPORT_CANCEL", truncate(report.getComment().getContent()));
+            adminActionLogService.log("COMMENT", commentId, "REPORT_CANCEL", TextUtils.truncate(report.getComment().getContent()));
         });
     }
 
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
-    }
 }

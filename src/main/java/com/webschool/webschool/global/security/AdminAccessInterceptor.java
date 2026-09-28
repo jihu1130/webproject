@@ -111,8 +111,12 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         // 권한이 하나라도 있는 부관리자라면 볼 수 있게 한다(그 권한으로 이미 같은 정보(실명 닉네임 등)를
         // 보고 있으므로 새로 노출되는 정보가 없음).
         if (uri.startsWith("/admin/profiles")) {
+            // 출석/포인트 관리 화면(2026-09-28 추가)에서도 계정 이름을 눌러 프로필을 열 수 있게
+            // 됐으므로, 그 권한을 가진 부관리자도 여기서 막히면 안 된다(이미 같은 정보를 보고
+            // 있으므로 새로 노출되는 정보 없음 - 위 신고/게시글/한마디 관리와 같은 논리).
             boolean anyManagePermission = user.isCanManageReports() || user.isCanManagePosts()
-                    || user.isCanManageScheduleComments();
+                    || user.isCanManageScheduleComments() || user.isCanManageAttendance()
+                    || user.isCanManagePoints();
             if (!anyManagePermission) {
                 throw new AccessDeniedException("프로필을 조회할 권한이 없습니다.");
             }

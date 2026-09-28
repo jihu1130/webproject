@@ -54,8 +54,8 @@
                 </thead>
                 <tbody>
                 <tr th:each="summary : ${summaries}">
-                    <td th:text="${summary.username}">아이디</td>
-                    <td th:text="${summary.nickname}">닉네임</td>
+                    <td><a th:href="@{'/admin/profiles/' + ${summary.userId}}" class="admin-table-title" th:text="${summary.username}">아이디</a></td>
+                    <td><a th:href="@{'/admin/profiles/' + ${summary.userId}}" class="admin-table-title" th:text="${summary.nickname}">닉네임</a></td>
                     <td th:text="${summary.totalCheckIns}">0</td>
                     <td>
                         <span class="admin-status-badge admin-status-cleared" th:if="${summary.currentStreakDay > 0}"

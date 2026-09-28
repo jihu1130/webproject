@@ -2,6 +2,7 @@ package com.webschool.webschool.bugreport.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.bugreport.domain.BugReport;
 import com.webschool.webschool.bugreport.domain.BugReportAttachment;
@@ -210,11 +211,11 @@ public class BugReportService {
         reply.setAdminUsername(adminUsername);
         reply.setContent(trimmed);
         inquiryReplyRepository.save(reply);
-        adminActionLogService.log("BUG_REPORT", report.getId(), "REPLY", truncate(trimmed));
+        adminActionLogService.log("BUG_REPORT", report.getId(), "REPLY", TextUtils.truncate(trimmed));
 
         if (report.getReporter() != null) {
             notificationService.notify(report.getReporter(), Notification.Type.INQUIRY_REPLY,
-                    "'" + truncate(report.getTitle()) + "' 문의에 답변이 등록되었습니다.", "/mypage/inquiries");
+                    "'" + TextUtils.truncate(report.getTitle()) + "' 문의에 답변이 등록되었습니다.", "/mypage/inquiries");
         } else if (report.getContactEmail() != null) {
             mailService.sendInquiryReply(report.getContactEmail(), trimmed);
         }
@@ -258,7 +259,7 @@ public class BugReportService {
         report.setResolved(!report.isResolved());
         report.setResolvedAt(report.isResolved() ? LocalDateTime.now() : null);
         adminActionLogService.log("BUG_REPORT", report.getId(),
-                report.isResolved() ? "RESOLVE" : "REOPEN", truncate(report.getTitle()));
+                report.isResolved() ? "RESOLVE" : "REOPEN", TextUtils.truncate(report.getTitle()));
     }
 
     // 첨부 DB 행을 먼저 지워야 FK 제약 위반 없이 BugReport를 지울 수 있다. 실제 파일은 여기서 직접
@@ -269,7 +270,7 @@ public class BugReportService {
         requireSuperAdmin(actorUsername);
         BugReport report = bugReportRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "버그 리포트를 찾을 수 없습니다."));
-        adminActionLogService.log("BUG_REPORT", report.getId(), "DELETE", truncate(report.getTitle()));
+        adminActionLogService.log("BUG_REPORT", report.getId(), "DELETE", TextUtils.truncate(report.getTitle()));
         bugReportAttachmentRepository.deleteAll(
                 bugReportAttachmentRepository.findByBugReport_IdOrderBySortOrderAsc(report.getId()));
         inquiryReplyRepository.deleteAll(
@@ -307,11 +308,6 @@ public class BugReportService {
         String trimmed = content.trim();
         BannedWordFilter.validate(trimmed);
         return trimmed;
-    }
-
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     private BugReportDto toDto(BugReport r) {

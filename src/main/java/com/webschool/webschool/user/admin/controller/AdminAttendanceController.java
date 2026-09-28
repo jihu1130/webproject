@@ -5,12 +5,16 @@ import com.webschool.webschool.user.admin.dto.AdminAttendanceSummaryDto;
 import com.webschool.webschool.user.admin.service.AdminAttendanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -55,9 +59,39 @@ public class AdminAttendanceController {
             model.addAttribute("month", targetMonth);
             model.addAttribute("attendedDates",
                     adminAttendanceService.getAttendedDatesInMonth(userId, targetYear, targetMonth));
+            model.addAttribute("dayGrid", adminAttendanceService.getMonthGrid(userId, targetYear, targetMonth));
             return "admin/attendance-detail";
         } catch (IllegalArgumentException e) {
             return "redirect:/admin/attendance";
         }
+    }
+
+    // 출석 인정/취소 처리 후 보던 달로 그대로 돌아가기 위해 year/month를 폼 파라미터로 같이 받는다.
+    @PostMapping("/{userId}/grant")
+    public String grant(@PathVariable Long userId,
+                         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                         @RequestParam int year, @RequestParam int month,
+                         Authentication authentication, RedirectAttributes redirectAttributes) {
+        try {
+            adminAttendanceService.grantAttendance(userId, date, authentication.getName());
+            redirectAttributes.addFlashAttribute("flashSuccess", date + " 출석을 인정 처리했습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
+        }
+        return "redirect:/admin/attendance/" + userId + "?year=" + year + "&month=" + month;
+    }
+
+    @PostMapping("/{userId}/revoke")
+    public String revoke(@PathVariable Long userId,
+                          @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                          @RequestParam int year, @RequestParam int month,
+                          Authentication authentication, RedirectAttributes redirectAttributes) {
+        try {
+            adminAttendanceService.revokeAttendance(userId, date, authentication.getName());
+            redirectAttributes.addFlashAttribute("flashSuccess", date + " 출석을 취소 처리했습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("flashError", e.getMessage());
+        }
+        return "redirect:/admin/attendance/" + userId + "?year=" + year + "&month=" + month;
     }
 }

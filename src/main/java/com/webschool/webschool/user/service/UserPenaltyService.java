@@ -3,6 +3,7 @@ package com.webschool.webschool.user.service;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.user.domain.User;
@@ -81,7 +82,7 @@ public class UserPenaltyService {
                 "[" + type.getLabel() + "] " + periodText + " 제재가 부여되었습니다. 포인트 "
                         + type.getPointPenalty() + "점이 차감되었습니다. 사유: " + trimmedReason, null);
         adminActionLogService.log("USER", target.getId(), "PENALTY_ISSUE",
-                type.getLabel() + " " + periodText + " (" + truncate(trimmedReason) + ")");
+                type.getLabel() + " " + periodText + " (" + TextUtils.truncate(trimmedReason) + ")");
     }
 
     @Transactional
@@ -127,11 +128,6 @@ public class UserPenaltyService {
         UserPenalty p = active.get(0);
         String until = p.getExpiresAt() != null ? p.getExpiresAt().format(DISPLAY_FORMAT) + "까지" : "무기한";
         throw new IllegalArgumentException(actionLabel + " 제재 중이라 이용할 수 없습니다(" + until + "). 사유: " + p.getReason());
-    }
-
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
     }
 
     private UserPenaltyDto toDto(UserPenalty p) {

@@ -1,6 +1,7 @@
 package com.webschool.webschool.post.admin.service;
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.post.service.PostImageService;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
@@ -184,14 +185,14 @@ public class AdminPostService {
             // 다시 블라인드 처리한다는 건 "문제없음" 판결을 뒤집는 것과 같다
             post.setReportCleared(false);
             notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
-                    "'" + truncate(post.getTitle()) + "' 글이 관리자에 의해 블라인드 처리되었습니다.",
+                    "'" + TextUtils.truncate(post.getTitle()) + "' 글이 관리자에 의해 블라인드 처리되었습니다.",
                     "/posts/" + post.getUuid());
-            adminActionLogService.log("POST", id, "BLIND", truncate(post.getTitle()));
+            adminActionLogService.log("POST", id, "BLIND", TextUtils.truncate(post.getTitle()));
         } else {
             notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
-                    "'" + truncate(post.getTitle()) + "' 글의 블라인드 처리가 해제되었습니다.",
+                    "'" + TextUtils.truncate(post.getTitle()) + "' 글의 블라인드 처리가 해제되었습니다.",
                     "/posts/" + post.getUuid());
-            adminActionLogService.log("POST", id, "UNBLIND", truncate(post.getTitle()));
+            adminActionLogService.log("POST", id, "UNBLIND", TextUtils.truncate(post.getTitle()));
         }
     }
 
@@ -204,9 +205,9 @@ public class AdminPostService {
         post.setReportCleared(true);
         post.setBlind(false);
         notificationService.notify(post.getAuthor(), Notification.Type.REPORT_ACTION,
-                "'" + truncate(post.getTitle()) + "' 글이 검토 결과 문제없음으로 처리되었습니다.",
+                "'" + TextUtils.truncate(post.getTitle()) + "' 글이 검토 결과 문제없음으로 처리되었습니다.",
                 "/posts/" + post.getUuid());
-        adminActionLogService.log("POST", id, "REPORT_CLEAR", truncate(post.getTitle()));
+        adminActionLogService.log("POST", id, "REPORT_CLEAR", TextUtils.truncate(post.getTitle()));
     }
 
     // "문제없음" 판결 철회 - 잘못 눌렀거나 재검토가 필요할 때 되돌리는 용도. reportCount는 그대로
@@ -216,7 +217,7 @@ public class AdminPostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         post.setReportCleared(false);
-        adminActionLogService.log("POST", id, "REPORT_UNCLEAR", truncate(post.getTitle()));
+        adminActionLogService.log("POST", id, "REPORT_UNCLEAR", TextUtils.truncate(post.getTitle()));
     }
 
     // 댓글 신고 "문제없음" 판결 - 게시물과 동일한 패턴
@@ -289,7 +290,7 @@ public class AdminPostService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         post.setDeleted(true);
         post.setDeletedAt(LocalDateTime.now());
-        adminActionLogService.log("POST", id, "DELETE", truncate(post.getTitle()));
+        adminActionLogService.log("POST", id, "DELETE", TextUtils.truncate(post.getTitle()));
     }
 
     // 소프트 삭제 복구
@@ -299,12 +300,7 @@ public class AdminPostService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         post.setDeleted(false);
         post.setDeletedAt(null);
-        adminActionLogService.log("POST", id, "RESTORE", truncate(post.getTitle()));
-    }
-
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
+        adminActionLogService.log("POST", id, "RESTORE", TextUtils.truncate(post.getTitle()));
     }
 
     private AdminPostSummaryDto toSummaryDto(Post post) {

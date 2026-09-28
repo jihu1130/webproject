@@ -8,6 +8,7 @@ import com.webschool.webschool.post.dto.PostDetailDto;
 import com.webschool.webschool.post.dto.PostFormDto;
 import com.webschool.webschool.post.dto.PostListItemDto;
 import com.webschool.webschool.global.util.HtmlSanitizer;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.post.repository.PostBookmarkRepository;
 import com.webschool.webschool.post.repository.PostLikeRepository;
 import com.webschool.webschool.post.repository.PostRepository;
@@ -148,7 +149,7 @@ public class PostService {
         // 감사 로그 커버리지 확장(사용자 요청) - 관리자 조치뿐 아니라 일반 사용자 본인의 주요 활동도
         // 기록한다. log()가 SecurityContextHolder에서 현재 로그인 사용자를 그대로 읽으므로 호출부만
         // 추가하면 된다(시그니처 변경 불필요).
-        adminActionLogService.log("POST", saved.getId(), "CREATE", truncate(title) + " [" + category.getLabel() + "]");
+        adminActionLogService.log("POST", saved.getId(), "CREATE", TextUtils.truncate(title) + " [" + category.getLabel() + "]");
         userPointService.award(author, UserPointService.POST_CREATE, "게시글 작성");
         return saved.getUuid();
     }
@@ -203,7 +204,7 @@ public class PostService {
             post.setUpdatedAt(LocalDateTime.now());
             // 내용이 바뀌었으니 예전 "문제없음" 판결은 더 이상 유효하지 않다 - 다시 검토가 필요함
             post.setReportCleared(false);
-            adminActionLogService.log("POST", post.getId(), "UPDATE", truncate(title));
+            adminActionLogService.log("POST", post.getId(), "UPDATE", TextUtils.truncate(title));
         }
     }
 
@@ -224,7 +225,7 @@ public class PostService {
         // 관리자 페이지에서 계속 조회 가능하다 - 6-6 항목 참고). FK 제약 문제도 이걸로 근본 해결됨.
         post.setDeleted(true);
         post.setDeletedAt(LocalDateTime.now());
-        adminActionLogService.log("POST", post.getId(), "DELETE", truncate(post.getTitle()));
+        adminActionLogService.log("POST", post.getId(), "DELETE", TextUtils.truncate(post.getTitle()));
     }
 
     // **버그 수정**: 예전엔 ROLE_ADMIN(부관리자)만 확인해서 총관리자(ROLE_SUPER_ADMIN)가 블라인드된
@@ -240,11 +241,6 @@ public class PostService {
     }
 
     // 알림 메시지에 제목을 넣을 때 너무 길어지지 않도록 자르는 용도 (Notification.message는 200자 제한)
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
-    }
-
     private Post.Category parseCategory(String value) {
         if (value == null || value.isBlank()) {
             return Post.Category.FREE;

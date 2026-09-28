@@ -3,6 +3,7 @@ package com.webschool.webschool.admin.service;
 import com.webschool.webschool.admin.domain.AdminActionLog;
 import com.webschool.webschool.admin.dto.AdminActionLogDto;
 import com.webschool.webschool.admin.repository.AdminActionLogRepository;
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.post.repository.PostCommentRepository;
@@ -131,9 +132,8 @@ public class AdminActionLogService {
     @Transactional
     public void log(String targetType, Long targetId, String action, String detail) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        boolean authenticated = authentication != null && authentication.isAuthenticated()
-                && !"anonymousUser".equals(authentication.getPrincipal());
-        log(targetType, targetId, action, detail, authenticated ? authentication.getName() : "system");
+        String actorUsername = AuthenticationUtils.usernameOrNull(authentication);
+        log(targetType, targetId, action, detail, actorUsername != null ? actorUsername : "system");
     }
 
     // 회원가입(UserService.register())처럼 아직 로그인 전이라 SecurityContext에 실제 사용자가 없는

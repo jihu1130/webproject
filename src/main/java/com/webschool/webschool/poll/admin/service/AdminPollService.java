@@ -4,6 +4,7 @@ import com.webschool.webschool.poll.service.PollService;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.poll.domain.Poll;
 import com.webschool.webschool.poll.admin.dto.PollAdminDetailDto;
 import com.webschool.webschool.poll.admin.dto.PollAdminOptionDto;
@@ -110,7 +111,7 @@ public class AdminPollService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "설문을 찾을 수 없습니다."));
         poll.setDeleted(true);
         poll.setDeletedAt(LocalDateTime.now());
-        adminActionLogService.log("POLL", id, "DELETE", truncate(poll.getQuestion()));
+        adminActionLogService.log("POLL", id, "DELETE", TextUtils.truncate(poll.getQuestion()));
     }
 
     @Transactional
@@ -119,12 +120,7 @@ public class AdminPollService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "설문을 찾을 수 없습니다."));
         poll.setDeleted(false);
         poll.setDeletedAt(null);
-        adminActionLogService.log("POLL", id, "RESTORE", truncate(poll.getQuestion()));
-    }
-
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
+        adminActionLogService.log("POLL", id, "RESTORE", TextUtils.truncate(poll.getQuestion()));
     }
 
     private PollAdminSummaryDto toSummaryDto(Poll poll) {

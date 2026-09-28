@@ -3,6 +3,7 @@ package com.webschool.webschool.user.service;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.global.upload.FileUploadService;
 import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
@@ -111,7 +112,7 @@ public class MyPageService {
         }
         user.setBio(bio == null || bio.isBlank() ? null : bio.trim());
         adminActionLogService.log("USER", user.getId(), "BIO_UPDATE",
-                bio == null || bio.isBlank() ? "(비움)" : truncate(bio.trim()));
+                bio == null || bio.isBlank() ? "(비움)" : TextUtils.truncate(bio.trim()));
     }
 
     // 알림 설정 - 사용자가 직접 켜고 끄는 개인 알림 설정(관리자 위임 권한과는 성격이 다름, 계정
@@ -171,8 +172,4 @@ public class MyPageService {
         adminActionLogService.log("USER", user.getId(), "SELF_DELETE", username);
     }
 
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
-    }
 }

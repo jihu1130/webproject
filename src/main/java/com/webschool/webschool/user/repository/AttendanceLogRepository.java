@@ -18,6 +18,9 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
 
     Optional<AttendanceLog> findTopByUserIdOrderByAttendanceDateDesc(Long userId);
 
+    // 관리자 출석 수동 취소/미인정 처리(AttendanceService.adminRevoke()) - 삭제 대상 조회용.
+    Optional<AttendanceLog> findByUser_IdAndAttendanceDate(Long userId, LocalDate attendanceDate);
+
     // 연속 출석 스트릭 계산(AttendanceService) + 마이페이지 미니 캘린더 팝업 조회용 - 범위 안의
     // 출석 기록을 전부 가져와 서비스 단에서 날짜 Set으로 바꿔 처리한다(이 프로젝트에 날짜범위
     // JPQL 집계 선례가 없어 다른 리포지토리들처럼 "조회는 단순하게, 계산은 서비스에서" 패턴을 따름).

@@ -1,6 +1,7 @@
 package com.webschool.webschool.bugreport.controller;
 
 import com.webschool.webschool.bugreport.service.BugReportService;
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.util.PageUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -80,7 +81,6 @@ public class BugReportController {
     }
 
     private boolean isAuthenticated(Authentication authentication) {
-        return authentication != null && authentication.isAuthenticated()
-                && !"anonymousUser".equals(authentication.getPrincipal());
+        return AuthenticationUtils.isLoggedIn(authentication);
     }
 }

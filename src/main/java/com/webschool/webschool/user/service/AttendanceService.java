@@ -1,5 +1,7 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.user.domain.AttendanceLog;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.dto.AttendanceCheckInResult;
@@ -116,6 +118,40 @@ public class AttendanceService {
                 .stream()
                 .map(AttendanceLog::getAttendanceDate)
                 .toList();
+    }
+
+    // 관리자가 지난 날짜를 수동으로 "출석 인정" 처리(출석 관리 화면, 2026-09-28 추가) - checkIn()과
+    // 동일한 스트릭 규칙으로 포인트까지 계산해 지급한다(사용자 결정 - 수동 인정도 실제 출석과 동일하게
+    // 취급). checkIn()과 달리 대상 날짜를 파라미터로 받고, 미래 날짜는 거부한다.
+    @Transactional
+    public int adminGrant(User user, LocalDate date) {
+        if (date.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("미래 날짜는 출석 인정할 수 없습니다.");
+        }
+        if (attendanceLogRepository.existsByUserIdAndAttendanceDate(user.getId(), date)) {
+            throw new IllegalArgumentException("이미 출석 처리된 날짜입니다.");
+        }
+
+        Set<LocalDate> recentDates = loadRecentDates(user.getId(), date);
+        int streakDay = countConsecutiveDaysEnding(recentDates, date.minusDays(1)) + 1;
+
+        AttendanceLog log = new AttendanceLog();
+        log.setUser(user);
+        log.setAttendanceDate(date);
+        attendanceLogRepository.save(log);
+
+        int points = pointsForStreakDay(streakDay);
+        userPointService.awardBonus(user, points, "관리자 출석 인정(" + date + ", " + streakDay + "일 연속)");
+        return points;
+    }
+
+    // 관리자가 출석 기록을 "미인정/취소" 처리 - 기록만 삭제하고 이미 지급된 포인트는 그대로 둔다
+    // (사용자 결정, 2026-09-28 - 포인트까지 회수하면 이중 처리가 복잡해지고 실효도 적어서).
+    @Transactional
+    public void adminRevoke(Long userId, LocalDate date) {
+        AttendanceLog log = attendanceLogRepository.findByUser_IdAndAttendanceDate(userId, date)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "출석 기록을 찾을 수 없습니다."));
+        attendanceLogRepository.delete(log);
     }
 
     private Set<LocalDate> loadRecentDates(Long userId, LocalDate today) {

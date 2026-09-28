@@ -1,5 +1,6 @@
 package com.webschool.webschool.post.controller;
 
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.post.dto.CommentReportResultDto;
 import com.webschool.webschool.post.dto.PostCommentDto;
 import com.webschool.webschool.post.service.CommentReactionService;
@@ -28,7 +29,7 @@ public class PostCommentController {
     @ResponseBody
     public List<PostCommentDto> list(@PathVariable String postUuid, Authentication authentication) {
         Long postId = postService.resolveIdByUuid(postUuid);
-        return postCommentService.getComments(postId, extractUsername(authentication));
+        return postCommentService.getComments(postId, AuthenticationUtils.usernameOrNull(authentication));
     }
 
     @PostMapping
@@ -89,11 +90,4 @@ public class PostCommentController {
         return Map.of("accepted", accepted);
     }
 
-    private String extractUsername(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()
-                || "anonymousUser".equals(authentication.getPrincipal())) {
-            return null;
-        }
-        return authentication.getName();
-    }
 }

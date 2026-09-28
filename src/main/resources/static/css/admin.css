@@ -868,6 +868,71 @@
     margin-top: 16px;
 }
 
+/* 출석 관리 상세 캘린더(2026-09-28 추가) - 마이페이지 미니 캘린더 팝업(mypage.css의
+   attendance-cal-*)과 같은 7열 그리드 콘셉트지만, 칸마다 인정/취소 버튼이 들어가야 해서
+   더 크게 그린다. */
+.admin-attend-cal-dow {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 6px;
+}
+
+.admin-attend-cal-dow span {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.admin-attend-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.admin-attend-cal-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 10px;
+    background: var(--surface-soft);
+}
+
+.admin-attend-cal-cell-empty { visibility: hidden; }
+
+.admin-attend-cal-cell-attended {
+    background: var(--success-soft);
+}
+
+.admin-attend-cal-cell-attended .admin-attend-cal-day { color: var(--success); }
+
+.admin-attend-cal-day {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.admin-attend-cal-action button {
+    border: none;
+    background: var(--surface);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-attend-cal-cell-attended .admin-attend-cal-action button {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.admin-attend-cal-action button:hover { filter: brightness(0.95); }
+
 .loadtest-run {
     background: var(--surface);
     border: 1px solid var(--border);

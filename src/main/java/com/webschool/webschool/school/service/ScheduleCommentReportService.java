@@ -3,6 +3,7 @@ package com.webschool.webschool.school.service;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.school.domain.ScheduleComment;
@@ -65,7 +66,7 @@ public class ScheduleCommentReportService {
         report.setReason(trimmedReason);
         scheduleCommentReportRepository.save(report);
         adminActionLogService.log("SCHEDULE_COMMENT", id, "REPORT",
-                trimmedReason != null ? truncate(trimmedReason) : truncate(HtmlSanitizer.toPlainText(comment.getContent())));
+                trimmedReason != null ? TextUtils.truncate(trimmedReason) : TextUtils.truncate(HtmlSanitizer.toPlainText(comment.getContent())));
 
         scheduleCommentRepository.incrementReportCount(id);
         int displayReportCount = comment.getReportCount() + 1;
@@ -84,12 +85,8 @@ public class ScheduleCommentReportService {
         scheduleCommentReportRepository.findByComment_IdAndReporter_Username(id, username).ifPresent(report -> {
             scheduleCommentReportRepository.delete(report);
             scheduleCommentRepository.decrementReportCount(id);
-            adminActionLogService.log("SCHEDULE_COMMENT", id, "REPORT_CANCEL", truncate(HtmlSanitizer.toPlainText(report.getComment().getContent())));
+            adminActionLogService.log("SCHEDULE_COMMENT", id, "REPORT_CANCEL", TextUtils.truncate(HtmlSanitizer.toPlainText(report.getComment().getContent())));
         });
     }
 
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
-    }
 }

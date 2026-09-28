@@ -2,6 +2,7 @@ package com.webschool.webschool.post.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.Post;
@@ -203,7 +204,7 @@ public class PostRecommendService {
         User author = post.getAuthor();
         userPointService.awardBonus(author, DAILY_WINNER_PRIZE_POINTS, "오늘의 추천 게시글 1위");
         notificationService.notify(author, Notification.Type.CONTEST_WIN,
-                "'" + truncate(post.getTitle()) + "'이(가) 오늘의 추천 게시글 1위(" + winner.getCount()
+                "'" + TextUtils.truncate(post.getTitle()) + "'이(가) 오늘의 추천 게시글 1위(" + winner.getCount()
                         + "표)에 선정돼 " + DAILY_WINNER_PRIZE_POINTS + "포인트를 받았어요!",
                 "/posts/" + post.getUuid());
 
@@ -233,8 +234,4 @@ public class PostRecommendService {
                 .build();
     }
 
-    private String truncate(String text) {
-        int limit = 40;
-        return text.length() > limit ? text.substring(0, limit) + "..." : text;
-    }
 }

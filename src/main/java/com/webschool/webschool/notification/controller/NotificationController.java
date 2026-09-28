@@ -1,5 +1,6 @@
 package com.webschool.webschool.notification.controller;
 
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.notification.dto.NotificationDto;
 import com.webschool.webschool.notification.service.NotificationService;
@@ -61,8 +62,7 @@ public class NotificationController {
     @GetMapping("/unread-count")
     @ResponseBody
     public Map<String, Long> unreadCount(Authentication authentication) {
-        String username = (authentication != null && authentication.isAuthenticated()
-                && !"anonymousUser".equals(authentication.getPrincipal())) ? authentication.getName() : null;
+        String username = AuthenticationUtils.usernameOrNull(authentication);
         return Map.of("count", notificationService.getUnreadCount(username));
     }
 }

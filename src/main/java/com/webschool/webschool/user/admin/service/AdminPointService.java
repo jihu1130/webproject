@@ -47,6 +47,7 @@ public class AdminPointService {
 
     private AdminPointLogDto toDto(UserPointLog log) {
         return AdminPointLogDto.builder()
+                .userId(log.getUser().getId())
                 .username(log.getUser().getUsername())
                 .nickname(log.getUser().getNickname())
                 .points(log.getPoints())

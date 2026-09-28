@@ -1,5 +1,6 @@
 package com.webschool.webschool.home.controller;
 
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.notice.dto.NoticeDto;
 import com.webschool.webschool.notice.service.NoticeService;
 import com.webschool.webschool.post.dto.PostListItemDto;
@@ -58,8 +59,7 @@ public class SearchController {
     // 캘린더 일정은 "내 학교" 기준으로만 조회 가능하다 - 비로그인이거나 아직 학교 설정을 안 마친
     // 계정(User.needsSchoolSetup())은 이 영역을 건너뛴다(검색 결과에서 조용히 빠짐, 에러 아님).
     private CalendarEventDto findScheduleEvent(Authentication authentication, String keyword) {
-        if (authentication == null || !authentication.isAuthenticated()
-                || "anonymousUser".equals(authentication.getPrincipal())) {
+        if (!AuthenticationUtils.isLoggedIn(authentication)) {
             return null;
         }
         User user = userService.getByUsername(authentication.getName());

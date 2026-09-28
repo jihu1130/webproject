@@ -1,5 +1,6 @@
 package com.webschool.webschool.user.controller;
 
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.dto.RankingItemDto;
 import com.webschool.webschool.user.service.UserPointService;
@@ -47,8 +48,7 @@ public class RankingController {
     }
 
     private User currentUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()
-                || "anonymousUser".equals(authentication.getPrincipal())) {
+        if (!AuthenticationUtils.isLoggedIn(authentication)) {
             return null;
         }
         return userService.getByUsername(authentication.getName());

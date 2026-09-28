@@ -44,7 +44,8 @@
                 <tbody>
                 <tr th:each="log : ${logs}">
                     <td th:text="${log.createdAt}">날짜</td>
-                    <td th:text="${log.nickname} + ' (' + ${log.username} + ')'">닉네임 (아이디)</td>
+                    <td><a th:href="@{'/admin/profiles/' + ${log.userId}}" class="admin-table-title"
+                           th:text="${log.nickname} + ' (' + ${log.username} + ')'">닉네임 (아이디)</a></td>
                     <td>
                         <span class="admin-status-badge admin-status-cleared" th:if="${log.points > 0}"
                               th:text="'+' + ${log.points} + 'P'">+0P</span>
