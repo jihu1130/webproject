@@ -1,6 +1,8 @@
 package com.webschool.webschool.user.service;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.user.domain.User;
@@ -45,9 +47,9 @@ public class UserPenaltyService {
     public void issue(Long targetId, UserPenalty.Type type, String reason, Integer durationDays,
                        String actingAdminUsername) {
         User target = userRepository.findById(targetId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         User issuer = userRepository.findByUsername(actingAdminUsername)
-                .orElseThrow(() -> new IllegalArgumentException("관리자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "관리자 정보를 찾을 수 없습니다."));
 
         if (target.getUsername().equals(actingAdminUsername)) {
             throw new IllegalArgumentException("본인에게는 제재를 부여할 수 없습니다.");
@@ -85,14 +87,14 @@ public class UserPenaltyService {
     @Transactional
     public void revoke(Long penaltyId) {
         UserPenalty penalty = userPenaltyRepository.findById(penaltyId)
-                .orElseThrow(() -> new IllegalArgumentException("제재 기록을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "제재 기록을 찾을 수 없습니다."));
 
         if (penalty.isRevoked()) {
-            throw new IllegalArgumentException("이미 해제된 제재입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 해제된 제재입니다.");
         }
         // 대상 계정이 이미 하드 삭제됐으면(AccountHardDeleteService 참고) 해제할 대상 자체가 없다.
         if (penalty.getTarget() == null) {
-            throw new IllegalArgumentException("대상 계정이 이미 삭제되어 해제할 수 없습니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "대상 계정이 이미 삭제되어 해제할 수 없습니다.");
         }
 
         penalty.setRevoked(true);

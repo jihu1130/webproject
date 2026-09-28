@@ -80,7 +80,7 @@ public class AdminUserService {
 
     public AdminUserProfileDto getUserProfile(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         List<AdminUserProfilePostDto> recentPosts = postRepository
                 .findTop5ByAuthor_IdAndDeletedFalseOrderByCreatedAtDesc(id).stream()
@@ -130,12 +130,12 @@ public class AdminUserService {
     @Transactional
     public void adjustPoints(Long id, int amount, String reason, String actingAdminUsername) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         // 본인 스스로에게 포인트를 지급하는 건 다른 self-action 금지(승격/탈퇴/정지 등)와 같은
         // 이유로 막는다 - 안 막으면 canManagePoints 권한이 있는 관리자가 자기 자신에게 무제한
         // 포인트를 줄 수 있게 된다.
         if (user.getUsername().equals(actingAdminUsername)) {
-            throw new IllegalArgumentException("본인의 포인트는 스스로 조정할 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 포인트는 스스로 조정할 수 없습니다.");
         }
         if (amount == 0) {
             throw new IllegalArgumentException("0은 지급/차감할 수 없습니다.");
@@ -151,10 +151,10 @@ public class AdminUserService {
     @Transactional
     public void setRole(Long id, User.Role role, String actingAdminUsername) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getUsername().equals(actingAdminUsername)) {
-            throw new IllegalArgumentException("본인의 권한은 관리자 페이지에서 변경할 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 권한은 관리자 페이지에서 변경할 수 없습니다.");
         }
 
         // 총관리자 계정은 이 화면에서 권한을 뺏거나 다른 계정을 총관리자로 만들 수 없다 - admin 계정 하나로 고정
@@ -208,10 +208,10 @@ public class AdminUserService {
                                    boolean canViewAuditLog, boolean canManageShop, boolean canManagePolls,
                                    boolean canManageAttendance, boolean canManagePoints) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getUsername().equals(actingAdminUsername)) {
-            throw new IllegalArgumentException("본인의 권한은 스스로 변경할 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 권한은 스스로 변경할 수 없습니다.");
         }
 
         if (user.getRole() != User.Role.ROLE_ADMIN) {
@@ -252,10 +252,10 @@ public class AdminUserService {
         }
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getUsername().equals(actingAdminUsername)) {
-            throw new IllegalArgumentException("본인은 이미 총관리자입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "본인은 이미 총관리자입니다.");
         }
         if (user.getRole() != User.Role.ROLE_ADMIN) {
             throw new IllegalArgumentException("부관리자 계정만 총관리자로 승격할 수 있습니다.");
@@ -273,10 +273,10 @@ public class AdminUserService {
     @Transactional
     public void deleteUser(Long id, String actingAdminUsername) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getUsername().equals(actingAdminUsername)) {
-            throw new IllegalArgumentException("본인 계정은 관리자 페이지에서 삭제할 수 없습니다. 마이페이지를 이용하세요.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인 계정은 관리자 페이지에서 삭제할 수 없습니다. 마이페이지를 이용하세요.");
         }
 
         if (user.isSuperAdmin()) {
@@ -297,7 +297,7 @@ public class AdminUserService {
     @Transactional
     public void restoreUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.setDeleted(false);
         user.setDeletedAt(null);
         user.setDeletedByAdmin(false);
@@ -309,10 +309,10 @@ public class AdminUserService {
     @Transactional
     public void deactivateUser(Long id, String actingAdminUsername) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getUsername().equals(actingAdminUsername)) {
-            throw new IllegalArgumentException("본인 계정은 비활성화할 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인 계정은 비활성화할 수 없습니다.");
         }
 
         if (user.isSuperAdmin()) {
@@ -333,7 +333,7 @@ public class AdminUserService {
     @Transactional
     public void activateUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.setActive(true);
         notificationService.notify(user, Notification.Type.ACCOUNT, "계정이 다시 활성화되었습니다. 로그인할 수 있어요.", "/mypage");
         adminActionLogService.log("USER", id, "ACTIVATE", user.getUsername());

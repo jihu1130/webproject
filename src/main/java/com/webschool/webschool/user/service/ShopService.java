@@ -1,5 +1,7 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.user.domain.ShopItem;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.domain.UserShopItem;
@@ -68,7 +70,7 @@ public class ShopService {
     public void updateItem(Long id, String label, String value, int price, ShopItem.Effect effect) {
         validate(label, value, price);
         ShopItem item = shopItemRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
         item.setLabel(label.trim());
         item.setValue(value.trim());
         item.setPrice(price);
@@ -80,7 +82,7 @@ public class ShopService {
     @Transactional
     public void setActive(Long id, boolean active) {
         ShopItem item = shopItemRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
         item.setActive(active);
     }
 
@@ -150,12 +152,12 @@ public class ShopService {
     @Transactional
     public void purchase(User user, Long itemId) {
         ShopItem item = shopItemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
         if (!item.isActive()) {
             throw new IllegalArgumentException("판매가 중지된 상품입니다.");
         }
         if (userShopItemRepository.existsByUser_IdAndShopItem_Id(user.getId(), itemId)) {
-            throw new IllegalArgumentException("이미 보유한 상품입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 보유한 상품입니다.");
         }
 
         userPointService.spend(user, item.getPrice(), "상점 구매: " + item.getLabel());
@@ -173,7 +175,7 @@ public class ShopService {
     @Transactional
     public void equip(User user, Long itemId) {
         ShopItem item = shopItemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
         if (!userShopItemRepository.existsByUser_IdAndShopItem_Id(user.getId(), itemId)) {
             throw new IllegalArgumentException("보유하지 않은 상품입니다.");
         }

@@ -1,5 +1,7 @@
 package com.webschool.webschool.user.admin.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.user.admin.dto.AdminAttendanceSummaryDto;
 import com.webschool.webschool.user.domain.AttendanceLog;
 import com.webschool.webschool.user.domain.User;
@@ -34,7 +36,7 @@ public class AdminAttendanceService {
 
     public AdminAttendanceSummaryDto getSummary(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         return toSummaryDto(user);
     }
 

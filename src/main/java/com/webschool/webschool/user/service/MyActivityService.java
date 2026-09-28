@@ -1,5 +1,7 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.post.domain.Post;
@@ -225,7 +227,7 @@ public class MyActivityService {
 
     private Long resolveUserId(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         return user.getId();
     }
 

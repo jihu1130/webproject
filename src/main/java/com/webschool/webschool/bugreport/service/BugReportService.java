@@ -165,7 +165,7 @@ public class BugReportService {
     // 연결되지 않으므로 여기서 볼 수 없다 - contactEmail로만 답변을 받는다).
     public Page<BugReportDto> getMyInquiries(String username, int page, int size) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         List<BugReportDto> mine = bugReportRepository.findAllByOrderByCreatedAtDesc().stream()
                 .filter(r -> r.getReporter() != null && r.getReporter().getId().equals(user.getId()))
                 .map(this::toDto)
@@ -188,7 +188,7 @@ public class BugReportService {
 
     public BugReportDto getDetail(Long id) {
         BugReport report = bugReportRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("버그 리포트를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "버그 리포트를 찾을 수 없습니다."));
         return toDto(report);
     }
 
@@ -198,7 +198,7 @@ public class BugReportService {
     public void addReply(Long id, String adminUsername, String content) {
         requireSuperAdmin(adminUsername);
         BugReport report = bugReportRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "문의를 찾을 수 없습니다."));
         String trimmed = content == null ? "" : content.trim();
         if (trimmed.isBlank()) {
             throw new IllegalArgumentException("답변 내용을 입력해주세요.");
@@ -230,9 +230,9 @@ public class BugReportService {
     @Transactional
     public void addUserReply(Long id, String username, String content) {
         BugReport report = bugReportRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "문의를 찾을 수 없습니다."));
         if (report.getReporter() == null || !report.getReporter().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 제출한 문의에만 답장할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 제출한 문의에만 답장할 수 있습니다.");
         }
         if (report.isResolved()) {
             throw new IllegalArgumentException("해결된 문의에는 답장을 남길 수 없습니다.");
@@ -254,7 +254,7 @@ public class BugReportService {
     public void resolve(Long id, String actorUsername) {
         requireSuperAdmin(actorUsername);
         BugReport report = bugReportRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("버그 리포트를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "버그 리포트를 찾을 수 없습니다."));
         report.setResolved(!report.isResolved());
         report.setResolvedAt(report.isResolved() ? LocalDateTime.now() : null);
         adminActionLogService.log("BUG_REPORT", report.getId(),
@@ -268,7 +268,7 @@ public class BugReportService {
     public void delete(Long id, String actorUsername) {
         requireSuperAdmin(actorUsername);
         BugReport report = bugReportRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("버그 리포트를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "버그 리포트를 찾을 수 없습니다."));
         adminActionLogService.log("BUG_REPORT", report.getId(), "DELETE", truncate(report.getTitle()));
         bugReportAttachmentRepository.deleteAll(
                 bugReportAttachmentRepository.findByBugReport_IdOrderBySortOrderAsc(report.getId()));
@@ -281,7 +281,7 @@ public class BugReportService {
         User actor = userRepository.findByUsername(actorUsername)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         if (!actor.isSuperAdmin()) {
-            throw new IllegalArgumentException("버그 리포트 관리 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "버그 리포트 관리 권한이 없습니다.");
         }
     }
 

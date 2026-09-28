@@ -46,12 +46,12 @@ public class UserService {
         }
 
         if (userRepository.existsByUsername(dto.getUsername())) {
-            throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 존재하는 아이디입니다.");
         }
 
         String email = UserInputValidator.requireValidEmail(dto.getEmail());
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 사용 중인 이메일입니다.");
         }
 
         UserInputValidator.requireSchoolSelected(dto.getSchoolName(), dto.getSchoolCode(),

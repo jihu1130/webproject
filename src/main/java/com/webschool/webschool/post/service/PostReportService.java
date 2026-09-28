@@ -37,15 +37,15 @@ public class PostReportService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (post.isReportCleared()) {
-            throw new IllegalArgumentException("이미 검토되어 문제없다고 판정된 게시물입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 검토되어 문제없다고 판정된 게시물입니다.");
         }
 
         if (post.getAuthor() != null && post.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 게시물은 신고할 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 게시물은 신고할 수 없습니다.");
         }
 
         if (postReportRepository.existsByPost_IdAndReporter_Username(id, username)) {
-            throw new IllegalArgumentException("이미 신고한 게시물입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 신고한 게시물입니다.");
         }
 
         User reporter = userRepository.findByUsername(username)

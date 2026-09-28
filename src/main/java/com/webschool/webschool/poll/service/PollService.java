@@ -92,7 +92,7 @@ public class PollService {
         validateQuestion(req.getQuestion());
 
         ScheduleComment comment = scheduleCommentRepository.findById(scheduleCommentId)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다."));
         User creator = userRepository.findByUsername(creatorUsername)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -112,7 +112,7 @@ public class PollService {
     public PollResultDto getResult(Long pollId, String viewerUsername) {
         Poll poll = pollRepository.findById(pollId)
                 .filter(p -> !p.isDeleted())
-                .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "설문을 찾을 수 없습니다."));
         return buildResult(poll, viewerUsername);
     }
 
@@ -121,7 +121,7 @@ public class PollService {
     // 그대로 적용되므로 실제 관리자가 아니면 여전히 접근이 막힌다.
     public PollResultDto getResultForAdmin(Long pollId, String adminUsername) {
         Poll poll = pollRepository.findById(pollId)
-                .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "설문을 찾을 수 없습니다."));
         return buildResult(poll, adminUsername);
     }
 
@@ -137,7 +137,7 @@ public class PollService {
     public void deletePollForComment(Long scheduleCommentId, String username) {
         pollRepository.findByScheduleComment_IdAndDeletedFalse(scheduleCommentId).ifPresent(poll -> {
             if (poll.getCreator() == null || !poll.getCreator().getUsername().equals(username)) {
-                throw new IllegalArgumentException("본인이 작성한 설문만 삭제할 수 있습니다.");
+                throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 설문만 삭제할 수 있습니다.");
             }
             poll.setDeleted(true);
             poll.setDeletedAt(LocalDateTime.now());
@@ -151,12 +151,12 @@ public class PollService {
     public void vote(Long pollId, List<Long> optionIds, String customOptionText, String username) {
         Poll poll = pollRepository.findById(pollId)
                 .filter(p -> !p.isDeleted())
-                .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "설문을 찾을 수 없습니다."));
         User voter = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (!canAccess(poll, voter)) {
-            throw new IllegalArgumentException("이 설문에 참여할 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "이 설문에 참여할 수 없습니다.");
         }
         if (poll.isExpired()) {
             throw new IllegalArgumentException("마감된 설문입니다.");
@@ -239,7 +239,7 @@ public class PollService {
                 : userRepository.findByUsername(viewerUsername).orElse(null);
 
         if (!canAccess(poll, viewer)) {
-            throw new IllegalArgumentException("이 설문을 볼 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "이 설문을 볼 수 없습니다.");
         }
 
         List<PollOption> options = pollOptionRepository.findByPoll_IdOrderByIdAsc(poll.getId());

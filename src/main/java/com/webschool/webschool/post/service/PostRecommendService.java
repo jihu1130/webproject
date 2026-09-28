@@ -78,10 +78,10 @@ public class PostRecommendService {
             throw new IllegalArgumentException("전체 공개 게시글만 추천할 수 있습니다.");
         }
         if (post.getAuthor() != null && post.getAuthor().getId().equals(voter.getId())) {
-            throw new IllegalArgumentException("본인 게시물은 추천할 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인 게시물은 추천할 수 없습니다.");
         }
         if (recommendRepository.existsByPost_IdAndVoter_Id(post.getId(), voter.getId())) {
-            throw new IllegalArgumentException("이미 추천한 게시물입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 추천한 게시물입니다.");
         }
 
         PostRecommend recommend = new PostRecommend();

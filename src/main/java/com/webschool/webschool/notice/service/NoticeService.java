@@ -51,7 +51,7 @@ public class NoticeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (!author.isSuperAdmin() && !author.isCanManageNotices()) {
-            throw new IllegalArgumentException("공지사항 작성 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "공지사항 작성 권한이 없습니다.");
         }
 
         String validTitle = validateTitle(title);
@@ -91,9 +91,9 @@ public class NoticeService {
 
     public NoticeDto getDetail(Long id) {
         Notice notice = noticeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공지사항을 찾을 수 없습니다."));
         if (notice.isDeleted()) {
-            throw new IllegalArgumentException("공지사항을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "공지사항을 찾을 수 없습니다.");
         }
         return toDto(notice);
     }
@@ -107,13 +107,13 @@ public class NoticeService {
         User actor = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         if (!actor.isSuperAdmin() && !actor.isCanManageNotices()) {
-            throw new IllegalArgumentException("공지사항 수정 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "공지사항 수정 권한이 없습니다.");
         }
 
         Notice notice = noticeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공지사항을 찾을 수 없습니다."));
         if (notice.isDeleted()) {
-            throw new IllegalArgumentException("공지사항을 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "공지사항을 찾을 수 없습니다.");
         }
 
         notice.setTitle(validateTitle(title));
@@ -130,11 +130,11 @@ public class NoticeService {
         User actor = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         if (!actor.isSuperAdmin() && !actor.isCanManageNotices()) {
-            throw new IllegalArgumentException("공지사항 삭제 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "공지사항 삭제 권한이 없습니다.");
         }
 
         Notice notice = noticeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공지사항을 찾을 수 없습니다."));
         notice.setDeleted(true);
         notice.setDeletedAt(LocalDateTime.now());
         adminActionLogService.log("NOTICE", notice.getId(), "DELETE", truncate(notice.getTitle()));

@@ -95,10 +95,10 @@ public class NotificationService {
     @Transactional
     public String markRead(Long id, String username) {
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "알림을 찾을 수 없습니다."));
 
         if (!notification.getRecipient().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인의 알림만 확인할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 알림만 확인할 수 있습니다.");
         }
 
         notification.setRead(true);
@@ -110,10 +110,10 @@ public class NotificationService {
     @Transactional
     public void delete(Long id, String username) {
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "알림을 찾을 수 없습니다."));
 
         if (!notification.getRecipient().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인의 알림만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 알림만 삭제할 수 있습니다.");
         }
 
         notificationRepository.delete(notification);

@@ -27,6 +27,8 @@ import com.webschool.webschool.school.repository.ScheduleCommentLikeRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentReportRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.school.repository.SchoolRepository;
+import com.webschool.webschool.school.service.ScheduleCommentReactionService;
+import com.webschool.webschool.school.service.ScheduleCommentReportService;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.user.dto.RegisterDto;
 import com.webschool.webschool.user.domain.User;
@@ -276,6 +278,12 @@ class TestDataSeeder {
 
     @Autowired
     private ScheduleCommentService scheduleCommentService;
+
+    @Autowired
+    private ScheduleCommentReportService scheduleCommentReportService;
+
+    @Autowired
+    private ScheduleCommentReactionService scheduleCommentReactionService;
 
     @Autowired
     private ScheduleCommentRepository scheduleCommentRepository;
@@ -669,7 +677,7 @@ class TestDataSeeder {
             if (scheduleCommentReportRepository.existsByComment_IdAndReporter_Username(commentId, reporter)) {
                 continue;
             }
-            scheduleCommentService.reportComment(commentId, reporter, reason);
+            scheduleCommentReportService.reportComment(commentId, reporter, reason);
         }
     }
 
@@ -705,7 +713,7 @@ class TestDataSeeder {
             if (scheduleCommentLikeRepository.existsByComment_IdAndUser_Username(commentId, liker)) {
                 continue;
             }
-            scheduleCommentService.toggleLike(commentId, liker);
+            scheduleCommentReactionService.toggleLike(commentId, liker);
         }
     }
 
@@ -717,7 +725,7 @@ class TestDataSeeder {
             if (scheduleCommentBookmarkRepository.existsByComment_IdAndUser_Username(commentId, bookmarker)) {
                 continue;
             }
-            scheduleCommentService.toggleBookmark(commentId, bookmarker);
+            scheduleCommentReactionService.toggleBookmark(commentId, bookmarker);
         }
     }
 }

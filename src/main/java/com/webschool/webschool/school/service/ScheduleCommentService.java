@@ -5,20 +5,14 @@ import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.school.domain.School;
 import com.webschool.webschool.school.domain.ScheduleComment;
-import com.webschool.webschool.school.domain.ScheduleCommentBookmark;
-import com.webschool.webschool.school.domain.ScheduleCommentLike;
-import com.webschool.webschool.school.domain.ScheduleCommentReport;
 import com.webschool.webschool.school.dto.ScheduleCommentDto;
-import com.webschool.webschool.school.dto.ScheduleCommentReportResultDto;
 import com.webschool.webschool.school.repository.ScheduleCommentBookmarkRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentLikeRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentReportRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.school.repository.SchoolRepository;
 import com.webschool.webschool.global.util.HtmlSanitizer;
-import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.post.util.BannedWordFilter;
-import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserBlockService;
@@ -30,10 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+// 오늘의 한마디 목록/작성/수정/삭제. 2026-09-28 파일 정리 때 신고(ScheduleCommentReportService)와
+// 좋아요·북마크(ScheduleCommentReactionService)를 분리했다 - PostService/PostCommentService와 같은 축.
 @Service
 @RequiredArgsConstructor
 public class ScheduleCommentService {
@@ -42,7 +37,6 @@ public class ScheduleCommentService {
     // 리치 에디터 도입 이후(2026-08-19) 이 값은 "글자 수"가 아니라 정제된 HTML 문자열 길이 기준이다 -
     // 예전엔 진짜 "한 줄"짜리 300자 제한이었지만, 본문에 사진/동영상/파일 삽입을 지원하면서 넉넉하게 늘림.
     private static final int MAX_CONTENT_LENGTH = 50000;
-    private static final int BLIND_THRESHOLD = 3; // 서로 다른 사용자 3명이 신고하면 자동 블라인드 (PostCommentService와 동일)
     private static final String BLIND_PLACEHOLDER = "신고 누적으로 블라인드 처리된 한마디입니다.";
 
     private final ScheduleCommentRepository scheduleCommentRepository;
@@ -53,7 +47,6 @@ public class ScheduleCommentService {
     private final UserRepository userRepository;
     private final UserPenaltyService userPenaltyService;
     private final UserBlockService userBlockService;
-    private final NotificationService notificationService;
     private final AdminActionLogService adminActionLogService;
 
     // 차단한 사용자의 한마디는 목록에서 걸러낸다(UserBlockService 클래스 주석 참고 - 한마디는 특정
@@ -107,7 +100,7 @@ public class ScheduleCommentService {
         }
 
         if (comment.getUser() == null || !comment.getUser().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 댓글만 수정할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 댓글만 수정할 수 있습니다.");
         }
 
         // 실제로 내용이 바뀐 경우에만 "수정됨"으로 표시 (닉네임 변경 등 무관한 변경이나
@@ -133,7 +126,7 @@ public class ScheduleCommentService {
         }
 
         if (comment.getUser() == null || !comment.getUser().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 댓글만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 댓글만 삭제할 수 있습니다.");
         }
 
         // 소프트 딜리트: 물리적으로 지우지 않고 상태만 변경 (관리자 페이지에서 계속 조회/복구 가능, PostComment와 동일 패턴)
@@ -142,154 +135,21 @@ public class ScheduleCommentService {
         adminActionLogService.log("SCHEDULE_COMMENT", comment.getId(), "DELETE", truncate(HtmlSanitizer.toPlainText(comment.getContent())));
     }
 
-    @Transactional
-    public ScheduleCommentReportResultDto reportComment(Long id, String username, String reason) {
-        ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
-
-        if (comment.isDeleted()) {
-            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
-        }
-
-        if (comment.isReportCleared()) {
-            throw new IllegalArgumentException("이미 검토되어 문제없다고 판정된 한마디입니다.");
-        }
-
-        if (comment.getUser() != null && comment.getUser().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 댓글은 신고할 수 없습니다.");
-        }
-
-        if (scheduleCommentReportRepository.existsByComment_IdAndReporter_Username(id, username)) {
-            throw new IllegalArgumentException("이미 신고한 댓글입니다.");
-        }
-
-        User reporter = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        String trimmedReason = reason == null || reason.isBlank() ? null : reason.trim();
-        if (trimmedReason != null && trimmedReason.length() > 300) {
-            trimmedReason = trimmedReason.substring(0, 300);
-        }
-        BannedWordFilter.validate(trimmedReason);
-
-        ScheduleCommentReport report = new ScheduleCommentReport();
-        report.setComment(comment);
-        report.setReporter(reporter);
-        report.setReason(trimmedReason);
-        scheduleCommentReportRepository.save(report);
-        adminActionLogService.log("SCHEDULE_COMMENT", id, "REPORT",
-                trimmedReason != null ? truncate(trimmedReason) : truncate(HtmlSanitizer.toPlainText(comment.getContent())));
-
-        scheduleCommentRepository.incrementReportCount(id);
-        int displayReportCount = comment.getReportCount() + 1;
-        boolean nowBlind = comment.isBlind();
-        if (!nowBlind && displayReportCount >= BLIND_THRESHOLD) {
-            comment.setBlind(true);
-            nowBlind = true;
-        }
-
-        return new ScheduleCommentReportResultDto(displayReportCount, nowBlind);
-    }
-
-    // 신고 취소 - PostReportService.cancelReport()와 동일한 이유/패턴(자동 언블라인드는 하지 않음).
-    @Transactional
-    public void cancelReport(Long id, String username) {
-        scheduleCommentReportRepository.findByComment_IdAndReporter_Username(id, username).ifPresent(report -> {
-            scheduleCommentReportRepository.delete(report);
-            scheduleCommentRepository.decrementReportCount(id);
-            adminActionLogService.log("SCHEDULE_COMMENT", id, "REPORT_CANCEL", truncate(HtmlSanitizer.toPlainText(report.getComment().getContent())));
-        });
-    }
-
-    // PostReactionService.toggleLike()/toggleBookmark()와 동일한 패턴
-    @Transactional
-    public Map<String, Object> toggleLike(Long id, String username) {
-        ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        var existing = scheduleCommentLikeRepository.findByComment_IdAndUser_Id(id, user.getId());
-        boolean liked;
-        int displayLikeCount;
-        if (existing.isPresent()) {
-            scheduleCommentLikeRepository.delete(existing.get());
-            scheduleCommentRepository.decrementLikeCount(id);
-            displayLikeCount = Math.max(0, comment.getLikeCount() - 1);
-            liked = false;
-        } else {
-            ScheduleCommentLike like = new ScheduleCommentLike();
-            like.setComment(comment);
-            like.setUser(user);
-            scheduleCommentLikeRepository.save(like);
-            scheduleCommentRepository.incrementLikeCount(id);
-            displayLikeCount = comment.getLikeCount() + 1;
-            liked = true;
-            notificationService.notifyIfNotSelf(comment.getUser(), username, Notification.Type.LIKE,
-                    user.getNickname() + "님이 회원님의 오늘의 한마디를 좋아합니다.",
-                    "/school/comments/" + comment.getUuid());
-        }
-        return Map.of("liked", liked, "likeCount", displayLikeCount);
-    }
-
-    @Transactional
-    public boolean toggleBookmark(Long id, String username) {
-        ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        var existing = scheduleCommentBookmarkRepository.findByComment_IdAndUser_Id(id, user.getId());
-        if (existing.isPresent()) {
-            scheduleCommentBookmarkRepository.delete(existing.get());
-            return false;
-        }
-        ScheduleCommentBookmark bookmark = new ScheduleCommentBookmark();
-        bookmark.setComment(comment);
-        bookmark.setUser(user);
-        scheduleCommentBookmarkRepository.save(bookmark);
-        return true;
-    }
-
-    // 마이페이지 "북마크" 탭(한마디)의 "해제" 버튼 전용 - PostReactionService.removeBookmark()와 동일한 이유로
-    // 토글이 아닌 항상 "제거"만 하는 멱등 동작으로 분리.
-    @Transactional
-    public void removeBookmark(Long id, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        scheduleCommentBookmarkRepository.findByComment_IdAndUser_Id(id, user.getId())
-                .ifPresent(scheduleCommentBookmarkRepository::delete);
-    }
-
-    // 마이페이지 "좋아요" 탭(한마디)의 "취소" 버튼 전용 - PostReactionService.removeLike()와 동일한 이유로
-    // 토글이 아닌 항상 "제거"만 하는 멱등 동작으로 분리.
-    @Transactional
-    public void removeLike(Long id, String username) {
-        ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        scheduleCommentLikeRepository.findByComment_IdAndUser_Id(id, user.getId()).ifPresent(like -> {
-            scheduleCommentLikeRepository.delete(like);
-            scheduleCommentRepository.decrementLikeCount(id);
-        });
-    }
-
     // 공개 URL(/school/comments/{uuid})의 uuid를 내부 Long id로 변환 - PostService.resolveIdByUuid()와
     // 동일한 패턴(컨트롤러 레이어에서만 uuid를 다루고, 그 아래 서비스/리포지토리는 계속 Long을 쓴다).
     public Long resolveIdByUuid(String uuid) {
         return scheduleCommentRepository.findByUuid(uuid)
                 .map(ScheduleComment::getId)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다."));
     }
 
     // 게시글 본문에 삽입된 "한마디로 바로가기" 임베드 카드가 가리키는 대상 조회용
     // (ScheduleCommentController.openComment()에서 캘린더 화면으로 리다이렉트하는 데 필요한 정보를 얻는다).
     public ScheduleComment findForPermalink(Long id) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다."));
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("한마디를 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다.");
         }
         return comment;
     }
@@ -299,12 +159,12 @@ public class ScheduleCommentService {
     // 들어와도 내용이 노출되지 않게 막는다(PostController.editForm()의 postService.getForEdit()와 동일 패턴).
     public ScheduleComment getForEdit(Long id, String username) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다."));
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("한마디를 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다.");
         }
         if (comment.getUser() == null || !comment.getUser().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 한마디만 수정할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 한마디만 수정할 수 있습니다.");
         }
         return comment;
     }

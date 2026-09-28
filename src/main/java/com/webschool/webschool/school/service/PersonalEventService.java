@@ -68,7 +68,7 @@ public class PersonalEventService {
     public PersonalEventDto updateEvent(Long id, String username, String title, String memo) {
         User user = getUser(username);
         PersonalEvent event = personalEventRepository.findByIdAndUser_Id(id, user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("본인이 등록한 일정만 수정할 수 있습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN, "본인이 등록한 일정만 수정할 수 있습니다."));
 
         event.setTitle(validateTitle(title));
         event.setMemo(validateMemo(memo));
@@ -80,7 +80,7 @@ public class PersonalEventService {
     public void deleteEvent(Long id, String username) {
         User user = getUser(username);
         PersonalEvent event = personalEventRepository.findByIdAndUser_Id(id, user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("본인이 등록한 일정만 삭제할 수 있습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN, "본인이 등록한 일정만 삭제할 수 있습니다."));
         personalEventRepository.delete(event);
     }
 

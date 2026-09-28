@@ -29,6 +29,8 @@ import com.webschool.webschool.user.repository.UserPenaltyRepository;
 import com.webschool.webschool.user.repository.UserPointLogRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.repository.UserShopItemRepository;
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,7 +117,7 @@ public class AccountHardDeleteService {
     @Transactional
     public void hardDelete(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         // 총관리자는 deleteAccount()에서 애초에 탈퇴가 막혀있어 이 배치 대상이 될 수 없지만,
         // 방어적으로 한 번 더 막는다(다른 경로로 실수로 호출되는 것까지 대비).
         if (user.isSuperAdmin()) {

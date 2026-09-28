@@ -1,6 +1,8 @@
 package com.webschool.webschool.user.service;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.global.upload.FileUploadService;
 import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
@@ -51,7 +53,7 @@ public class MyPageService {
         if (!newUsername.isBlank() && !newUsername.equals(user.getUsername())) {
             UserInputValidator.requireValidUsername(newUsername);
             if (userRepository.existsByUsername(newUsername)) {
-                throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
+                throw new BusinessException(ErrorCode.CONFLICT, "이미 사용 중인 아이디입니다.");
             }
             String oldUsername = user.getUsername();
             user.setUsername(newUsername);
@@ -79,7 +81,7 @@ public class MyPageService {
         String newEmail = UserInputValidator.requireValidEmail(dto.getEmail());
         if (!newEmail.equals(user.getEmail())) {
             if (userRepository.existsByEmail(newEmail)) {
-                throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+                throw new BusinessException(ErrorCode.CONFLICT, "이미 사용 중인 이메일입니다.");
             }
             user.setEmail(newEmail);
             user.setEmailVerified(false); // 이메일이 바뀌었으니 새 주소로 다시 인증해야 함

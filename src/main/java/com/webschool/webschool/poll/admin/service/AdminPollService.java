@@ -2,6 +2,8 @@ package com.webschool.webschool.poll.admin.service;
 import com.webschool.webschool.poll.service.PollService;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.poll.domain.Poll;
 import com.webschool.webschool.poll.admin.dto.PollAdminDetailDto;
 import com.webschool.webschool.poll.admin.dto.PollAdminOptionDto;
@@ -67,7 +69,7 @@ public class AdminPollService {
     // (CLAUDE.md "익명성 보호가 여러 곳에 걸쳐 일관되게 적용됨" 원칙).
     public PollAdminDetailDto getDetail(Long id, String adminUsername) {
         Poll poll = pollRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "설문을 찾을 수 없습니다."));
         PollResultDto result = pollService.getResultForAdmin(id, adminUsername);
 
         int totalVotes = result.getOptions().stream().mapToInt(PollOptionResultDto::getVoteCount).sum();
@@ -105,7 +107,7 @@ public class AdminPollService {
     @Transactional
     public void deletePoll(Long id) {
         Poll poll = pollRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "설문을 찾을 수 없습니다."));
         poll.setDeleted(true);
         poll.setDeletedAt(LocalDateTime.now());
         adminActionLogService.log("POLL", id, "DELETE", truncate(poll.getQuestion()));
@@ -114,7 +116,7 @@ public class AdminPollService {
     @Transactional
     public void restorePoll(Long id) {
         Poll poll = pollRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("설문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "설문을 찾을 수 없습니다."));
         poll.setDeleted(false);
         poll.setDeletedAt(null);
         adminActionLogService.log("POLL", id, "RESTORE", truncate(poll.getQuestion()));

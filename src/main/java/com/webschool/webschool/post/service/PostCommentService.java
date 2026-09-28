@@ -114,12 +114,12 @@ public class PostCommentService {
         PostComment parentComment = null;
         if (parentId != null) {
             parentComment = postCommentRepository.findById(parentId)
-                    .orElseThrow(() -> new IllegalArgumentException("답글을 달 댓글을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "답글을 달 댓글을 찾을 수 없습니다."));
             if (parentComment.isDeleted()) {
                 throw new IllegalArgumentException("삭제된 댓글에는 답글을 달 수 없습니다.");
             }
             if (!parentComment.getPost().getId().equals(postId)) {
-                throw new IllegalArgumentException("답글을 달 댓글을 찾을 수 없습니다.");
+                throw new BusinessException(ErrorCode.NOT_FOUND, "답글을 달 댓글을 찾을 수 없습니다.");
             }
             if (parentComment.getParentComment() != null) {
                 throw new IllegalArgumentException("답글에는 답글을 달 수 없습니다.");
@@ -171,7 +171,7 @@ public class PostCommentService {
         }
 
         if (comment.getAuthor() == null || !comment.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 댓글만 수정할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 댓글만 수정할 수 있습니다.");
         }
 
         if (!trimmed.equals(comment.getContent())) {
@@ -195,7 +195,7 @@ public class PostCommentService {
         }
 
         if (comment.getAuthor() == null || !comment.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 댓글만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 댓글만 삭제할 수 있습니다.");
         }
 
         // 답글이 달린 댓글은 삭제할 수 없다 - 삭제된 댓글은 목록 조회 쿼리에서 아예 제외되는데
@@ -232,12 +232,12 @@ public class PostCommentService {
             throw new IllegalArgumentException("질의응답 게시글에서만 답변을 채택할 수 있습니다.");
         }
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("질문 작성자만 답변을 채택할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "질문 작성자만 답변을 채택할 수 있습니다.");
         }
         // 수정사항.md 지적 - 질문자가 자기 자신의 댓글을 채택할 수 있어서 "다른 사람이 도와준
         // 답을 표시"한다는 채택 기능의 취지가 무의미해졌다.
         if (comment.getAuthor() != null && comment.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 답변은 채택할 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 답변은 채택할 수 없습니다.");
         }
 
         if (comment.isAccepted()) {

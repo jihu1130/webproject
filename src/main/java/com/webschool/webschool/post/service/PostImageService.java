@@ -94,7 +94,7 @@ public class PostImageService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 게시물에만 이미지를 추가할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 게시물에만 이미지를 추가할 수 있습니다.");
         }
 
         int nextOrder = postImageRepository.countByPost_Id(postId);
@@ -134,7 +134,7 @@ public class PostImageService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 게시물의 이미지만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 게시물의 이미지만 삭제할 수 있습니다.");
         }
 
         List<PostImage> images = postImageRepository.findAllById(imageIds).stream()

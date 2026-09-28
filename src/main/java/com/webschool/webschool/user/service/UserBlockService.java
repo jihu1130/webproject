@@ -48,7 +48,7 @@ public class UserBlockService {
         User blocker = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         User target = userRepository.findById(targetId)
-                .orElseThrow(() -> new IllegalArgumentException("차단할 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "차단할 사용자를 찾을 수 없습니다."));
 
         if (blocker.getId().equals(target.getId())) {
             throw new IllegalArgumentException("본인은 차단할 수 없습니다.");
@@ -66,10 +66,10 @@ public class UserBlockService {
     @Transactional
     public void unblock(String username, Long blockId) {
         UserBlock block = userBlockRepository.findById(blockId)
-                .orElseThrow(() -> new IllegalArgumentException("차단 기록을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "차단 기록을 찾을 수 없습니다."));
 
         if (!block.getBlocker().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 설정한 차단만 해제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 설정한 차단만 해제할 수 있습니다.");
         }
 
         userBlockRepository.delete(block);

@@ -1,5 +1,7 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
@@ -34,17 +36,17 @@ public class UserProfileService {
     public Long resolveIdByUuid(String uuid) {
         return userRepository.findByUuid(uuid)
                 .map(User::getId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
     public PublicUserProfileDto getProfile(Long userId, int page) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 탈퇴한 계정은 프로필 자체를 보여주지 않는다 - 콘텐츠 화면에서도 "탈퇴한 사용자"로만
         // 표시되고 링크 자체가 안 걸리지만(authorLinkable), URL을 직접 알고 접근하는 경우까지 방어.
         if (user.isDeleted()) {
-            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
         Pageable pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE);

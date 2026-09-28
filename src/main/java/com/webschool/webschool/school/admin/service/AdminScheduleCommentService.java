@@ -1,6 +1,8 @@
 package com.webschool.webschool.school.admin.service;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
@@ -98,7 +100,7 @@ public class AdminScheduleCommentService {
     @Transactional
     public void setBlind(Long id, boolean blind) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다."));
         comment.setBlind(blind);
         String link = "/school/calendar?date=" + comment.getTargetDate() + "&grade=" + comment.getGrade()
                 + "&classNm=" + comment.getClassNm();
@@ -118,7 +120,7 @@ public class AdminScheduleCommentService {
     @Transactional
     public void clearReport(Long id) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다."));
         comment.setReportCleared(true);
         comment.setBlind(false);
         notificationService.notify(comment.getUser(), Notification.Type.REPORT_ACTION,
@@ -132,7 +134,7 @@ public class AdminScheduleCommentService {
     @Transactional
     public void unclearReport(Long id) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다."));
         comment.setReportCleared(false);
         adminActionLogService.log("SCHEDULE_COMMENT", id, "REPORT_UNCLEAR", null);
     }
@@ -141,7 +143,7 @@ public class AdminScheduleCommentService {
     @Transactional
     public void deleteComment(Long id) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다."));
         comment.setDeleted(true);
         comment.setDeletedAt(LocalDateTime.now());
         adminActionLogService.log("SCHEDULE_COMMENT", id, "DELETE", null);
@@ -150,7 +152,7 @@ public class AdminScheduleCommentService {
     @Transactional
     public void restoreComment(Long id) {
         ScheduleComment comment = scheduleCommentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("한마디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "한마디를 찾을 수 없습니다."));
         comment.setDeleted(false);
         comment.setDeletedAt(null);
         adminActionLogService.log("SCHEDULE_COMMENT", id, "RESTORE", null);

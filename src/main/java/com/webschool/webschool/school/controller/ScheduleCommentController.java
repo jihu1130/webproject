@@ -5,6 +5,8 @@ import com.webschool.webschool.poll.service.PollService;
 import com.webschool.webschool.school.domain.ScheduleComment;
 import com.webschool.webschool.school.dto.ScheduleCommentDto;
 import com.webschool.webschool.school.dto.ScheduleCommentReportResultDto;
+import com.webschool.webschool.school.service.ScheduleCommentReactionService;
+import com.webschool.webschool.school.service.ScheduleCommentReportService;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.school.service.SchoolService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,8 @@ import java.util.Map;
 public class ScheduleCommentController {
 
     private final ScheduleCommentService scheduleCommentService;
+    private final ScheduleCommentReportService scheduleCommentReportService;
+    private final ScheduleCommentReactionService scheduleCommentReactionService;
     private final PollService pollService;
 
     // 4-4. 게시글 본문에 삽입된 "한마디로 바로가기" 임베드 카드의 링크 대상. 한마디는 자체 상세
@@ -261,20 +265,20 @@ public class ScheduleCommentController {
     public ScheduleCommentReportResultDto reportComment(@PathVariable Long id,
                                                           @RequestParam(required = false) String reason,
                                                           Authentication authentication) {
-        return scheduleCommentService.reportComment(id, authentication.getName(), reason);
+        return scheduleCommentReportService.reportComment(id, authentication.getName(), reason);
     }
 
     // 10. 댓글 좋아요/북마크 토글 - PostController/PostCommentController와 동일한 패턴
     @PostMapping("/api/comments/{id}/like")
     @ResponseBody
     public Map<String, Object> likeComment(@PathVariable Long id, Authentication authentication) {
-        return scheduleCommentService.toggleLike(id, authentication.getName());
+        return scheduleCommentReactionService.toggleLike(id, authentication.getName());
     }
 
     @PostMapping("/api/comments/{id}/bookmark")
     @ResponseBody
     public Map<String, Object> bookmarkComment(@PathVariable Long id, Authentication authentication) {
-        boolean bookmarked = scheduleCommentService.toggleBookmark(id, authentication.getName());
+        boolean bookmarked = scheduleCommentReactionService.toggleBookmark(id, authentication.getName());
         return Map.of("bookmarked", bookmarked);
     }
 

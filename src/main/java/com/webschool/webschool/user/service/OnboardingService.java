@@ -1,6 +1,8 @@
 package com.webschool.webschool.user.service;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.user.domain.EmailToken;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.dto.EmailSetupDto;
@@ -53,7 +55,7 @@ public class OnboardingService {
 
         String email = UserInputValidator.requireValidEmail(dto.getEmail());
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 사용 중인 이메일입니다.");
         }
 
         user.setEmail(email);

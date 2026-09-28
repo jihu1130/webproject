@@ -162,7 +162,7 @@ public class PostService {
         }
 
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 게시물만 수정할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 게시물만 수정할 수 있습니다.");
         }
 
         PostFormDto dto = new PostFormDto();
@@ -187,7 +187,7 @@ public class PostService {
         }
 
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 게시물만 수정할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 게시물만 수정할 수 있습니다.");
         }
 
         Post.Visibility visibility = parseVisibility(form.getVisibility());
@@ -217,7 +217,7 @@ public class PostService {
         }
 
         if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 게시물만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 게시물만 삭제할 수 있습니다.");
         }
 
         // 소프트 딜리트: 물리적으로 지우지 않고 상태만 변경한다(댓글/신고/이미지는 그대로 보존되고,

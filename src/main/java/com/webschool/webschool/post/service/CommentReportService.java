@@ -40,15 +40,15 @@ public class CommentReportService {
         }
 
         if (comment.isReportCleared()) {
-            throw new IllegalArgumentException("이미 검토되어 문제없다고 판정된 댓글입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 검토되어 문제없다고 판정된 댓글입니다.");
         }
 
         if (comment.getAuthor() != null && comment.getAuthor().getUsername().equals(username)) {
-            throw new IllegalArgumentException("본인이 작성한 댓글은 신고할 수 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 댓글은 신고할 수 없습니다.");
         }
 
         if (commentReportRepository.existsByComment_IdAndReporter_Username(commentId, username)) {
-            throw new IllegalArgumentException("이미 신고한 댓글입니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 신고한 댓글입니다.");
         }
 
         User reporter = userRepository.findByUsername(username)

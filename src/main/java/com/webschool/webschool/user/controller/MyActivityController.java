@@ -6,6 +6,8 @@ import com.webschool.webschool.post.service.PostCommentService;
 import com.webschool.webschool.post.service.PostReactionService;
 import com.webschool.webschool.post.service.PostReportService;
 import com.webschool.webschool.post.service.PostService;
+import com.webschool.webschool.school.service.ScheduleCommentReactionService;
+import com.webschool.webschool.school.service.ScheduleCommentReportService;
 import com.webschool.webschool.school.service.ScheduleCommentService;
 import com.webschool.webschool.user.dto.MyCommentSummaryDto;
 import com.webschool.webschool.user.dto.MyPostSummaryDto;
@@ -42,6 +44,8 @@ public class MyActivityController {
     private final CommentReactionService commentReactionService;
     private final CommentReportService commentReportService;
     private final ScheduleCommentService scheduleCommentService;
+    private final ScheduleCommentReportService scheduleCommentReportService;
+    private final ScheduleCommentReactionService scheduleCommentReactionService;
     private final UserBlockService userBlockService;
 
     @GetMapping
@@ -167,7 +171,7 @@ public class MyActivityController {
                                           @RequestParam(required = false) String keyword,
                                           Authentication authentication) {
         try {
-            scheduleCommentService.removeBookmark(id, authentication.getName());
+            scheduleCommentReactionService.removeBookmark(id, authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("bookmarks", "schedule", keyword, page);
@@ -189,7 +193,7 @@ public class MyActivityController {
                                       @RequestParam(required = false) String keyword,
                                       Authentication authentication) {
         try {
-            scheduleCommentService.removeLike(id, authentication.getName());
+            scheduleCommentReactionService.removeLike(id, authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("likes", "schedule", keyword, page);
@@ -233,7 +237,7 @@ public class MyActivityController {
                                         @RequestParam(required = false) String keyword,
                                         Authentication authentication) {
         try {
-            scheduleCommentService.cancelReport(id, authentication.getName());
+            scheduleCommentReportService.cancelReport(id, authentication.getName());
         } catch (IllegalArgumentException ignored) {
         }
         return redirect("reports", "schedule", keyword, page);
