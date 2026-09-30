@@ -57,7 +57,7 @@ body.auth-body.auth-body-plain {
 
 .auth-field-hint {
     font-weight: 400;
-    color: #9ca3af;
+    color: var(--muted);
     font-size: 0.8rem;
 }
 
@@ -133,10 +133,11 @@ body.auth-body.auth-body-plain {
     background: var(--border);
     transition: background 0.15s ease;
 }
-.auth-password-strength.weak span:nth-child(1) { background: #dc2626; }
-.auth-password-strength.fair span:nth-child(-n+2) { background: #d97706; }
-.auth-password-strength.good span:nth-child(-n+3) { background: #ca8a04; }
-.auth-password-strength.strong span { background: #16a34a; }
+/* theme.css 토큰으로 교체(리디자인 Phase 1) - 예전 하드코딩 색은 다크모드 대응이 없었다. */
+.auth-password-strength.weak span:nth-child(1) { background: var(--danger); }
+.auth-password-strength.fair span:nth-child(-n+2) { background: var(--warn); }
+.auth-password-strength.good span:nth-child(-n+3) { background: var(--accent); }
+.auth-password-strength.strong span { background: var(--success); }
 
 .auth-section-label {
     font-weight: 700;
@@ -181,14 +182,16 @@ body.auth-body.auth-body-plain {
     padding: 0.75rem;
     border-radius: 0.65rem;
     border: 1.5px solid var(--border);
-    background: #fff;
+    /* --surface/--surface-soft - 예전엔 #fff/#f8f9fc 하드코딩이라 다크모드용 재정의 블록이
+       따로 필요했다(리디자인 Phase 1에서 토큰으로 바꾸며 그 블록 제거). */
+    background: var(--surface);
     color: var(--ink);
     font-weight: 600;
     font-size: 0.92rem;
     text-decoration: none;
     transition: background 0.15s ease, border-color 0.15s ease;
 }
-.auth-google-btn:hover { background: #f8f9fc; border-color: var(--brand-1); color: var(--ink); }
+.auth-google-btn:hover { background: var(--surface-soft); border-color: var(--brand-1); color: var(--ink); }
 .auth-google-btn i { color: #ea4335; }
 
 .auth-footer {
@@ -211,18 +214,109 @@ body.auth-body.auth-body-plain {
     margin: 0 0 14px;
 }
 
-@media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .auth-google-btn { background: var(--surface); color: var(--ink); }
-    html:not([data-theme="light"]) .auth-google-btn:hover { background: var(--surface-soft); }
+/* ══════════ 리디자인 Phase 1 (2026-09-30) - 로그인/가입/계정 찾기/온보딩 8개 화면 ══════════
+   body.auth-flow가 붙은 화면에만 적용한다. auth.css는 마이페이지 계열(mypage-edit/profile-edit/
+   notification-settings)도 같이 쓰는데, 그쪽은 Phase 4에서 따로 다룬다.
+   홈페이지의 "문구류" 톤(바인더 탭·마스킹 테이프·쪽지 카드)을 가볍게 가져온다. 색은 theme.css
+   토큰만, 흰 글자 버튼은 -fixed 토큰(리디자인 원칙 1·2). 버튼 알약 모양은 전역 Bootstrap 반경을
+   건드리지 않고 이 범위 안에서만(원칙 4). */
+
+/* 예전엔 5개 화면만 남색 풀페이지 배경이고 로그인/가입/학교 설정은 기본 배경이라 흐름 중간에
+   배경이 바뀌었다 - 기본 배경 + 옅은 공책 줄무늬로 통일. */
+/* body.auth-body.auth-flow - 위쪽 body.auth-body.auth-body-plain의 background 단축 속성보다
+   뒤에서 같은 우선순위로 이겨야 줄무늬가 지워지지 않는다. */
+body.auth-body.auth-flow {
+    background-color: var(--bg);
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 31px,
+        color-mix(in srgb, var(--border) 45%, transparent) 31px,
+        color-mix(in srgb, var(--border) 45%, transparent) 32px
+    );
 }
 
-/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .auth-google-btn { background: var(--surface); color: var(--ink); }
-html[data-theme="dark"] .auth-google-btn:hover { background: var(--surface-soft); }
+.auth-flow .auth-shell { padding-top: 3.5rem; padding-bottom: 3.5rem; }
+
+.auth-flow .auth-card {
+    position: relative;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card-lg);
+    padding: 2.75rem 2.5rem 2.25rem;
+}
+
+/* 카드 위쪽 가운데에 붙인 마스킹 테이프(index.css의 .note-tape와 같은 톤) */
+.auth-flow .auth-card::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 96px;
+    height: 24px;
+    transform: translateX(-50%) rotate(-2deg);
+    background: var(--brand-gradient-tint-2);
+    border: 1px solid var(--brand-1);
+    border-radius: 3px;
+    opacity: 0.9;
+}
+
+.auth-flow .auth-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.4rem;
+}
+
+.auth-flow .auth-title i {
+    color: var(--brand-1);
+    margin-right: 0.2rem;
+}
+
+.auth-flow .auth-subtitle {
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.auth-flow .form-label {
+    font-weight: 600;
+    font-size: 0.88rem;
+    margin-bottom: 0.4rem;
+}
+
+.auth-flow .form-control,
+.auth-flow .form-select {
+    border-radius: 12px;
+    padding: 0.65rem 0.9rem;
+    background-color: var(--surface-soft);
+}
+
+.auth-flow .form-control:focus,
+.auth-flow .form-select:focus { background-color: var(--surface); }
+
+.auth-flow .auth-card .alert {
+    border-radius: 12px;
+    font-size: 0.88rem;
+}
+
+/* 제출 버튼/구글 버튼/중복확인 - 알약 모양 */
+.auth-flow .auth-card .btn-primary {
+    border-radius: 999px;
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+}
+
+.auth-flow .auth-google-btn { border-radius: 999px; }
+.auth-flow .btn-usercheck { border-radius: 999px; }
+
+.auth-flow .auth-section-divider { margin: 2rem 0 1.5rem; }
 
 /* 버그수정 프롬포트 요청 - 반응형 규칙이 아예 없었다(post.css 등의 560px 기준과 동일하게 맞춤). */
 @media (max-width: 560px) {
     .auth-shell { padding: 1.5rem 0.75rem; }
     .auth-card { padding: 1.75rem 1.25rem; }
     .auth-field-row { flex-direction: column; gap: 0; }
+    .auth-flow .auth-shell { padding-top: 2.25rem; padding-bottom: 2rem; }
+    .auth-flow .auth-card { padding: 2.25rem 1.25rem 1.75rem; }
+    .auth-flow .auth-title { font-size: 1.4rem; }
 }
