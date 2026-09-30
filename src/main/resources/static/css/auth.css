@@ -215,8 +215,9 @@ body.auth-body.auth-body-plain {
 }
 
 /* ══════════ 리디자인 Phase 1 (2026-09-30) - 로그인/가입/계정 찾기/온보딩 8개 화면 ══════════
-   body.auth-flow가 붙은 화면에만 적용한다. auth.css는 마이페이지 계열(mypage-edit/profile-edit/
-   notification-settings)도 같이 쓰는데, 그쪽은 Phase 4에서 따로 다룬다.
+   body.auth-flow가 붙은 화면에만 적용한다. 마이페이지 설정 화면 3개(mypage-edit/profile-edit/
+   notification-settings)도 Phase 4-B에서 auth-flow + auth-flow-inapp으로 같은 스타일을 쓰게 됐다
+   (맨 아래 "앱 안 설정 화면" 참고).
    홈페이지의 "문구류" 톤(바인더 탭·마스킹 테이프·쪽지 카드)을 가볍게 가져온다. 색은 theme.css
    토큰만, 흰 글자 버튼은 -fixed 토큰(리디자인 원칙 1·2). 버튼 알약 모양은 전역 Bootstrap 반경을
    건드리지 않고 이 범위 안에서만(원칙 4). */
@@ -293,6 +294,27 @@ body.auth-body.auth-flow {
 .auth-flow .form-control:focus,
 .auth-flow .form-select:focus { background-color: var(--surface); }
 
+/* 학교 검색 위젯(school-search.js)의 입력칸은 .form-control이 아니라 위젯 CSS에도 입력칸 스타일이
+   없어서 브라우저 기본 모양(각진 테두리)으로 나왔다 - 회원가입/학교 설정/내 정보 수정에서 옆
+   입력칸들과 같은 모양으로 맞춘다. 캘린더는 calendar.css가 따로 그리므로 여기 범위 밖. */
+.auth-flow .school-search-box input {
+    width: 100%;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: 12px;
+    padding: 0.65rem 0.9rem;
+    background-color: var(--surface-soft);
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.auth-flow .school-search-box input:focus {
+    background-color: var(--surface);
+    border-color: var(--brand-1);
+    box-shadow: 0 0 0 0.25rem var(--brand-gradient-soft);
+}
+
 .auth-flow .auth-card .alert {
     border-radius: 12px;
     font-size: 0.88rem;
@@ -306,10 +328,48 @@ body.auth-body.auth-flow {
     margin-top: 0.5rem;
 }
 
+.auth-flow .auth-card .btn-outline-danger {
+    border-radius: 999px;
+    padding: 0.7rem 1rem;
+    font-weight: 700;
+}
+
 .auth-flow .auth-google-btn { border-radius: 999px; }
 .auth-flow .btn-usercheck { border-radius: 999px; }
 
 .auth-flow .auth-section-divider { margin: 2rem 0 1.5rem; }
+
+/* ── 앱 안 설정 화면(리디자인 Phase 4-B) - 내 정보 수정 / 프로필 설정 / 알림 설정 ──
+   카드·입력·버튼은 위 auth-flow 그대로, 배경만 마이페이지처럼 줄무늬 없는 기본 배경. */
+body.auth-body.auth-flow.auth-flow-inapp { background-image: none; }
+
+/* 알림 설정 - 체크박스 3개를 Bootstrap 스위치로 바꾸고(같은 input, name/value 그대로), 한 줄씩
+   카드형 행으로. 라벨은 왼쪽, 스위치는 오른쪽. */
+.auth-flow-inapp .form-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row-reverse;
+    gap: 12px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+}
+.auth-flow-inapp .form-switch .form-check-input {
+    float: none;
+    margin: 0;
+    width: 2.6em;
+    height: 1.4em;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.auth-flow-inapp .form-switch .form-check-label {
+    font-weight: 600;
+    cursor: pointer;
+}
+.auth-flow-inapp .form-switch + .btn-primary { margin-top: 1rem; }
 
 /* 버그수정 프롬포트 요청 - 반응형 규칙이 아예 없었다(post.css 등의 560px 기준과 동일하게 맞춤). */
 @media (max-width: 560px) {
