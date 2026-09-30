@@ -137,6 +137,11 @@ public class SecurityConfig {
                         // 그 안에서 구체적으로 어떤 메뉴(신고/게시글/한마디/계정 관리)까지 볼 수 있는지는
                         // AdminAccessInterceptor가 계정별 권한 플래그로 한 번 더 세밀하게 가른다.
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                        // API 문서(Swagger UI/OpenAPI JSON, springdoc) - 전체 엔드포인트 목록과 파라미터가
+                        // 그대로 드러나므로 공개하지 않고 총관리자만 열람. 아래 anyRequest().authenticated()에
+                        // 맡기면 일반 로그인 사용자도 볼 수 있게 되니 반드시 그보다 앞에 둘 것.
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**")
+                        .hasRole("SUPER_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
