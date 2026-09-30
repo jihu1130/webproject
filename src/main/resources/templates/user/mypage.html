@@ -43,13 +43,13 @@
                       th:text="'학생'">학생</span>
                 <!-- 수정사항.md 지적 - 신고/게시글/한마디/공지 권한을 전부 회수당한 부관리자도 예전엔
                      계속 "부관리자"로만 보여서 실제 권한이 하나도 없다는 걸 본인이 알 방법이 없었다.
-                     역할 스탬프(명사형) 옆에 상태 태그(동사형)로 분리해서 표시한다. -->
+                     역할 스탬프(명사형) 옆에 상태 태그(동사형)로 분리해서 표시한다.
+                     예전엔 권한 플래그 7개를 여기 직접 나열해서, 그 뒤에 추가된 권한(상점/설문/출석/
+                     포인트/대시보드 등)만 가진 부관리자도 "권한 없음"으로 잘못 표시됐다 - 전체 플래그를
+                     보는 User.hasAnyAdminAccess()로 판단한다(2026-09-30). -->
                 <span class="profile-card-status profile-card-status-inactive"
                       th:if="${loginUser != null and loginUser.role != null and loginUser.role.name() == 'ROLE_ADMIN'
-                              and !loginUser.canManageReports and !loginUser.canManagePosts
-                              and !loginUser.canManageScheduleComments and !loginUser.canManageNotices
-                              and !loginUser.canManageUsers and !loginUser.canManageAdminPermissions
-                              and !loginUser.canViewAuditLog}"
+                              and !loginUser.hasAnyAdminAccess()}"
                       th:text="'권한 없음'">권한 없음</span>
                 <!-- 포인트/티어 시스템(todo.md 요구사항) - 역할 스탬프 옆에 티어 배지를 추가로 표시.
                      loginUser는 DTO가 아니라 엔티티라 getTier()가 그대로 프로퍼티 접근(.tier)된다. -->
