@@ -307,48 +307,7 @@
 .page-size-select select:focus { border-color: var(--brand-1); }
 
 /* 게시물 목록 */
-/* 빈 상태(empty state) 공용 컴포넌트 - fragments/empty-state.html :: box(icon, message, ctaText,
-   ctaHref)가 이 클래스를 쓴다. 예전엔 아이콘을 ::before로 고정해서(항상 같은 inbox 모양) 화면마다
-   다른 아이콘을 줄 수 없었는데, 진짜 <i> 태그로 바꿔 화면 맥락에 맞는 아이콘을 골라 쓸 수 있게 됐다
-   (2026-09-09, 디자인 개선 계획 - 빈 상태 디자인 통일). post.css가 커뮤니티/공지/알림/검색/
-   마이페이지 등 대부분 화면에서 이미 공통으로 로드되고 있어 여기 둔다. */
-.empty-state {
-    background: var(--surface);
-    border: 1px dashed var(--border);
-    border-radius: var(--radius-card);
-    padding: 44px 20px;
-    text-align: center;
-    color: var(--muted);
-}
-
-.empty-state i {
-    display: block;
-    font-size: 1.7rem;
-    color: var(--border);
-    margin-bottom: 12px;
-}
-
-.empty-state p {
-    margin: 0;
-    font-weight: 600;
-}
-
-.empty-state-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 14px;
-    padding: 8px 18px;
-    border-radius: 999px;
-    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
-    background: var(--brand-fixed);
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.85rem;
-    text-decoration: none;
-}
-
-.empty-state-cta:hover { background: var(--brand-fixed-dark); color: #fff; }
+/* 빈 상태(.empty-state) 스타일은 전역 components.css로 옮겼다(리디자인 Phase 0, 2026-09-30). */
 
 .post-list {
     list-style: none;

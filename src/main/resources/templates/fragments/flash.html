@@ -9,11 +9,13 @@
      화면 어디에나 넣을 수 있는 공용 배너로 쓴다(Bootstrap alert, 어느 페이지가 로드하든
      bootstrap.min.css는 commonHead로 항상 로드되므로 별도 인라인 대체 스타일이 필요 없다). -->
 <div th:fragment="flash">
-    <div th:if="${flashError}" class="alert alert-danger alert-dismissible fade show container mt-3" role="alert">
+    <div th:if="${flashError}" class="alert alert-danger alert-dismissible fade show container mt-3 site-flash" role="alert">
+        <i class="fa-solid fa-circle-exclamation site-flash-icon" aria-hidden="true"></i>
         <span th:text="${flashError}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="닫기"></button>
     </div>
-    <div th:if="${flashSuccess}" class="alert alert-success alert-dismissible fade show container mt-3" role="alert">
+    <div th:if="${flashSuccess}" class="alert alert-success alert-dismissible fade show container mt-3 site-flash" role="alert">
+        <i class="fa-solid fa-circle-check site-flash-icon" aria-hidden="true"></i>
         <span th:text="${flashSuccess}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="닫기"></button>
     </div>

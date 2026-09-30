@@ -41,6 +41,9 @@
     --bs-danger-border-subtle: var(--danger-border);
     --bs-danger-text-emphasis: var(--danger-dark);
     --bs-success-bg-subtle: var(--success-soft);
+    /* 성공 alert 테두리 - 매핑이 빠져 있어 Bootstrap 기본 연녹색(#a3cfbb)이 다크모드에서도
+       그대로 떴다. 새 색을 만들지 않고 --success에서 파생한다(리디자인 Phase 0). */
+    --bs-success-border-subtle: color-mix(in srgb, var(--success) 35%, transparent);
     --bs-success-text-emphasis: var(--success);
     --bs-warning-bg-subtle: var(--warn-soft);
     --bs-warning-text-emphasis: var(--warn);

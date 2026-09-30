@@ -1,0 +1,72 @@
+/*
+ * 사이트 전역 공용 조각(fragments/*.html)의 스타일 - 리디자인 Phase 0(2026-09-30).
+ * commonHead(fragments/head.html)가 모든 페이지에 로드하므로, 특정 페이지 CSS(post.css 등)를
+ * 불러오지 않는 화면에서도 똑같이 보인다. 예전엔 empty-state가 post.css에, flash는 Bootstrap
+ * 기본 alert 그대로였다.
+ * 색은 theme.css 토큰만 쓴다(리디자인 원칙 1) - 여기서 새 색을 만들지 말 것.
+ */
+
+/* ── flash 배너 (fragments/flash.html) ──
+   Bootstrap .alert/.alert-dismissible/.fade/.btn-close 동작은 그대로 두고 모양만 카드 톤으로.
+   색은 bootstrap-theme.css가 alert 변수를 theme.css 토큰에 매핑해 둔 것을 그대로 따른다. */
+.site-flash {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    font-weight: 600;
+    font-size: 0.93rem;
+    line-height: 1.5;
+}
+
+.site-flash-icon {
+    flex-shrink: 0;
+    font-size: 1.05rem;
+}
+
+/* ── 빈 상태 (fragments/empty-state.html :: box) ── */
+.empty-state {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-card);
+    padding: 44px 20px;
+    text-align: center;
+    color: var(--muted);
+}
+
+/* 아이콘을 옅은 원형 배지 안에 넣어 홈페이지 카드들과 같은 톤으로 맞춘다. */
+.empty-state i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--brand-gradient-tint-2);
+    color: var(--brand-1);
+    font-size: 1.35rem;
+    margin-bottom: 14px;
+}
+
+.empty-state p {
+    margin: 0;
+    font-weight: 600;
+}
+
+.empty-state-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    padding: 9px 20px;
+    border-radius: 999px;
+    /* 흰 글자를 얹는 버튼이라 -fixed 토큰(리디자인 원칙 2). */
+    background: var(--brand-fixed);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.empty-state-cta:hover { background: var(--brand-fixed-dark); color: #fff; }
