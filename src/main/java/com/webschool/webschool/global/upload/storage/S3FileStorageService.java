@@ -1,5 +1,6 @@
 package com.webschool.webschool.global.upload.storage;
 
+import org.springframework.http.ContentDisposition;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -10,6 +11,7 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,11 +34,22 @@ public class S3FileStorageService implements FileStorageService {
 
     @Override
     public String store(MultipartFile file, String key) throws IOException {
-        PutObjectRequest request = PutObjectRequest.builder()
+        // Content-Type은 클라이언트가 보낸 file.getContentType()이 아니라 확장자로 서버가 정한다 -
+        // 예전엔 .png 파일에 text/html을 실어 보내면 S3가 HTML 페이지로 서빙했다(보안 점검 M1).
+        // 이미지/동영상이 아니면 다운로드 전용(attachment)으로 저장해 버킷 주소에서 열리지 않게 하고,
+        // 버킷은 다른 오리진이라 <a download>가 무시되므로 원래 파일명을 여기에 실어준다.
+        PutObjectRequest.Builder builder = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
-                .contentType(file.getContentType())
-                .build();
+                .contentType(UploadContentTypes.contentTypeFor(key));
+        if (!UploadContentTypes.isInline(key)) {
+            String filename = file.getOriginalFilename();
+            ContentDisposition disposition = (filename == null || filename.isBlank())
+                    ? ContentDisposition.attachment().build()
+                    : ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build();
+            builder.contentDisposition(disposition.toString());
+        }
+        PutObjectRequest request = builder.build();
         s3Client.putObject(request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         return baseUrl + "/" + key;
     }

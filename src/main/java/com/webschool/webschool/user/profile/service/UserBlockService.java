@@ -8,6 +8,7 @@ import com.webschool.webschool.user.profile.dto.UserBlockDto;
 import com.webschool.webschool.user.profile.repository.UserBlockRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 // 글이 아니라 학교/날짜/반별로 여러 명이 공유하는 스레드라 "작성 자체를 막는" assertNotBlocked
 // 방식이 안 맞는다 - 대신 getBlockedUserIds()로 목록 조회 단계에서 내가 차단한 사용자의 한마디를
 // 걸러내는 방식으로 적용한다(ScheduleCommentService.getComments() 참고).
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserBlockService {
@@ -61,6 +63,8 @@ public class UserBlockService {
         block.setExpiresAt(durationDays != null && durationDays > 0
                 ? LocalDateTime.now().plusDays(durationDays) : null);
         userBlockRepository.save(block);
+        log.info("사용자 차단 blockerId={} blockedId={} 기간={}", blocker.getId(), target.getId(),
+                durationDays != null && durationDays > 0 ? durationDays + "일" : "무기한");
     }
 
     @Transactional
@@ -73,6 +77,7 @@ public class UserBlockService {
         }
 
         userBlockRepository.delete(block);
+        log.info("사용자 차단 해제 blockId={} blockedId={}", blockId, block.getBlocked().getId());
     }
 
     // 댓글 작성 시점에 호출 - 글쓴이(postAuthor)와 댓글 작성자(commenter) 중 누구든 상대를 차단한

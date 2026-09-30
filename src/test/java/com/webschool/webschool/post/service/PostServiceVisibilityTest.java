@@ -126,4 +126,44 @@ class PostServiceVisibilityTest {
 
         assertDoesNotThrow(() -> postService.getDetail(10L, null, false));
     }
+
+    // 보안 점검 M2(2026-09-30) - 댓글/좋아요/북마크/신고 API가 쓰는 resolveReadableIdByUuid()도 상세와
+    // 같은 기준으로 막는지. 예전엔 uuid만 있으면 삭제/블라인드/비공개 글의 댓글을 읽을 수 있었다.
+    @Test
+    void readableId_blocksPrivatePostForStranger() {
+        Post post = buildPost(Post.Visibility.PRIVATE);
+        when(postRepository.findByUuid("uuid-10")).thenReturn(Optional.of(post));
+
+        assertThrows(IllegalArgumentException.class, () -> postService.resolveReadableIdByUuid("uuid-10", null));
+    }
+
+    @Test
+    void readableId_blocksBlindPostForStranger() {
+        Post post = buildPost(Post.Visibility.PUBLIC);
+        post.setBlind(true);
+        when(postRepository.findByUuid("uuid-10")).thenReturn(Optional.of(post));
+
+        assertThrows(IllegalArgumentException.class, () -> postService.resolveReadableIdByUuid("uuid-10", null));
+    }
+
+    @Test
+    void readableId_blocksDeletedPostEvenForAuthor() {
+        Post post = buildPost(Post.Visibility.PUBLIC);
+        post.setDeleted(true);
+        when(postRepository.findByUuid("uuid-10")).thenReturn(Optional.of(post));
+
+        assertThrows(IllegalArgumentException.class, () -> postService.resolveReadableIdByUuid("uuid-10", "author"));
+    }
+
+    @Test
+    void readableId_allowsAuthorOnBlindPostAndAnyoneOnPublic() {
+        Post blind = buildPost(Post.Visibility.PUBLIC);
+        blind.setBlind(true);
+        when(postRepository.findByUuid("uuid-10")).thenReturn(Optional.of(blind));
+        assertDoesNotThrow(() -> postService.resolveReadableIdByUuid("uuid-10", "author"));
+
+        Post open = buildPost(Post.Visibility.PUBLIC);
+        when(postRepository.findByUuid("uuid-10")).thenReturn(Optional.of(open));
+        assertDoesNotThrow(() -> postService.resolveReadableIdByUuid("uuid-10", null));
+    }
 }

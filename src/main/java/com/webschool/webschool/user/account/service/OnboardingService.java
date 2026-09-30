@@ -12,6 +12,7 @@ import com.webschool.webschool.user.account.dto.PasswordSetupDto;
 import com.webschool.webschool.user.account.dto.SchoolSetupDto;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 // 로그인 직후 강제 온보딩 게이트(SchoolSetupInterceptor/EmailSetupInterceptor/
 // PasswordSetupInterceptor)가 요구하는 설정들과 이메일 인증. 2026-09-28 UserService에서 분리 -
 // 세 인터셉터가 이미 하나의 "온보딩" 개념으로 묶여 있던 것을 서비스로도 묶었다.
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OnboardingService {
@@ -79,6 +81,7 @@ public class OnboardingService {
                 || !dto.getNewPassword().equals(dto.getConfirmNewPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
+        UserInputValidator.requireValidPassword(user.getUsername(), dto.getNewPassword());
 
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         user.setPasswordSet(true);
@@ -99,5 +102,6 @@ public class OnboardingService {
     public void verifyEmail(String token) {
         User user = emailTokenService.consume(token, EmailToken.Purpose.VERIFY_EMAIL);
         user.setEmailVerified(true);
+        log.info("이메일 인증 완료 userId={}", user.getId());
     }
 }

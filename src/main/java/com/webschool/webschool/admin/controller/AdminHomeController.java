@@ -77,7 +77,16 @@ public class AdminHomeController {
     }
 
     @GetMapping("/admin/access-denied")
-    public String accessDenied(HttpSession session, Model model) {
+    public String accessDenied(Authentication authentication, HttpSession session, Model model) {
+        // 총관리자는 모든 관리자 메뉴에 접근할 수 있어 이 화면으로 올 일이 없는데, 주소를 직접 치고
+        // 들어오면 예전엔 "권한이 없어요"가 그대로 보여 권한이 깨진 것처럼 오해를 샀다(2026-09-30) -
+        // 관리자 첫 화면으로 돌려보낸다.
+        User user = authentication == null ? null
+                : userRepository.findByUsername(authentication.getName()).orElse(null);
+        if (user != null && user.isSuperAdmin()) {
+            session.removeAttribute("flashError");
+            return "redirect:/admin";
+        }
         // SecurityConfig의 accessDeniedHandler가 세션에 심어둔 구체적인 사유 - 한 번 보여주면
         // 바로 지운다(진짜 flash와 동일하게 새로고침하면 다시 안 보여야 함).
         Object reason = session.getAttribute("flashError");

@@ -224,7 +224,7 @@ public class PostController {
     public Map<String, Object> report(@PathVariable String uuid,
                                        @RequestParam(required = false) String reason,
                                        Authentication authentication) {
-        Long id = postService.resolveIdByUuid(uuid);
+        Long id = postService.resolveReadableIdByUuid(uuid, authentication.getName());
         PostReportResultDto result = postReportService.reportPost(id, authentication.getName(), reason);
         return Map.of("success", true, "reportCount", result.reportCount(), "blind", result.blind());
     }
@@ -232,14 +232,14 @@ public class PostController {
     @PostMapping("/{uuid}/like")
     @ResponseBody
     public Map<String, Object> like(@PathVariable String uuid, Authentication authentication) {
-        Long id = postService.resolveIdByUuid(uuid);
+        Long id = postService.resolveReadableIdByUuid(uuid, authentication.getName());
         return postReactionService.toggleLike(id, authentication.getName());
     }
 
     @PostMapping("/{uuid}/bookmark")
     @ResponseBody
     public Map<String, Object> bookmark(@PathVariable String uuid, Authentication authentication) {
-        Long id = postService.resolveIdByUuid(uuid);
+        Long id = postService.resolveReadableIdByUuid(uuid, authentication.getName());
         boolean bookmarked = postReactionService.toggleBookmark(id, authentication.getName());
         return Map.of("bookmarked", bookmarked);
     }

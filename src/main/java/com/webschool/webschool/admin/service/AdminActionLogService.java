@@ -6,10 +6,12 @@ import com.webschool.webschool.admin.repository.AdminActionLogRepository;
 import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
+import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.post.comment.repository.PostCommentRepository;
 import com.webschool.webschool.school.comment.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 // 감사에서 "관리자 액션 이력이 아예 없다"고 지적된 갭을 메우기 위해 신설했다. AdminPostService/
 // AdminScheduleCommentService/AdminUserService의 블라인드·해제·삭제·복구·승격·강등·정지·해제
 // 메서드마다 이 서비스의 log()를 한 줄씩 호출한다.
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminActionLogService {
@@ -149,6 +152,19 @@ public class AdminActionLogService {
         entry.setDetail(detail);
         entry.setIp(currentClientIp());
         adminActionLogRepository.save(entry);
+
+        // 파일 로그에도 같은 이벤트를 남긴다(2026-09-30) - 감사 로그는 DB 화면(/admin/audit-log)에서만
+        // 보여서, 서버 로그에서 요청 로그(RequestLoggingFilter)·에러와 같은 requestId로 묶어 보려면
+        // 여기에도 한 줄 필요하다. 이 메서드를 가입/글·댓글/신고/계정 변경/로그인 실패/관리자 조치가
+        // 전부 거치므로 서비스마다 로그를 따로 넣지 않아도 된다. 보안 로그로 분류되는 조치(권한 변경,
+        // 정지, 제재, 계정 잠금 등)는 WARN, 흔한 실수인 로그인 실패와 일반 활동은 INFO.
+        // detail에는 글 제목처럼 사용자 입력이 들어올 수 있어 길이만 잘라 둔다(개행은 로그 위조 방지로 치환).
+        String safeDetail = detail == null ? "" : TextUtils.truncate(detail.replaceAll("[\\r\\n]+", " "), 120);
+        if (SECURITY_ACTIONS.contains(action) && !"LOGIN_FAIL".equals(action)) {
+            log.warn("감사 {} {}#{} by={} {}", action, targetType, targetId, actorUsername, safeDetail);
+        } else {
+            log.info("감사 {} {}#{} by={} {}", action, targetType, targetId, actorUsername, safeDetail);
+        }
     }
 
     // log()는 전부 컨트롤러가 처리 중인 요청 스레드 안에서 호출되므로(회원가입도 포함, 로그인 전이지만

@@ -2,6 +2,7 @@ package com.webschool.webschool.global.upload;
 
 import com.webschool.webschool.global.upload.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,39 +14,31 @@ import java.util.Set;
 import java.util.UUID;
 
 // 리치 에디터(게시글/오늘의 한마디 본문 중간 삽입)에서 쓰는 범용 파일 업로드. PostImageService와
-// 동일한 저장 방식(FileStorageService에 위임, UUID 파일명)을 그대로 따르되, 이미지 확장자만
-// 허용하던 그쪽과 달리 여기는 "위험한 실행/스크립트 파일만 차단하고 나머지는 전부 허용" 방식이다
-// (2026-08-19 사용자 확정) - 업로드된 파일은 항상 정적 서빙만 되고 서버에서 실행되지 않으므로,
-// 그래도 남아있는 위험은 "다른 사용자가 다운로드해서 자기 PC에서 직접 실행"하는 경우뿐이라
-// 확장자 차단 정도로 충분하다.
+// 동일한 저장 방식(FileStorageService에 위임, UUID 파일명)을 그대로 따른다.
+// 예전엔 "위험한 확장자만 차단하고 나머지는 전부 허용"(블랙리스트, 2026-08-19 결정)이었는데,
+// 차단 목록에 없는 .xhtml/.xml/.mht 같은 확장자가 브라우저에서 HTML로 실행돼 저장형 XSS가
+// 남아 있었다(보안 점검 M1, 2026-09-30) - 이미지/동영상/문서·압축·오디오만 허용하는 허용
+// 목록(화이트리스트)으로 바꿨다. 허용 목록에 없는 형식이 필요하면 FILE_EXTENSIONS에 추가하면 되고,
+// 이미지/동영상이 아닌 파일은 추가해도 항상 다운로드 전용으로만 내려간다(UploadContentTypes 참고).
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FileUploadService {
 
     private final FileStorageService fileStorageService;
 
-    // 서버/클라이언트에서 직접 실행되거나 설치될 수 있는 확장자만 차단(화이트리스트가 아니라 블랙리스트).
-    // svg는 실행 파일은 아니지만 <script>를 담을 수 있어 여기 포함시켰다 - 브라우저로 파일 URL을
-    // 직접 열면(에디터 이미지를 "새 탭에서 열기" 등) 업로드한 오리진에서 그대로 실행되는 저장형
-    // XSS가 된다(2026-09-02, 보안 점검 중 발견). "image" 카테고리에서만 빼면 이미지도 영상도
-    // 아닌 "file"로 분류돼 그대로 업로드가 허용되므로, 아예 이 블랙리스트에 넣어 어떤 경로로도
-    // 업로드 자체를 막는다. 로컬 저장소 모드(/uploads/**, 같은 오리진)에서 특히 위험하고, S3
-    // 모드(별도 오리진)에서도 피싱 등에 악용될 수 있다. 앱 자체가 쓰는
-    // static/images/default-avatar.svg처럼 개발자가 직접 배치하는 정적 리소스는 이 업로드
-    // 경로를 타지 않으므로 영향 없다.
-    // html/htm도 정확히 같은 이유로 여기 포함(2026-09-28, 보안 점검 중 발견 - "📎 파일" 버튼은
-    // accept="*/*"라 클라이언트 제한이 없는데 서버도 안 막아서, 업로드한 .html을 직접 열면
-    // 스크립트가 그대로 실행되는 걸 실제로 재현해 확인함).
-    private static final Set<String> DANGEROUS_EXTENSIONS = Set.of(
-            "exe", "bat", "cmd", "com", "msi", "msp", "scr", "pif", "gadget",
-            "sh", "bash", "run", "app", "pkg", "deb", "rpm", "apk", "ipa",
-            "jar", "js", "jse", "vbs", "vbe", "wsf", "wsh", "ps1", "psm1",
-            "jsp", "jspx", "php", "php3", "php4", "php5", "phtml", "asp", "aspx",
-            "cgi", "dll", "so", "action", "reg", "hta", "svg", "html", "htm"
-    );
-
+    // 이미지/동영상 목록은 UploadContentTypes의 inline 형식과 반드시 같게 유지할 것(여기서 image/video로
+    // 분류돼 <img>/<video>로 삽입되는데 저장소가 다운로드 전용으로 내려주면 본문에서 깨져 보인다).
     private static final Set<String> IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp", "bmp", "avif");
     private static final Set<String> VIDEO_EXTENSIONS = Set.of("mp4", "webm", "ogg", "mov", "m4v");
+    // "📎 파일" 버튼으로 올릴 수 있는 이미지/동영상 외 형식 - 전부 다운로드 전용으로 서빙된다.
+    // svg/html/xhtml/xml처럼 브라우저가 문서로 실행할 수 있는 형식은 절대 넣지 말 것.
+    private static final Set<String> FILE_EXTENSIONS = Set.of(
+            "pdf", "txt", "csv",
+            "hwp", "hwpx", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            "zip", "7z",
+            "mp3", "wav", "m4a"
+    );
 
     private static final long MAX_IMAGE_SIZE = 15L * 1024 * 1024;   // 15MB
     private static final long MAX_VIDEO_SIZE = 300L * 1024 * 1024;  // 300MB
@@ -70,8 +63,9 @@ public class FileUploadService {
         if (ext.isEmpty()) {
             throw new IllegalArgumentException("확장자가 없는 파일은 업로드할 수 없습니다.");
         }
-        if (DANGEROUS_EXTENSIONS.contains(ext)) {
-            throw new IllegalArgumentException("보안상 허용되지 않는 파일 형식(." + ext + ")입니다.");
+        if (!IMAGE_EXTENSIONS.contains(ext) && !VIDEO_EXTENSIONS.contains(ext) && !FILE_EXTENSIONS.contains(ext)) {
+            throw new IllegalArgumentException("허용되지 않는 파일 형식(." + ext + ")입니다. "
+                    + "사진·동영상, 문서(pdf, hwp, 오피스, txt), 압축(zip, 7z), 음성(mp3, wav, m4a)만 올릴 수 있습니다.");
         }
 
         String kind = IMAGE_EXTENSIONS.contains(ext) ? "image" : VIDEO_EXTENSIONS.contains(ext) ? "video" : "file";
@@ -93,8 +87,11 @@ public class FileUploadService {
         try {
             url = fileStorageService.store(file, key);
         } catch (IOException e) {
+            log.warn("파일 저장 실패 key={}", key, e);
             throw new IllegalArgumentException("파일 저장에 실패했습니다.");
         }
+        // 원본 파일명은 개인정보(실명 등)가 들어가기 쉬워 남기지 않고, 저장 키·종류·크기만.
+        log.info("파일 업로드 kind={} size={}B key={}", kind, file.getSize(), key);
 
         return UploadedFileDto.builder()
                 .url(url)
@@ -126,8 +123,10 @@ public class FileUploadService {
         try {
             url = fileStorageService.store(file, key);
         } catch (IOException e) {
+            log.warn("프로필 사진 저장 실패 key={}", key, e);
             throw new IllegalArgumentException("사진 저장에 실패했습니다.");
         }
+        log.info("프로필 사진 업로드 size={}B key={}", file.getSize(), key);
 
         deleteProfileImage(previousUrl);
         return url;

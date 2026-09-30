@@ -10,6 +10,7 @@ import com.webschool.webschool.user.point.dto.UserPointLogDto;
 import com.webschool.webschool.user.point.repository.UserPointLogRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 // 서비스는 이 서비스의 award()만 호출하면 되고, 적립량/일일 한도 로직은 전부 여기 모아둔다.
 // 어뷰징 방지(사용자 요청)로 하루 획득량에 상한을 둔다 - 좋아요 주고받기를 반복하거나 의미 없는
 // 짧은 댓글을 도배해서 포인트를 무한정 쌓는 것을 막는다.
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserPointService {
@@ -57,17 +59,19 @@ public class UserPointService {
         int earnedToday = userPointLogRepository.sumPointsSince(user.getId(), today.atStartOfDay());
         int remaining = DAILY_CAP - earnedToday;
         if (remaining <= 0) {
+            log.debug("포인트 적립 생략(일일 한도 도달) userId={} reason={}", user.getId(), reason);
             return;
         }
 
         int actual = Math.min(points, remaining);
         userRepository.addPoints(user.getId(), actual);
 
-        UserPointLog log = new UserPointLog();
-        log.setUser(user);
-        log.setPoints(actual);
-        log.setReason(reason);
-        userPointLogRepository.save(log);
+        UserPointLog pointLog = new UserPointLog();
+        pointLog.setUser(user);
+        pointLog.setPoints(actual);
+        pointLog.setReason(reason);
+        userPointLogRepository.save(pointLog);
+        log.info("포인트 적립 userId={} +{} (요청 {}) reason={}", user.getId(), actual, points, reason);
     }
 
     // 인기 게시글 주간 콘테스트(todo.md 4번 항목) 전용 - award()와 달리 일일 획득 한도(DAILY_CAP)를
@@ -78,11 +82,12 @@ public class UserPointService {
     public void awardBonus(User user, int points, String reason) {
         userRepository.addPoints(user.getId(), points);
 
-        UserPointLog log = new UserPointLog();
-        log.setUser(user);
-        log.setPoints(points);
-        log.setReason(reason);
-        userPointLogRepository.save(log);
+        UserPointLog pointLog = new UserPointLog();
+        pointLog.setUser(user);
+        pointLog.setPoints(points);
+        pointLog.setReason(reason);
+        userPointLogRepository.save(pointLog);
+        log.info("포인트 보너스 지급 userId={} +{} reason={}", user.getId(), points, reason);
     }
 
     // 티어 하락(todo.md 요구사항) - 제재(UserPenaltyService.issue())를 받으면 그 유형만큼 포인트를
@@ -97,11 +102,12 @@ public class UserPointService {
         }
         userRepository.addPoints(user.getId(), -actual);
 
-        UserPointLog log = new UserPointLog();
-        log.setUser(user);
-        log.setPoints(-actual);
-        log.setReason(reason);
-        userPointLogRepository.save(log);
+        UserPointLog pointLog = new UserPointLog();
+        pointLog.setUser(user);
+        pointLog.setPoints(-actual);
+        pointLog.setReason(reason);
+        userPointLogRepository.save(pointLog);
+        log.info("포인트 제재 차감 userId={} -{} reason={}", user.getId(), actual, reason);
     }
 
     // 포인트 소비(todo.md 요구사항, 상점 기능용) - ShopService.purchase()가 실제로 포인트를 차감할
@@ -115,11 +121,12 @@ public class UserPointService {
         }
         userRepository.addPoints(user.getId(), -points);
 
-        UserPointLog log = new UserPointLog();
-        log.setUser(user);
-        log.setPoints(-points);
-        log.setReason(reason);
-        userPointLogRepository.save(log);
+        UserPointLog pointLog = new UserPointLog();
+        pointLog.setUser(user);
+        pointLog.setPoints(-points);
+        pointLog.setReason(reason);
+        userPointLogRepository.save(pointLog);
+        log.info("포인트 사용 userId={} -{} reason={}", user.getId(), points, reason);
     }
 
     // 관리자 수동 포인트 지급/차감(관리자 페이지 재구성, 2026-09-21 추가) - 지금까지 관리자가
@@ -137,11 +144,12 @@ public class UserPointService {
         }
         userRepository.addPoints(user.getId(), actual);
 
-        UserPointLog log = new UserPointLog();
-        log.setUser(user);
-        log.setPoints(actual);
-        log.setReason("관리자 조정: " + reason);
-        userPointLogRepository.save(log);
+        UserPointLog pointLog = new UserPointLog();
+        pointLog.setUser(user);
+        pointLog.setPoints(actual);
+        pointLog.setReason("관리자 조정: " + reason);
+        userPointLogRepository.save(pointLog);
+        log.info("포인트 관리자 조정 userId={} {}{} reason={}", user.getId(), actual > 0 ? "+" : "", actual, reason);
     }
 
     // 포인트 내역 화면(todo.md 요구사항) - 적립/소비 내역을 함께 보여준다(UserPointLog가 이미

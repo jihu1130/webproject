@@ -29,6 +29,9 @@
                 비밀번호를 여러 번 잘못 입력해서 계정이 일시적으로 잠겼습니다.
                 <span th:if="${param.minutes != null}" th:text="${param.minutes[0]}"></span><span th:if="${param.minutes == null}">5</span>분 후 다시 시도해주세요.
             </div>
+            <div th:if="${param.throttled}" class="alert alert-danger">
+                로그인 실패가 너무 많습니다. 잠시 후 다시 시도해주세요.
+            </div>
             <div th:if="${param.registered}" class="alert alert-success">
                 회원가입이 완료되었습니다! 로그인해 주세요.
             </div>

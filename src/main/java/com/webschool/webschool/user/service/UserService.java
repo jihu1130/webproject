@@ -45,6 +45,7 @@ public class UserService {
         if (dto.getPassword() == null || !dto.getPassword().equals(dto.getConfirmPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
+        UserInputValidator.requireValidPassword(dto.getUsername(), dto.getPassword());
 
         if (userRepository.existsByUsername(dto.getUsername())) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 존재하는 아이디입니다.");

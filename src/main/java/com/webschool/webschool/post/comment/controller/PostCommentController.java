@@ -28,8 +28,10 @@ public class PostCommentController {
     @GetMapping
     @ResponseBody
     public List<PostCommentDto> list(@PathVariable String postUuid, Authentication authentication) {
-        Long postId = postService.resolveIdByUuid(postUuid);
-        return postCommentService.getComments(postId, AuthenticationUtils.usernameOrNull(authentication));
+        String username = AuthenticationUtils.usernameOrNull(authentication);
+        // 상세 페이지를 못 여는 글(삭제/블라인드/비공개)은 댓글도 못 읽게 같은 조건으로 막는다(보안 점검 M2)
+        Long postId = postService.resolveReadableIdByUuid(postUuid, username);
+        return postCommentService.getComments(postId, username);
     }
 
     @PostMapping
@@ -37,7 +39,7 @@ public class PostCommentController {
     public PostCommentDto create(@PathVariable String postUuid, @RequestParam String content,
                                   @RequestParam(required = false) Long parentId,
                                   Authentication authentication) {
-        Long postId = postService.resolveIdByUuid(postUuid);
+        Long postId = postService.resolveReadableIdByUuid(postUuid, authentication.getName());
         return postCommentService.createComment(postId, authentication.getName(), content, parentId);
     }
 

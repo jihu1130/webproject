@@ -1,10 +1,10 @@
 package com.webschool.webschool.global.config;
 
-import com.webschool.webschool.global.security.login.CookieOAuth2AuthorizationRequestRepository;
 import com.webschool.webschool.global.security.jwt.JwtAuthenticationFilter;
 import com.webschool.webschool.global.security.jwt.JwtService;
 import com.webschool.webschool.global.security.login.LoginFailureHandler;
 import com.webschool.webschool.global.security.login.LoginSuccessHandler;
+import com.webschool.webschool.global.security.login.LoginThrottleFilter;
 import com.webschool.webschool.global.security.login.OAuth2LoginSuccessHandler;
 import com.webschool.webschool.user.account.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +37,8 @@ public class SecurityConfig {
     private final LoginSuccessHandler loginSuccessHandler;
     private final LoginFailureHandler loginFailureHandler;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-    private final CookieOAuth2AuthorizationRequestRepository cookieOAuth2AuthorizationRequestRepository;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final LoginThrottleFilter loginThrottleFilter;
     private final JwtService jwtService;
 
     @Bean
@@ -145,6 +145,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // IP당 로그인 실패 제한(보안 점검 M4) - 폼 로그인 처리(BCrypt 검증) 전에 걸러야 의미가 있다.
+                .addFilterBefore(loginThrottleFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(login -> login
                         .loginPage("/login")
                         // 로그인 시도 횟수 제한(todo.md "고도화 후보") - 성공 시 실패 카운터 리셋,
@@ -194,10 +196,14 @@ public class SecurityConfig {
                 );
 
         if (clientRegistrationRepositoryProvider.getIfAvailable() != null) {
+            // authorization request(구글 왕복 구간의 임시 데이터)는 Spring 기본값인 세션 저장소
+            // (HttpSessionOAuth2AuthorizationRequestRepository)를 쓴다. 예전엔 STATELESS 때문에 쿠키에
+            // Java 직렬화로 담는 CookieOAuth2AuthorizationRequestRepository를 썼는데, 브라우저가 보낸
+            // 쿠키를 서명 없이 그대로 역직렬화해서 비로그인 공격자가 임의 바이트를 ObjectInputStream에
+            // 넣을 수 있었다(보안 점검 H1, 2026-09-30). 세션 정책이 이미 IF_REQUIRED라(아래
+            // sessionManagement 참고) 세션 저장소로 충분해서 쿠키 방식 자체를 제거했다.
             http.oauth2Login(oauth2 -> oauth2
                     .loginPage("/login")
-                    .authorizationEndpoint(authorization -> authorization
-                            .authorizationRequestRepository(cookieOAuth2AuthorizationRequestRepository))
                     .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                     .successHandler(oAuth2LoginSuccessHandler)
                     .failureUrl("/login?error=true")

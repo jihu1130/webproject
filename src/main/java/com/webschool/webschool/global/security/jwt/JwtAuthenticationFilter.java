@@ -1,5 +1,6 @@
 package com.webschool.webschool.global.security.jwt;
 
+import com.webschool.webschool.global.logging.RequestLoggingFilter;
 import com.webschool.webschool.user.account.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -7,6 +8,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -52,6 +54,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            // 요청 로그(RequestLoggingFilter)가 요청이 끝난 뒤 "누가" 보낸 요청인지 찍을 수 있게 남기고,
+            // 이 요청 안에서 나오는 다른 로그 줄에도 사용자가 찍히도록 MDC에 넣는다(MDC는
+            // RequestLoggingFilter가 요청 끝에 비운다).
+            request.setAttribute(RequestLoggingFilter.USER_ATTRIBUTE, username);
+            MDC.put(RequestLoggingFilter.MDC_USER, username);
         } catch (UsernameNotFoundException e) {
             // 토큰 발급 이후 계정이 완전히 삭제된 경우(AccountHardDeleteService) - 조용히 익명 유지
         }

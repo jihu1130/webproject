@@ -20,10 +20,12 @@ import java.io.IOException;
 public class LoginFailureHandler implements AuthenticationFailureHandler {
 
     private final LoginAttemptService loginAttemptService;
+    private final LoginThrottleFilter loginThrottleFilter;
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                          AuthenticationException exception) throws IOException {
+        loginThrottleFilter.recordFailure(request);
         String username = request.getParameter("username");
         if (exception instanceof LockedException) {
             redirectLocked(request, response, username);

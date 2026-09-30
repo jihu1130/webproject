@@ -71,6 +71,8 @@ public class MyPageService {
             if (!dto.getNewPassword().equals(dto.getConfirmNewPassword())) {
                 throw new IllegalArgumentException("새 비밀번호가 일치하지 않습니다.");
             }
+            // 아이디를 같은 요청에서 바꿨다면 위에서 이미 새 아이디로 바뀐 상태라 새 아이디 기준으로 검사된다.
+            UserInputValidator.requireValidPassword(user.getUsername(), dto.getNewPassword());
             user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
             // 값 자체(원문/해시 불문)는 절대 detail에 남기지 않는다 - 변경이 일어났다는 사실만 기록.
             adminActionLogService.log("USER", user.getId(), "PASSWORD_CHANGE", null);

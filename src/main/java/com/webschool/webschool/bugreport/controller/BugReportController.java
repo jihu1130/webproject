@@ -1,8 +1,13 @@
 package com.webschool.webschool.bugreport.controller;
 
 import com.webschool.webschool.bugreport.service.BugReportService;
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.global.security.AuthenticationUtils;
+import com.webschool.webschool.global.security.RateLimiter;
+import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -14,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Duration;
 import java.util.List;
 
 // 버그 리포트 제출 - 비로그인 사용자도 제출 가능(SecurityConfig가 permitAll로 열어둠).
@@ -22,6 +28,7 @@ import java.util.List;
 public class BugReportController {
 
     private final BugReportService bugReportService;
+    private final RateLimiter rateLimiter;
 
     @GetMapping("/bug-reports/new")
     public String newForm(Authentication authentication, Model model) {
@@ -35,9 +42,17 @@ public class BugReportController {
                           @RequestParam(required = false) String reporterNickname,
                           @RequestParam(required = false) String contactEmail,
                           @RequestParam(required = false) List<MultipartFile> files,
-                          Authentication authentication, Model model) {
+                          Authentication authentication, Model model, HttpServletRequest request) {
         boolean loggedIn = isAuthenticated(authentication);
         try {
+            // 요청 횟수 제한(보안 점검 M4) - 비로그인도 첨부파일과 함께 제출할 수 있어서 제한이 없으면
+            // 스팸/저장공간 소모에 그대로 열려 있었다. 로그인 사용자는 계정 기준, 비로그인은 IP 기준 10분 5건.
+            String limitKey = loggedIn ? "bug-report-user:" + authentication.getName()
+                    : "bug-report-ip:" + ClientIpUtils.getClientIp(request);
+            if (!rateLimiter.tryAcquire(limitKey, 5, Duration.ofMinutes(10))) {
+                throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS,
+                        "문의는 10분에 5건까지 보낼 수 있습니다. 잠시 후 다시 시도해주세요.");
+            }
             bugReportService.submitReport(loggedIn ? authentication.getName() : null,
                     category, title, content, reporterNickname, contactEmail, files);
             return "redirect:/bug-reports/new?submitted=true";

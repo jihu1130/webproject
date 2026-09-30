@@ -20,6 +20,9 @@
             <div th:if="${param.sent}" class="alert alert-success">
                 입력하신 이메일로 안내를 보냈습니다. 가입 시 등록한 이메일이 아니라면 도착하지 않을 수 있어요.
             </div>
+            <div th:if="${param.limited}" class="alert alert-danger">
+                요청이 너무 많습니다. 잠시 후 다시 시도해주세요.
+            </div>
 
             <form th:action="@{/find-username}" method="post">
                 <div class="auth-field">

@@ -6,6 +6,7 @@ import com.webschool.webschool.global.mail.MailService;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
 // "username" 속성으로 지정한다 - 이렇게 하면 Authentication.getName()이 우리 내부 username을
 // 반환하게 되어서, 이 앱 전체에 이미 퍼져있는 `userRepository.findByUsername(authentication.getName())`
 // 패턴이 폼 로그인/구글 로그인 양쪽에서 전혀 코드 변경 없이 그대로 동작한다.
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
@@ -131,7 +133,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user.setEmail(email);
             user.setEmailVerified(true);
         }
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        // 로컬 가입은 UserService.register()가 감사 로그(REGISTER)를 남기는데 구글 첫 가입은 안 남아서 여기에.
+        log.info("구글 계정으로 신규 가입 userId={} username={}", saved.getId(), saved.getUsername());
+        return saved;
     }
 
     // 아이디는 영문+숫자만 허용(UserService.USERNAME_PATTERN과 동일한 규칙)이라 이메일의 점/특수문자를

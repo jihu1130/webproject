@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -16,6 +17,7 @@ import java.io.IOException;
 // 동일하게 JWT 쿠키를 발급하고 홈으로 보낸다. CustomOAuth2UserService가 이미
 // nameAttributeKey="username"으로 맞춰둬서 authentication.getName()이 로그인 방식과 무관하게
 // 항상 내부 username을 반환하므로, 이 핸들러는 그 값을 그대로 재사용하면 된다(별도 분기 불필요).
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -27,6 +29,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                                          Authentication authentication) throws ServletException, IOException {
         String token = jwtService.generateToken(authentication.getName());
         response.addHeader(HttpHeaders.SET_COOKIE, jwtService.buildCookie(token, request.isSecure()).toString());
+        log.info("로그인 성공(구글) user={}", authentication.getName());
         response.sendRedirect("/");
     }
 }

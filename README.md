@@ -534,8 +534,9 @@ Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, 
 ./gradlew test --tests "com.webschool.webschool.devseed.SuperAdminSeeder"
 ```
 
-`test1`~`test5`(아이디=비밀번호) 일반 계정과 예시 게시글/한마디, `admin`/`admin`
-총관리자 계정이 생성됩니다. 이미 존재하는 데이터는 건너뛰므로 여러 번 실행해도
+`test1`~`test5` 일반 계정과 예시 게시글/한마디, `admin` 총관리자 계정이 생성됩니다
+(비밀번호는 `TestDataSeeder` 상단의 `USER_PASSWORD`/`ADMIN_PASSWORD` 상수 참고 — 가입 시 비밀번호
+규칙이 적용되므로 아이디와 같은 비밀번호는 쓸 수 없습니다). 이미 존재하는 데이터는 건너뛰므로 여러 번 실행해도
 안전합니다. **배포 전에는 반드시 비밀번호를 바꾸세요.**
 
 ## 🌐 배포
@@ -570,7 +571,8 @@ Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, 
 - 로컬/구글 계정은 완전히 별개로 취급(이메일이 같아도 자동 연동하지 않음),
   구글 계정 탈퇴는 같은 계정 재로그인 시 자기 복구되지만 관리자가 강제
   탈퇴시킨 경우는 예외
-- 업로드 파일은 위험 확장자(실행 파일, 스크립트 삽입 가능한 SVG 등) 차단
+- 업로드 파일은 허용 목록(사진·동영상·문서·압축·음성)만 받고, Content-Type은 서버가 확장자로
+  결정 — 사진/동영상이 아닌 파일은 브라우저에서 열리지 않고 다운로드만 됨(저장형 XSS 방지)
 - 에러 처리는 `ErrorCode` enum + `BusinessException` + 전역 예외 핸들러
   (`GlobalExceptionHandler`)로 중앙화 — 서비스는 `BusinessException(ErrorCode, 메시지)`만
   던지면 되고, JSON API/화면 요청 여부에 따라 응답 형식(JSON 에러 바디 vs `error.html`)을

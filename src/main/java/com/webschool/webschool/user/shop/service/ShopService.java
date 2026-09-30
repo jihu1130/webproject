@@ -13,6 +13,7 @@ import com.webschool.webschool.user.shop.repository.ShopItemRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.shop.repository.UserShopItemRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 // 포인트 소비 상점(todo.md "포인트 소비" 요구사항) - 카탈로그(ShopItem) CRUD는 관리자가, 구매/장착은
 // 사용자가 다루지만 NoticeService가 관리자 CRUD와 사용자 조회를 한 서비스에 같이 두는 것과 동일한
 // 이유(같은 자원을 다루는 서비스를 굳이 쪼개지 않는 관례)로 한 서비스에 모았다.
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ShopService {
@@ -65,6 +67,7 @@ public class ShopService {
         item.setActive(true);
         item.setEffect(type == ShopItem.Type.AVATAR_COLOR && effect != null ? effect : ShopItem.Effect.NONE);
         shopItemRepository.save(item);
+        log.info("상점 상품 등록 itemId={} type={} label={} price={}", item.getId(), type, item.getLabel(), price);
     }
 
     @Transactional
@@ -76,6 +79,7 @@ public class ShopService {
         item.setValue(value.trim());
         item.setPrice(price);
         item.setEffect(item.getType() == ShopItem.Type.AVATAR_COLOR && effect != null ? effect : ShopItem.Effect.NONE);
+        log.info("상점 상품 수정 itemId={} label={} price={}", id, item.getLabel(), price);
     }
 
     // 하드 삭제 없음(CLAUDE.md "알려진 함정" - 이미 구매한 사용자가 있으면 UserShopItem의 FK가
@@ -85,6 +89,7 @@ public class ShopService {
         ShopItem item = shopItemRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
         item.setActive(active);
+        log.info("상점 상품 {} itemId={}", active ? "판매 재개" : "판매 중지", id);
     }
 
     // 상점 구매 내역(관리자 페이지 재구성, 2026-09-21 추가) - AdminShopItemController가 카탈로그
@@ -171,6 +176,7 @@ public class ShopService {
         // 구매 즉시 자동 장착 - 바로 효과가 보여야 자연스럽다.
         applyEquip(user, item);
         userRepository.save(user);
+        log.info("상점 구매 userId={} itemId={} price={}", user.getId(), itemId, item.getPrice());
     }
 
     @Transactional
@@ -182,6 +188,7 @@ public class ShopService {
         }
         applyEquip(user, item);
         userRepository.save(user);
+        log.info("상점 장착 userId={} itemId={}", user.getId(), itemId);
     }
 
     @Transactional
@@ -194,6 +201,7 @@ public class ShopService {
             user.setEquippedAvatarColorItemId(null);
         }
         userRepository.save(user);
+        log.info("상점 장착 해제 userId={} type={}", user.getId(), type);
     }
 
     private void applyEquip(User user, ShopItem item) {

@@ -1,8 +1,11 @@
 package com.webschool.webschool.global.embed;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.repository.PostRepository;
+import com.webschool.webschool.post.service.PostService;
 import com.webschool.webschool.school.comment.domain.ScheduleComment;
 import com.webschool.webschool.school.comment.repository.ScheduleCommentRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,7 @@ public class EmbedResolveController {
 
     private final PostRepository postRepository;
     private final ScheduleCommentRepository scheduleCommentRepository;
+    private final PostService postService;
 
     @GetMapping("/resolve")
     @ResponseBody
@@ -45,7 +49,7 @@ public class EmbedResolveController {
 
         Matcher scheduleMatcher = SCHEDULE_PATTERN.matcher(url);
         if (scheduleMatcher.find()) {
-            return resolveScheduleComment(scheduleMatcher.group(1));
+            return resolveScheduleComment(scheduleMatcher.group(1), authentication);
         }
 
         return ResponseEntity.badRequest().body(Map.of("error", "게시물 또는 오늘의 한마디 링크만 삽입할 수 있어요."));
@@ -53,16 +57,16 @@ public class EmbedResolveController {
 
     private ResponseEntity<?> resolvePost(String uuid, Authentication authentication) {
         Post post = postRepository.findByUuid(uuid).orElse(null);
-        if (post == null || post.isDeleted()) {
+        if (post == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "게시물을 찾을 수 없어요."));
         }
-        // 비공개(PRIVATE) 게시물은 작성자 본인에게만 카드로 만들어준다 - 이 엔드포인트는 제목을
-        // 돌려주므로, 막지 않으면 uuid를 아는 사람이 상세 페이지(PostService.getDetail()에서 차단됨)
-        // 대신 여기로 제목만 빼갈 수 있다. 카드가 본문에 스냅샷으로 박히면 그 글을 읽는 제3자에게도
-        // 제목이 그대로 노출되므로 작성자 본인 확인이 필요하다.
-        if (post.getVisibility() == Post.Visibility.PRIVATE
-                && (authentication == null || post.getAuthor() == null
-                        || !post.getAuthor().getUsername().equals(authentication.getName()))) {
+        // 상세 페이지를 못 여는 글(삭제/블라인드/비공개)은 카드도 못 만든다 - 이 엔드포인트는 제목을
+        // 돌려주고, 카드가 본문에 스냅샷으로 박히면 그 글을 읽는 제3자에게도 제목이 그대로 노출된다.
+        // 예전엔 PRIVATE만 막아서 블라인드된 글의 제목이 새어 나갔다(보안 점검 M2) - 상세 페이지와
+        // 같은 판단(PostService.assertReadable)을 그대로 쓴다.
+        try {
+            postService.assertReadable(post, AuthenticationUtils.usernameOrNull(authentication));
+        } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "게시물을 찾을 수 없어요."));
         }
         return ResponseEntity.ok(Map.of(
@@ -73,9 +77,16 @@ public class EmbedResolveController {
         ));
     }
 
-    private ResponseEntity<?> resolveScheduleComment(String uuid) {
+    private ResponseEntity<?> resolveScheduleComment(String uuid, Authentication authentication) {
         ScheduleComment comment = scheduleCommentRepository.findByUuid(uuid).orElse(null);
         if (comment == null || comment.isDeleted()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "한마디를 찾을 수 없어요."));
+        }
+        // 블라인드된 한마디는 다른 화면에서 원문 대신 안내 문구로 가려지는데, 여기서 원문 미리보기를
+        // 돌려주면 그 내용을 다른 글에 퍼뜨릴 수 있었다(보안 점검 M2) - 작성자 본인 외에는 막는다.
+        String username = AuthenticationUtils.usernameOrNull(authentication);
+        if (comment.isBlind() && (username == null || comment.getUser() == null
+                || !comment.getUser().getUsername().equals(username))) {
             return ResponseEntity.badRequest().body(Map.of("error", "한마디를 찾을 수 없어요."));
         }
         String preview = HtmlSanitizer.toPlainText(comment.getContent());

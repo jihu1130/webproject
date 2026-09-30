@@ -23,6 +23,7 @@ import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 
 // 버그 리포트 - 비로그인 사용자도 제출 가능(사용자 확정 정책). 관리 화면은 총관리자 전용
 // (AdminAccessInterceptor의 "/admin/bug-reports" 분기 참고, /admin/users·/admin/audit-log와 동일 패턴).
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BugReportService {
@@ -94,6 +96,9 @@ public class BugReportService {
 
         BugReport saved = bugReportRepository.save(report);
         saveAttachments(saved, files);
+        // 연락 이메일/비로그인 닉네임은 개인정보라 남기지 않는다.
+        log.info("문의 접수 bugReportId={} category={} 로그인={} 첨부 {}개", saved.getId(), category,
+                username != null, files == null ? 0 : files.stream().filter(f -> f != null && !f.isEmpty()).count());
     }
 
     private BugReport.Category parseCategory(String value) {
@@ -249,6 +254,7 @@ public class BugReportService {
         reply.setUserUsername(username);
         reply.setContent(trimmed);
         inquiryReplyRepository.save(reply);
+        log.info("문의 재답장(작성자) bugReportId={}", id);
     }
 
     @Transactional

@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -16,6 +17,7 @@ import java.io.IOException;
 // 세션 인증 → JWT 전체 교체(사용자 확정, 2026-09-14) - 예전엔 SavedRequestAwareAuthenticationSuccessHandler로
 // "원래 요청했던 페이지로 복귀"를 지원했지만, stateless 전환과 함께 사용자가 "항상 홈으로
 // 단순화"를 택해서(OAuth2 로그인이 이미 이렇게 동작 중이던 것과 통일) 더 이상 필요 없다.
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -29,6 +31,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         loginAttemptService.recordSuccess(authentication.getName());
         String token = jwtService.generateToken(authentication.getName());
         response.addHeader(HttpHeaders.SET_COOKIE, jwtService.buildCookie(token, request.isSecure()).toString());
+        // 로그인 실패/잠금은 LoginAttemptService가 감사 로그로 남기지만 성공은 어디에도 안 남던 빈틈.
+        log.info("로그인 성공(아이디/비밀번호) user={}", authentication.getName());
         response.sendRedirect("/");
     }
 }

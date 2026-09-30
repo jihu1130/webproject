@@ -87,11 +87,20 @@ public class PostService {
                 .getId();
     }
 
-    @Transactional
-    public PostDetailDto getDetail(Long id, String currentUsername, boolean countView) {
-        Post post = postRepository.findById(id)
+    // 댓글 목록 API처럼 게시글 본문이 아니라 "그 글에 딸린 데이터"를 돌려주는 곳에서 쓴다 - 상세
+    // 페이지(getDetail)와 똑같은 열람 조건을 통과한 글의 id만 돌려준다. 예전엔 댓글 API가 uuid만으로
+    // 조회해서, 상세는 막힌 삭제/블라인드/비공개 글의 댓글을 그대로 읽을 수 있었다(보안 점검 M2).
+    @Transactional(readOnly = true)
+    public Long resolveReadableIdByUuid(String uuid, String currentUsername) {
+        Post post = postRepository.findByUuid(uuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+        assertReadable(post, currentUsername);
+        return post.getId();
+    }
 
+    // 일반 사용자 화면 기준 열람 가능 여부 - 안 되면 "없는 글"(POST_NOT_FOUND)로 응답해 존재 여부도 숨긴다.
+    // getDetail/resolveReadableIdByUuid/EmbedResolveController가 같은 기준을 쓰도록 한 곳에 모았다.
+    public void assertReadable(Post post, String currentUsername) {
         // 소프트 삭제된 게시물은 일반 사용자 화면에서는 완전히 사라진 것처럼 처리 (작성자 본인도 예외 없음).
         // 관리자가 삭제된 글을 봐야 하면 AdminPostService의 별도 경로를 사용한다.
         if (post.isDeleted()) {
@@ -114,6 +123,16 @@ public class PostService {
         if (post.getVisibility() == Post.Visibility.PRIVATE && !mine && !isAdmin(currentUsername)) {
             throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
+    }
+
+    @Transactional
+    public PostDetailDto getDetail(Long id, String currentUsername, boolean countView) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+        assertReadable(post, currentUsername);
+
+        boolean mine = currentUsername != null && post.getAuthor() != null
+                && post.getAuthor().getUsername().equals(currentUsername);
 
         // 원자적 벌크 UPDATE로 조회수 증가(PostRepository.incrementViewCount() 참고) - 엔티티
         // 필드는 건드리지 않고(다른 필드 변경 시 stale 값으로 덮어쓰는 걸 막기 위함, Post.java의

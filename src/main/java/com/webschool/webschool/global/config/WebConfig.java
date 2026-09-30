@@ -4,6 +4,7 @@ import com.webschool.webschool.global.security.AdminAccessInterceptor;
 import com.webschool.webschool.global.security.onboarding.EmailSetupInterceptor;
 import com.webschool.webschool.global.security.onboarding.PasswordSetupInterceptor;
 import com.webschool.webschool.global.security.onboarding.SchoolSetupInterceptor;
+import com.webschool.webschool.global.upload.storage.UploadResponseHeaderInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ public class WebConfig implements WebMvcConfigurer {
     private final SchoolSetupInterceptor schoolSetupInterceptor;
     private final EmailSetupInterceptor emailSetupInterceptor;
     private final PasswordSetupInterceptor passwordSetupInterceptor;
+    private final UploadResponseHeaderInterceptor uploadResponseHeaderInterceptor;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -36,6 +38,8 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(adminAccessInterceptor).addPathPatterns("/admin/**");
+        // 업로드 파일이 같은 오리진에서 페이지로 실행되지 않게 막는 응답 헤더(보안 점검 M1)
+        registry.addInterceptor(uploadResponseHeaderInterceptor).addPathPatterns("/uploads/**");
         // 학교 설정 화면 자체가 쓰는 정적 리소스/학교 검색·반 목록 API는 막으면 그 화면 자체가
         // 못 뜨게 되므로 반드시 제외해야 한다.
         registry.addInterceptor(schoolSetupInterceptor).addPathPatterns("/**")

@@ -18,6 +18,7 @@ import com.webschool.webschool.school.comment.repository.ScheduleCommentReposito
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 // 게시글/한마디 첨부형 설문(todo.md 4번 항목). Post/ScheduleComment 양쪽에 붙을 수 있어 poll
 // 패키지가 post/school 양쪽을 의존한다(반대 방향 의존은 없음 - post/school 서비스는 poll을 모른다,
 // 위젯이 자기 데이터를 스스로 불러오는 기존 컨벤션과 동일하게 화면 쪽에서 별도 API로 조회).
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PollService {
@@ -81,6 +83,7 @@ public class PollService {
         Poll poll = buildPoll(creator, req);
         poll.setPost(post);
         persistPollWithOptions(poll, options);
+        log.info("설문 생성(게시글) pollId={} postId={} 옵션 {}개", poll.getId(), postId, options.size());
     }
 
     @Transactional
@@ -99,6 +102,7 @@ public class PollService {
         Poll poll = buildPoll(creator, req);
         poll.setScheduleComment(comment);
         persistPollWithOptions(poll, options);
+        log.info("설문 생성(한마디) pollId={} scheduleCommentId={} 옵션 {}개", poll.getId(), scheduleCommentId, options.size());
     }
 
     public Optional<PollResultDto> findResultByPost(Long postId, String viewerUsername) {
@@ -190,6 +194,7 @@ public class PollService {
         pollVoteRepository.flush();
 
         if (selected.isEmpty()) {
+            log.info("설문 투표 취소 pollId={}", pollId);
             return; // 아무것도 선택 안 하고 제출 = 투표 취소
         }
         if (!poll.isAllowMultiple() && selected.size() > 1) {
@@ -209,6 +214,10 @@ public class PollService {
             vote.setVoter(voter);
             pollVoteRepository.save(vote);
         }
+        // 익명 투표(누가 뭘 골랐는지 숨김) 설문도 있어서 어떤 옵션을 골랐는지는 남기지 않는다 -
+        // 서버 로그를 볼 수 있는 사람이 익명 설정을 우회하게 되면 안 된다. 선택 개수만.
+        log.info("설문 투표 pollId={} 선택 {}개{}", pollId, distinctSelected.size(),
+                customOptionText != null && !customOptionText.isBlank() ? " (기타 직접 추가)" : "");
     }
 
     private void persistPollWithOptions(Poll poll, List<String> options) {

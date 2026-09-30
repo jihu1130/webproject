@@ -43,10 +43,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// 개발용 테스트 데이터 생성기. 실행하면 test1~test5(아이디와 완전히 같지 않도록 비밀번호는
-// "아이디!" 형태 - 예: test1/test1!, 닉네임은 실제 유저처럼 보이도록 별도 지정) 계정 +
-// 계정별 한마디 1개, admin/admin!(ROLE_ADMIN, canManageNotices만 On) 계정, subadmin/subadmin!
-// (ROLE_ADMIN, 세분화된 부관리자 권한 9개를 전부 켠 "풀권한 부관리자" 데모 계정), 커뮤니티
+// 개발용 테스트 데이터 생성기. 실행하면 test1~test5(비밀번호는 아래 USER_PASSWORD 공용, 닉네임은
+// 실제 유저처럼 보이도록 별도 지정) 계정 + 계정별 한마디 1개, admin(비밀번호 ADMIN_PASSWORD,
+// ROLE_ADMIN, canManageNotices만 On) 계정, subadmin(비밀번호 SUBADMIN_PASSWORD
+// , ROLE_ADMIN, 세분화된 부관리자 권한 9개를 전부 켠 "풀권한 부관리자" 데모 계정), 커뮤니티
 // 게시글 15개(자유 5 · 익명 5 · 질의응답 5 - 계정마다 한 카테고리씩 고르게 나눠 쓰지 않고
 // 계정당 3개씩을 서로 다른 카테고리 조합으로 섞어서 채움), 문의하기 12개(버그/건의/계정 문의/
 // 기타 4종 × 3개) + 공지사항(별도 모델) 1개를 만들고, 신고→자동 블라인드 흐름을 화면에서
@@ -83,9 +83,12 @@ class TestDataSeeder {
     private static final int USER_COUNT = 5;
     private static final String USERNAME_PREFIX = "test";
     private static final String ADMIN_USERNAME = "admin";
-    private static final String ADMIN_PASSWORD = "admin!";
+    private static final String ADMIN_PASSWORD = "Seed-BxKduYIo7!";
     private static final String SUBADMIN_USERNAME = "subadmin";
-    private static final String SUBADMIN_PASSWORD = "subadmin!";
+    private static final String SUBADMIN_PASSWORD = "Seed-IUMlvNW67!";
+    // test1~test5 공용 비밀번호 - 2026-09-30 비밀번호 규칙(8자 이상, 2종류 이상, 아이디 포함 금지, 보안 점검 M3)이
+    // 생기면서 예전 "아이디+!" 방식은 가입 자체가 거부돼 고정 값으로 바꿨다. 이미 있는 계정엔 반영 안 됨.
+    private static final String USER_PASSWORD = "Seed-jwvyLP1G7!";
     private static final String SCHOOL_NAME = "아산배방중학교";
     private static final String SCHOOL_CODE = "8181104";
     private static final String ATPT_CODE = "N10";
@@ -365,9 +368,7 @@ class TestDataSeeder {
             return;
         }
 
-        // 비밀번호를 아이디와 완전히 동일하게 두지 않도록 "!"를 붙인다(2026-09-16) -
-        // 예: 아이디 test1 / 비밀번호 test1!.
-        String password = username + "!";
+        String password = USER_PASSWORD;
 
         RegisterDto dto = new RegisterDto();
         dto.setUsername(username);

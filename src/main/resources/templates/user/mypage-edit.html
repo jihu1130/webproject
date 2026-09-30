@@ -45,7 +45,8 @@
 
                     <div class="auth-field">
                         <label class="form-label">새 비밀번호</label>
-                        <input type="password" th:field="*{newPassword}" class="form-control" placeholder="변경하지 않으려면 비워두세요">
+                        <input type="password" th:field="*{newPassword}" class="form-control" placeholder="변경하지 않으려면 비워두세요" minlength="8">
+                        <div class="form-text">8자 이상, 영문·숫자·특수문자 중 2가지 이상 (아이디 포함 불가)</div>
                     </div>
                     <div class="auth-field">
                         <label class="form-label">새 비밀번호 확인</label>
