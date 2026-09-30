@@ -132,12 +132,14 @@
     border-radius: 20px;
     font-size: 11px;
     font-weight: 700;
-    background: rgba(30, 79, 163, 0.1);
-    color: var(--brand-1-dark);
+    /* theme.css 토큰으로 교체(리디자인 Phase 2) - 예전 rgba(30,79,163)는 브랜드를 인디고로 바꾸기
+       전의 파란색이 남아 있던 것이고, 다크모드에서도 바뀌지 않았다. QNA는 자유와 구분되게 accent. */
+    background: var(--brand-gradient-tint-2);
+    color: var(--brand-1);
 }
 
-.post-category-badge-ANONYMOUS { background: rgba(107, 114, 128, 0.14); color: var(--muted); }
-.post-category-badge-QNA { background: rgba(30, 79, 163, 0.14); color: var(--brand-1-dark); }
+.post-category-badge-ANONYMOUS { background: color-mix(in srgb, var(--muted) 16%, transparent); color: var(--muted); }
+.post-category-badge-QNA { background: var(--accent-soft); color: var(--accent); }
 
 /* 검색 */
 .post-search-form {
@@ -415,7 +417,7 @@ a.post-list-nickname:hover { text-decoration: underline; }
     transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.post-page-link:hover { background: rgba(30, 79, 163, 0.08); border-color: var(--brand-1); }
+.post-page-link:hover { background: var(--brand-gradient-tint-1); border-color: var(--brand-1); }
 
 .post-page-link.active {
     /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
@@ -1910,16 +1912,97 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 /* 다크모드 - 카드류(.post-detail-card 등)와 버튼류(.post-category-tab 등)는 이제 전부
    var(--surface)/var(--border)/var(--danger)/var(--success) 같은 theme.css 토큰만 쓰므로
    theme.css의 다크 팔레트 재정의만으로 자동 대응된다(예전엔 #fff/#dcdfef/#fee2e2 등을
-   하드코딩해뒀어서 이 아래에 배경색만 다시 덮어쓰는 규칙이 따로 필요했었다). 카테고리 배지
-   (익명/질의응답)만 라이트/다크에서 톤 자체가 다른 rgba 배경을 쓰므로 예외적으로 계속 남겨둔다. */
-@media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .post-category-badge-ANONYMOUS { background: rgba(255, 255, 255, 0.08); }
-    html:not([data-theme="light"]) .post-category-badge-QNA { background: rgba(126, 166, 230, 0.16); color: var(--brand-1-dark); }
+   하드코딩해뒀어서 이 아래에 배경색만 다시 덮어쓰는 규칙이 따로 필요했었다). 카테고리 배지도
+   리디자인 Phase 2에서 토큰으로 바꿔 다크모드 재정의 블록이 필요 없어졌다. */
+
+/* ══════════ 리디자인 Phase 2 (2026-09-30) - 커뮤니티 화면 ══════════
+   body.community가 붙은 화면에만 적용한다. post.css는 공지/검색/마이페이지/관리자 화면도 같이
+   쓰므로 범위를 좁혀 둔다(그쪽은 각자의 Phase에서). 2-A: 게시글 목록(post/list.html).
+   색은 theme.css 토큰만, 흰 글자는 -fixed 토큰, 알약 모양은 이 범위 안에서만(리디자인 원칙 1·2·4). */
+
+.community .post-page { padding-top: 40px; }
+
+/* 헤더 - 홈페이지 헤드라인처럼 제목을 크고 굵게 */
+.community .post-list-header { align-items: center; margin-bottom: 22px; }
+.community .post-page-heading h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+.community .post-page-heading .page-sub { font-size: 0.92rem; margin-top: 2px; }
+
+.community .post-write-btn,
+.community .post-contest-btn {
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-weight: 700;
 }
 
-/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .post-category-badge-ANONYMOUS { background: rgba(255, 255, 255, 0.08); }
-html[data-theme="dark"] .post-category-badge-QNA { background: rgba(126, 166, 230, 0.16); color: var(--brand-1-dark); }
+/* 카테고리 탭 - 바인더 인덱스 탭처럼 조금 더 크게 */
+.community .post-category-tabs { gap: 8px; margin-bottom: 18px; }
+.community .post-category-tab { padding: 8px 18px; font-size: 0.88rem; }
 
-html[data-theme="dark"] .post-category-badge-ANONYMOUS { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
-html[data-theme="dark"] .post-category-badge-QNA { background: rgba(126, 166, 230, 0.16); color: var(--brand-1-dark); }
+/* 검색 - 입력칸과 버튼을 하나의 알약형 필드로 합친다 */
+.community .list-toolbar { margin-bottom: 20px; }
+.community .post-search-form-rich { max-width: 100%; width: 100%; }
+.community .post-search-row {
+    gap: 0;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.15s ease;
+}
+.community .post-search-row:focus-within { border-color: var(--brand-1); }
+.community .post-search-row input[type="text"] {
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    padding: 8px 16px;
+    font-size: 0.92rem;
+}
+.community .post-search-row button {
+    width: 44px;
+    height: 38px;
+    border-radius: 999px;
+}
+.community .post-search-options { padding: 0 4px; }
+.community .post-search-sort { border-radius: 999px; padding: 6px 14px; }
+
+/* 목록 - 행 높이를 조금 키우고, 올리면 왼쪽에 브랜드색 줄이 선다 */
+.community .post-list-item {
+    position: relative;
+    padding: 18px 22px;
+}
+.community .post-list-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--brand-1);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.community .post-list-item:hover::before { opacity: 1; }
+.community .post-list-link { gap: 12px; }
+.community .post-list-thumbnail { width: 52px; height: 52px; border-radius: 12px; }
+.community .post-list-title { font-size: 1.02rem; letter-spacing: -0.01em; }
+.community .post-list-meta { gap: 14px; font-size: 0.8rem; }
+
+/* 페이지네이션 - 동그란 알약 */
+.community .post-pagination { gap: 6px; margin-top: 8px; }
+.community .post-page-link {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 999px;
+}
+
+@media (max-width: 560px) {
+    .community .post-page-heading h1 { font-size: 1.5rem; }
+    .community .post-list-item { padding: 14px 16px; }
+    .community .post-list-thumbnail { width: 44px; height: 44px; }
+}
