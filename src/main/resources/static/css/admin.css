@@ -15,9 +15,12 @@
     max-width: 640px;
 }
 
+/* 리디자인 Phase 7(2026-09-30) - 관리자는 기능 우선(원칙 5)이라 정보 밀도는 그대로 두고, 제목 굵기·
+   입력칸 반경(9px → 사이트 입력칸과 같은 12px)·표 행 hover 정도만 사이트 톤에 맞춘다. */
 .admin-page-heading h1 {
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     color: var(--ink);
     margin: 0 0 4px;
 }
@@ -72,6 +75,10 @@
 }
 
 .admin-table tbody tr + tr td { border-top: 1px solid var(--border); }
+
+/* 넓은 표에서 지금 보는 행을 놓치지 않게 - 커뮤니티 목록 행 hover와 같은 옅은 배경 */
+.admin-table tbody tr { transition: background 0.12s ease; }
+.admin-table tbody tr:hover { background: var(--surface-soft); }
 
 .admin-table-title {
     color: var(--ink);
@@ -224,7 +231,7 @@
 .admin-search-form input[type="text"] {
     flex: 1 1 140px;
     padding: 9px 14px;
-    border-radius: 9px;
+    border-radius: 12px;
     border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.88rem;
@@ -240,7 +247,7 @@
 .admin-search-form input[type="date"] {
     flex: 1 1 120px;
     padding: 9px 12px;
-    border-radius: 9px;
+    border-radius: 12px;
     border: 1.5px solid var(--border);
     background: var(--surface);
     color: var(--ink);
@@ -255,7 +262,7 @@
 
 .admin-search-form button {
     width: 42px;
-    border-radius: 9px;
+    border-radius: 12px;
     border: none;
     /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
     background: var(--brand-fixed);
@@ -636,7 +643,7 @@
     flex: 1 1 100%;
     min-height: 70px;
     padding: 9px 12px;
-    border-radius: 9px;
+    border-radius: 12px;
     border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.88rem;
@@ -670,7 +677,7 @@
 .admin-penalty-form select,
 .admin-penalty-form input[type="number"] {
     padding: 9px 12px;
-    border-radius: 9px;
+    border-radius: 12px;
     border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.85rem;
@@ -680,7 +687,7 @@
     flex: 1 1 100%;
     min-height: 60px;
     padding: 9px 12px;
-    border-radius: 9px;
+    border-radius: 12px;
     border: 1.5px solid var(--border);
     font-family: inherit;
     font-size: 0.85rem;
