@@ -23,7 +23,7 @@ NEIS(교육정보 개방 포털) API로 시간표·급식·학사일정을 실�
 같은 학교 학생들끼리 커뮤니티에서 소통할 수 있는 학교 생활 플랫폼입니다.
 동명 학교를 주소로 구분하는 학교 찾기부터, 자유/익명/QnA 게시판, 신고 기반
 자동 블라인드, 날짜별 "오늘의 한마디", 게시글에 붙는 설문/투표, 포인트·티어
-기반 상점, 주간 인기글 콘테스트, 권한이 세분화된 관리자 페이지까지 직접
+기반 상점, 추천 게시글 랭킹, 권한이 세분화된 관리자 페이지까지 직접
 설계하고 구현했으며, GitHub Actions로 AWS에 자동 배포되고 UptimeRobot로
 가동 상태를 모니터링하고 있습니다.
 
@@ -42,7 +42,8 @@ NEIS(교육정보 개방 포털) API로 시간표·급식·학사일정을 실�
 - 🔐 **로그인/회원가입** — 로컬 계정 + 구글 소셜 로그인(OAuth2), 첫 로그인 시
   학교 설정·비밀번호 설정 강제 온보딩(구글 첫 가입은 본인도 모르는 임의
   비밀번호로 생성되므로), 5회 연속 실패 시 계정 잠금 + 남은 시도 횟수 안내
-  (브루트포스 방지), 탈퇴 후에도 같은 구글 계정으로 재로그인하면 자동 복구
+  (브루트포스 방지) + IP당 로그인 실패 횟수 제한(계정을 바꿔가며 대입하는 시도 차단),
+  아이디/비밀번호 찾기·비로그인 문의에도 요청 횟수 제한, 탈퇴 후에도 같은 구글 계정으로 재로그인하면 자동 복구
   (단, 관리자가 강제 탈퇴시킨 계정은 예외). 이메일 인증 · 아이디/비밀번호
   찾기(SMTP 발송) 지원
 - 📆 **출석체크** — 마이페이지에서 매일 체크인, 연속 출석일수에 따라 포인트
@@ -51,8 +52,8 @@ NEIS(교육정보 개방 포털) API로 시간표·급식·학사일정을 실�
   (동영상/파일 임베드), 게시글 공개범위(전체공개/링크공개/비공개) 설정
 - 🗳️ **설문/투표** — 게시글·오늘의 한마디에 붙는 설문, 다중 선택 및 기타 의견
   직접 입력 지원, 관리자 소프트 삭제
-- 🏆 **인기 게시글 주간 콘테스트** — 본인 게시물 후보 신청, 득표 상위 3명에게
-  매주 포인트 지급
+- 🏆 **추천 게시글 랭킹** — 자유 게시판 전체 공개 글을 누구나(본인 제외) 바로 추천,
+  일간/주간/월간/전체 랭킹, 매일 자정 전날 추천 1위 작성자에게 포인트 지급 + 일별 1위 이력
 - 🛍️ **포인트 · 티어 · 상점** — 활동으로 포인트를 모아 상점에서 칭호/아바타
   효과(반짝임/무지개 등) 구매, 상점 또는 마이페이지 프로필 설정에서 바로
   장착/해제, 포인트 랭킹(상위 10명 + 내 순위)·티어 안내 페이지 제공
@@ -61,13 +62,18 @@ NEIS(교육정보 개방 포털) API로 시간표·급식·학사일정을 실�
 - 📝 **오늘의 한마디** — 날짜별 한 줄 댓글, 좋아요/북마크
 - 🐛 **버그 제보 / 문의** — 비로그인 사용자도 첨부파일과 함께 제출 가능,
   관리자 답변(마이페이지 "내 문의"에서 1:1 문의 형태로 조회 + 알림)
-- 🛡️ **관리자 페이지** — 총관리자/부관리자 2단계, 부관리자 권한을 기능별로
-  개별 On/Off (신고 · 게시글 · 한마디 · 공지 · 설문 · 상점 · 문의 · 계정 관리)
+- 🛡️ **관리자 페이지** — 총관리자/부관리자 2단계, 부관리자 권한 15개를 기능별로
+  개별 On/Off (신고 · 게시글 · 한마디 · 공지 · 설문 · 상점 · 출석 · 포인트 · 계정 관리 ·
+  관리자 권한 부여 · 감사 로그 · 대시보드 · 부하테스트 결과 · 문의 · 에러 로그)
 - 🧾 **관리자 감사/보안/에러 로그** — 일반 활동 감사 로그와 별도로, 로그인 실패
   · 계정 잠금 · 권한 변경처럼 보안 관점에서 봐야 할 기록만 모은 보안 로그,
-  최근 예외를 메모리에서 바로 확인하는 에러 로그 화면(총관리자 전용)
-- 📊 **서버 상태 대시보드** — 동시 접속 세션 수 · CPU/힙 메모리 사용량 등을
-  최근 추이 그래프로 확인(총관리자 전용), k6 부하테스트 결과도 같은 화면에서 조회
+  최근 예외를 메모리에서 바로 확인하는 에러 로그 화면
+- 📊 **서버 상태 대시보드** — CPU/힙 메모리/디스크 사용량 등을 최근 추이 그래프로
+  확인, k6 부하테스트 결과도 별도 탭에서 조회(둘 다 부관리자에게 위임 가능)
+- 📘 **API 문서(Swagger UI)** — springdoc-openapi로 전체 엔드포인트 문서 자동 생성,
+  **총관리자만** 관리자 탭의 "API 문서" 버튼으로 열람(그 외 계정은 서버에서 차단)
+- 🪵 **요청 로그 · 요청 ID** — 모든 요청에 ID를 붙여(`X-Request-Id` 응답 헤더) 요청
+  로그·서비스 이벤트·에러를 한 ID로 묶어 추적, 비밀번호·이메일·재설정 토큰은 로그에 남기지 않음
 - 📢 **공지사항** — 활성 공지 항상 1개 유지, 과거 이력 보관 및 조회
 - 🔔 **알림** — 댓글/좋아요/답글/관리자 조치/공지에 대한 알림(항목별 on-off),
   네비바 뱃지
@@ -83,6 +89,8 @@ NEIS(교육정보 개방 포털) API로 시간표·급식·학사일정을 실�
 | Auth | Spring Security, OAuth2 Client (Google Login) |
 | View | Thymeleaf, Bootstrap 5.3, FontAwesome, Pretendard, FullCalendar, Quill(리치 에디터), Chart.js(관리자 대시보드 그래프) |
 | External API | NEIS Open API (`java.net.http.HttpClient` 직접 연동) |
+| API 문서 | springdoc-openapi 3 (Swagger UI, 총관리자 전용) |
+| Logging | SLF4J + Logback(파일 롤링), 요청 ID MDC(`RequestLoggingFilter`) |
 | Build | Gradle |
 | Infra / CI·CD | AWS EC2 · ECR · S3(파일 저장) · SSM, GitHub Actions (OIDC 기반 배포), Docker / Docker Compose |
 | Monitoring | Prometheus · Grafana(지표), UptimeRobot(가동 확인), k6(부하 테스트) |
@@ -93,16 +101,29 @@ NEIS(교육정보 개방 포털) API로 시간표·급식·학사일정을 실�
 아니라 `user`, `school`, `post`처럼 도메인이 최상위 기준입니다. 각 도메인
 안에서도 관리자 전용 화면(컨트롤러/서비스/DTO)은 `admin` 서브패키지로 한 번 더
 분리되어 있고, 최상위 `admin` 패키지는 특정 기능에 속하지 않는 감사 로그와
-관리자 홈 진입점만 담당합니다.
+관리자 홈 진입점만 담당합니다. 파일이 많은 도메인은 그 안을 다시 기능별 하위 패키지로
+나눴습니다(각 하위 패키지 안은 다시 `controller/service/dto/domain/repository`).
 
 ```
 com.webschool.webschool
 ├── home         : 홈("/") · 통합검색 진입점
 ├── admin        : 관리자 홈("/admin", 권한별 첫 메뉴로 리다이렉트) + 관리자 행동 감사/보안/에러 로그
-├── global       : 보안 설정, 정적 리소스 서빙, 권한 인터셉터, 공통 모델 어드바이스
-├── user         : 회원가입/로그인, 마이페이지, 계정 관리, 프로필 조회 (관리자 계정 관리는 user/admin)
-├── school       : 캘린더, NEIS 연동, 시간표/급식 캐시, 학사일정, 개인 일정, 오늘의 한마디 (관리자 화면은 school/admin)
-├── post         : 커뮤니티(자유/익명/QnA) + 댓글 + 신고/블라인드 + 이미지 첨부 (관리자 화면은 post/admin)
+├── global       : 보안 설정, 에러 처리, 로깅, 업로드, 공통 유틸
+│   ├── security.jwt / security.login / security.onboarding : JWT 인증 · 로그인 처리 · 온보딩 게이트
+│   ├── logging  : 요청 로그/요청 ID 필터, 에러 로그 버퍼
+│   └── upload.storage : 로컬/S3 파일 저장소
+├── user         : 계정 본체 · 제재 (관리자 계정 관리는 user/admin)
+│   ├── account  : 로그인 · 가입 · 온보딩 · 계정 찾기 · 탈퇴 배치
+│   ├── mypage   : 마이페이지 · 내 활동
+│   ├── point    : 포인트 · 출석 · 티어 · 랭킹
+│   ├── shop     : 상점
+│   └── profile  : 공개 프로필 · 차단
+├── school       : 캘린더, NEIS 연동, 시간표/급식 캐시, 학사일정 (관리자 화면은 school/admin)
+│   ├── comment  : 오늘의 한마디 (+ 좋아요/북마크/신고)
+│   └── event    : 개인 일정
+├── post         : 커뮤니티(자유/익명/QnA) + 게시글 좋아요/북마크/신고 + 이미지 첨부 (관리자 화면은 post/admin)
+│   ├── comment  : 댓글 (+ 좋아요/북마크/신고, 답변 채택)
+│   └── recommend: 추천 게시글 랭킹 · 일별 1위
 ├── poll         : 게시글/한마디에 붙는 설문·투표 (관리자 화면은 poll/admin)
 ├── notice       : 공지사항(활성 공지 1개 유지, 이력 보관) (관리자 화면은 notice/admin)
 ├── notification : 댓글/좋아요/관리자 조치/공지 알림
@@ -158,7 +179,7 @@ flowchart LR
 
 ## 🗄️ ERD (데이터베이스 구조)
 
-38개 엔티티가 있어 도메인 패키지 단위로 4개 다이어그램으로 나눴습니다. 화살표는
+37개 엔티티가 있어 도메인 패키지 단위로 4개 다이어그램으로 나눴습니다. 화살표는
 전부 자식 → 부모 방향의 `@ManyToOne`(단방향, `@OneToMany` 컬렉션은 쓰지 않는
 설계 원칙)이며, `User` FK는 대부분 nullable입니다 — 탈퇴 후 7일이 지나면
 계정이 실제로 하드 삭제되는데(아래 [설계 원칙](#-설계-원칙) 참고) 작성자
@@ -333,19 +354,14 @@ erDiagram
     CommentLike { long id PK }
     PostBookmark { long id PK }
     PostLike { long id PK }
-    PostContestEntry {
+    PostRecommend {
         long id PK
-        date weekStart
+        datetime createdAt
     }
-    PostContestVote {
+    PostDailyBestResult {
         long id PK
-        date weekStart
-    }
-    PostContestResult {
-        long id PK
-        date weekStart
-        int rank
-        int voteCount
+        date resultDate
+        int recommendCount
         int prizePoints
     }
 
@@ -367,12 +383,10 @@ erDiagram
     User |o--o{ PostBookmark : 북마크
     Post ||--o{ PostLike : 좋아요됨
     User |o--o{ PostLike : 좋아요
-    Post ||--o{ PostContestEntry : 후보신청
-    User |o--o{ PostContestEntry : 신청
-    PostContestEntry ||--o{ PostContestVote : 득표
-    User |o--o{ PostContestVote : 투표
-    Post ||--o{ PostContestResult : "주간 수상"
-    User |o--o{ PostContestResult : 수상
+    Post ||--o{ PostRecommend : 추천받음
+    User ||--o{ PostRecommend : 추천
+    Post ||--o{ PostDailyBestResult : "일별 1위"
+    User |o--o{ PostDailyBestResult : 수상
 ```
 
 ### 설문 · 공지 · 알림 · 문의 · 로그 (`poll` / `notice` / `notification` / `bugreport` / `admin`)
@@ -525,6 +539,12 @@ Prometheus([http://localhost:9090](http://localhost:9090))와
 Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, Prometheus
 데이터소스와 `webschool 개요` 대시보드 자동 등록)도 함께 뜹니다.
 
+**띄운 뒤 참고**
+- API 문서: 총관리자로 로그인한 상태에서 [http://localhost:8888/swagger-ui.html](http://localhost:8888/swagger-ui.html)
+  (관리자 탭의 "API 문서" 버튼). 다른 계정은 접근이 막힙니다.
+- 서버 로그: `logs/webschool.log`(일별·20MB 롤링, 30일 보관). 각 줄에 `[요청ID 사용자]`가 찍히므로,
+  응답 헤더 `X-Request-Id` 값으로 한 요청의 로그를 모아 볼 수 있습니다.
+
 ### 5) 테스트 데이터 심기 (선택)
 
 빈 DB로 시작하면 둘러볼 데이터가 없으니, 아래 시더로 예시 계정/게시글을 채울 수 있습니다.
@@ -556,8 +576,8 @@ Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, 
 | 역할 | 설명 |
 |---|---|
 | `ROLE_USER` | 일반 사용자 |
-| `ROLE_ADMIN` | 부관리자 — 신고/게시글/한마디/공지/설문/상점/문의/계정 관리 권한을 7개 항목으로 세분화해서 개별 부여 |
-| `ROLE_SUPER_ADMIN` | 총관리자 — 여러 명 지정 가능, 부관리자 권한 승격/회수, 감사·보안·에러 로그 열람, 서버 상태 대시보드 조회 |
+| `ROLE_ADMIN` | 부관리자 — 관리자 기능을 15개 권한으로 세분화해 개별 부여(신고/게시글/한마디/공지/설문/상점/출석/포인트/계정 관리/관리자 권한 부여/감사 로그/대시보드/부하테스트 결과/문의/에러 로그). 권한 없는 메뉴는 탭에서 숨겨지고 주소로 직접 들어와도 서버에서 차단 |
+| `ROLE_SUPER_ADMIN` | 총관리자 — 여러 명 지정 가능, 모든 관리자 기능 + 부관리자 권한 부여/회수, 총관리자 승격, API 문서(Swagger UI) 열람 |
 
 ## 🧩 설계 원칙
 
@@ -577,6 +597,11 @@ Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, 
   (`GlobalExceptionHandler`)로 중앙화 — 서비스는 `BusinessException(ErrorCode, 메시지)`만
   던지면 되고, JSON API/화면 요청 여부에 따라 응답 형식(JSON 에러 바디 vs `error.html`)을
   자동으로 맞춰줌
+- 로그는 요청 단위로 추적 — 요청마다 ID를 붙이고, 감사 로그로 남는 이벤트(가입·글·신고·권한
+  변경·로그인 실패 등)는 서버 로그에도 같은 ID로 남음. 쿼리 문자열(재설정 토큰)·비밀번호·이메일·
+  원본 파일명·익명 투표 선택지는 로그에 남기지 않음
+- 누구나 호출할 수 있고 호출마다 비용이 드는 동작(로그인 시도, 메일 발송, 비로그인 문의)은
+  IP·계정 단위 요청 횟수 제한을 둠
 
 ---
 
