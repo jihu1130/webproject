@@ -4,31 +4,44 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
+    font-weight: 800;
     color: var(--ink);
-    margin: 24px 0 12px;
+    margin: 28px 0 14px;
 }
+
+.shop-section-title i { color: var(--brand-1); }
 
 .shop-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 14px;
+    gap: 16px;
     margin-bottom: 8px;
 }
 
+/* 리디자인 Phase 4-C(2026-09-30) - 다른 카드들과 같은 톤(라운드, 그림자, hover 시 살짝 떠오름) */
 .shop-item-card {
     position: relative;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px;
+    border-radius: 18px;
+    padding: 18px 16px 16px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
+.shop-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-lg);
+    border-color: var(--brand-1);
+}
+
+/* 보유중/장착중 - 글자만 있던 걸 작은 칩으로. 비어 있으면(미보유) 안 보이게 :empty 처리 */
 .shop-item-badge {
     position: absolute;
     top: 10px;
@@ -36,7 +49,11 @@
     font-size: 11px;
     font-weight: 700;
     color: var(--brand-1);
+    background: var(--brand-gradient-tint-2);
+    padding: 2px 9px;
+    border-radius: 999px;
 }
+.shop-item-badge:empty { display: none; }
 
 .shop-item-preview {
     width: 100%;
@@ -44,7 +61,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--surface-soft);
 }
 
@@ -69,13 +86,17 @@
 
 .shop-item-price {
     font-size: 0.85rem;
-    color: var(--muted);
+    font-weight: 700;
+    color: var(--brand-1);
 }
 
 .shop-item-btn {
     width: 100%;
     padding: 8px;
     font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 999px;
+    margin-top: 4px;
 }
 
 /* 프로필 설정(/mypage/profile)의 치장품 장착 섹션 전용 - 보유 아이템이 늘어날수록 위

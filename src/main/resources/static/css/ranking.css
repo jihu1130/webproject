@@ -7,18 +7,22 @@
 .ranking-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
+/* 리디자인 Phase 4-C(2026-09-30) - 추천 게시글 랭킹(post.css .community .contest-entry)과 같은 카드 톤 */
 .ranking-row {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 12px 16px;
+    border-radius: 16px;
+    padding: 14px 20px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+.ranking-row:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-lg); }
 
 /* 로그인 사용자 본인 행 강조 - 긴 목록에서 내 위치를 바로 찾을 수 있게 */
 .ranking-row-me {
@@ -26,18 +30,30 @@
     background: var(--brand-gradient-soft);
 }
 
+/* 순위를 원형 배지로 - 추천 게시글 랭킹과 같은 규칙: 4위부터 옅은 브랜드, 2·3위 진한 브랜드,
+   1위 금색. 금색은 추천 게시글 진입 버튼(post.css .post-contest-btn)의 "성취" 금색 재사용이라
+   다크모드에서도 같은 톤(성취 색은 테마와 무관). 예전엔 3위만 #a3620f 하드코딩 글자색이었다. */
 .ranking-rank {
-    width: 36px;
+    width: 38px;
+    height: 38px;
     flex-shrink: 0;
-    text-align: center;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 800;
-    font-size: 1.05rem;
-    color: var(--muted);
+    font-size: 0.95rem;
+    background: var(--brand-gradient-tint-2);
+    color: var(--brand-1);
 }
 
-.ranking-rank-1 { color: var(--accent); font-size: 1.3rem; }
-.ranking-rank-2 { color: var(--muted); font-size: 1.15rem; }
-.ranking-rank-3 { color: #a3620f; font-size: 1.1rem; }
+.ranking-rank-2,
+.ranking-rank-3 { background: var(--brand-fixed); color: #fff; }
+.ranking-rank-1 {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1.5px solid #f2c94c;
+    color: #92400e;
+}
 
 .ranking-avatar {
     width: 44px;
@@ -113,8 +129,9 @@
     gap: 12px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 18px;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: var(--shadow-card);
 }
 
 .tier-guide-row-mine {
@@ -132,5 +149,5 @@
 @media (max-width: 480px) {
     .ranking-row { padding: 10px 12px; gap: 10px; }
     .ranking-avatar { width: 36px; height: 36px; }
-    .ranking-rank { width: 28px; font-size: 0.95rem; }
+    .ranking-rank { width: 32px; height: 32px; font-size: 0.85rem; }
 }
