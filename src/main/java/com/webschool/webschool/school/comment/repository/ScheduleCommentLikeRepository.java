@@ -1,6 +1,6 @@
-package com.webschool.webschool.school.repository;
+package com.webschool.webschool.school.comment.repository;
 
-import com.webschool.webschool.school.domain.ScheduleCommentLike;
+import com.webschool.webschool.school.comment.domain.ScheduleCommentLike;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

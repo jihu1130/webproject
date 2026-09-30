@@ -1,15 +1,15 @@
-package com.webschool.webschool.school.service;
+package com.webschool.webschool.school.comment.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
-import com.webschool.webschool.school.domain.ScheduleComment;
-import com.webschool.webschool.school.domain.ScheduleCommentBookmark;
-import com.webschool.webschool.school.domain.ScheduleCommentLike;
-import com.webschool.webschool.school.repository.ScheduleCommentBookmarkRepository;
-import com.webschool.webschool.school.repository.ScheduleCommentLikeRepository;
-import com.webschool.webschool.school.repository.ScheduleCommentRepository;
+import com.webschool.webschool.school.comment.domain.ScheduleComment;
+import com.webschool.webschool.school.comment.domain.ScheduleCommentBookmark;
+import com.webschool.webschool.school.comment.domain.ScheduleCommentLike;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentBookmarkRepository;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentLikeRepository;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

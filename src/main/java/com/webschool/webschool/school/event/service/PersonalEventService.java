@@ -1,10 +1,10 @@
-package com.webschool.webschool.school.service;
+package com.webschool.webschool.school.event.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
-import com.webschool.webschool.school.domain.PersonalEvent;
-import com.webschool.webschool.school.dto.PersonalEventDto;
-import com.webschool.webschool.school.repository.PersonalEventRepository;
+import com.webschool.webschool.school.event.domain.PersonalEvent;
+import com.webschool.webschool.school.event.dto.PersonalEventDto;
+import com.webschool.webschool.school.event.repository.PersonalEventRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

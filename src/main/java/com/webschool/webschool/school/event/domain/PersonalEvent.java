@@ -1,4 +1,4 @@
-package com.webschool.webschool.school.domain;
+package com.webschool.webschool.school.event.domain;
 
 import com.webschool.webschool.user.domain.User;
 import jakarta.persistence.*;

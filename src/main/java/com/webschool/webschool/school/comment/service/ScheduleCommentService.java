@@ -1,16 +1,16 @@
-package com.webschool.webschool.school.service;
+package com.webschool.webschool.school.comment.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.school.domain.School;
-import com.webschool.webschool.school.domain.ScheduleComment;
-import com.webschool.webschool.school.dto.ScheduleCommentDto;
-import com.webschool.webschool.school.repository.ScheduleCommentBookmarkRepository;
-import com.webschool.webschool.school.repository.ScheduleCommentLikeRepository;
-import com.webschool.webschool.school.repository.ScheduleCommentReportRepository;
-import com.webschool.webschool.school.repository.ScheduleCommentRepository;
+import com.webschool.webschool.school.comment.domain.ScheduleComment;
+import com.webschool.webschool.school.comment.dto.ScheduleCommentDto;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentBookmarkRepository;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentLikeRepository;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentReportRepository;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentRepository;
 import com.webschool.webschool.school.repository.SchoolRepository;
 import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.post.util.BannedWordFilter;

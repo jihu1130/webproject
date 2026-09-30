@@ -1,13 +1,13 @@
-package com.webschool.webschool.school.controller;
+package com.webschool.webschool.school.comment.controller;
 
 import com.webschool.webschool.poll.dto.PollCreateRequest;
 import com.webschool.webschool.poll.service.PollService;
-import com.webschool.webschool.school.domain.ScheduleComment;
-import com.webschool.webschool.school.dto.ScheduleCommentDto;
-import com.webschool.webschool.school.dto.ScheduleCommentReportResultDto;
-import com.webschool.webschool.school.service.ScheduleCommentReactionService;
-import com.webschool.webschool.school.service.ScheduleCommentReportService;
-import com.webschool.webschool.school.service.ScheduleCommentService;
+import com.webschool.webschool.school.comment.domain.ScheduleComment;
+import com.webschool.webschool.school.comment.dto.ScheduleCommentDto;
+import com.webschool.webschool.school.comment.dto.ScheduleCommentReportResultDto;
+import com.webschool.webschool.school.comment.service.ScheduleCommentReactionService;
+import com.webschool.webschool.school.comment.service.ScheduleCommentReportService;
+import com.webschool.webschool.school.comment.service.ScheduleCommentService;
 import com.webschool.webschool.school.service.SchoolService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

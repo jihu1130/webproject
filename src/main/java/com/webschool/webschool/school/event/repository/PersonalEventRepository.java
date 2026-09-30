@@ -1,6 +1,6 @@
-package com.webschool.webschool.school.repository;
+package com.webschool.webschool.school.event.repository;
 
-import com.webschool.webschool.school.domain.PersonalEvent;
+import com.webschool.webschool.school.event.domain.PersonalEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

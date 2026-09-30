@@ -7,7 +7,7 @@ import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.post.comment.repository.PostCommentRepository;
-import com.webschool.webschool.school.repository.ScheduleCommentRepository;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

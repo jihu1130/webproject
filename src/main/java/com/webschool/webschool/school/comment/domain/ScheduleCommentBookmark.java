@@ -1,4 +1,4 @@
-package com.webschool.webschool.school.domain;
+package com.webschool.webschool.school.comment.domain;
 
 import com.webschool.webschool.user.domain.User;
 import jakarta.persistence.*;
@@ -8,12 +8,12 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-// 오늘의 한마디(ScheduleComment) 좋아요 - post.domain.PostLike와 동일한 패턴.
+// 오늘의 한마디(ScheduleComment) 북마크 - post.domain.PostBookmark와 동일한 패턴.
 @Entity
-@Table(name = "schedule_comment_likes", uniqueConstraints = @UniqueConstraint(columnNames = {"comment_id", "user_id"}))
+@Table(name = "schedule_comment_bookmarks", uniqueConstraints = @UniqueConstraint(columnNames = {"comment_id", "user_id"}))
 @Getter @Setter
 @NoArgsConstructor
-public class ScheduleCommentLike {
+public class ScheduleCommentBookmark {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,7 +1,7 @@
-package com.webschool.webschool.school.controller;
+package com.webschool.webschool.school.event.controller;
 
-import com.webschool.webschool.school.dto.PersonalEventDto;
-import com.webschool.webschool.school.service.PersonalEventService;
+import com.webschool.webschool.school.event.dto.PersonalEventDto;
+import com.webschool.webschool.school.event.service.PersonalEventService;
 import com.webschool.webschool.school.service.SchoolService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

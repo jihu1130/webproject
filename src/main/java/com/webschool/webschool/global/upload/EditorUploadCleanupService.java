@@ -2,7 +2,7 @@ package com.webschool.webschool.global.upload;
 
 import com.webschool.webschool.bugreport.repository.BugReportAttachmentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
-import com.webschool.webschool.school.repository.ScheduleCommentRepository;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

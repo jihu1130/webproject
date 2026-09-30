@@ -1,4 +1,4 @@
-package com.webschool.webschool.school.dto;
+package com.webschool.webschool.school.comment.dto;
 
 import lombok.Builder;
 import lombok.Getter;

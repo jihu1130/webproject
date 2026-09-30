@@ -1,4 +1,4 @@
-package com.webschool.webschool.school.service;
+package com.webschool.webschool.school.comment.service;
 
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.error.BusinessException;
@@ -6,11 +6,11 @@ import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.post.util.BannedWordFilter;
-import com.webschool.webschool.school.domain.ScheduleComment;
-import com.webschool.webschool.school.domain.ScheduleCommentReport;
-import com.webschool.webschool.school.dto.ScheduleCommentReportResultDto;
-import com.webschool.webschool.school.repository.ScheduleCommentReportRepository;
-import com.webschool.webschool.school.repository.ScheduleCommentRepository;
+import com.webschool.webschool.school.comment.domain.ScheduleComment;
+import com.webschool.webschool.school.comment.domain.ScheduleCommentReport;
+import com.webschool.webschool.school.comment.dto.ScheduleCommentReportResultDto;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentReportRepository;
+import com.webschool.webschool.school.comment.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
