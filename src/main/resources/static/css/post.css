@@ -2099,6 +2099,71 @@ a.post-comment-nickname:hover { text-decoration: underline; }
 }
 .community .post-form-actions .btn { border-radius: 999px; padding: 11px 24px; }
 
+/* ── 2-D: 추천 게시글 랭킹(post/contest-list.html) / 일별 1위 이력(post/contest-history.html) ──
+   추천 버튼의 data-post-uuid(인라인 스크립트가 읽음)는 그대로. */
+.community .post-list-header > .btn,
+.community .post-list-header-actions .btn { border-radius: 999px; padding: 9px 18px; font-weight: 700; }
+
+.community .contest-period-tabs { gap: 8px; margin-bottom: 20px; }
+.community .contest-period-tab { padding: 8px 18px; font-size: 0.88rem; }
+
+.community .contest-entry-list { gap: 12px; }
+.community .contest-entry {
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    border-width: 1px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.community .contest-entry:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-lg);
+    border-color: var(--brand-1);
+}
+
+/* 순위 - 4위부터는 옅은 브랜드 톤, 2·3위는 진한 브랜드, 1위만 금색으로 강조한다. 금색은 새로 만든
+   색이 아니라 위쪽 .post-contest-btn(추천 게시글 진입 버튼)의 "성취" 금색을 그대로 가져온 것 -
+   그 버튼처럼 다크모드에서도 같은 톤을 유지한다(성취 색은 테마와 무관하다는 기존 규칙). */
+.community .contest-entry-rank {
+    width: 38px;
+    height: 38px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    background: var(--brand-gradient-tint-2);
+    color: var(--brand-1);
+}
+.community .contest-entry:nth-child(-n+3) .contest-entry-rank { background: var(--brand-fixed); color: #fff; }
+.community .contest-entry:first-child .contest-entry-rank {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1.5px solid #f2c94c;
+    color: #92400e;
+}
+
+.community .contest-entry-title { font-size: 1rem; }
+
+/* 득표 수·포인트를 작은 칩으로 */
+.community .contest-entry-votes,
+.community .contest-entry-prize {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    background: var(--brand-gradient-tint-2);
+    color: var(--brand-1);
+}
+.community .contest-entry-prize { background: var(--success-soft); color: var(--success); }
+.community .contest-vote-btn { border-radius: 999px; font-weight: 700; }
+
+/* 이력의 날짜 - 도장처럼 */
+.community .contest-history-date {
+    width: auto;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1.5px dashed var(--border);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 560px) {
     .community .post-page-heading h1 { font-size: 1.5rem; }
     .community .post-list-item { padding: 14px 16px; }
@@ -2108,4 +2173,6 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     .community .post-comment-section { padding: 22px 18px; }
     .community .post-form-card { padding: 26px 20px 22px; }
     .community .post-form-card h2 { font-size: 1.35rem; }
+    .community .contest-entry { flex-wrap: wrap; padding: 14px 16px; gap: 10px 12px; }
+    .community .contest-entry-body { flex-basis: calc(100% - 60px); }
 }
