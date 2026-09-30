@@ -5,16 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${status} + '번 오류 - WebSchool'">오류 - WebSchool</title>
     <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
-    <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
 
 <div th:replace="~{fragments/navbar :: navbar('')}"></div>
 
-<div class="admin-page">
-    <div class="admin-container admin-container-narrow">
-        <div class="admin-empty">
-            <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.6rem; margin-bottom: 10px; display: block;"></i>
+<!-- 리디자인 Phase 8(2026-09-30) - 예전엔 관리자 화면의 .admin-empty 박스를 빌려 써서(admin.css 로드)
+     사용자 화면인데도 관리자 톤이었다. 전역 components.css의 .error-card로 옮겼다(문구/분기는 그대로). -->
+<div class="error-page">
+    <div class="error-card">
+        <div class="error-code" th:text="${status}">404</div>
+        <div class="error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <p class="error-message">
             <!-- errorMessage: GlobalExceptionHandler가 4xx일 때만 넘기는 구체적인 안내 문구(없으면 상태별 기본 문구) -->
             <span th:if="${errorMessage != null}" th:text="${errorMessage}"></span>
             <th:block th:if="${errorMessage == null}">
@@ -23,8 +25,10 @@
                 <span th:if="${status == 400}">요청을 처리할 수 없어요. 입력 내용을 확인해주세요.</span>
                 <span th:unless="${status == 404 or status == 403 or status == 400}">일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.</span>
             </th:block>
-            <br>
-            <a href="/">홈으로 돌아가기</a>
+        </p>
+        <div class="error-actions">
+            <button type="button" class="btn btn-outline-primary" onclick="history.back()">이전 페이지</button>
+            <a href="/" class="btn btn-primary">홈으로 돌아가기</a>
         </div>
     </div>
 </div>

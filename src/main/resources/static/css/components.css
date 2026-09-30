@@ -70,3 +70,81 @@
 }
 
 .empty-state-cta:hover { background: var(--brand-fixed-dark); color: #fff; }
+
+/* ── 에러 페이지 (templates/error.html, 리디자인 Phase 8) ──
+   로그인 카드(auth.css .auth-flow)와 같은 문구류 톤 - 큰 상태 코드 + 마스킹 테이프 카드. */
+.error-page {
+    min-height: calc(100vh - 64px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 16px;
+}
+
+.error-card {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card-lg);
+    padding: 44px 32px 32px;
+    text-align: center;
+}
+
+.error-card::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 96px;
+    height: 24px;
+    transform: translateX(-50%) rotate(-2deg);
+    background: var(--brand-gradient-tint-2);
+    border: 1px solid var(--brand-1);
+    border-radius: 3px;
+    opacity: 0.9;
+}
+
+.error-code {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--brand-1);
+    font-variant-numeric: tabular-nums;
+}
+
+.error-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin: 16px 0 12px;
+    border-radius: 50%;
+    background: var(--warn-soft);
+    color: var(--warn);
+    font-size: 1.2rem;
+}
+
+.error-message {
+    margin: 0 0 24px;
+    color: var(--ink);
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+.error-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.error-actions .btn {
+    border-radius: 999px;
+    padding: 9px 20px;
+    font-weight: 700;
+}
