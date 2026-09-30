@@ -49,9 +49,9 @@
      항상 붙어 다님). 아이콘을 붙여 각 탭을 더 빠르게 구분할 수 있게 했다. -->
 <nav class="post-category-tabs admin-main-tabs">
     <span class="admin-tabs-group">
-        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewDashboard)}"
            href="/admin/dashboard" class="post-category-tab" th:classappend="${active == 'dashboard'} ? ' active' : ''"><i class="fa-solid fa-gauge-high"></i> 대시보드</a>
-        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewLoadTest)}"
            href="/admin/loadtest" class="post-category-tab" th:classappend="${active == 'loadtest'} ? ' active' : ''"><i class="fa-solid fa-bolt"></i> 부하테스트 결과</a>
     </span>
     <span class="admin-tabs-divider" aria-hidden="true"></span>
@@ -92,9 +92,9 @@
            href="/admin/audit-log" class="post-category-tab" th:classappend="${active == 'audit-log'} ? ' active' : ''"><i class="fa-solid fa-clipboard-list"></i> 감사 로그</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewAuditLog)}"
            href="/admin/security-log" class="post-category-tab" th:classappend="${active == 'security-log'} ? ' active' : ''"><i class="fa-solid fa-shield-halved"></i> 보안 로그</a>
-        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewErrorLog)}"
            href="/admin/error-log" class="post-category-tab" th:classappend="${active == 'error-log'} ? ' active' : ''"><i class="fa-solid fa-triangle-exclamation"></i> 에러 로그</a>
-        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+        <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canManageBugReports)}"
            href="/admin/bug-reports" class="post-category-tab" th:classappend="${active == 'bug-reports'} ? ' active' : ''"><i class="fa-solid fa-comment-dots"></i> 문의 관리</a>
     </span>
 </nav>

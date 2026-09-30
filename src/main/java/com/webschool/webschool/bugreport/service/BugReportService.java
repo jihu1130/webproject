@@ -281,7 +281,7 @@ public class BugReportService {
     private void requireSuperAdmin(String actorUsername) {
         User actor = userRepository.findByUsername(actorUsername)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        if (!actor.isSuperAdmin()) {
+        if (!actor.isSuperAdmin() && !actor.isCanManageBugReports()) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "버그 리포트 관리 권한이 없습니다.");
         }
     }

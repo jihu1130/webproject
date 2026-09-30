@@ -206,7 +206,9 @@ public class AdminUserService {
                                    boolean canManageScheduleComments, boolean canManageNotices,
                                    boolean canManageUsers, boolean canManageAdminPermissions,
                                    boolean canViewAuditLog, boolean canManageShop, boolean canManagePolls,
-                                   boolean canManageAttendance, boolean canManagePoints) {
+                                   boolean canManageAttendance, boolean canManagePoints,
+                                   boolean canViewDashboard, boolean canViewLoadTest,
+                                   boolean canManageBugReports, boolean canViewErrorLog) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -229,12 +231,18 @@ public class AdminUserService {
         user.setCanManagePolls(canManagePolls);
         user.setCanManageAttendance(canManageAttendance);
         user.setCanManagePoints(canManagePoints);
+        user.setCanViewDashboard(canViewDashboard);
+        user.setCanViewLoadTest(canViewLoadTest);
+        user.setCanManageBugReports(canManageBugReports);
+        user.setCanViewErrorLog(canViewErrorLog);
         adminActionLogService.log("USER", id, "PERMISSIONS", user.getUsername()
                 + " (신고:" + canManageReports + " 게시글:" + canManagePosts
                 + " 한마디:" + canManageScheduleComments + " 공지:" + canManageNotices
                 + " 계정관리:" + canManageUsers + " 권한부여:" + canManageAdminPermissions
                 + " 감사로그:" + canViewAuditLog + " 상점:" + canManageShop + " 설문:" + canManagePolls
-                + " 출석:" + canManageAttendance + " 포인트:" + canManagePoints + ")");
+                + " 출석:" + canManageAttendance + " 포인트:" + canManagePoints
+                + " 대시보드:" + canViewDashboard + " 부하테스트:" + canViewLoadTest
+                + " 문의관리:" + canManageBugReports + " 에러로그:" + canViewErrorLog + ")");
     }
 
     // 수정사항.md #13 지적 - 총관리자가 잠기면(비밀번호 분실 등) 복구할 방법이 앱 안에 전혀 없었다.
@@ -358,6 +366,12 @@ public class AdminUserService {
                 .canViewAuditLog(user.isCanViewAuditLog())
                 .canManageShop(user.isCanManageShop())
                 .canManagePolls(user.isCanManagePolls())
+                .canManageAttendance(user.isCanManageAttendance())
+                .canManagePoints(user.isCanManagePoints())
+                .canViewDashboard(user.isCanViewDashboard())
+                .canViewLoadTest(user.isCanViewLoadTest())
+                .canManageBugReports(user.isCanManageBugReports())
+                .canViewErrorLog(user.isCanViewErrorLog())
                 .build();
     }
 

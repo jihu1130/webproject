@@ -85,26 +85,20 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/admin/security-log") && !user.isCanViewAuditLog()) {
             throw new AccessDeniedException("보안 로그 열람 권한이 없습니다.");
         }
-        // 에러 로그 - 대시보드/부하테스트와 같은 이유(스택 트레이스에 내부 경로 등이 노출될 수 있음)로
-        // 총관리자 전용 고정.
-        if (uri.startsWith("/admin/error-log")) {
-            throw new AccessDeniedException("에러 로그는 총관리자만 접근할 수 있습니다.");
+        // 에러 로그 / 문의(버그 리포트) 관리 / 대시보드 / 부하테스트 결과 - 예전엔 총관리자 전용으로
+        // 하드코딩돼 있었지만(2026-09-28) 각각 위임 가능한 플래그로 바꿨다. 스택 트레이스·서버 상태처럼
+        // 민감한 정보가 있는 화면이라 기본값은 꺼짐이고 총관리자가 명시적으로 켜줘야 한다.
+        if (uri.startsWith("/admin/error-log") && !user.isCanViewErrorLog()) {
+            throw new AccessDeniedException("에러 로그 열람 권한이 없습니다.");
         }
-        // 버그 리포트 관리 - 위임 권한 플래그 없이 총관리자 전용으로 고정(사용자 확정, 이번 라운드 범위 밖).
-        if (uri.startsWith("/admin/bug-reports")) {
-            throw new AccessDeniedException("버그 리포트 관리는 총관리자만 접근할 수 있습니다.");
+        if (uri.startsWith("/admin/bug-reports") && !user.isCanManageBugReports()) {
+            throw new AccessDeniedException("문의 관리 권한이 없습니다.");
         }
-        // 관리자 대시보드(KPI 개요) - 미답변 문의 수처럼 문의 관리(총관리자 전용) 권한이 있어야 보이는
-        // 수치를 함께 보여주므로, 위임 가능한 별도 플래그를 새로 만들지 않고 문의 관리와 동일하게
-        // 총관리자 전용으로 고정한다. 이 if가 없으면 이 메서드는 인식 못한 경로를 기본 허용하므로
-        // (아래 return true) 권한이 하나도 없는 부관리자도 접근할 수 있게 되는 걸 막기 위해 명시적으로 둔다.
-        if (uri.startsWith("/admin/dashboard")) {
-            throw new AccessDeniedException("대시보드는 총관리자만 접근할 수 있습니다.");
+        if (uri.startsWith("/admin/dashboard") && !user.isCanViewDashboard()) {
+            throw new AccessDeniedException("대시보드 열람 권한이 없습니다.");
         }
-        // 부하테스트 결과(AdminLoadTestController, 사용자 요청) - 대시보드의 서버 상태와 같은 이유로
-        // 총관리자 전용 고정.
-        if (uri.startsWith("/admin/loadtest")) {
-            throw new AccessDeniedException("부하테스트 결과는 총관리자만 접근할 수 있습니다.");
+        if (uri.startsWith("/admin/loadtest") && !user.isCanViewLoadTest()) {
+            throw new AccessDeniedException("부하테스트 결과 열람 권한이 없습니다.");
         }
         // 게시글/댓글/한마디 관리 화면에서 작성자 이름을 눌러 프로필을 보는 기능(2026-08-10(5차) 추가) -
         // 계정 관리(/admin/users)는 총관리자 전용이지만, 이 조회 전용 화면은 신고/게시글/한마디 관리

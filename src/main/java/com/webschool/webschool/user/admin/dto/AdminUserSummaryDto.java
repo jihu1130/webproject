@@ -24,4 +24,10 @@ public class AdminUserSummaryDto {
     private boolean canViewAuditLog;
     private boolean canManageShop;
     private boolean canManagePolls;
+    private boolean canManageAttendance;
+    private boolean canManagePoints;
+    private boolean canViewDashboard;
+    private boolean canViewLoadTest;
+    private boolean canManageBugReports;
+    private boolean canViewErrorLog;
 }

@@ -152,6 +152,22 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean canManagePoints;
 
+    // 나머지 관리자 화면도 전부 위임 가능하게 확장(사용자 요청, 2026-09-28) - 예전엔 대시보드/
+    // 부하테스트/문의 관리/에러 로그 4개가 AdminAccessInterceptor에 총관리자 전용으로 하드코딩돼
+    // 있었다. 문의 관리(canManageBugReports)는 BugReportService의 답변/해결/삭제에도 같은 플래그로
+    // 서비스 단 이중 검증이 걸려있다(canManageNotices가 NoticeService에서 하는 것과 동일 패턴).
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canViewDashboard;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canViewLoadTest;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canManageBugReports;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean canViewErrorLog;
+
     // 댓글/좋아요/답글 알림 개별 on-off(todo.md "고도화 후보" 항목) - 이 셋은 기존에 이미 항상
     // 켜져 있던 알림을 사용자가 끌 수 있게 여는 것이라 기본값을 true로 둔다(옵트아웃 - active
     // 필드와 동일한 이유로 Java 필드 초기값을 직접 줘야 신규
@@ -255,7 +271,8 @@ public class User {
         return isSuperAdmin()
                 || canManageReports || canManagePosts || canManageScheduleComments || canManageNotices
                 || canManageUsers || canManageAdminPermissions || canViewAuditLog || canManageShop
-                || canManagePolls || canManageAttendance || canManagePoints;
+                || canManagePolls || canManageAttendance || canManagePoints
+                || canViewDashboard || canViewLoadTest || canManageBugReports || canViewErrorLog;
     }
 
     public enum Role {

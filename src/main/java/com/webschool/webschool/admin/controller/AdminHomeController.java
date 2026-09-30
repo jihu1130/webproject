@@ -23,9 +23,8 @@ public class AdminHomeController {
         if (user == null) {
             return "redirect:/admin/access-denied";
         }
-        // 총관리자는 특정 기능 화면이 아니라 KPI 개요(대시보드)부터 보게 한다 - 부관리자는 위임받은
-        // 권한 범위 밖의 수치(예: 문의 관리는 총관리자 전용)까지 노출되므로 대시보드 자체가
-        // 총관리자 전용(AdminAccessInterceptor 참고)이라 이 분기를 분리했다.
+        // 총관리자는 특정 기능 화면이 아니라 KPI 개요(대시보드)부터 보게 한다. 부관리자는 대시보드
+        // 권한(canViewDashboard)이 있어도 첫 화면은 아래 폴백 체인 순서를 따른다.
         if (user.isSuperAdmin()) {
             return "redirect:/admin/dashboard";
         }
@@ -55,6 +54,24 @@ public class AdminHomeController {
         }
         if (user.isCanManagePolls()) {
             return "redirect:/admin/polls";
+        }
+        if (user.isCanManageAttendance()) {
+            return "redirect:/admin/attendance";
+        }
+        if (user.isCanManagePoints()) {
+            return "redirect:/admin/points";
+        }
+        if (user.isCanViewDashboard()) {
+            return "redirect:/admin/dashboard";
+        }
+        if (user.isCanViewLoadTest()) {
+            return "redirect:/admin/loadtest";
+        }
+        if (user.isCanManageBugReports()) {
+            return "redirect:/admin/bug-reports";
+        }
+        if (user.isCanViewErrorLog()) {
+            return "redirect:/admin/error-log";
         }
         return "redirect:/admin/access-denied";
     }

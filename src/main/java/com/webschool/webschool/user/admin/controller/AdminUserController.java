@@ -94,12 +94,17 @@ public class AdminUserController {
                                @RequestParam(defaultValue = "false") boolean canManagePolls,
                                @RequestParam(defaultValue = "false") boolean canManageAttendance,
                                @RequestParam(defaultValue = "false") boolean canManagePoints,
+                               @RequestParam(defaultValue = "false") boolean canViewDashboard,
+                               @RequestParam(defaultValue = "false") boolean canViewLoadTest,
+                               @RequestParam(defaultValue = "false") boolean canManageBugReports,
+                               @RequestParam(defaultValue = "false") boolean canViewErrorLog,
                                Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
             adminUserService.updatePermissions(id, authentication.getName(),
                     canManageReports, canManagePosts, canManageScheduleComments, canManageNotices,
                     canManageUsers, canManageAdminPermissions, canViewAuditLog, canManageShop, canManagePolls,
-                    canManageAttendance, canManagePoints);
+                    canManageAttendance, canManagePoints,
+                    canViewDashboard, canViewLoadTest, canManageBugReports, canViewErrorLog);
             redirectAttributes.addFlashAttribute("flashSuccess", "권한이 저장되었습니다.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("flashError", e.getMessage());
