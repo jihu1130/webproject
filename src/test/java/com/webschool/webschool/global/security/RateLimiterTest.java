@@ -29,6 +29,19 @@ class RateLimiterTest {
     }
 
     @Test
+    void ipLimitIsSkippedWhenRealIpIsUnknown() {
+        // 보안 점검 L3 - 실제 IP를 모르면(모두 127.0.0.1로 보임) 사이트 전체가 같이 막히지 않게 건너뛴다
+        for (int i = 0; i < 5; i++) {
+            assertTrue(limiter.tryAcquireForIp("p:", "127.0.0.1", 1, Duration.ofHours(1)));
+        }
+        assertFalse(limiter.isExhaustedForIp("p:", "127.0.0.1", 1, Duration.ofHours(1)));
+
+        assertTrue(limiter.tryAcquireForIp("p:", "1.2.3.4", 1, Duration.ofHours(1)));
+        assertFalse(limiter.tryAcquireForIp("p:", "1.2.3.4", 1, Duration.ofHours(1)));
+        assertTrue(limiter.isExhaustedForIp("p:", "1.2.3.4", 1, Duration.ofHours(1)));
+    }
+
+    @Test
     void windowResetsAfterExpiry() throws InterruptedException {
         assertTrue(limiter.tryAcquire("w", 1, Duration.ofMillis(50)));
         assertFalse(limiter.tryAcquire("w", 1, Duration.ofMillis(50)));

@@ -47,9 +47,10 @@ public class BugReportController {
         try {
             // 요청 횟수 제한(보안 점검 M4) - 비로그인도 첨부파일과 함께 제출할 수 있어서 제한이 없으면
             // 스팸/저장공간 소모에 그대로 열려 있었다. 로그인 사용자는 계정 기준, 비로그인은 IP 기준 10분 5건.
-            String limitKey = loggedIn ? "bug-report-user:" + authentication.getName()
-                    : "bug-report-ip:" + ClientIpUtils.getClientIp(request);
-            if (!rateLimiter.tryAcquire(limitKey, 5, Duration.ofMinutes(10))) {
+            boolean allowed = loggedIn
+                    ? rateLimiter.tryAcquire("bug-report-user:" + authentication.getName(), 5, Duration.ofMinutes(10))
+                    : rateLimiter.tryAcquireForIp("bug-report-ip:", ClientIpUtils.getClientIp(request), 5, Duration.ofMinutes(10));
+            if (!allowed) {
                 throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS,
                         "문의는 10분에 5건까지 보낼 수 있습니다. 잠시 후 다시 시도해주세요.");
             }

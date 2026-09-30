@@ -66,7 +66,7 @@ public class AccountRecoveryController {
     // 메일을 계속 보내게 하거나 Gmail SMTP 일일 한도를 소진시켜 다른 사람의 인증 메일까지 막을 수 있었다.
     // IP 기준: 두 화면 합쳐 1시간 10회 - 넘으면 "잠시 후 다시" 안내(이메일과 무관한 정보라 노출돼도 괜찮음).
     private boolean allowByIp(HttpServletRequest request) {
-        return rateLimiter.tryAcquire("account-recovery-ip:" + ClientIpUtils.getClientIp(request),
+        return rateLimiter.tryAcquireForIp("account-recovery-ip:", ClientIpUtils.getClientIp(request),
                 RECOVERY_LIMIT_PER_IP, Duration.ofHours(1));
     }
 

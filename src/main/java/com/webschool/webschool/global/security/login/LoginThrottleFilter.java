@@ -23,11 +23,12 @@ public class LoginThrottleFilter extends OncePerRequestFilter {
 
     static final int MAX_FAILURES_PER_IP = 30;
     static final Duration WINDOW = Duration.ofMinutes(15);
+    private static final String KEY_PREFIX = "login-fail-ip:";
 
     private final RateLimiter rateLimiter;
 
     public void recordFailure(HttpServletRequest request) {
-        rateLimiter.tryAcquire(key(request), Integer.MAX_VALUE, WINDOW);
+        rateLimiter.tryAcquireForIp(KEY_PREFIX, ClientIpUtils.getClientIp(request), Integer.MAX_VALUE, WINDOW);
     }
 
     @Override
@@ -38,14 +39,10 @@ public class LoginThrottleFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        if (rateLimiter.isExhausted(key(request), MAX_FAILURES_PER_IP, WINDOW)) {
+        if (rateLimiter.isExhaustedForIp(KEY_PREFIX, ClientIpUtils.getClientIp(request), MAX_FAILURES_PER_IP, WINDOW)) {
             response.sendRedirect(request.getContextPath() + "/login?throttled=true");
             return;
         }
         filterChain.doFilter(request, response);
-    }
-
-    private String key(HttpServletRequest request) {
-        return "login-fail-ip:" + ClientIpUtils.getClientIp(request);
     }
 }

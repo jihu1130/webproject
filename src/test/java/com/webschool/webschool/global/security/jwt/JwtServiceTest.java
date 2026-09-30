@@ -23,7 +23,12 @@ class JwtServiceTest {
     void tamperedToken_isRejected() {
         JwtService jwtService = new JwtService(SECRET);
         String token = jwtService.generateToken("test1");
-        String tampered = token.substring(0, token.length() - 1) + (token.endsWith("a") ? "b" : "a");
+        // 서명의 "마지막" 글자를 바꾸면 안 된다 - HS256 서명(32바이트)의 base64url 마지막 글자는 하위 2비트가
+        // 쓰이지 않아서, 끝 글자가 Y/Z/b일 때 a로 바꾸면 디코딩 결과가 같아 가끔(약 5%) 변조가 안 된 토큰이 된다
+        // (2026-09-30 전체 테스트 중 간헐 실패로 발견). 모든 비트가 쓰이는 서명 첫 글자를 바꾼다.
+        int sigStart = token.lastIndexOf('.') + 1;
+        char first = token.charAt(sigStart);
+        String tampered = token.substring(0, sigStart) + (first == 'A' ? 'B' : 'A') + token.substring(sigStart + 1);
 
         assertTrue(jwtService.validateAndGetUsername(tampered).isEmpty());
     }
