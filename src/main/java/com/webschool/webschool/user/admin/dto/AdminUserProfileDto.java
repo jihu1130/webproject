@@ -1,6 +1,6 @@
 package com.webschool.webschool.user.admin.dto;
 import com.webschool.webschool.user.dto.UserPenaltyDto;
-import com.webschool.webschool.user.dto.UserPointLogDto;
+import com.webschool.webschool.user.point.dto.UserPointLogDto;
 
 import lombok.Builder;
 import lombok.Getter;

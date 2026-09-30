@@ -17,7 +17,7 @@ import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserPenaltyService;
-import com.webschool.webschool.user.service.UserPointService;
+import com.webschool.webschool.user.point.service.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

@@ -1,6 +1,6 @@
 package com.webschool.webschool.global.security;
 
-import com.webschool.webschool.user.service.CustomUserDetailsService;
+import com.webschool.webschool.user.account.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

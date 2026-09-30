@@ -1,5 +1,6 @@
 package com.webschool.webschool.user.domain;
 
+import com.webschool.webschool.user.point.domain.PointTier;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

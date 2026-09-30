@@ -1,12 +1,13 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.user.account.service.EmailTokenService;
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.mail.MailService;
 import com.webschool.webschool.post.util.BannedWordFilter;
-import com.webschool.webschool.user.domain.EmailToken;
-import com.webschool.webschool.user.dto.RegisterDto;
+import com.webschool.webschool.user.account.domain.EmailToken;
+import com.webschool.webschool.user.account.dto.RegisterDto;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

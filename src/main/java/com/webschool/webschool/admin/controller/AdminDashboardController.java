@@ -5,7 +5,7 @@ import com.webschool.webschool.bugreport.repository.BugReportRepository;
 import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
-import com.webschool.webschool.user.domain.PointTier;
+import com.webschool.webschool.user.point.domain.PointTier;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;

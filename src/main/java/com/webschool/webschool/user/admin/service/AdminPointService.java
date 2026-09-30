@@ -2,8 +2,8 @@ package com.webschool.webschool.user.admin.service;
 
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.user.admin.dto.AdminPointLogDto;
-import com.webschool.webschool.user.domain.UserPointLog;
-import com.webschool.webschool.user.repository.UserPointLogRepository;
+import com.webschool.webschool.user.point.domain.UserPointLog;
+import com.webschool.webschool.user.point.repository.UserPointLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;

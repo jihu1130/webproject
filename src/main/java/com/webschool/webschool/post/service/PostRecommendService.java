@@ -16,7 +16,7 @@ import com.webschool.webschool.post.repository.PostRecommendRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
-import com.webschool.webschool.user.service.UserPointService;
+import com.webschool.webschool.user.point.service.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

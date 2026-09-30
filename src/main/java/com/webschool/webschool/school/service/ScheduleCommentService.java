@@ -16,7 +16,7 @@ import com.webschool.webschool.global.util.HtmlSanitizer;
 import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
-import com.webschool.webschool.user.service.UserBlockService;
+import com.webschool.webschool.user.profile.service.UserBlockService;
 import com.webschool.webschool.user.service.UserPenaltyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

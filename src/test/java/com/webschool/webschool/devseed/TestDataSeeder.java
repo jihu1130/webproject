@@ -30,7 +30,7 @@ import com.webschool.webschool.school.repository.SchoolRepository;
 import com.webschool.webschool.school.service.ScheduleCommentReactionService;
 import com.webschool.webschool.school.service.ScheduleCommentReportService;
 import com.webschool.webschool.school.service.ScheduleCommentService;
-import com.webschool.webschool.user.dto.RegisterDto;
+import com.webschool.webschool.user.account.dto.RegisterDto;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserService;

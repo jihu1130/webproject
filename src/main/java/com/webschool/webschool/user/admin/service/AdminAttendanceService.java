@@ -5,11 +5,11 @@ import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.user.admin.dto.AdminAttendanceDayDto;
 import com.webschool.webschool.user.admin.dto.AdminAttendanceSummaryDto;
-import com.webschool.webschool.user.domain.AttendanceLog;
+import com.webschool.webschool.user.point.domain.AttendanceLog;
 import com.webschool.webschool.user.domain.User;
-import com.webschool.webschool.user.repository.AttendanceLogRepository;
+import com.webschool.webschool.user.point.repository.AttendanceLogRepository;
 import com.webschool.webschool.user.repository.UserRepository;
-import com.webschool.webschool.user.service.AttendanceService;
+import com.webschool.webschool.user.point.service.AttendanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

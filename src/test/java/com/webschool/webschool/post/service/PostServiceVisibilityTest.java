@@ -10,7 +10,7 @@ import com.webschool.webschool.post.repository.PostReportRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.service.UserPenaltyService;
-import com.webschool.webschool.user.service.UserPointService;
+import com.webschool.webschool.user.point.service.UserPointService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

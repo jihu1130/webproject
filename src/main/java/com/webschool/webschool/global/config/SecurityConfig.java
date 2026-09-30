@@ -6,7 +6,7 @@ import com.webschool.webschool.global.security.JwtService;
 import com.webschool.webschool.global.security.LoginFailureHandler;
 import com.webschool.webschool.global.security.LoginSuccessHandler;
 import com.webschool.webschool.global.security.OAuth2LoginSuccessHandler;
-import com.webschool.webschool.user.service.CustomOAuth2UserService;
+import com.webschool.webschool.user.account.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;

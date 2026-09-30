@@ -1,5 +1,6 @@
 package com.webschool.webschool.user.service;
 
+import com.webschool.webschool.user.point.service.UserPointService;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;

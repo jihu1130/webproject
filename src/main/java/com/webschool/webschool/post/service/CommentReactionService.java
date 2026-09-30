@@ -12,7 +12,7 @@ import com.webschool.webschool.post.repository.CommentLikeRepository;
 import com.webschool.webschool.post.repository.PostCommentRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
-import com.webschool.webschool.user.service.UserPointService;
+import com.webschool.webschool.user.point.service.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,7 +1,7 @@
 package com.webschool.webschool.user.admin.controller;
 
-import com.webschool.webschool.user.domain.ShopItem;
-import com.webschool.webschool.user.service.ShopService;
+import com.webschool.webschool.user.shop.domain.ShopItem;
+import com.webschool.webschool.user.shop.service.ShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
