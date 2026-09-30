@@ -12,25 +12,19 @@
     margin: 0 auto;
 }
 
+/* 리디자인 Phase 3(2026-09-30) - 옅은 그라데이션 배경 + 위쪽 4px 띠 대신 커뮤니티/로그인 카드와
+   같은 흰 카드 톤. */
 .page-heading {
-    margin-bottom: 18px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 16px;
-    background: linear-gradient(135deg, rgba(30, 79, 163, 0.08), rgba(30, 79, 163, 0.06));
-    border: 1px solid #e6e8fb;
-    border-radius: 18px;
-    padding: 18px 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 20px 24px;
     position: relative;
-    overflow: hidden;
-}
-
-.page-heading::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: var(--brand-gradient);
 }
 
 .page-heading-icon {
@@ -45,14 +39,14 @@
     justify-content: center;
     font-size: 1.4rem;
     flex-shrink: 0;
-    box-shadow: 0 8px 18px rgba(30, 79, 163, 0.28);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--brand-1) 28%, transparent);
 }
 
 .page-heading-text { min-width: 0; }
 
 .page-heading h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 1.75rem;
+    font-weight: 800;
     color: var(--ink);
     letter-spacing: -0.02em;
     margin: 0 0 4px;
@@ -67,7 +61,7 @@
 @media (max-width: 560px) {
     .page-heading { padding: 16px; gap: 12px; }
     .page-heading-icon { width: 42px; height: 42px; font-size: 1.15rem; border-radius: 13px; }
-    .page-heading h1 { font-size: 1.15rem; }
+    .page-heading h1 { font-size: 1.3rem; }
 }
 
 /* 방학 D-Day 배지 - 학교 선택 시 page-heading 오른쪽에 표시. 방학 중(D+N)은 따뜻한
@@ -78,11 +72,11 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 16px;
-    border-radius: 14px;
-    background: white;
-    border: 1.5px solid #fde68a;
-    box-shadow: 0 4px 14px rgba(180, 83, 9, 0.12);
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1.5px solid color-mix(in srgb, var(--warn) 35%, transparent);
+    box-shadow: var(--shadow-card);
 }
 
 .vacation-dday-badge-icon { font-size: 1.3rem; }
@@ -102,12 +96,12 @@
 .vacation-dday-badge-value {
     font-size: 1rem;
     font-weight: 700;
-    color: #b45309;
+    color: var(--warn);
 }
 
 .vacation-dday-badge--upcoming {
-    border-color: #c7d2fe;
-    box-shadow: 0 4px 14px rgba(30, 79, 163, 0.1);
+    border-color: color-mix(in srgb, var(--brand-1) 30%, transparent);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--brand-1) 10%, transparent);
 }
 
 .vacation-dday-badge--upcoming .vacation-dday-badge-value { color: var(--brand-1); }
@@ -123,12 +117,12 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 10px;
-    background: var(--brand-gradient-soft);
-    padding: 12px 16px;
-    border-radius: 14px;
+    background: var(--surface);
+    padding: 14px 18px;
+    border-radius: var(--radius-card);
     margin-bottom: 12px;
-    border: 1px solid #e6e8fb;
-    box-shadow: 0 4px 16px rgba(30, 27, 58, 0.05);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
 }
 
 .cal-control-item {
@@ -143,17 +137,16 @@
 }
 
 .cal-control-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
-    background: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--brand-gradient-tint-2);
     color: var(--brand-1);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(30, 79, 163, 0.12);
 }
 
 .cal-control-wide .school-search-box {
@@ -169,13 +162,14 @@
 
 .cal-control-item input,
 .cal-control-item select {
-    padding: 7px 10px;
-    border: 1.5px solid #dcdfef;
-    border-radius: 8px;
+    padding: 8px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
     font-size: 0.85rem;
     outline: none;
     font-family: inherit;
-    background: white;
+    background: var(--surface);
+    color: var(--ink);
     font-weight: 600;
     transition: border-color 0.15s ease;
 }
@@ -211,10 +205,10 @@
 }
 
 .event-search-btn {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     flex-shrink: 0;
-    border-radius: 8px;
+    border-radius: 50%;
     border: none;
     /* --brand-fixed(고정 남색) - 다크모드에서도 흰 아이콘 대비 유지, theme.css 상단 주석 참고 */
     background: var(--brand-fixed);
@@ -232,19 +226,19 @@
 .event-search-status {
     font-size: 0.82rem;
     font-weight: 600;
-    padding: 8px 14px;
-    border-radius: 10px;
+    padding: 9px 16px;
+    border-radius: 999px;
     margin-bottom: 12px;
 }
 
 .event-search-status-ok {
-    background: rgba(5, 150, 105, 0.1);
-    color: #059669;
+    background: var(--success-soft);
+    color: var(--success);
 }
 
 .event-search-status-error {
-    background: rgba(220, 38, 38, 0.08);
-    color: #dc2626;
+    background: var(--danger-soft);
+    color: var(--danger);
 }
 
 /* 월 이동 네비게이션 */
@@ -252,12 +246,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: white;
-    border-radius: 14px;
-    padding: 10px 16px;
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    padding: 12px 18px;
     margin-bottom: 16px;
     border: 1px solid var(--border);
-    box-shadow: 0 4px 16px rgba(30, 27, 58, 0.05);
+    box-shadow: var(--shadow-card);
     flex-wrap: wrap;
     gap: 8px;
 }
@@ -269,11 +263,11 @@
 }
 
 .cal-nav-btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    border: 1.5px solid #dcdfef;
-    background: white;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
     color: var(--brand-1-dark);
     font-size: 12px;
     display: flex;
@@ -284,7 +278,7 @@
 }
 
 .cal-nav-btn:hover {
-    background: rgba(30, 79, 163, 0.08);
+    background: color-mix(in srgb, var(--brand-1) 8%, transparent);
     border-color: var(--brand-1);
 }
 
@@ -296,10 +290,10 @@
 }
 
 .cal-nav-select-group select {
-    padding: 6px 8px;
-    border-radius: 8px;
-    border: 1.5px solid #dcdfef;
-    background: white;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
     font-family: inherit;
     font-weight: 700;
     font-size: 1rem;
@@ -318,9 +312,9 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 0 14px;
-    height: 30px;
-    border-radius: 8px;
+    padding: 0 18px;
+    height: 34px;
+    border-radius: 999px;
     border: none;
     /* --brand-fixed(고정 남색) - 다크모드에서도 흰 글자 대비 유지, theme.css 상단 주석 참고 */
     background: var(--brand-fixed);
@@ -375,23 +369,21 @@
 
 /* 달력 그리드 카드 */
 .cal-grid-card {
-    background: white;
-    border-radius: 1.25rem;
+    background: var(--surface);
+    border-radius: var(--radius-card);
     border: 1px solid var(--border);
     overflow: hidden;
-    box-shadow: 0 4px 24px rgba(30, 27, 58, 0.07);
+    box-shadow: var(--shadow-card);
     position: relative;
 }
 
-.cal-grid-accent {
-    height: 4px;
-    background: var(--brand-gradient);
-}
+/* 위쪽 4px 그라데이션 띠 - 리디자인 Phase 3에서 다른 카드들과 맞춰 없앴다(마크업은 그대로 둠). */
+.cal-grid-accent { display: none; }
 
 .cal-dow-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    background: #f8f9fd;
+    background: var(--surface-soft);
     border-bottom: 1px solid var(--border);
 }
 
@@ -431,7 +423,7 @@
 .cal-day:nth-child(7n) { border-right: none; }
 .cal-day:nth-last-child(-n+7) { border-bottom: none; }
 
-.cal-day:hover { background-color: #f8f8ff; }
+.cal-day:hover { background-color: color-mix(in srgb, var(--brand-1) 4%, transparent); }
 
 /* 개인 일정이 있는 날짜 표시 - .cal-day가 flex-direction:column이라 그냥 마지막 자식으로 넣으면
    날짜 숫자/학사일정 띠 아래에 자연스럽게 한 줄 차지한다(절대 위치 계산 불필요). */
@@ -483,7 +475,7 @@
     .cal-day-event-bar { font-size: 0.56rem; padding-top: 1px; padding-bottom: 1px; }
 }
 
-.cal-day-selected { background-color: rgba(30, 79, 163, 0.04); }
+.cal-day-selected { background-color: color-mix(in srgb, var(--brand-1) 4%, transparent); }
 
 .cal-day-num {
     width: 28px;
@@ -501,7 +493,7 @@
 
 .cal-day-num-sun { color: #e53935; }
 .cal-day-num-sat { color: #1e88e5; }
-.cal-day-num-muted { color: #c4c6d8; }
+.cal-day-num-muted { color: color-mix(in srgb, var(--muted) 50%, transparent); }
 
 /* 오늘/선택 강조 (등장 애니메이션은 fc- 시절 이름을 그대로 재사용) */
 @keyframes day-highlight-pop {
@@ -511,8 +503,8 @@
 }
 
 @keyframes day-selected-ring-pulse {
-    0% { box-shadow: 0 0 0 0 rgba(30, 79, 163, 0.45); }
-    100% { box-shadow: 0 0 0 8px rgba(30, 79, 163, 0); }
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-1) 45%, transparent); }
+    100% { box-shadow: 0 0 0 8px transparent; }
 }
 
 .cal-day-today .cal-day-num {
@@ -556,11 +548,11 @@
 
 /* 상세 패널 (예전 팝업 모달을 대체) */
 .day-detail-panel {
-    background: white;
-    border-radius: 1.2rem;
+    background: var(--surface);
+    border-radius: var(--radius-card);
     border: 1px solid var(--border);
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(30, 27, 58, 0.1);
+    box-shadow: var(--shadow-card-lg);
     display: flex;
     flex-direction: column;
     animation: panel-slide-in 0.22s ease;
@@ -579,7 +571,7 @@
 .day-detail-header {
     padding: 18px 20px 14px;
     border-bottom: 1px solid var(--border);
-    background: linear-gradient(135deg, rgba(30, 79, 163, 0.04), rgba(30, 79, 163, 0.04));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--brand-1) 4%, transparent), color-mix(in srgb, var(--brand-1) 4%, transparent));
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -592,8 +584,8 @@
 }
 
 .day-detail-date {
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-size: 1.45rem;
+    font-weight: 800;
     color: var(--ink);
     letter-spacing: -0.02em;
 }
@@ -613,7 +605,7 @@
     height: 30px;
     border-radius: 50%;
     border: 1px solid var(--border);
-    background: white;
+    background: var(--surface);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -625,7 +617,7 @@
 
 .day-detail-close:hover,
 .day-detail-day-nav-btn:hover {
-    background: #f1f2f6;
+    background: var(--surface-soft);
     color: var(--ink);
 }
 
@@ -652,12 +644,12 @@
 
 /* 학사일정 배너 */
 .event-badge {
-    background: linear-gradient(135deg, rgba(30, 79, 163, 0.16), rgba(30, 79, 163, 0.08));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--brand-1) 16%, transparent), color-mix(in srgb, var(--brand-1) 8%, transparent));
     color: var(--brand-1-dark);
     font-weight: 700;
     padding: 10px 14px;
     margin: 12px 20px 0;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 13.5px;
     text-align: left;
     display: flex;
@@ -667,13 +659,13 @@
 
 /* 급식 박스 */
 .meal-box {
-    background-color: #f8f9fc;
-    border: 1px solid #edeef7;
-    border-radius: 10px;
+    background-color: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     padding: 12px;
     font-size: 13px;
     line-height: 1.65;
-    color: #495057;
+    color: var(--ink);
     white-space: pre-line;
     max-height: 160px;
     overflow-y: auto;
@@ -694,7 +686,7 @@
     border-radius: 8px;
 }
 
-.timetable-row:nth-child(odd) { background: #f8f9fc; }
+.timetable-row:nth-child(odd) { background: var(--surface-soft); }
 
 .timetable-perio {
     width: 22px;
@@ -721,7 +713,7 @@
     font-size: 0.84rem;
     color: var(--muted);
     padding: 10px 12px;
-    background: #f8f9fc;
+    background: var(--surface-soft);
     border-radius: 8px;
 }
 
@@ -747,7 +739,7 @@
 
 .special-day-card p {
     font-size: 13.5px;
-    color: #4b5065;
+    color: var(--muted);
     margin: 0;
 }
 
@@ -781,9 +773,9 @@
 }
 
 .comment-item {
-    background: #f8f9fc;
-    border: 1px solid #edeef7;
-    border-radius: 10px;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     padding: 8px 10px;
 }
 
@@ -848,17 +840,17 @@ a.comment-nickname:hover { text-decoration: underline; }
 }
 /* comment-edit-btn은 수정 페이지로 이동하는 <a>라 버튼들과 달리 텍스트 밑줄/기본 색이 붙는다 */
 .comment-edit-btn { display: inline-flex; align-items: center; text-decoration: none; }
-.comment-edit-btn:hover { color: var(--brand-1); background: rgba(30, 79, 163, 0.08); transform: translateY(-1px); }
+.comment-edit-btn:hover { color: var(--brand-1); background: color-mix(in srgb, var(--brand-1) 8%, transparent); transform: translateY(-1px); }
 .comment-delete-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
 .comment-report-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
 .comment-report-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.comment-like-btn.active, .comment-like-btn.active:hover { color: #e11d48; background: #fee2e2; }
-.comment-bookmark-btn.active, .comment-bookmark-btn.active:hover { color: var(--brand-1); background: rgba(30, 79, 163, 0.1); }
+.comment-like-btn.active, .comment-like-btn.active:hover { color: var(--danger); background: var(--danger-soft); }
+.comment-bookmark-btn.active, .comment-bookmark-btn.active:hover { color: var(--brand-1); background: color-mix(in srgb, var(--brand-1) 10%, transparent); }
 .comment-like-count { font-size: 11px; margin-left: 2px; }
 
 .comment-blind-badge {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: var(--danger-soft);
+    color: var(--danger);
     font-weight: 700;
     font-size: 10px;
     padding: 2px 8px;
@@ -875,7 +867,7 @@ a.comment-nickname:hover { text-decoration: underline; }
 }
 @keyframes comment-highlight-pulse {
     0%, 100% { background: transparent; }
-    50% { background: rgba(30, 79, 163, 0.12); }
+    50% { background: color-mix(in srgb, var(--brand-1) 12%, transparent); }
 }
 
 .comment-content {
@@ -968,9 +960,9 @@ a.comment-nickname:hover { text-decoration: underline; }
 /* 개인 일정 - .comment-item과 동일한 카드 톤을 그대로 재사용(나만 보는 일정이지만
    시각적으로 한마디 카드와 어울리게). */
 .personal-event-item {
-    background: #f8f9fc;
-    border: 1px solid #edeef7;
-    border-radius: 10px;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     padding: 8px 10px;
 }
 .personal-event-item + .personal-event-item,
@@ -1006,7 +998,7 @@ a.comment-nickname:hover { text-decoration: underline; }
 }
 .personal-event-edit-btn { margin-left: auto; }
 .personal-event-delete-btn { margin-left: 2px; }
-.personal-event-edit-btn:hover { color: var(--brand-1); background: rgba(30, 79, 163, 0.08); transform: translateY(-1px); }
+.personal-event-edit-btn:hover { color: var(--brand-1); background: color-mix(in srgb, var(--brand-1) 8%, transparent); transform: translateY(-1px); }
 .personal-event-delete-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
 
 .personal-event-memo {
@@ -1019,9 +1011,9 @@ a.comment-nickname:hover { text-decoration: underline; }
 }
 
 .personal-event-form {
-    background: #f8f9fc;
-    border: 1px solid #edeef7;
-    border-radius: 10px;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     padding: 8px 10px;
     display: flex;
     flex-direction: column;
@@ -1037,7 +1029,7 @@ a.comment-nickname:hover { text-decoration: underline; }
     font-family: inherit;
     font-size: 12.5px;
     color: var(--ink);
-    background: white;
+    background: var(--surface);
     box-sizing: border-box;
     resize: vertical;
 }
@@ -1080,9 +1072,9 @@ a.comment-nickname:hover { text-decoration: underline; }
     align-items: center;
     gap: 14px;
     margin-top: 14px;
-    padding: 10px 16px;
-    background: rgba(255, 255, 255, 0.82);
-    border-radius: 10px;
+    padding: 10px 18px;
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+    border-radius: 999px;
     border: 1px solid var(--border);
     backdrop-filter: blur(8px);
 }
@@ -1114,7 +1106,7 @@ a.comment-nickname:hover { text-decoration: underline; }
 /* --brand-fixed - 실제 "선택된 날"(.cal-day-selected .cal-day-num)을 --brand-fixed로 고정해둬서
    범례 색도 맞춰야 다크모드에서 안 어긋난다 */
 .cal-legend-dot-selected { background: var(--brand-fixed); }
-.cal-legend-dot-event { background: linear-gradient(135deg, rgba(30, 79, 163, 0.14), rgba(30, 79, 163, 0.14)); }
+.cal-legend-dot-event { background: linear-gradient(135deg, color-mix(in srgb, var(--brand-1) 14%, transparent), color-mix(in srgb, var(--brand-1) 14%, transparent)); }
 
 @media (max-width: 640px) {
     .day-detail-header { padding: 16px 16px 12px; }
@@ -1122,107 +1114,23 @@ a.comment-nickname:hover { text-decoration: underline; }
     .event-badge { margin: 12px 16px 0; }
 }
 
-/* 다크모드 - 캘린더는 이 CSS 파일 전체에서 카드/네비바/입력창 배경을 white로 하드코딩해뒀다
-   (테마 변수 도입 이전에 만들어진 화면이라 추정). 큰 구조는 그대로 두고 배경색만 var(--surface)/
-   var(--surface-soft)로 교체한다. */
+/* 다크모드 - 예전엔 이 파일이 카드/입력창 배경을 white·#f8f9fc 등으로 하드코딩해 두고 여기서
+   하나하나 var(--surface)로 덮어썼다. 리디자인 Phase 3(2026-09-30)에서 본문 규칙 자체를 theme.css
+   토큰으로 바꿔 그 덮어쓰기가 전부 필요 없어졌다. 남은 건 일/토요일 색뿐 - 라이트모드 대비로 고른
+   고정 색이라 다크 배경에서 기준(4.5:1) 미달이라 더 밝은 톤으로 보정한다. */
 @media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .vacation-dday-badge,
-    html:not([data-theme="light"]) .cal-control-icon,
-    html:not([data-theme="light"]) .cal-navbar,
-    html:not([data-theme="light"]) .cal-nav-btn,
-    html:not([data-theme="light"]) .cal-nav-select-group select,
-    html:not([data-theme="light"]) .cal-grid-card,
-    html:not([data-theme="light"]) .day-detail-panel,
-    html:not([data-theme="light"]) .day-detail-close,
-    html:not([data-theme="light"]) .day-detail-day-nav-btn {
-        background: var(--surface);
-    }
-
-    html:not([data-theme="light"]) .cal-control-item input,
-    html:not([data-theme="light"]) .cal-control-item select {
-        background: var(--surface);
-        color: var(--ink);
-    }
-
-    html:not([data-theme="light"]) .cal-dow-header,
-    html:not([data-theme="light"]) .meal-box,
-    html:not([data-theme="light"]) .timetable-empty,
-    html:not([data-theme="light"]) .comment-item,
-    html:not([data-theme="light"]) .personal-event-item,
-    html:not([data-theme="light"]) .personal-event-form {
-        background: var(--surface-soft);
-    }
-
-    html:not([data-theme="light"]) .personal-event-form-title,
-    html:not([data-theme="light"]) .personal-event-form-memo {
-        background: var(--surface);
-        color: var(--ink);
-        border-color: var(--border);
-    }
-
-    /* .meal-box는 배경만 위에서 var(--surface-soft)로 바뀌고 글자색(#495057, 라이트모드
-       고정 회색)은 그대로라 다크 카드 위에서 대비가 1.77:1까지 떨어졌었다. */
-    html:not([data-theme="light"]) .meal-box { color: var(--ink); }
-
-    /* 버그 수정: .timetable-row:nth-child(odd)의 줄무늬 배경(#f8f9fc, 라이트모드 고정값)이
-       위 목록에서 빠져 있어서 다크모드에서도 그대로 밝게 남아있었다 - 그 위의 글자색은
-       .timetable-subject { color: var(--ink) }로 다크모드에서 밝은 색(#eeece2)이 되므로,
-       밝은 배경 위에 밝은 글씨가 겹쳐 홀수 줄만 흐릿해 보였다. */
-    html:not([data-theme="light"]) .timetable-row:nth-child(odd) { background: var(--surface-soft); }
-
-    /* .cal-legend는 캘린더 그리드 위에 얹히는 반투명 "유리" 배경이라 항상 밝은 흰색
-       (rgba(255,255,255,0.82))으로 고정돼 있었는데, 다크모드에서도 안 바뀌어서 그 위의
-       글자(var(--muted)/var(--ink), 다크모드용 밝은 색)가 밝은 배경과 겹쳐 대비가
-       1.18~2.18:1까지 떨어졌었다. */
-    html:not([data-theme="light"]) .cal-legend { background: rgba(13, 21, 32, 0.82); }
-
-    /* 일/토요일 숫자(빨강/파랑)는 라이트모드 대비로 고른 고정 색이라 다크 배경에서 각각
-       3.82:1/4.39:1로 기준(4.5:1) 미달이었다 - 다크모드에서 더 밝은 톤으로 보정. */
     html:not([data-theme="light"]) .cal-dow-header .dow-sun,
-    html:not([data-theme="light"]) .cal-day-num-sun { color: #ff6b64; }
+    html:not([data-theme="light"]) .cal-day-num-sun,
+    html:not([data-theme="light"]) .day-detail-date.day-detail-date-sun { color: #ff6b64; }
     html:not([data-theme="light"]) .cal-dow-header .dow-sat,
-    html:not([data-theme="light"]) .cal-day-num-sat { color: #5b9dec; }
+    html:not([data-theme="light"]) .cal-day-num-sat,
+    html:not([data-theme="light"]) .day-detail-date.day-detail-date-sat { color: #5b9dec; }
 }
 
 /* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .vacation-dday-badge,
-html[data-theme="dark"] .cal-control-icon,
-html[data-theme="dark"] .cal-navbar,
-html[data-theme="dark"] .cal-nav-btn,
-html[data-theme="dark"] .cal-nav-select-group select,
-html[data-theme="dark"] .cal-grid-card,
-html[data-theme="dark"] .day-detail-panel,
-html[data-theme="dark"] .day-detail-close,
-html[data-theme="dark"] .day-detail-day-nav-btn {
-    background: var(--surface);
-}
-
-html[data-theme="dark"] .cal-control-item input,
-html[data-theme="dark"] .cal-control-item select {
-    background: var(--surface);
-    color: var(--ink);
-}
-
-html[data-theme="dark"] .cal-dow-header,
-html[data-theme="dark"] .meal-box,
-html[data-theme="dark"] .timetable-empty,
-html[data-theme="dark"] .comment-item,
-html[data-theme="dark"] .personal-event-item,
-html[data-theme="dark"] .personal-event-form {
-    background: var(--surface-soft);
-}
-
-html[data-theme="dark"] .personal-event-form-title,
-html[data-theme="dark"] .personal-event-form-memo {
-    background: var(--surface);
-    color: var(--ink);
-    border-color: var(--border);
-}
-
-html[data-theme="dark"] .meal-box { color: var(--ink); }
-html[data-theme="dark"] .timetable-row:nth-child(odd) { background: var(--surface-soft); }
-html[data-theme="dark"] .cal-legend { background: rgba(13, 21, 32, 0.82); }
 html[data-theme="dark"] .cal-dow-header .dow-sun,
-html[data-theme="dark"] .cal-day-num-sun { color: #ff6b64; }
+html[data-theme="dark"] .cal-day-num-sun,
+html[data-theme="dark"] .day-detail-date.day-detail-date-sun { color: #ff6b64; }
 html[data-theme="dark"] .cal-dow-header .dow-sat,
-html[data-theme="dark"] .cal-day-num-sat { color: #5b9dec; }
+html[data-theme="dark"] .cal-day-num-sat,
+html[data-theme="dark"] .day-detail-date.day-detail-date-sat { color: #5b9dec; }

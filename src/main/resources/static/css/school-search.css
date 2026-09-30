@@ -33,7 +33,7 @@
     gap: 2px;
 }
 
-.school-search-item:hover { background: rgba(30, 79, 163, 0.08); }
+.school-search-item:hover { background: color-mix(in srgb, var(--brand-1) 8%, transparent); }
 
 .school-search-item-name {
     font-weight: 700;
@@ -46,7 +46,7 @@
     font-weight: 600;
     font-size: 11px;
     color: var(--brand-1);
-    background: rgba(30, 79, 163, 0.1);
+    background: color-mix(in srgb, var(--brand-1) 10%, transparent);
     padding: 1px 7px;
     border-radius: 20px;
     margin-left: 6px;
