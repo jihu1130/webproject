@@ -53,6 +53,12 @@
            href="/admin/dashboard" class="post-category-tab" th:classappend="${active == 'dashboard'} ? ' active' : ''"><i class="fa-solid fa-gauge-high"></i> 대시보드</a>
         <a th:if="${loginUser != null and (loginUser.role.name() == 'ROLE_SUPER_ADMIN' or loginUser.canViewLoadTest)}"
            href="/admin/loadtest" class="post-category-tab" th:classappend="${active == 'loadtest'} ? ' active' : ''"><i class="fa-solid fa-bolt"></i> 부하테스트 결과</a>
+        <!-- API 문서(Swagger UI) - 총관리자 전용. 부관리자 위임 플래그가 없는 기능이라 대시보드/부하테스트처럼
+             canView* 조건을 붙이지 않고 역할만 본다. 이 탭을 숨기는 건 화면 정리일 뿐이고, 실제 차단은
+             SecurityConfig의 /swagger-ui/**·/v3/api-docs/** hasRole("SUPER_ADMIN")이 한다. 관리자 화면을
+             떠나지 않게 새 탭으로 연다. -->
+        <a th:if="${loginUser != null and loginUser.role.name() == 'ROLE_SUPER_ADMIN'}"
+           href="/swagger-ui.html" target="_blank" rel="noopener" class="post-category-tab"><i class="fa-solid fa-book"></i> API 문서 <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7em"></i></a>
     </span>
     <span class="admin-tabs-divider" aria-hidden="true"></span>
     <span class="admin-tabs-group">
