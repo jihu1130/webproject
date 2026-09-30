@@ -1,4 +1,4 @@
-package com.webschool.webschool.global.upload;
+package com.webschool.webschool.global.upload.storage;
 
 import org.springframework.web.multipart.MultipartFile;
 

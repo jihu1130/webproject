@@ -1,5 +1,6 @@
 package com.webschool.webschool.global.upload;
 
+import com.webschool.webschool.global.upload.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;

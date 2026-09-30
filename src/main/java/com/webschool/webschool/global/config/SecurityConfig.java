@@ -1,11 +1,11 @@
 package com.webschool.webschool.global.config;
 
-import com.webschool.webschool.global.security.CookieOAuth2AuthorizationRequestRepository;
-import com.webschool.webschool.global.security.JwtAuthenticationFilter;
-import com.webschool.webschool.global.security.JwtService;
-import com.webschool.webschool.global.security.LoginFailureHandler;
-import com.webschool.webschool.global.security.LoginSuccessHandler;
-import com.webschool.webschool.global.security.OAuth2LoginSuccessHandler;
+import com.webschool.webschool.global.security.login.CookieOAuth2AuthorizationRequestRepository;
+import com.webschool.webschool.global.security.jwt.JwtAuthenticationFilter;
+import com.webschool.webschool.global.security.jwt.JwtService;
+import com.webschool.webschool.global.security.login.LoginFailureHandler;
+import com.webschool.webschool.global.security.login.LoginSuccessHandler;
+import com.webschool.webschool.global.security.login.OAuth2LoginSuccessHandler;
 import com.webschool.webschool.user.account.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;

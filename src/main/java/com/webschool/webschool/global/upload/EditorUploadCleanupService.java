@@ -1,5 +1,6 @@
 package com.webschool.webschool.global.upload;
 
+import com.webschool.webschool.global.upload.storage.FileStorageService;
 import com.webschool.webschool.bugreport.repository.BugReportAttachmentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.school.comment.repository.ScheduleCommentRepository;

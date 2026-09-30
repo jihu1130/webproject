@@ -1,4 +1,4 @@
-package com.webschool.webschool.global.security;
+package com.webschool.webschool.global.security.login;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

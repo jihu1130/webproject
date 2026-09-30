@@ -1,4 +1,4 @@
-package com.webschool.webschool.global.security;
+package com.webschool.webschool.global.security.login;
 
 import com.webschool.webschool.user.account.service.LoginAttemptService;
 import jakarta.servlet.http.HttpServletRequest;

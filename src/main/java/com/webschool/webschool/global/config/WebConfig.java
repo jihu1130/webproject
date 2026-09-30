@@ -1,9 +1,9 @@
 package com.webschool.webschool.global.config;
 
 import com.webschool.webschool.global.security.AdminAccessInterceptor;
-import com.webschool.webschool.global.security.EmailSetupInterceptor;
-import com.webschool.webschool.global.security.PasswordSetupInterceptor;
-import com.webschool.webschool.global.security.SchoolSetupInterceptor;
+import com.webschool.webschool.global.security.onboarding.EmailSetupInterceptor;
+import com.webschool.webschool.global.security.onboarding.PasswordSetupInterceptor;
+import com.webschool.webschool.global.security.onboarding.SchoolSetupInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

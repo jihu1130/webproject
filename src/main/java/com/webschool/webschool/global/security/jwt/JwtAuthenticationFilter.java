@@ -1,4 +1,4 @@
-package com.webschool.webschool.global.security;
+package com.webschool.webschool.global.security.jwt;
 
 import com.webschool.webschool.user.account.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;

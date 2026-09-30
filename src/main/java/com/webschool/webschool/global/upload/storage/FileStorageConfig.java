@@ -1,4 +1,4 @@
-package com.webschool.webschool.global.upload;
+package com.webschool.webschool.global.upload.storage;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

@@ -1,4 +1,4 @@
-package com.webschool.webschool.global.security;
+package com.webschool.webschool.global.security.jwt;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

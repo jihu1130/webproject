@@ -2,7 +2,7 @@ package com.webschool.webschool.post.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
-import com.webschool.webschool.global.upload.FileStorageService;
+import com.webschool.webschool.global.upload.storage.FileStorageService;
 import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.post.domain.PostImage;
 import com.webschool.webschool.post.dto.PostImageDto;
