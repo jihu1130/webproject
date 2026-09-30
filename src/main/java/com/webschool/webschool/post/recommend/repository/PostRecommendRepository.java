@@ -1,6 +1,6 @@
-package com.webschool.webschool.post.repository;
+package com.webschool.webschool.post.recommend.repository;
 
-import com.webschool.webschool.post.domain.PostRecommend;
+import com.webschool.webschool.post.recommend.domain.PostRecommend;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

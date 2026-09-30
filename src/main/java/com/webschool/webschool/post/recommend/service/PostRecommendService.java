@@ -1,4 +1,4 @@
-package com.webschool.webschool.post.service;
+package com.webschool.webschool.post.recommend.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
@@ -6,13 +6,13 @@ import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
 import com.webschool.webschool.post.domain.Post;
-import com.webschool.webschool.post.domain.PostDailyBestResult;
-import com.webschool.webschool.post.domain.PostRecommend;
-import com.webschool.webschool.post.dto.PostDailyBestResultDto;
-import com.webschool.webschool.post.dto.PostRecommendRankDto;
-import com.webschool.webschool.post.repository.PostDailyBestResultRepository;
-import com.webschool.webschool.post.repository.PostRecommendCount;
-import com.webschool.webschool.post.repository.PostRecommendRepository;
+import com.webschool.webschool.post.recommend.domain.PostDailyBestResult;
+import com.webschool.webschool.post.recommend.domain.PostRecommend;
+import com.webschool.webschool.post.recommend.dto.PostDailyBestResultDto;
+import com.webschool.webschool.post.recommend.dto.PostRecommendRankDto;
+import com.webschool.webschool.post.recommend.repository.PostDailyBestResultRepository;
+import com.webschool.webschool.post.recommend.repository.PostRecommendCount;
+import com.webschool.webschool.post.recommend.repository.PostRecommendRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;

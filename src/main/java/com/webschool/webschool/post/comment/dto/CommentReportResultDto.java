@@ -1,4 +1,4 @@
-package com.webschool.webschool.post.dto;
+package com.webschool.webschool.post.comment.dto;
 
 public record CommentReportResultDto(int reportCount, boolean blind) {
 }

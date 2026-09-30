@@ -1,6 +1,6 @@
-package com.webschool.webschool.post.repository;
+package com.webschool.webschool.post.recommend.repository;
 
-import com.webschool.webschool.post.domain.PostDailyBestResult;
+import com.webschool.webschool.post.recommend.domain.PostDailyBestResult;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

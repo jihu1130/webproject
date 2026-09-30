@@ -2,7 +2,7 @@ package com.webschool.webschool.admin.controller;
 
 import com.webschool.webschool.admin.service.ServerMetricsHistoryService;
 import com.webschool.webschool.bugreport.repository.BugReportRepository;
-import com.webschool.webschool.post.repository.PostCommentRepository;
+import com.webschool.webschool.post.comment.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.point.domain.PointTier;

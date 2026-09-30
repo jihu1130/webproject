@@ -1,11 +1,11 @@
-package com.webschool.webschool.post.controller;
+package com.webschool.webschool.post.comment.controller;
 
 import com.webschool.webschool.global.security.AuthenticationUtils;
-import com.webschool.webschool.post.dto.CommentReportResultDto;
-import com.webschool.webschool.post.dto.PostCommentDto;
-import com.webschool.webschool.post.service.CommentReactionService;
-import com.webschool.webschool.post.service.CommentReportService;
-import com.webschool.webschool.post.service.PostCommentService;
+import com.webschool.webschool.post.comment.dto.CommentReportResultDto;
+import com.webschool.webschool.post.comment.dto.PostCommentDto;
+import com.webschool.webschool.post.comment.service.CommentReactionService;
+import com.webschool.webschool.post.comment.service.CommentReportService;
+import com.webschool.webschool.post.comment.service.PostCommentService;
 import com.webschool.webschool.post.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

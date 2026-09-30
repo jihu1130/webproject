@@ -1,4 +1,4 @@
-package com.webschool.webschool.post.domain;
+package com.webschool.webschool.post.comment.domain;
 
 import com.webschool.webschool.user.domain.User;
 import jakarta.persistence.*;
@@ -8,12 +8,12 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-// 댓글(PostComment) 좋아요 - PostLike와 동일한 패턴.
+// PostReport와 동일한 패턴 (comment_id + reporter_id 유니크로 중복 신고 방지)
 @Entity
-@Table(name = "comment_likes", uniqueConstraints = @UniqueConstraint(columnNames = {"comment_id", "user_id"}))
+@Table(name = "comment_reports", uniqueConstraints = @UniqueConstraint(columnNames = {"comment_id", "reporter_id"}))
 @Getter @Setter
 @NoArgsConstructor
-public class CommentLike {
+public class CommentReport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,9 +23,13 @@ public class CommentLike {
     @JoinColumn(name = "comment_id", nullable = false)
     private PostComment comment;
 
+    // nullable - PostReport.reporter와 동일 이유(AccountHardDeleteService 참고).
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "reporter_id")
+    private User reporter;
+
+    @Column(length = 300)
+    private String reason; // 신고 사유 (선택 입력)
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

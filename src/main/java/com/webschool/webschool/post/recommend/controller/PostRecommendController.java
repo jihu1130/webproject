@@ -1,8 +1,8 @@
-package com.webschool.webschool.post.controller;
+package com.webschool.webschool.post.recommend.controller;
 
-import com.webschool.webschool.post.dto.PostDailyBestResultDto;
-import com.webschool.webschool.post.dto.PostRecommendRankDto;
-import com.webschool.webschool.post.service.PostRecommendService;
+import com.webschool.webschool.post.recommend.dto.PostDailyBestResultDto;
+import com.webschool.webschool.post.recommend.dto.PostRecommendRankDto;
+import com.webschool.webschool.post.recommend.service.PostRecommendService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;

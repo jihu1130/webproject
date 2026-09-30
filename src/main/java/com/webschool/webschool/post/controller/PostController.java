@@ -11,7 +11,7 @@ import com.webschool.webschool.post.dto.PostReportResultDto;
 import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
-import com.webschool.webschool.post.service.PostRecommendService;
+import com.webschool.webschool.post.recommend.service.PostRecommendService;
 import com.webschool.webschool.post.service.PostImageService;
 import com.webschool.webschool.post.service.PostReactionService;
 import com.webschool.webschool.post.service.PostReportService;

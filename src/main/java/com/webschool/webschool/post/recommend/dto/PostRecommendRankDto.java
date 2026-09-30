@@ -1,4 +1,4 @@
-package com.webschool.webschool.post.dto;
+package com.webschool.webschool.post.recommend.dto;
 
 import lombok.Builder;
 import lombok.Getter;

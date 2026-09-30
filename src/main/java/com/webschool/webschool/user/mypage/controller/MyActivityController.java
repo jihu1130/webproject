@@ -1,8 +1,8 @@
 package com.webschool.webschool.user.mypage.controller;
 
-import com.webschool.webschool.post.service.CommentReactionService;
-import com.webschool.webschool.post.service.CommentReportService;
-import com.webschool.webschool.post.service.PostCommentService;
+import com.webschool.webschool.post.comment.service.CommentReactionService;
+import com.webschool.webschool.post.comment.service.CommentReportService;
+import com.webschool.webschool.post.comment.service.PostCommentService;
 import com.webschool.webschool.post.service.PostReactionService;
 import com.webschool.webschool.post.service.PostReportService;
 import com.webschool.webschool.post.service.PostService;

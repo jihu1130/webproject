@@ -1,5 +1,6 @@
-package com.webschool.webschool.post.domain;
+package com.webschool.webschool.post.comment.domain;
 
+import com.webschool.webschool.post.domain.Post;
 import com.webschool.webschool.user.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;

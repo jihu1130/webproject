@@ -1,4 +1,4 @@
-package com.webschool.webschool.post.service;
+package com.webschool.webschool.post.comment.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
@@ -6,11 +6,11 @@ import com.webschool.webschool.global.util.TextUtils;
 import com.webschool.webschool.admin.service.AdminActionLogService;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
-import com.webschool.webschool.post.domain.CommentReport;
-import com.webschool.webschool.post.domain.PostComment;
-import com.webschool.webschool.post.dto.CommentReportResultDto;
-import com.webschool.webschool.post.repository.CommentReportRepository;
-import com.webschool.webschool.post.repository.PostCommentRepository;
+import com.webschool.webschool.post.comment.domain.CommentReport;
+import com.webschool.webschool.post.comment.domain.PostComment;
+import com.webschool.webschool.post.comment.dto.CommentReportResultDto;
+import com.webschool.webschool.post.comment.repository.CommentReportRepository;
+import com.webschool.webschool.post.comment.repository.PostCommentRepository;
 import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;

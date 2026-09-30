@@ -3,7 +3,7 @@ package com.webschool.webschool.user.profile.service;
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.post.domain.Post;
-import com.webschool.webschool.post.repository.PostCommentRepository;
+import com.webschool.webschool.post.comment.repository.PostCommentRepository;
 import com.webschool.webschool.post.repository.PostRepository;
 import com.webschool.webschool.user.profile.dto.PublicUserProfileDto;
 import com.webschool.webschool.user.profile.dto.PublicUserProfilePostDto;

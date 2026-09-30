@@ -6,7 +6,7 @@ import com.webschool.webschool.admin.repository.AdminActionLogRepository;
 import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.util.PageUtils;
-import com.webschool.webschool.post.repository.PostCommentRepository;
+import com.webschool.webschool.post.comment.repository.PostCommentRepository;
 import com.webschool.webschool.school.repository.ScheduleCommentRepository;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

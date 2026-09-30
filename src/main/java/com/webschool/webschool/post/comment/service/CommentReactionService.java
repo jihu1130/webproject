@@ -1,15 +1,15 @@
-package com.webschool.webschool.post.service;
+package com.webschool.webschool.post.comment.service;
 
 import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.notification.domain.Notification;
 import com.webschool.webschool.notification.service.NotificationService;
-import com.webschool.webschool.post.domain.CommentBookmark;
-import com.webschool.webschool.post.domain.CommentLike;
-import com.webschool.webschool.post.domain.PostComment;
-import com.webschool.webschool.post.repository.CommentBookmarkRepository;
-import com.webschool.webschool.post.repository.CommentLikeRepository;
-import com.webschool.webschool.post.repository.PostCommentRepository;
+import com.webschool.webschool.post.comment.domain.CommentBookmark;
+import com.webschool.webschool.post.comment.domain.CommentLike;
+import com.webschool.webschool.post.comment.domain.PostComment;
+import com.webschool.webschool.post.comment.repository.CommentBookmarkRepository;
+import com.webschool.webschool.post.comment.repository.CommentLikeRepository;
+import com.webschool.webschool.post.comment.repository.PostCommentRepository;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.repository.UserRepository;
 import com.webschool.webschool.user.point.service.UserPointService;
