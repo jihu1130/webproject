@@ -1,12 +1,14 @@
 /* 알림 목록 (/notifications) - post.css의 .post-list와 같은 카드 톤을 쓰되, 각 행이 읽음 처리
-   POST 폼(버튼)이라는 점만 다르다(navbar.html의 종 배지와 동일한 흐름으로 서버 렌더링만으로 동작). */
+   POST 폼(버튼)이라는 점만 다르다(navbar.html의 종 배지와 동일한 흐름으로 서버 렌더링만으로 동작).
+   리디자인 Phase 5(2026-09-30) - 하드코딩 색(#f0f1fa, #f8f9fc, 옛 파란색 rgba(30,79,163), 종류별
+   아이콘 hex)을 전부 theme.css 토큰으로 바꿨다. 그래서 예전 다크모드 덮어쓰기 블록이 필요 없어졌다. */
 .notif-list {
     list-style: none;
     margin: 0 0 20px;
     padding: 0;
     background: var(--surface);
     border-radius: var(--radius-card);
-    border: 1px solid #f0f1fa;
+    border: 1px solid var(--border);
     box-shadow: var(--shadow-card);
     overflow: hidden;
 }
@@ -15,7 +17,18 @@
 
 .notif-item { position: relative; }
 
-.notif-item-unread { background: rgba(30, 79, 163, 0.04); }
+/* 안 읽은 알림 - 옅은 브랜드 배경 + 왼쪽 브랜드색 줄(커뮤니티 목록 hover 줄과 같은 언어) */
+.notif-item-unread { background: color-mix(in srgb, var(--brand-1) 5%, transparent); }
+.notif-item-unread::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--brand-1);
+}
 
 .notif-item-form { margin: 0; }
 
@@ -24,7 +37,7 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 16px 48px 16px 20px;
+    padding: 18px 52px 18px 22px;
     border: none;
     background: transparent;
     cursor: pointer;
@@ -43,8 +56,8 @@
 }
 
 .notif-item-delete-btn {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -57,27 +70,27 @@
     transition: background 0.15s ease, color 0.15s ease;
 }
 
-.notif-item-delete-btn:hover { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
+.notif-item-delete-btn:hover { background: var(--danger-soft); color: var(--danger); }
 
-.notif-item-btn:hover { background: #f8f9fc; }
+.notif-item-btn:hover { background: var(--surface-soft); }
 
 .notif-item-icon {
     flex-shrink: 0;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(30, 79, 163, 0.1);
-    color: var(--brand-1-dark);
-    font-size: 0.9rem;
+    background: var(--brand-gradient-tint-2);
+    color: var(--brand-1);
+    font-size: 0.95rem;
 }
 
-.notif-item-icon-LIKE { background: rgba(225, 29, 72, 0.1); color: #be123c; }
-.notif-item-icon-REPORT_ACTION { background: rgba(217, 119, 6, 0.14); color: #b45309; }
-.notif-item-icon-ACCOUNT { background: rgba(107, 114, 128, 0.14); color: #4b5563; }
-.notif-item-icon-ANNOUNCEMENT { background: rgba(30, 79, 163, 0.14); color: var(--brand-1-dark); }
+.notif-item-icon-LIKE { background: var(--danger-soft); color: var(--danger); }
+.notif-item-icon-REPORT_ACTION { background: var(--warn-soft); color: var(--warn); }
+.notif-item-icon-ACCOUNT { background: color-mix(in srgb, var(--muted) 16%, transparent); color: var(--muted); }
+.notif-item-icon-ANNOUNCEMENT { background: var(--accent-soft); color: var(--accent); }
 
 .notif-item-body {
     flex: 1;
@@ -89,7 +102,7 @@
 
 .notif-item-message {
     font-weight: 700;
-    font-size: 0.92rem;
+    font-size: 0.94rem;
     color: var(--ink);
     overflow-wrap: break-word;
 }
@@ -111,18 +124,6 @@
 }
 
 @media (max-width: 560px) {
-    .notif-item-btn { padding: 14px 16px; gap: 10px; }
-    .notif-item-icon { width: 30px; height: 30px; font-size: 0.8rem; }
+    .notif-item-btn { padding: 14px 48px 14px 16px; gap: 10px; }
+    .notif-item-icon { width: 32px; height: 32px; font-size: 0.8rem; }
 }
-
-/* 수정사항.md 지적 - 다크모드 대응이 전혀 없었다. 하드코딩된 밝은 회색(#f0f1fa 테두리,
-   #f8f9fc 호버 배경)만 var()로 교체하면 나머지는 이미 var(--surface)/var(--ink) 등을 쓰고 있어
-   자동으로 맞춰진다. */
-@media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .notif-list { border-color: var(--border); }
-    html:not([data-theme="light"]) .notif-item-btn:hover { background: var(--surface-soft); }
-}
-
-/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .notif-list { border-color: var(--border); }
-html[data-theme="dark"] .notif-item-btn:hover { background: var(--surface-soft); }

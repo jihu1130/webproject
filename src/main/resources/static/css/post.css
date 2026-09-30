@@ -2004,6 +2004,47 @@ a.post-comment-nickname:hover { text-decoration: underline; }
     border-radius: 999px;
 }
 
+/* 옵션 없는 단순 검색창(공지사항/통합검색 결과 화면의 .post-search-form) - 위 rich 검색창의
+   .post-search-row처럼 입력칸+버튼을 한 알약 필드로(리디자인 Phase 5·6). */
+.community .post-search-form:not(.post-search-form-rich) {
+    gap: 0;
+    max-width: 480px;
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.15s ease;
+}
+.community .post-search-form:not(.post-search-form-rich):focus-within { border-color: var(--brand-1); }
+.community .post-search-form:not(.post-search-form-rich) input[type="text"] {
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    padding: 8px 16px;
+    font-size: 0.92rem;
+}
+.community .post-search-form:not(.post-search-form-rich) button { width: 44px; height: 38px; border-radius: 999px; }
+
+/* 마이페이지 목록형 화면(내 활동/내 문의 - 리디자인 Phase 4-D)은 관리자 화면의 머리말·검색 클래스
+   (.admin-page-heading/.admin-search-form, admin.css)를 빌려 쓰고 있어서 커뮤니티 톤으로 맞춘다.
+   관리자 화면 자체에는 body.community가 없으므로 영향 없음. */
+.community .admin-page-heading h1 { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; }
+.community .admin-search-form {
+    gap: 0;
+    flex-wrap: nowrap;
+    max-width: 480px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: var(--shadow-card);
+}
+.community .admin-search-form:focus-within { border-color: var(--brand-1); }
+.community .admin-search-form input[type="text"] { border: none; background: transparent; color: var(--ink); padding: 8px 16px; }
+.community .admin-search-form button { height: 38px; width: 44px; border-radius: 999px; }
+
 /* ── 2-B: 게시글 상세(post/detail.html) ──
    JS(post-detail.js/poll.js)가 참조하는 id·class는 그대로 두고 모양만 바꾼다. 본문(.post-rich-content,
    Quill 산출물)과 설문 위젯(.poll-widget, 캘린더 한마디와 공용)은 손대지 않는다(원칙 6). */

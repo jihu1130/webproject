@@ -1,6 +1,9 @@
 /* 공지사항(/notices) 전용 스타일 - post.css의 카드/목록 톤을 그대로 쓰고, "현재 공지"임을
    표시하는 압정 배지 색상만 별도로 정의한다(예전 Post.Category.NOTICE 방식의 고정 배지와 동일한
-   호박색 팔레트를 재사용 - 사용자에게 이미 익숙한 "공지 = 호박색" 인상을 유지). */
+   호박색 계열 - 사용자에게 이미 익숙한 "공지 = 호박색" 인상을 유지).
+   리디자인 Phase 6(2026-09-30) - 호박색을 하드코딩(rgba(217,119,6), #b45309, 다크용 #fbbf24)하던 것을
+   theme.css의 --warn(라이트/다크 각각 알맞은 호박색이 이미 정의돼 있음)에서 파생시켜, 다크모드용
+   덮어쓰기 블록이 필요 없어졌다. */
 .notice-badge {
     display: inline-flex;
     align-items: center;
@@ -10,28 +13,28 @@
     border-radius: 20px;
     font-size: 11px;
     font-weight: 700;
-    background: rgba(217, 119, 6, 0.16);
-    color: #b45309;
+    background: color-mix(in srgb, var(--warn) 18%, transparent);
+    color: var(--warn);
 }
 
-.notice-list-item-active { background: rgba(217, 119, 6, 0.06); }
-.notice-list-item-active:hover { background: rgba(217, 119, 6, 0.1); }
+.notice-list-item-active { background: color-mix(in srgb, var(--warn) 7%, transparent); }
+.notice-list-item-active:hover { background: color-mix(in srgb, var(--warn) 12%, transparent); }
 
 /* 커뮤니티(/posts) 목록 상단에 노출되는 활성 공지 배너 */
 .notice-banner {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 18px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    background: rgba(217, 119, 6, 0.08);
-    border: 1px solid rgba(217, 119, 6, 0.2);
+    padding: 13px 20px;
+    margin-bottom: 18px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--warn) 9%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warn) 25%, transparent);
     text-decoration: none;
     color: var(--ink);
     transition: background 0.15s ease;
 }
-.notice-banner:hover { background: rgba(217, 119, 6, 0.14); }
+.notice-banner:hover { background: color-mix(in srgb, var(--warn) 15%, transparent); }
 .notice-banner-title {
     font-weight: 700;
     font-size: 0.92rem;
@@ -39,29 +42,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.notice-banner i.fa-chevron-right { margin-left: auto; color: #b45309; flex-shrink: 0; }
+.notice-banner i.fa-chevron-right { margin-left: auto; color: var(--warn); flex-shrink: 0; }
 
 /* 버그수정 프롬포트 요청 - 반응형 규칙이 아예 없었다(post.css 등의 560px 기준과 동일하게 맞춤). */
 @media (max-width: 560px) {
-    .notice-banner { padding: 10px 14px; gap: 8px; }
+    .notice-banner { padding: 10px 16px; gap: 8px; }
     .notice-banner-title { font-size: 0.85rem; }
 }
-
-/* 수정사항.md 지적 - 다크모드 대응이 전혀 없었다. 호박색 오버레이는 옅은 rgba라 어두운 배경
-   위에서는 거의 안 보여서 불투명도를 올리고 글자색을 밝은 앰버로 바꾼다. */
-@media (prefers-color-scheme: dark) {
-    html:not([data-theme="light"]) .notice-badge { background: rgba(217, 119, 6, 0.3); color: #fbbf24; }
-    html:not([data-theme="light"]) .notice-list-item-active { background: rgba(217, 119, 6, 0.14); }
-    html:not([data-theme="light"]) .notice-list-item-active:hover { background: rgba(217, 119, 6, 0.2); }
-    html:not([data-theme="light"]) .notice-banner { background: rgba(217, 119, 6, 0.16); border-color: rgba(217, 119, 6, 0.35); }
-    html:not([data-theme="light"]) .notice-banner:hover { background: rgba(217, 119, 6, 0.22); }
-    html:not([data-theme="light"]) .notice-banner i.fa-chevron-right { color: #fbbf24; }
-}
-
-/* 위 @media와 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
-html[data-theme="dark"] .notice-badge { background: rgba(217, 119, 6, 0.3); color: #fbbf24; }
-html[data-theme="dark"] .notice-list-item-active { background: rgba(217, 119, 6, 0.14); }
-html[data-theme="dark"] .notice-list-item-active:hover { background: rgba(217, 119, 6, 0.2); }
-html[data-theme="dark"] .notice-banner { background: rgba(217, 119, 6, 0.16); border-color: rgba(217, 119, 6, 0.35); }
-html[data-theme="dark"] .notice-banner:hover { background: rgba(217, 119, 6, 0.22); }
-html[data-theme="dark"] .notice-banner i.fa-chevron-right { color: #fbbf24; }

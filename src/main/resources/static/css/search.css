@@ -10,8 +10,8 @@
 }
 
 .search-section-heading h2 {
-    font-size: 1.05rem;
-    font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 800;
     color: var(--ink);
     margin: 0;
 }
@@ -21,14 +21,21 @@
     margin-right: 6px;
 }
 
+/* "더보기" - 리디자인 Phase 5에서 작은 알약 칩으로 */
 .search-more-link {
     color: var(--muted);
-    font-weight: 600;
-    font-size: 0.85rem;
+    font-weight: 700;
+    font-size: 0.82rem;
     text-decoration: none;
     white-space: nowrap;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .search-more-link:hover {
     color: var(--brand-1);
+    border-color: var(--brand-1);
 }
