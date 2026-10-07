@@ -186,6 +186,15 @@ public class AdminUserService {
             user.setCanViewAuditLog(false);
             user.setCanManageShop(false);
             user.setCanManagePolls(false);
+            // 아래 6개는 권한이 나중에 추가되면서 여기에 빠져 있었다(2026-10-07 테스트로 발견) - 강등 후에도
+            // 남아 있다가 재승격 순간 포인트 지급·문의 관리 같은 권한이 확인 없이 되살아났다. 권한 플래그를
+            // 새로 추가하면 여기와 User.hasAnyAdminAccess()에 같이 넣을 것(AdminUserServiceTest가 잡아준다).
+            user.setCanManageAttendance(false);
+            user.setCanManagePoints(false);
+            user.setCanViewDashboard(false);
+            user.setCanViewLoadTest(false);
+            user.setCanManageBugReports(false);
+            user.setCanViewErrorLog(false);
             notificationService.notify(user, Notification.Type.ACCOUNT, "관리자 권한이 해제되었습니다.", "/mypage");
             adminActionLogService.log("USER", id, "DEMOTE", user.getUsername() + " -> ROLE_USER");
         } else if (role == User.Role.ROLE_ADMIN) {
