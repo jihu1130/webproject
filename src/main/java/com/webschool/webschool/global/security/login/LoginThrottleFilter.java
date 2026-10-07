@@ -2,6 +2,7 @@ package com.webschool.webschool.global.security.login;
 
 import com.webschool.webschool.global.security.RateLimiter;
 import com.webschool.webschool.global.util.ClientIpUtils;
+import com.webschool.webschool.user.account.service.LoginAttemptService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,8 @@ public class LoginThrottleFilter extends OncePerRequestFilter {
     private static final String KEY_PREFIX = "login-fail-ip:";
 
     private final RateLimiter rateLimiter;
+    private final LoginAttemptService loginAttemptService;
+    private final KnownDeviceCookie knownDeviceCookie;
 
     public void recordFailure(HttpServletRequest request) {
         rateLimiter.tryAcquireForIp(KEY_PREFIX, ClientIpUtils.getClientIp(request), Integer.MAX_VALUE, WINDOW);
@@ -42,6 +45,18 @@ public class LoginThrottleFilter extends OncePerRequestFilter {
         if (rateLimiter.isExhaustedForIp(KEY_PREFIX, ClientIpUtils.getClientIp(request), MAX_FAILURES_PER_IP, WINDOW)) {
             response.sendRedirect(request.getContextPath() + "/login?throttled=true");
             return;
+        }
+        // 이 아이디로 이 접속한 곳에서 연속 실패해 대기 중이면 비밀번호를 확인하지 않고 돌려보낸다(2026-10-07).
+        // 맞는 비밀번호를 넣어도 대기 중에는 통과시키지 않는다 - 통과시키면 대기가 대입 속도를 늦추지 못한다.
+        String username = request.getParameter("username");
+        if (username != null && !username.isBlank()) {
+            username = username.trim();
+            long wait = loginAttemptService.waitSecondsBeforeNextAttempt(username,
+                    ClientIpUtils.getClientIp(request), knownDeviceCookie.isPresentFor(request, username));
+            if (wait > 0) {
+                response.sendRedirect(request.getContextPath() + "/login?locked=true&wait=" + wait);
+                return;
+            }
         }
         filterChain.doFilter(request, response);
     }

@@ -1,62 +1,46 @@
 package com.webschool.webschool.global.security.login;
 
+import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.user.account.service.LoginAttemptService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-// 로그인 실패 사유에 따라 다른 안내로 보낸다 - 계정이 이미 잠긴 상태(LockedException, 비밀번호
-// 검증 전 단계에서 던져짐)라면 실패 횟수를 더 세지 않고 잠금 안내로만 보내고, 그 외 일반적인
-// 비밀번호 오류는 기존과 동일하게 처리하되 LoginAttemptService로 실패 횟수를 센다
-// (5회 실패 시 5분 잠금).
+// 로그인 실패 처리 - 실패 횟수를 "아이디 + 접속한 곳" 단위로 세고(LoginAttemptService), 5회부터는 다음
+// 시도까지 기다려야 하는 시간을 안내한다. 계정 자체는 잠그지 않는다(2026-10-07, 클래스 주석은
+// LoginAttemptService 참고). 대기 중인 시도는 LoginThrottleFilter가 비밀번호 검증 전에 돌려보내므로
+// 여기까지 오지 않는다.
 @Component
 @RequiredArgsConstructor
 public class LoginFailureHandler implements AuthenticationFailureHandler {
 
     private final LoginAttemptService loginAttemptService;
     private final LoginThrottleFilter loginThrottleFilter;
+    private final KnownDeviceCookie knownDeviceCookie;
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                          AuthenticationException exception) throws IOException {
         loginThrottleFilter.recordFailure(request);
         String username = request.getParameter("username");
-        if (exception instanceof LockedException) {
-            redirectLocked(request, response, username);
-            return;
-        }
         if (username == null || username.isBlank()) {
             response.sendRedirect(request.getContextPath() + "/login?error=true");
             return;
         }
-        int attempts = loginAttemptService.recordFailure(username.trim());
-        if (attempts >= LoginAttemptService.MAX_ATTEMPTS) {
-            // 이번 실패로 막 잠긴 경우 - LockedException은 그 다음 시도부터 던져지므로
-            // 지금 이 요청에서 바로 잠금 안내로 보내야 한다.
-            redirectLocked(request, response, username);
-        } else if (attempts > 0) {
-            int remaining = LoginAttemptService.MAX_ATTEMPTS - attempts;
-            response.sendRedirect(request.getContextPath()
-                    + "/login?error=true&attempts=" + attempts + "&remaining=" + remaining);
+        username = username.trim();
+        LoginAttemptService.FailureResult result = loginAttemptService.recordFailure(
+                username, ClientIpUtils.getClientIp(request), knownDeviceCookie.isPresentFor(request, username));
+        if (result.blocked()) {
+            response.sendRedirect(request.getContextPath() + "/login?locked=true&wait=" + result.waitSeconds());
         } else {
-            response.sendRedirect(request.getContextPath() + "/login?error=true");
+            int remaining = LoginAttemptService.FREE_ATTEMPTS - result.attempts();
+            response.sendRedirect(request.getContextPath()
+                    + "/login?error=true&attempts=" + result.attempts() + "&remaining=" + remaining);
         }
-    }
-
-    // 잠금 화면에 실제 남은 시간(분)을 함께 보여준다 - username을 못 구하면(이론상 발생하지
-    // 않지만 방어적으로) 분 정보 없이 잠금 안내만 보낸다.
-    private void redirectLocked(HttpServletRequest request, HttpServletResponse response, String username) throws IOException {
-        if (username == null || username.isBlank()) {
-            response.sendRedirect(request.getContextPath() + "/login?locked=true");
-            return;
-        }
-        long minutes = loginAttemptService.getRemainingLockMinutes(username.trim());
-        response.sendRedirect(request.getContextPath() + "/login?locked=true&minutes=" + minutes);
     }
 }

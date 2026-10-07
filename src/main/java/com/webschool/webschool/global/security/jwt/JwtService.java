@@ -27,6 +27,9 @@ public class JwtService {
     public static final String COOKIE_NAME = "jwt";
     private static final Duration EXPIRATION = Duration.ofMinutes(60);
     private static final String ISSUED_AT_MILLIS_CLAIM = "iat_ms";
+    private static final String PURPOSE_CLAIM = "purpose";
+    private static final String PURPOSE_KNOWN_DEVICE = "known-device";
+    public static final Duration KNOWN_DEVICE_EXPIRATION = Duration.ofDays(180);
 
     // "알려진 함정" 패턴 준수 - jwt.secret이 아직 application.yml에 없는 환경(로컬/운영
     // 최초 배포 등)에서도 앱이 기동은 되게 기본값(빈 문자열)을 준다. 빈 값이면 매 기동마다
@@ -120,12 +123,40 @@ public class JwtService {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            if (claims.getSubject() == null) {
+            // 용도가 따로 표시된 토큰(아래 "아는 기기" 토큰 등)은 로그인 토큰이 아니다 - 같은 키로 서명하므로
+            // 여기서 거르지 않으면 180일짜리 기기 토큰을 jwt 쿠키에 넣어 로그인할 수 있게 된다.
+            if (claims.getSubject() == null || claims.get(PURPOSE_CLAIM) != null) {
                 return Optional.empty();
             }
             return Optional.of(new TokenClaims(claims.getSubject(), issuedAtOf(claims)));
         } catch (JwtException | IllegalArgumentException e) {
             return Optional.empty();
+        }
+    }
+
+    // "이 브라우저에서 이 계정으로 로그인에 성공한 적이 있다"는 표시(KnownDeviceCookie). 로그인 권한은 전혀
+    // 없고, 로그인 실패 횟수를 셀 때 남이 일으킨 실패와 따로 세기 위한 용도뿐이다(LoginAttemptService 참고).
+    public String generateKnownDeviceToken(String username) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .subject(username)
+                .claim(PURPOSE_CLAIM, PURPOSE_KNOWN_DEVICE)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(KNOWN_DEVICE_EXPIRATION)))
+                .signWith(key)
+                .compact();
+    }
+
+    public boolean isKnownDeviceTokenFor(String token, String username) {
+        if (token == null || token.isBlank() || username == null) {
+            return false;
+        }
+        try {
+            Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+            return PURPOSE_KNOWN_DEVICE.equals(claims.get(PURPOSE_CLAIM))
+                    && username.equalsIgnoreCase(claims.getSubject());
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
         }
     }
 

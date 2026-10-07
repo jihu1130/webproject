@@ -50,12 +50,27 @@ public class AuthController {
     // 즐겨찾기, 뒤로가기) 네비바는 로그인 상태를 보여주면서 그 아래에 로그인/회원가입 폼이
     // 또 뜨는 문제가 있었다. 인증된 사용자는 두 페이지 모두 홈으로 돌려보낸다.
     @GetMapping("/login")
-    public String loginPage(Model model, Authentication authentication) {
+    public String loginPage(Model model, Authentication authentication,
+                            @RequestParam(required = false) String wait) {
         if (AuthenticationUtils.isLoggedIn(authentication)) {
             return "redirect:/";
         }
+        model.addAttribute("loginWaitText", waitText(wait));
         model.addAttribute("googleLoginEnabled", clientRegistrationRepositoryProvider.getIfAvailable() != null);
         return "user/login";
+    }
+
+    // 로그인 대기 안내(/login?locked=true&wait=초)의 남은 시간 문구 - 주소창에서 바꿀 수 있는 값이라
+    // 숫자가 아니거나 터무니없으면 "잠시"로만 보여준다.
+    static String waitText(String waitSeconds) {
+        if (waitSeconds == null || !waitSeconds.matches("[0-9]{1,5}")) {
+            return "잠시";
+        }
+        int seconds = Integer.parseInt(waitSeconds);
+        if (seconds <= 0) {
+            return "잠시";
+        }
+        return seconds < 60 ? seconds + "초" : ((seconds + 59) / 60) + "분";
     }
 
     // 아이디 중복확인 API

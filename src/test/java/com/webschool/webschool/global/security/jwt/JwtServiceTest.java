@@ -21,6 +21,21 @@ class JwtServiceTest {
         assertEquals("test1", jwtService.validateAndGetUsername(token).orElseThrow());
     }
 
+    // "아는 기기" 토큰은 로그인 토큰과 같은 키로 서명하지만 로그인에는 쓸 수 없어야 한다 - 180일짜리라
+    // jwt 쿠키 자리에 넣어 통하면 60분 만료가 무의미해진다.
+    @Test
+    void knownDeviceToken_cannotBeUsedAsLoginToken_andViceVersa() {
+        JwtService jwtService = new JwtService(SECRET);
+        String deviceToken = jwtService.generateKnownDeviceToken("test1");
+        String loginToken = jwtService.generateToken("test1");
+
+        assertTrue(jwtService.parse(deviceToken).isEmpty());
+        assertTrue(jwtService.isKnownDeviceTokenFor(deviceToken, "TEST1"));
+        assertTrue(!jwtService.isKnownDeviceTokenFor(deviceToken, "test2"));
+        assertTrue(!jwtService.isKnownDeviceTokenFor(loginToken, "test1"));
+        assertTrue(!jwtService.isKnownDeviceTokenFor("garbage", "test1"));
+    }
+
     // 보안 점검 L2 - 로그아웃/비밀번호 변경 이전 토큰을 가려내려면 발급 시각이 밀리초까지 그대로 읽혀야 한다
     // (초 단위로 잘리면 로그아웃 직후 같은 초에 다시 로그인한 토큰이 무효가 된다).
     @Test

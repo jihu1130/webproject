@@ -23,11 +23,13 @@
             <div th:if="${param.attempts != null}" class="alert alert-danger">
                 아이디 또는 비밀번호가 올바르지 않습니다.
                 (<span th:text="${param.attempts[0]}"></span>/5회 실패 —
-                <span th:text="${param.remaining[0]}"></span>번 더 틀리면 계정이 5분간 잠깁니다)
+                <span th:text="${param.remaining[0]}"></span>번 더 틀리면 잠시 기다려야 다시 시도할 수 있어요)
             </div>
+            <!--/* 계정이 잠기는 게 아니라 이 브라우저(네트워크)에서의 다음 시도만 미뤄진다 - 기다리는 시간은
+                 30초 -> 5분 -> 30분으로 늘어난다(LoginAttemptService). wait는 초 단위. */-->
             <div th:if="${param.locked}" class="alert alert-danger">
-                비밀번호를 여러 번 잘못 입력해서 계정이 일시적으로 잠겼습니다.
-                <span th:if="${param.minutes != null}" th:text="${param.minutes[0]}"></span><span th:if="${param.minutes == null}">5</span>분 후 다시 시도해주세요.
+                비밀번호를 여러 번 잘못 입력해서 잠시 로그인할 수 없어요.
+                <span th:text="${loginWaitText}">잠시</span> 후 다시 시도해주세요. 비밀번호가 기억나지 않으면 아래 <a th:href="@{/forgot-password}">비밀번호 찾기</a>를 이용하세요.
             </div>
             <div th:if="${param.throttled}" class="alert alert-danger">
                 로그인 실패가 너무 많습니다. 잠시 후 다시 시도해주세요.
