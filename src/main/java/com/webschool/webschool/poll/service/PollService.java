@@ -319,8 +319,17 @@ public class PollService {
     // 있는 사람과 동일 조건). 한마디(ScheduleComment)는 대응되는 공개범위 개념이 없으므로
     // Poll.VisibilityScope(같은반/같은학년/전체공개)를 그대로 유지한다.
     private boolean matchesScope(Poll poll, User viewer) {
+        // 본체가 삭제됐거나 신고로 블라인드됐으면 본체 화면은 작성자/관리자 외에 "없는 것"이 된다
+        // (PostService.assertReadable, 보안 점검 M2). 설문 API는 그 화면과 따로 순번 id로 호출되므로
+        // 여기서 같이 막지 않으면 질문·선택지·투표자 이름이 계속 보인다(2026-10-07 테스트를 쓰다가 발견).
+        // 작성자/관리자는 canAccess()의 앞 두 분기에서 이미 통과했다.
         if (poll.getPost() != null) {
-            return poll.getPost().getVisibility() != Post.Visibility.PRIVATE;
+            Post post = poll.getPost();
+            return !post.isDeleted() && !post.isBlind() && post.getVisibility() != Post.Visibility.PRIVATE;
+        }
+        ScheduleComment comment = poll.getScheduleComment();
+        if (comment != null && (comment.isDeleted() || comment.isBlind())) {
+            return false;
         }
         User creator = poll.getCreator();
         // creator가 null(작성자 하드 삭제, AccountHardDeleteService 참고)이면 같은 반/같은 학년
