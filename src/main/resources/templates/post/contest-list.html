@@ -60,7 +60,7 @@
 </div>
 
 <script th:src="@{/js/csrf.js}"></script>
-<script>
+<script th:attr="nonce=${cspNonce}">
     document.querySelectorAll('.contest-vote-btn[data-post-uuid]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var postUuid = btn.getAttribute('data-post-uuid');

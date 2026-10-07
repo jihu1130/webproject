@@ -175,7 +175,7 @@
     </div>
 </div>
 
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
     /*<![CDATA[*/
     window.__POST_FORM_MODE__ = /*[[${mode}]]*/ 'create';
     /*]]>*/
@@ -186,7 +186,7 @@
 <script th:src="@{/js/rich-editor.js}"></script>
 <script th:src="@{/js/post-form.js}"></script>
 <script th:src="@{/js/poll-editor.js}"></script>
-<script>
+<script th:attr="nonce=${cspNonce}">
     window.__postQuill = initRichEditor({
         editorId: 'postContentEditor',
         hiddenId: 'postContentHidden',

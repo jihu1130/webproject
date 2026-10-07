@@ -128,7 +128,7 @@
      다크모드 토글에 저절로 안 따라간다 - dark-mode.js가 쏘는 "themechange" 이벤트를 듣고
      테마 토큰을 다시 읽어 각 차트에 재적용한다. -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
 (function () {
     var trendLabels = /*[[${postTrendLabels}]]*/ [];
     var trendValues = /*[[${postTrendValues}]]*/ [];

@@ -7,7 +7,7 @@
      body 맨 위에 온다) 페이지가 눈에 보이기 전에 data-theme을 정한다. localStorage에 저장된
      수동 선택이 있으면 그 값을, 없으면 시스템 설정을 따른다. 이 스크립트가 실패하거나
      JS가 꺼져있어도 theme.css의 prefers-color-scheme 분기가 그대로 폴백이 된다. -->
-<script>
+<script th:attr="nonce=${cspNonce}">
 (function () {
     try {
         var saved = localStorage.getItem('theme');

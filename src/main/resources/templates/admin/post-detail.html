@@ -145,7 +145,7 @@
 </div>
 
 <script th:src="@{/js/modal.js}"></script>
-<script>
+<script th:attr="nonce=${cspNonce}">
     // 신고 관리(/admin/reports?type=comment)나 댓글 관리(/admin/comments)에서 "#comment-{id}"
     // 앵커로 이 페이지에 들어온 경우, 브라우저가 자동으로 그 위치까지 스크롤은 해주지만 어떤 댓글인지
     // 눈에 띄지 않아서(사용자 지적 - 여러 댓글 사이에서 직접 찾아야 했음) 잠깐 배경을 강조 표시한다.

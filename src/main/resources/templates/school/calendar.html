@@ -210,14 +210,14 @@
     </div>
 </div>
 
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
     /*<![CDATA[*/
     // 비로그인 사용자도 캘린더를 열람할 수 있게 된 뒤(Feature 3) - JS 쪽에서 "쓰기 동작" 버튼을
     // 숨기거나 개인 일정 관련 API 호출을 건너뛸지 판단하는 데 쓴다.
     window.__LOGGED_IN__ = /*[[${loginUser != null}]]*/ false;
     /*]]>*/
 </script>
-<script th:if="${loginUser != null}" th:inline="javascript">
+<script th:if="${loginUser != null}" th:inline="javascript" th:attr="nonce=${cspNonce}">
     /*<![CDATA[*/
     window.__USER_SCHOOL__ = {
         schoolName: /*[[${loginUser.schoolName}]]*/ '',

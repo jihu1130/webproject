@@ -79,7 +79,7 @@
     </div>
 </div>
 
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
     (function () {
         var typeSelect = document.getElementById('typeSelect');
         var titleField = document.getElementById('valueTitleField');

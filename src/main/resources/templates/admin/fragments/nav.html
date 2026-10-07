@@ -105,7 +105,7 @@
     </span>
 </nav>
 
-<script>
+<script th:attr="nonce=${cspNonce}">
     // 모바일 가로 스크롤 탭바(admin.css .admin-main-tabs 참고)에서 현재 탭이 화면 밖에 있으면
     // (예: "8. 감사 로그"가 활성인데 스크롤이 맨 왼쪽인 경우) 자동으로 보이는 위치까지 스크롤한다.
     document.addEventListener('DOMContentLoaded', function () {

@@ -33,7 +33,7 @@
             <form th:action="@{/admin/users}" method="get" class="page-size-select">
                 <input type="hidden" name="keyword" th:value="${keyword}">
                 <label for="admin-user-page-size">페이지당</label>
-                <select id="admin-user-page-size" name="size" onchange="this.form.submit()">
+                <select id="admin-user-page-size" name="size" data-auto-submit>
                     <option value="10" th:selected="${users.size == 10}">10개</option>
                     <option value="20" th:selected="${users.size == 20}">20개</option>
                     <option value="30" th:selected="${users.size == 30}">30개</option>

@@ -134,7 +134,7 @@
 
             <div class="auth-footer"><a href="/mypage">마이페이지로 돌아가기</a></div>
 
-            <script>
+            <script th:attr="nonce=${cspNonce}">
                 /* "사진 올리기"를 실제로 눌러 서버에 반영되기 전까지는 선택만 한 파일을 원형
                    아바타에 미리 보여준다 - 눌러야 적용, 안 누르면 그대로(폼 제출 전이라 서버
                    상태는 안 바뀜). objectURL은 원본 이미지로 되돌릴 때(파일 선택 취소) 누수

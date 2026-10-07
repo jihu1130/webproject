@@ -50,7 +50,7 @@
                 <input type="hidden" name="from" th:value="${from}">
                 <input type="hidden" name="to" th:value="${to}">
                 <label for="admin-report-page-size">페이지당</label>
-                <select id="admin-report-page-size" name="size" onchange="this.form.submit()">
+                <select id="admin-report-page-size" name="size" data-auto-submit>
                     <option value="10" th:selected="${currentSize == 10}">10개</option>
                     <option value="20" th:selected="${currentSize == 20}">20개</option>
                     <option value="30" th:selected="${currentSize == 30}">30개</option>

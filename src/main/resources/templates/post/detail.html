@@ -140,7 +140,7 @@
 <script th:src="@{/js/request-guard.js}"></script>
 <script th:src="@{/js/post-detail.js}"></script>
 <script th:src="@{/js/poll.js}"></script>
-<script th:if="${loginUser != null}" th:inline="javascript">
+<script th:if="${loginUser != null}" th:inline="javascript" th:attr="nonce=${cspNonce}">
     initPollWidget(document.getElementById('pollWidget'), '/polls/by-post/' + /*[[${post.id}]]*/ 0);
 </script>
 <th:block th:replace="~{fragments/head :: commonScripts}"></th:block>

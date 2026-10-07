@@ -151,7 +151,7 @@
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script th:src="@{/js/rich-editor.js}"></script>
 <script th:src="@{/js/poll-editor.js}"></script>
-<script>
+<script th:attr="nonce=${cspNonce}">
     initRichEditor({
         editorId: 'commentFormEditor',
         hiddenId: 'commentFormHidden',

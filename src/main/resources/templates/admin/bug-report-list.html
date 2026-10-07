@@ -24,14 +24,14 @@
         <div class="list-toolbar">
             <form th:action="@{/admin/bug-reports}" method="get" class="admin-search-form">
                 <input type="text" name="keyword" placeholder="작성자/이메일/제목 검색" th:value="${keyword}">
-                <select name="category" onchange="this.form.submit()">
+                <select name="category" data-auto-submit>
                     <option value="" th:selected="${selectedCategory == null or selectedCategory == ''}">전체 유형</option>
                     <option value="BUG" th:selected="${selectedCategory == 'BUG'}">버그 제보</option>
                     <option value="SUGGESTION" th:selected="${selectedCategory == 'SUGGESTION'}">건의</option>
                     <option value="ACCOUNT" th:selected="${selectedCategory == 'ACCOUNT'}">계정 문의</option>
                     <option value="OTHER" th:selected="${selectedCategory == 'OTHER'}">기타</option>
                 </select>
-                <select name="resolved" onchange="this.form.submit()">
+                <select name="resolved" data-auto-submit>
                     <option value="" th:selected="${selectedResolved == null}">전체 상태</option>
                     <option value="false" th:selected="${selectedResolved != null and !selectedResolved}">처리중</option>
                     <option value="true" th:selected="${selectedResolved != null and selectedResolved}">해결됨</option>

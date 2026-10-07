@@ -42,12 +42,12 @@
         <div class="list-toolbar">
             <form th:action="@{/admin/shop-items}" method="get" class="admin-search-form">
                 <input type="text" name="keyword" placeholder="상품명 검색" th:value="${keyword}">
-                <select name="type" onchange="this.form.submit()">
+                <select name="type" data-auto-submit>
                     <option value="" th:selected="${selectedType == null or selectedType == ''}">전체 종류</option>
                     <option value="TITLE" th:selected="${selectedType == 'TITLE'}">칭호</option>
                     <option value="AVATAR_COLOR" th:selected="${selectedType == 'AVATAR_COLOR'}">아바타 색상</option>
                 </select>
-                <select name="active" onchange="this.form.submit()">
+                <select name="active" data-auto-submit>
                     <option value="" th:selected="${selectedActive == null}">전체 상태</option>
                     <option value="true" th:selected="${selectedActive != null and selectedActive}">판매중</option>
                     <option value="false" th:selected="${selectedActive != null and !selectedActive}">판매중지</option>

@@ -77,7 +77,7 @@
 
 <script th:src="@{/js/modal.js}"></script>
 <script th:src="@{/js/timeago.js}"></script>
-<script>
+<script th:attr="nonce=${cspNonce}">
     document.addEventListener('DOMContentLoaded', function () {
         WebSchoolTimeago.applyAll('.notif-item-date');
     });

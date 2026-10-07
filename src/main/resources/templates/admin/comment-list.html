@@ -44,7 +44,7 @@
                 <input type="hidden" name="status" th:value="${viewMode == 'all'} ? '' : ${viewMode}">
                 <input type="hidden" name="keyword" th:value="${keyword}">
                 <label for="admin-comment-page-size">페이지당</label>
-                <select id="admin-comment-page-size" name="size" onchange="this.form.submit()">
+                <select id="admin-comment-page-size" name="size" data-auto-submit>
                     <option value="10" th:selected="${comments.size == 10}">10개</option>
                     <option value="20" th:selected="${comments.size == 20}">20개</option>
                     <option value="30" th:selected="${comments.size == 30}">30개</option>

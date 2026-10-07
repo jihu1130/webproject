@@ -1,6 +1,8 @@
 package com.webschool.webschool.global.config;
 
 import com.webschool.webschool.global.security.AuthenticationUtils;
+import com.webschool.webschool.global.security.csp.CspHeaderWriter;
+import com.webschool.webschool.global.security.csp.CspNonceFilter;
 import com.webschool.webschool.global.security.jwt.JwtAuthenticationFilter;
 import com.webschool.webschool.global.security.jwt.JwtService;
 import com.webschool.webschool.global.security.login.LoginFailureHandler;
@@ -11,6 +13,7 @@ import com.webschool.webschool.user.account.service.CustomOAuth2UserService;
 import com.webschool.webschool.user.account.service.TokenRevocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +25,8 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.header.HeaderWriterFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 
 @Configuration
@@ -43,6 +48,11 @@ public class SecurityConfig {
     private final LoginThrottleFilter loginThrottleFilter;
     private final JwtService jwtService;
     private final TokenRevocationService tokenRevocationService;
+
+    // "알려진 함정" 패턴 준수 - 운영 application.yml엔 이 키가 없으므로 기본값(false = CSP 실제 차단)을 준다.
+    // true로 바꾸면 차단 없이 브라우저 콘솔 경고만 남는다(환경변수 APP_SECURITY_CSP_REPORT_ONLY=true로도 가능).
+    @Value("${app.security.csp-report-only:false}")
+    private boolean cspReportOnly;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -147,6 +157,15 @@ public class SecurityConfig {
                         .hasRole("SUPER_ADMIN")
                         .anyRequest().authenticated()
                 )
+                // 보안 헤더(보안 점검 L4, 2026-10-07) - X-Frame-Options/nosniff/HSTS는 Spring Security 기본값으로
+                // 이미 나가고 있었고, 빠져 있던 Referrer-Policy와 Content-Security-Policy를 더한다.
+                // CSP는 요청마다 nonce가 달라서 고정 문자열 설정 대신 CspNonceFilter(nonce 생성) +
+                // CspHeaderWriter(헤더 작성) 조합으로 넣는다 - 허용 출처는 CspHeaderWriter 주석 참고.
+                .headers(headers -> headers
+                        .referrerPolicy(referrer -> referrer
+                                .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .addHeaderWriter(new CspHeaderWriter(cspReportOnly)))
+                .addFilterBefore(new CspNonceFilter(), HeaderWriterFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 // IP당 로그인 실패 제한(보안 점검 M4) - 폼 로그인 처리(BCrypt 검증) 전에 걸러야 의미가 있다.
                 .addFilterBefore(loginThrottleFilter, UsernamePasswordAuthenticationFilter.class)
