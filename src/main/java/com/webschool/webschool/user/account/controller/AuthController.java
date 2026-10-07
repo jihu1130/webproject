@@ -1,6 +1,10 @@
 package com.webschool.webschool.user.account.controller;
 
+import com.webschool.webschool.global.error.BusinessException;
+import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.global.security.AuthenticationUtils;
+import com.webschool.webschool.global.security.RateLimiter;
+import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.security.jwt.JwtService;
 import com.webschool.webschool.user.account.dto.RegisterDto;
 import com.webschool.webschool.user.service.UserInputValidator;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.time.Duration;
 import java.util.Map;
 
 // 로그인/회원가입 화면과 아이디 중복확인. 2026-09-28 파일 정리 때 나머지 화면을 분리함:
@@ -30,8 +35,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String REGISTER_LIMIT_KEY = "register-ip:";
+    private static final int REGISTER_LIMIT = 20;
+    private static final Duration REGISTER_WINDOW = Duration.ofHours(1);
+
     private final UserService userService;
     private final JwtService jwtService;
+    private final RateLimiter rateLimiter;
     // 구글 OAuth 클라이언트 등록(client-id/secret)이 안 돼 있으면 이 빈 자체가 없다(SecurityConfig
     // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
@@ -83,7 +93,18 @@ public class AuthController {
     public String register(@ModelAttribute RegisterDto registerDto, HttpServletRequest request,
                            HttpServletResponse response, Model model) {
         try {
+            // 가입 횟수 제한(2026-10-07) - 로그인/계정 찾기/문의에는 제한이 있었는데 가입에는 없어서 계정을
+            // 무한정 만들 수 있었다. **성공한 가입만 센다**(오타로 여러 번 다시 제출하는 것까지 세면 정상 사용자가
+            // 막힌다) - 그래서 먼저 한도 도달 여부만 보고, 가입이 끝난 뒤에 센다.
+            // 한도가 넉넉한(IP당 1시간 20건) 이유: 학교에서는 한 반이 같은 공인 IP로 한꺼번에 가입한다.
+            // 대량 생성을 늦추는 장치이지, 계정 몇 개를 만드는 것까지 막지는 못한다.
+            String clientIp = ClientIpUtils.getClientIp(request);
+            if (rateLimiter.isExhaustedForIp(REGISTER_LIMIT_KEY, clientIp, REGISTER_LIMIT, REGISTER_WINDOW)) {
+                throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS,
+                        "이 네트워크에서 가입이 너무 많이 이루어졌습니다. 잠시 후 다시 시도해주세요.");
+            }
             userService.register(registerDto);
+            rateLimiter.tryAcquireForIp(REGISTER_LIMIT_KEY, clientIp, REGISTER_LIMIT, REGISTER_WINDOW);
             autoLogin(registerDto.getUsername(), request, response);
             return "redirect:/";
         } catch (IllegalArgumentException e) {
