@@ -2,6 +2,7 @@ package com.webschool.webschool.user.account.controller;
 
 import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.user.account.dto.RegisterDto;
+import com.webschool.webschool.user.service.UserInputValidator;
 import com.webschool.webschool.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,12 @@ public class AuthController {
     public Map<String, Object> checkUsername(@RequestParam(required = false) String username) {
         if (username == null || username.isBlank()) {
             return Map.of("available", false, "message", "아이디를 입력해주세요.");
+        }
+        // 형식·길이·금지 아이디도 여기서 같이 알려준다 - 안 그러면 "사용 가능"이라고 해놓고 가입에서 거절된다.
+        try {
+            UserInputValidator.requireValidUsername(username);
+        } catch (IllegalArgumentException e) {
+            return Map.of("available", false, "message", e.getMessage());
         }
 
         boolean available = userService.isUsernameAvailable(username);

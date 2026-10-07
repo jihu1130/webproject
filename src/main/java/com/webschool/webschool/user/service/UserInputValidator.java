@@ -17,9 +17,29 @@ public final class UserInputValidator {
     private UserInputValidator() {
     }
 
+    public static final int USERNAME_MIN_LENGTH = 4;
+    public static final int USERNAME_MAX_LENGTH = 20;
+    // 가입/아이디 변경에서 고를 수 없는 아이디(보안 점검 L5, 2026-10-07) - 소문자로 비교한다.
+    // anonymoususer가 핵심: Spring Security가 비로그인 사용자의 이름으로 쓰는 값이라, 코드 곳곳이 이 문자열로
+    // "비로그인"을 판별하고 SchoolSetupInterceptor는 "findByUsername("anonymousUser")는 항상 없다"에 기대고 있다.
+    // 나머지는 운영자를 사칭하기 쉬운 이름. admin/subadmin은 일부러 뺐다 - 개발용 시더(TestDataSeeder)가
+    // 일반 가입 경로로 만드는 계정이고, 이미 있는 계정이라 어차피 중복으로 걸린다.
+    private static final Set<String> RESERVED_USERNAMES = Set.of(
+            "anonymoususer", "anonymous", "system", "root", "administrator", "superadmin", "superuser",
+            "webschool", "operator", "moderator", "support", "official", "null", "undefined"
+    );
+
+    // 기존 계정에는 소급하지 않는다 - 가입할 때와 마이페이지에서 아이디를 "바꿀 때"만 검사한다.
     public static void requireValidUsername(String username) {
         if (username == null || !USERNAME_PATTERN.matcher(username).matches()) {
             throw new IllegalArgumentException("아이디는 영문과 숫자만 사용할 수 있습니다.");
+        }
+        if (username.length() < USERNAME_MIN_LENGTH || username.length() > USERNAME_MAX_LENGTH) {
+            throw new IllegalArgumentException(
+                    "아이디는 " + USERNAME_MIN_LENGTH + "~" + USERNAME_MAX_LENGTH + "자여야 합니다.");
+        }
+        if (RESERVED_USERNAMES.contains(username.toLowerCase(Locale.ROOT))) {
+            throw new IllegalArgumentException("사용할 수 없는 아이디입니다.");
         }
     }
 
