@@ -102,6 +102,8 @@ jobs:
       - name: Validate docker-compose.yml
         env:
           MYSQL_ROOT_PASSWORD: ci-dummy-password
+          # docker-compose.yml이 이 값을 필수(${MYSQL_APP_PASSWORD:?...})로 요구한다 - 없으면 config가 실패한다.
+          MYSQL_APP_PASSWORD: ci-dummy-app-password
           NEIS_API_KEY: ci-dummy-key
           JWT_SECRET: ci-dummy-jwt-secret-at-least-32-bytes-long
         run: docker compose config -q
