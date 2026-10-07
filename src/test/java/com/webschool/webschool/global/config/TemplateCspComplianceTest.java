@@ -82,6 +82,25 @@ class TemplateCspComplianceTest {
                         + String.join("\n", violations));
     }
 
+    // 우리 서버의 정적 파일은 반드시 th:href/th:src="@{...}"로 써야 한다(2026-10-07). 정적 파일에 내용 해시가 붙은
+    // 주소 + 1년 캐시를 쓰는데(WebschoolApplication 기본 속성), 해시는 @{...}를 거칠 때만 붙는다 - href="/css/x.css"처럼
+    // 직접 쓰면 그 파일은 고쳐도 사용자 브라우저에 옛 버전이 1년간 남는다.
+    @Test
+    void localStaticFilesAreReferencedThroughThymeleafUrls() throws IOException {
+        Pattern plain = Pattern.compile("\\s(src|href)=\"/(css|js|images)/[^\"]*\"");
+        List<String> violations = new ArrayList<>();
+        forEachTemplate((file, html) -> {
+            Matcher matcher = plain.matcher(html);
+            while (matcher.find()) {
+                violations.add(file + ": " + matcher.group().trim());
+            }
+        });
+
+        assertTrue(violations.isEmpty(),
+                "정적 파일 주소는 th:href/th:src=\"@{...}\"로 써야 캐시 무효화용 해시가 붙습니다:\n"
+                        + String.join("\n", violations));
+    }
+
     private interface TemplateVisitor {
         void visit(Path file, String html);
     }
