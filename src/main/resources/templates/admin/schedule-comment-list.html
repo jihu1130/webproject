@@ -7,7 +7,7 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>관리자 - 한마디 관리 - WebSchool</title>
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
-    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <th:block th:replace="~{fragments/head :: postStyles}"></th:block>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>

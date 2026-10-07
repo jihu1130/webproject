@@ -7,7 +7,7 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${mode == 'edit'} ? '게시물 수정 - WebSchool' : '게시물 작성 - WebSchool'">게시물 작성 - WebSchool</title>
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
-    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <th:block th:replace="~{fragments/head :: postStyles}"></th:block>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" integrity="sha256-YAWsUh9IimrexPGsNujui9SYWqnr0UrXCEJw8bZCgtc=" crossorigin="anonymous">
 </head>
 <body class="community">

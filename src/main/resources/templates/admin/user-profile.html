@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${profile.nickname + ' 프로필 - 관리자 - WebSchool'}">계정 프로필 - WebSchool</title>
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
-    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <th:block th:replace="~{fragments/head :: postStyles}"></th:block>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
     <link rel="stylesheet" th:href="@{/css/profile-card.css}">
 </head>

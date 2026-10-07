@@ -1,0 +1,309 @@
+/* 설문(투표) 첨부 - 작성 폼 섹션. 처음부터 var() 테마 변수만 써서 calendar.css에서 겪은
+   "하드코딩 색상이 다크모드 예외 목록에서 빠짐" 문제가 애초에 나지 않도록 한다. */
+.post-poll-toggle {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600 !important;
+    cursor: pointer;
+}
+
+.post-poll-fields {
+    margin-top: 12px;
+    padding: 16px 18px;
+    background: var(--surface-soft);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: post-poll-reveal 0.18s ease;
+}
+/* display:flex가 명시도가 같은 브라우저 기본 [hidden]{display:none}보다 우선 적용돼(작성자
+   스타일시트가 UA 기본보다 항상 이김) 체크박스를 꺼도 이 영역이 계속 보이는 버그가 있었다
+   (사용자 신고) - hidden 속성이 있을 땐 이 규칙을 명시적으로 꺼준다. */
+.post-poll-fields[hidden] { display: none; }
+
+@keyframes post-poll-reveal {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .post-poll-fields { animation: none; }
+}
+
+.post-poll-fields input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.88rem;
+}
+
+.post-poll-option-list { display: flex; flex-direction: column; gap: 8px; }
+
+.post-poll-option-row { display: flex; align-items: center; gap: 8px; }
+.post-poll-option-row input { flex: 1; }
+
+.post-poll-option-remove {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.post-poll-option-remove:hover { border-color: var(--brand-1); color: var(--brand-1); }
+
+.post-poll-add-btn { align-self: flex-start; padding: 6px 14px; font-size: 0.82rem; }
+
+.post-poll-checkbox {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500 !important;
+    font-size: 0.85rem;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.post-poll-scope { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.post-poll-scope > label:first-child { font-weight: 700; font-size: 0.85rem; color: var(--ink); }
+
+.post-poll-radio, .post-poll-same-school-only {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500 !important;
+    font-size: 0.85rem;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.post-poll-same-school-only { margin-left: 22px; color: var(--muted); }
+
+.shop-color-picker-row { display: flex; align-items: center; gap: 10px; }
+.shop-color-picker-row input[type="color"] {
+    width: 44px;
+    height: 36px;
+    padding: 2px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+}
+.shop-color-picker-row span { font-size: 0.88rem; color: var(--muted); font-family: monospace; }
+
+.post-poll-deadline { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.post-poll-deadline label { font-weight: 700; font-size: 0.85rem; color: var(--ink); }
+
+/* 디스코드/카카오톡 스타일 마감 기한 팝오버(poll-editor.js initPollDeadlinePicker) - 순정
+   datetime-local 입력칸을 대체. 트리거 버튼은 다른 입력칸과 톤을 맞추고, 패널은 자주 쓰는
+   기한을 칩 버튼으로 먼저 보여준 뒤 직접 지정은 그 아래로 내린다(대부분 프리셋으로 끝나는
+   흐름을 우선). */
+.poll-deadline-picker { position: relative; display: inline-block; }
+
+.poll-deadline-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.88rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+.poll-deadline-trigger:hover { border-color: var(--brand-1); }
+.poll-deadline-trigger i { color: var(--muted); }
+
+.poll-deadline-panel {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 260px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.poll-deadline-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.poll-deadline-preset {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--surface-soft);
+    color: var(--ink);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.poll-deadline-preset:hover { border-color: var(--brand-1); color: var(--brand-1); }
+
+.poll-deadline-custom {
+    display: flex;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    margin-bottom: 10px;
+}
+
+.poll-deadline-custom input {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 8px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.82rem;
+    font-family: inherit;
+}
+.poll-deadline-custom input:focus { border-color: var(--brand-1); outline: none; }
+
+.poll-deadline-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+.poll-deadline-actions .btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+/* 설문 관련 체크박스/라디오는 전부 네이티브 컨트롤을 그대로 쓰되(디자인 시스템 전체가
+   체크박스를 커스텀 렌더링하지 않으므로 통일성 유지), 브랜드 색과 살짝 큰 크기만 입혀
+   터치하기 편하게 한다. */
+.post-poll-toggle input[type="checkbox"],
+.post-poll-checkbox input[type="checkbox"],
+.post-poll-radio input[type="radio"],
+.post-poll-same-school-only input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--brand-1);
+    cursor: pointer;
+}
+
+.post-poll-toggle input[type="checkbox"] { width: 17px; height: 17px; }
+
+/* 세부 설정 접기/펼치기 - 질문/옵션은 항상 보이고, 자주 안 쓰는 나머지 설정만 기본 접어둔다 */
+.post-poll-advanced-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 2px 0;
+    margin-top: 2px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--brand-1);
+    cursor: pointer;
+}
+
+.post-poll-advanced-toggle i {
+    font-size: 0.68rem;
+    transition: transform 0.15s ease;
+}
+
+.post-poll-advanced-toggle[aria-expanded="true"] i { transform: rotate(180deg); }
+
+.post-poll-advanced-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 12px;
+    margin-top: 2px;
+    border-top: 1px dashed var(--border);
+}
+.post-poll-advanced-fields[hidden] { display: none; }
+
+/* 설문 결과 위젯 - 게시글 상세/한마디 상세에서 poll.js가 채워 넣는다. */
+.poll-widget {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-soft);
+}
+
+.poll-widget-question { font-weight: 700; font-size: 0.95rem; color: var(--ink); margin-bottom: 4px; }
+.poll-widget-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
+.poll-widget-options { display: flex; flex-direction: column; gap: 8px; }
+
+.poll-widget-option {
+    position: relative;
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.poll-widget-option.voted { border-color: var(--brand-1); }
+.poll-widget-option input { flex-shrink: 0; accent-color: var(--brand-1); }
+.poll-widget-option-label { flex: 1; font-size: 0.86rem; font-weight: 600; color: var(--ink); z-index: 1; }
+.poll-widget-option-count { font-size: 0.78rem; color: var(--muted); z-index: 1; }
+
+.poll-widget-option-bar {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+.poll-widget-option-bar span {
+    display: block;
+    height: 100%;
+    background: color-mix(in srgb, var(--brand-1) 12%, transparent);
+    transition: width 0.2s ease;
+}
+
+.poll-widget-custom-row { margin-top: 10px; }
+.poll-widget-custom-input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+.poll-widget-submit { margin-top: 12px; padding: 9px 20px; font-size: 0.85rem; }
+
+/* 추천 게시글 랭킹 - post/contest-list.html (2026-09-16, 기존 "인기 게시글 주간 콘테스트" 대체) */
+.contest-rule-hint {
+    margin-left: 6px;
+    color: var(--muted);
+    cursor: help;
+    font-size: 0.85rem;
+}
+

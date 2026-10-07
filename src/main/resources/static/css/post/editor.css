@@ -1,0 +1,412 @@
+/* 게시글/한마디 작성 화면 공용 리치 에디터 컨테이너 */
+/* Quill은 툴바를 에디터의 "형제"로 앞에 꺼내고 에디터 엘리먼트 자신에 .ql-container를 붙인다
+   (아래 dragover 주석 참고). 예전 규칙은 자손 선택자(.rich-editor-container .ql-toolbar)라
+   한 번도 적용되지 않았다 - 리디자인 Phase 2에서 발견해 형제/같은 엘리먼트 선택자로 고침. */
+.ql-toolbar:has(+ .rich-editor-container) { border-radius: 9px 9px 0 0; }
+.rich-editor-container.ql-container { border-radius: 0 0 9px 9px; font-size: 0.98rem; }
+.rich-editor-container .ql-editor { min-height: 220px; }
+
+/* 본문에 사진/파일을 드래그해 놓는 동안의 시각 피드백(rich-editor.js setupDragDropUpload) -
+   대표 이미지 드롭존(.post-image-dropzone.is-dragover)과 같은 브랜드색 강조 패턴. Quill이
+   초기화되면 #postContentEditor(=.rich-editor-container)를 자기 .ql-container로 그대로
+   재사용하므로(툴바만 형제로 빠져나감 - 위 주석 참고), 클래스 두 개가 같은 엘리먼트에 붙는다. */
+.rich-editor-container.rich-editor-dragover {
+    outline: 2px dashed var(--brand-1);
+    outline-offset: -2px;
+    background: var(--surface-soft);
+}
+
+/* 글자 크기 드롭다운(Quill style/size attributor, px 화이트리스트 - rich-editor.js
+   SIZE_WHITELIST 참고) 라벨 - Quill snow 테마는 라벨을 ::before의 content로만 그리므로
+   (글자 자체가 마크업에 없음) CSS로만 교체 가능하다. 값 없음(false, 기본 크기로 리셋)은
+   "기본"으로 표시한다.
+   주의: Quill은 툴바(.ql-toolbar)를 에디터 컨테이너(.rich-editor-container, 곧 .ql-container)의
+   자식이 아니라 "형제"로 삽입한다 - 그래서 .rich-editor-container를 조상으로 잡는 선택자는
+   툴바 안의 이 드롭다운에 닿지 않는다(둘 다 .post-field 밑에 나란히 있음). */
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item::before {
+    content: '기본';
+}
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before {
+    content: '14px';
+}
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before {
+    content: '18px';
+}
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before {
+    content: '24px';
+}
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="32px"]::before,
+.ql-toolbar.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before {
+    content: '32px';
+}
+
+/* 리치 에디터(Quill) 다크모드 - quill.snow.css(CDN)는 라이트 고정 테마라 대부분의 요소는
+   배경을 따로 안 정해서 부모(var(--surface))를 그대로 물려받아 저절로 어울리지만, 흰 배경/
+   회색 선을 직접 하드코딩해둔 요소(아이콘, 드롭다운 패널, 링크 삽입 툴팁, placeholder)는
+   다크모드에서도 항상 라이트 색 그대로 남는다. form.html/comment-form.html 둘 다
+   quill.snow.css를 post.css보다 나중에 불러오므로, 명시도를 quill 쪽 선택자보다 확실히
+   높게 잡아야(html[data-theme] 접두사) 로드 순서와 무관하게 이긴다. */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) .ql-toolbar.ql-snow,
+    html:not([data-theme="light"]) .ql-container.ql-snow {
+        border-color: var(--border);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-picker {
+        color: var(--muted);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow .ql-stroke-miter {
+        stroke: var(--muted);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-fill,
+    html:not([data-theme="light"]) .ql-snow .ql-stroke.ql-fill {
+        fill: var(--muted);
+    }
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:hover,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:focus,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button.ql-active,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label:hover,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label.ql-active,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item:hover,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item.ql-selected {
+        color: var(--brand-1);
+    }
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:hover .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:focus .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button.ql-active .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label:hover .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item:hover .ql-fill,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-fill {
+        fill: var(--brand-1);
+    }
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:hover .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button:focus .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item:hover .ql-stroke,
+    html:not([data-theme="light"]) .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-stroke {
+        stroke: var(--brand-1);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-picker-options {
+        background-color: var(--surface);
+        border-color: var(--border);
+    }
+    html:not([data-theme="light"]) .ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-label,
+    html:not([data-theme="light"]) .ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-options {
+        border-color: var(--border);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-tooltip {
+        background-color: var(--surface);
+        border-color: var(--border);
+        color: var(--ink);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    html:not([data-theme="light"]) .ql-snow .ql-tooltip input[type="text"] {
+        background-color: var(--surface);
+        color: var(--ink);
+        border-color: var(--border);
+    }
+    html:not([data-theme="light"]) .ql-editor.ql-blank::before {
+        color: var(--muted);
+    }
+}
+
+/* 위 규칙들과 동일한 값 - 수동 다크모드 토글용(theme.css 상단 설명 참고) */
+html[data-theme="dark"] .ql-toolbar.ql-snow,
+html[data-theme="dark"] .ql-container.ql-snow {
+    border-color: var(--border);
+}
+html[data-theme="dark"] .ql-snow .ql-picker {
+    color: var(--muted);
+}
+html[data-theme="dark"] .ql-snow .ql-stroke,
+html[data-theme="dark"] .ql-snow .ql-stroke-miter {
+    stroke: var(--muted);
+}
+html[data-theme="dark"] .ql-snow .ql-fill,
+html[data-theme="dark"] .ql-snow .ql-stroke.ql-fill {
+    fill: var(--muted);
+}
+html[data-theme="dark"] .ql-snow.ql-toolbar button:hover,
+html[data-theme="dark"] .ql-snow.ql-toolbar button:focus,
+html[data-theme="dark"] .ql-snow.ql-toolbar button.ql-active,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label:hover,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label.ql-active,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item:hover,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item.ql-selected {
+    color: var(--brand-1);
+}
+html[data-theme="dark"] .ql-snow.ql-toolbar button:hover .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar button:focus .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar button.ql-active .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label:hover .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item:hover .ql-fill,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-fill {
+    fill: var(--brand-1);
+}
+html[data-theme="dark"] .ql-snow.ql-toolbar button:hover .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar button:focus .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item:hover .ql-stroke,
+html[data-theme="dark"] .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-stroke {
+    stroke: var(--brand-1);
+}
+html[data-theme="dark"] .ql-snow .ql-picker-options {
+    background-color: var(--surface);
+    border-color: var(--border);
+}
+html[data-theme="dark"] .ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-label,
+html[data-theme="dark"] .ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-options {
+    border-color: var(--border);
+}
+html[data-theme="dark"] .ql-snow .ql-tooltip {
+    background-color: var(--surface);
+    border-color: var(--border);
+    color: var(--ink);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+html[data-theme="dark"] .ql-snow .ql-tooltip input[type="text"] {
+    background-color: var(--surface);
+    color: var(--ink);
+    border-color: var(--border);
+}
+html[data-theme="dark"] .ql-editor.ql-blank::before {
+    color: var(--muted);
+}
+
+/* "📎" 첨부 버튼 팝오버 - 사진/동영상/파일/링크카드 4종을 한 버튼 밑에 모은다(rich-editor.js
+   setupAttachPopover/toggleAttachPopover 참고 - 예전엔 이 4개가 각자 툴바 아이콘으로 늘어서
+   있어서 "서식" 버튼들과 구분이 안 됐다). var(--surface) 등 테마 토큰만 쓰므로 다크모드는
+   theme.css 재정의를 그대로 물려받는다. */
+.rich-attach-anchor { position: relative; }
+
+.rich-attach-popover {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 140px;
+    z-index: 20;
+}
+
+.rich-attach-popover-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: none;
+    background: none;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.rich-attach-popover-item:hover { background: var(--surface-soft); }
+
+.rich-attach-popover-icon { font-size: 1rem; }
+
+/* 드래그로 텍스트를 선택하면 그 위에 뜨는 디스코드/노션 스타일 플로팅 서식 툴바
+   (rich-editor.js setupSelectionToolbar) - 상단 고정 툴바는 그대로 두고, 선택한 글자를
+   바로 굵게/기울임 처리할 수 있는 지름길로 덧붙인다. document.body에 직접 붙기 때문에
+   에디터 카드의 overflow/스크롤과 무관하게 항상 선택 영역 바로 위에 뜬다.
+   --nav-bg/--brand-fixed는 라이트·다크 모드 어디서도 항상 짙은 남색으로 고정이라(theme.css
+   상단 설명 참고), 흰 아이콘 대비를 위해 별도 다크모드 분기 없이 그대로 쓴다. */
+.rich-selection-toolbar {
+    position: absolute;
+    display: flex;
+    gap: 2px;
+    background: var(--nav-bg);
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    z-index: 30;
+}
+
+/* display:flex가 명시도가 같은 브라우저 기본 [hidden]{display:none}보다 우선 적용돼(작성자
+   스타일시트가 UA 기본보다 항상 이김) 선택 해제/스크롤 후에도 이 팝업이 마지막 위치에 계속
+   떠 있는 버그가 있었다(.post-poll-fields[hidden]과 동일 패턴 - hidden 속성이 있을 땐 이 규칙을
+   명시적으로 꺼준다). */
+.rich-selection-toolbar[hidden] { display: none; }
+
+.rich-selection-toolbar-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.rich-selection-toolbar-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.rich-selection-toolbar-btn.is-active { background: var(--brand-fixed); color: #fff; }
+
+.post-detail-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.post-detail-actions-owner { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+/* theme.css의 .btn-brand/.btn-outline-brand는 padding/border-radius/font-size를 일부러
+   안 정해두고 각 화면에서 채우게 돼있는데(post-form-actions .btn 등), 이 줄이 빠져있어서
+   "수정" 버튼만 여백 없이 테두리에 글자가 붙어 나오고 있었다(옆의 삭제/좋아요/북마크는
+   각자 자기 클래스에 크기가 있어 정상). 삭제 버튼과 정확히 같은 크기로 맞춘다. */
+.post-detail-actions-owner .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.post-delete-form { margin: 0; }
+
+.post-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1.5px solid var(--danger-border);
+    background: var(--surface);
+    color: var(--danger);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.post-delete-btn:hover {
+    background: var(--danger-soft);
+    color: var(--danger-dark);
+    border-color: var(--danger);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.14);
+}
+.post-delete-btn:active { transform: translateY(0); box-shadow: none; }
+
+.post-report-btn {
+    margin-left: auto;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.post-report-btn:hover:not(:disabled) { background: var(--danger-soft); color: var(--danger-dark); border-color: var(--danger-border); }
+.post-report-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.post-like-bookmark-row {
+    display: flex;
+    gap: 8px;
+    margin: -6px 0 14px;
+}
+
+/* 설문 위젯 바로 아래에 좋아요/북마크 줄이 오면 위 -6px 음수 마진이 poll-widget의
+   테두리 박스 안쪽으로 파고들어 겹쳐 보였다 - 그 경우엔 마진을 취소한다. */
+.poll-widget + .post-like-bookmark-row {
+    margin-top: 14px;
+}
+
+.post-like-btn, .post-bookmark-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.post-like-btn:hover { border-color: var(--danger-border); color: var(--danger); }
+.post-like-btn.active { background: var(--danger-soft); color: var(--danger); border-color: var(--danger-border); }
+
+.post-bookmark-btn:hover { border-color: var(--brand-1); color: var(--brand-1); }
+.post-bookmark-btn.active { background: color-mix(in srgb, var(--brand-1) 10%, transparent); color: var(--brand-1-dark); border-color: var(--brand-1); }
+
+.post-list-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.post-list-back:hover { color: var(--brand-1); }
+
+/* Phase 7 - 관리자 상세/작성/수정 화면(목록 탭 nav.html이 없는 화면)의 짧은 위치 안내 */
+.admin-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
+.admin-breadcrumb i { font-size: 0.7rem; }
+
+.admin-breadcrumb-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.admin-breadcrumb-link:hover { color: var(--brand-1); }
+
+.admin-breadcrumb-current {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.post-detail-footer-links {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+

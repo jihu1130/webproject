@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${mode == 'edit'} ? '상점 상품 수정 - WebSchool' : '상점 상품 등록 - WebSchool'">상점 상품 등록 - WebSchool</title>
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
-    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <th:block th:replace="~{fragments/head :: postStyles}"></th:block>
 </head>
 <body>
 

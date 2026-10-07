@@ -11,7 +11,7 @@
     <th:block th:with="metaTitle=${post.title}">
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     </th:block>
-    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <th:block th:replace="~{fragments/head :: postStyles}"></th:block>
 </head>
 <body class="community">
 

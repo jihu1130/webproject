@@ -1,0 +1,102 @@
+/* 일간/주간/월간/전체 기간 탭 - .post-category-tab과 같은 "알약형" 언어로 통일. */
+.contest-period-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.contest-period-tab {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.contest-period-tab:hover { border-color: var(--brand-1); color: var(--brand-1); }
+.contest-period-tab.active { background: var(--brand-fixed); border-color: transparent; color: #fff; }
+
+.contest-entry-list { display: flex; flex-direction: column; gap: 10px; }
+
+.contest-entry {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+}
+
+.contest-entry-rank {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    /* --brand-fixed - 다크모드 대비 전수 감사(2026-09-09), theme.css 상단 주석 참고. */
+    background: var(--brand-fixed);
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contest-entry-body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.contest-entry-title {
+    font-weight: 700;
+    color: var(--ink);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.contest-entry-title:hover { color: var(--brand-1); }
+.contest-entry-author { font-size: 0.8rem; color: var(--muted); }
+
+.contest-entry-votes { flex-shrink: 0; font-weight: 700; color: var(--brand-1-dark); font-size: 0.9rem; }
+.contest-vote-btn { flex-shrink: 0; padding: 8px 16px; font-size: 0.82rem; }
+.contest-vote-btn:disabled { opacity: 0.6; cursor: default; }
+.contest-entry-mine-badge {
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 6px 12px;
+}
+
+/* 일별 추천 게시글 1위 이력(post/contest-history.html) - 날짜별 1행씩, 순위 원 대신 날짜를 보여준다. */
+.contest-history-date {
+    flex-shrink: 0;
+    width: 76px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-align: center;
+}
+.contest-entry-prize { flex-shrink: 0; font-weight: 700; color: var(--brand-1); font-size: 0.9rem; }
+
+/* 게시글 상세에서 자유 게시판 전체 공개 글에 바로 추천할 수 있는 위젯(post/detail.html) -
+   /posts/contest 목록까지 가지 않아도 글을 읽던 자리에서 바로 추천할 수 있게 한다. */
+.contest-post-widget {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface-soft);
+}
+.contest-post-widget-label { font-weight: 700; color: var(--ink); font-size: 0.88rem; }
+.contest-post-widget-label i { color: var(--brand-1); }
+.contest-post-widget .contest-entry-votes,
+.contest-post-widget .contest-vote-btn,
+.contest-post-widget .contest-entry-mine-badge { margin-left: auto; }
+
+/* 다크모드 - 카드류(.post-detail-card 등)와 버튼류(.post-category-tab 등)는 이제 전부
+   var(--surface)/var(--border)/var(--danger)/var(--success) 같은 theme.css 토큰만 쓰므로
+   theme.css의 다크 팔레트 재정의만으로 자동 대응된다(예전엔 #fff/#dcdfef/#fee2e2 등을
+   하드코딩해뒀어서 이 아래에 배경색만 다시 덮어쓰는 규칙이 따로 필요했었다). 카테고리 배지도
+   리디자인 Phase 2에서 토큰으로 바꿔 다크모드 재정의 블록이 필요 없어졌다. */
+

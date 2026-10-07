@@ -1,0 +1,321 @@
+/* 작성/수정 폼 */
+.post-form-card {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card-lg);
+    border: 1px solid var(--border);
+    padding: 32px;
+}
+
+.post-form-card h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 20px;
+}
+
+.post-field { margin-bottom: 18px; }
+
+.post-field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+}
+
+.post-field-optional {
+    font-weight: 500;
+    font-size: 0.8em;
+    color: var(--muted);
+}
+
+/* :not(checkbox):not(radio) - 이 규칙이 .post-field 안의 모든 input을 잡다 보니 설문
+   체크박스/라디오(.post-poll-checkbox 등)까지 100% 폭 + 테두리 박스로 늘려버려서, 네이티브
+   체크박스가 200px 가까이 늘어나고 그 뒤 라벨 문구가 오른쪽 끝으로 밀려나는 버그가 있었다. */
+.post-field input:not([type="checkbox"]):not([type="radio"]),
+.post-field textarea,
+.post-field select {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 9px;
+    border: 1.5px solid var(--border);
+    font-family: inherit;
+    font-size: 0.92rem;
+    color: var(--ink);
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s ease;
+}
+
+.post-field input:not([type="checkbox"]):not([type="radio"]):focus,
+.post-field textarea:focus,
+.post-field select:focus { border-color: var(--brand-1); }
+
+/* select는 위 규칙만으로는 배경/화살표가 브라우저 기본값 그대로 남아 나머지 입력칸과
+   따로 놀아 보였다(사용자 지적 - "문의 유형" 드롭다운이 너무 구려 보임). 배경을 명시하고
+   기본 화살표를 지운 뒤 우리 테마 색(--muted)의 셰브런 아이콘을 직접 그려 넣는다 -
+   .post-search-sort처럼 화살표 없이 두는 기존 셀렉트도 있지만, 그건 목록 툴바의 작은
+   보조 컨트롤이고 이건 폼의 주요 입력 필드라 다른 입력칸과 톤을 맞추는 게 더 중요하다. */
+.post-field select {
+    appearance: none;
+    background-color: var(--surface);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+/* 게시글 제한적 공개(링크 전용) 체크박스 - .post-field label의 block/굵게 스타일을 벗어나
+   체크박스+문구가 한 줄에 나란히 오도록 별도 지정 */
+/* 공개범위 라디오 - 카테고리 라디오(.post-category-radio)와 같은 톤이지만 옵션마다 설명 한 줄이
+   더 붙어서 세로로 쌓이고, 좁은 화면에서 설명이 잘리지 않도록 한 줄에 하나씩 꽉 채운다. */
+.post-visibility-radio-group {
+    display: grid;
+    gap: 8px;
+}
+
+.post-visibility-radio {
+    display: flex !important;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 9px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    font-weight: 500 !important;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.post-visibility-radio:has(input:checked) {
+    border-color: var(--brand-1);
+    background: color-mix(in srgb, var(--brand-1) 6%, transparent);
+}
+
+.post-visibility-radio input[type="radio"] {
+    margin: 2px 0 0;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--brand-1);
+    cursor: pointer;
+}
+
+.post-visibility-radio-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.post-visibility-radio-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.post-visibility-radio:has(input:checked) .post-visibility-radio-label {
+    color: var(--brand-1-dark);
+}
+
+.post-visibility-radio-desc {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.post-category-radio-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.post-category-radio {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 9px;
+    border: 1.5px solid var(--border);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.post-category-radio:has(input:checked) {
+    border-color: var(--brand-1);
+    background: color-mix(in srgb, var(--brand-1) 6%, transparent);
+    color: var(--brand-1-dark);
+}
+
+.post-category-radio input { margin: 0; accent-color: var(--brand-1); }
+
+.post-category-hint {
+    margin: 8px 0 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--brand-1-dark);
+}
+
+.post-content-guide {
+    margin: 0 0 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+/* 기존 첨부 이미지 (수정 폼) */
+.post-image-existing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.post-image-existing-item {
+    position: relative;
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+}
+
+.post-image-existing-item img {
+    display: block;
+    width: 100%;
+    height: 90px;
+    object-fit: cover;
+}
+
+.post-image-existing-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--danger);
+    background: var(--surface);
+}
+
+/* 대표 이미지 첨부칸 - 예전엔 스타일 없는 네이티브 input[type=file] 그대로라 주변 카드형
+   디자인과 붕 떠 보였다. 클릭 영역 전체를 커버하는 투명 input을 얹은 드롭존 카드로 바꾸고,
+   드래그해서 파일을 놓아도 되게 한다(브라우저가 file input에 드롭하면 기본으로 .files를
+   채워주므로 change 리스너 하나로 클릭/드롭 둘 다 처리됨 - post-form.js 참고). */
+.post-image-dropzone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 28px 16px;
+    border: 1.5px dashed var(--border);
+    border-radius: 12px;
+    background: var(--surface-soft);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.post-image-dropzone:hover,
+.post-image-dropzone.is-dragover {
+    border-color: var(--brand-1);
+    background: var(--brand-gradient-tint-1);
+}
+
+.post-image-dropzone i {
+    font-size: 1.4rem;
+    color: var(--brand-1);
+}
+
+.post-image-dropzone-text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.post-image-dropzone-hint {
+    font-size: 0.76rem;
+    color: var(--muted);
+}
+
+.post-image-dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* 새로 첨부할 이미지 미리보기 */
+.post-image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.post-image-preview-item {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+}
+
+.post-image-preview-item img,
+.post-image-preview-item video {
+    display: block;
+    width: 100%;
+    height: 90px;
+    object-fit: cover;
+}
+
+/* 상세 페이지 첨부 이미지 갤러리 */
+.post-image-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.post-image-gallery-item {
+    display: block;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.post-image-gallery-item img {
+    display: block;
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    transition: transform 0.15s ease;
+}
+
+.post-image-gallery-item:hover img { transform: scale(1.03); }
+
+.post-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.post-form-actions .btn {
+    padding: 10px 20px;
+    border-radius: 9px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+

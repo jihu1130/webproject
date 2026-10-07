@@ -38,6 +38,29 @@
     <link rel="stylesheet" th:href="@{/css/components.css}">
 </th:block>
 
+<!--/* 커뮤니티/관리자 공용 스타일 - 2,220줄짜리 post.css 하나였던 것을 영역별 8개 파일로 나눴다(2026-10-07).
+     내용은 한 글자도 바꾸지 않고 자르기만 했고, **아래 순서가 원래 파일 안에서의 순서**다 - 뒤 파일이 앞 파일의
+     규칙을 덮어쓰는 곳이 있으므로(특히 redesign.css는 body.community 범위로 앞의 것들을 덮어쓴다) 순서를
+     바꾸거나 일부만 불러오지 말 것. 화면에서는 예전 post.css 링크 자리에 이 프래그먼트를 넣는다.
+       base      레이아웃·목록 헤더·카테고리 탭/배지·검색·툴바·목록·페이지네이션·블라인드 배너
+       detail    게시글 상세
+       editor    리치 에디터(게시글/한마디 공용), 관리자 위치 안내
+       form      작성/수정 폼, 첨부 이미지, 상세 이미지 갤러리
+       comment   댓글, QNA 답변 채택
+       poll      설문 작성 폼, 설문 결과 위젯
+       recommend 추천 게시글(기간 탭·이력·추천 위젯)
+       redesign  리디자인 Phase 2 덮어쓰기(body.community) */-->
+<th:block th:fragment="postStyles">
+    <link rel="stylesheet" th:href="@{/css/post/base.css}">
+    <link rel="stylesheet" th:href="@{/css/post/detail.css}">
+    <link rel="stylesheet" th:href="@{/css/post/editor.css}">
+    <link rel="stylesheet" th:href="@{/css/post/form.css}">
+    <link rel="stylesheet" th:href="@{/css/post/comment.css}">
+    <link rel="stylesheet" th:href="@{/css/post/poll.css}">
+    <link rel="stylesheet" th:href="@{/css/post/recommend.css}">
+    <link rel="stylesheet" th:href="@{/css/post/redesign.css}">
+</th:block>
+
 <th:block th:fragment="commonScripts">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" crossorigin="anonymous"></script>

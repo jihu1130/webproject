@@ -1,0 +1,300 @@
+/* ══════════ 리디자인 Phase 2 (2026-09-30) - 커뮤니티 화면 ══════════
+   body.community가 붙은 화면에만 적용한다. post.css는 공지/검색/마이페이지/관리자 화면도 같이
+   쓰므로 범위를 좁혀 둔다(그쪽은 각자의 Phase에서). 2-A: 게시글 목록(post/list.html).
+   색은 theme.css 토큰만, 흰 글자는 -fixed 토큰, 알약 모양은 이 범위 안에서만(리디자인 원칙 1·2·4). */
+
+.community .post-page { padding-top: 40px; }
+
+/* 헤더 - 홈페이지 헤드라인처럼 제목을 크고 굵게 */
+.community .post-list-header { align-items: center; margin-bottom: 22px; }
+.community .post-page-heading h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+.community .post-page-heading .page-sub { font-size: 0.92rem; margin-top: 2px; }
+
+.community .post-write-btn,
+.community .post-contest-btn {
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-weight: 700;
+}
+
+/* 카테고리 탭 - 바인더 인덱스 탭처럼 조금 더 크게 */
+.community .post-category-tabs { gap: 8px; margin-bottom: 18px; }
+.community .post-category-tab { padding: 8px 18px; font-size: 0.88rem; }
+
+/* 검색 - 입력칸과 버튼을 하나의 알약형 필드로 합친다 */
+.community .list-toolbar { margin-bottom: 20px; }
+.community .post-search-form-rich { max-width: 100%; width: 100%; }
+.community .post-search-row {
+    gap: 0;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.15s ease;
+}
+.community .post-search-row:focus-within { border-color: var(--brand-1); }
+.community .post-search-row input[type="text"] {
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    padding: 8px 16px;
+    font-size: 0.92rem;
+}
+.community .post-search-row button {
+    width: 44px;
+    height: 38px;
+    border-radius: 999px;
+}
+.community .post-search-options { padding: 0 4px; }
+.community .post-search-sort { border-radius: 999px; padding: 6px 14px; }
+
+/* 목록 - 행 높이를 조금 키우고, 올리면 왼쪽에 브랜드색 줄이 선다 */
+.community .post-list-item {
+    position: relative;
+    padding: 18px 22px;
+}
+.community .post-list-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--brand-1);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.community .post-list-item:hover::before { opacity: 1; }
+.community .post-list-link { gap: 12px; }
+.community .post-list-thumbnail { width: 52px; height: 52px; border-radius: 12px; }
+.community .post-list-title { font-size: 1.02rem; letter-spacing: -0.01em; }
+.community .post-list-meta { gap: 14px; font-size: 0.8rem; }
+
+/* 페이지네이션 - 동그란 알약 */
+.community .post-pagination { gap: 6px; margin-top: 8px; }
+.community .post-page-link {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 999px;
+}
+
+/* 옵션 없는 단순 검색창(공지사항/통합검색 결과 화면의 .post-search-form) - 위 rich 검색창의
+   .post-search-row처럼 입력칸+버튼을 한 알약 필드로(리디자인 Phase 5·6). */
+.community .post-search-form:not(.post-search-form-rich) {
+    gap: 0;
+    max-width: 480px;
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.15s ease;
+}
+.community .post-search-form:not(.post-search-form-rich):focus-within { border-color: var(--brand-1); }
+.community .post-search-form:not(.post-search-form-rich) input[type="text"] {
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    padding: 8px 16px;
+    font-size: 0.92rem;
+}
+.community .post-search-form:not(.post-search-form-rich) button { width: 44px; height: 38px; border-radius: 999px; }
+
+/* 마이페이지 목록형 화면(내 활동/내 문의 - 리디자인 Phase 4-D)은 관리자 화면의 머리말·검색 클래스
+   (.admin-page-heading/.admin-search-form, admin.css)를 빌려 쓰고 있어서 커뮤니티 톤으로 맞춘다.
+   관리자 화면 자체에는 body.community가 없으므로 영향 없음. */
+.community .admin-page-heading h1 { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; }
+.community .admin-search-form {
+    gap: 0;
+    flex-wrap: nowrap;
+    max-width: 480px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: var(--shadow-card);
+}
+.community .admin-search-form:focus-within { border-color: var(--brand-1); }
+.community .admin-search-form input[type="text"] { border: none; background: transparent; color: var(--ink); padding: 8px 16px; }
+.community .admin-search-form button { height: 38px; width: 44px; border-radius: 999px; }
+
+/* ── 2-B: 게시글 상세(post/detail.html) ──
+   JS(post-detail.js/poll.js)가 참조하는 id·class는 그대로 두고 모양만 바꾼다. 본문(.post-rich-content,
+   Quill 산출물)과 설문 위젯(.poll-widget, 캘린더 한마디와 공용)은 손대지 않는다(원칙 6). */
+.community .post-blind-banner,
+.community .post-visibility-banner { border-radius: 14px; }
+
+/* 위쪽 5px 그라데이션 띠 대신 목록/로그인 카드와 같은 톤으로 - 여백을 넓히고 제목을 키운다 */
+.community .post-detail-card { padding: 36px 40px 30px; }
+.community .post-detail-card::before { display: none; }
+.community .post-detail-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.35;
+    margin: 10px 0 14px;
+}
+.community .post-detail-meta { gap: 16px; padding-bottom: 18px; margin-bottom: 26px; }
+.community .post-detail-meta i { color: var(--muted); }
+.community .post-detail-content { font-size: 1.02rem; line-height: 1.8; }
+
+.community .post-like-btn,
+.community .post-bookmark-btn { padding: 8px 16px; }
+
+.community .post-detail-actions-owner .btn,
+.community .post-delete-btn,
+.community .post-report-btn { border-radius: 999px; }
+
+/* 댓글 */
+.community .post-comment-section { margin-top: 20px; padding: 28px 32px 30px; }
+.community .post-comment-heading { font-size: 1.15rem; font-weight: 800; margin-bottom: 16px; }
+.community .post-comment-item { padding: 14px 0; }
+.community .post-comment-item-accepted { border-radius: 14px; padding: 12px 14px; }
+.community .post-comment-edit-input,
+.community .post-comment-reply-input,
+.community .post-comment-edit-form button,
+.community .post-comment-reply-form button { border-radius: 999px; }
+.community .post-comment-edit-input,
+.community .post-comment-reply-input { padding: 7px 14px; background: var(--surface); color: var(--ink); }
+
+/* 댓글 입력 - 목록 검색창처럼 입력칸과 버튼을 한 알약 필드로 */
+/* 배경은 --surface - theme.css의 다크모드 input 규칙(명시도가 더 높음)이 입력칸을 --surface로
+   칠하므로 필드도 같은 색이어야 다크모드에서 안쪽에 네모가 떠 보이지 않는다. */
+.community .post-comment-form {
+    gap: 0;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    transition: border-color 0.15s ease;
+}
+.community .post-comment-form:focus-within { border-color: var(--brand-1); }
+.community .post-comment-form input {
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    padding: 8px 16px;
+}
+.community .post-comment-form button { width: 44px; height: 38px; border-radius: 999px; }
+
+/* ── 2-C: 게시글 작성/수정(post/form.html) ──
+   Quill 에디터 내부(.ql-editor 안 마크업, 커스텀 블롯)는 손대지 않고 바깥 테두리 반경만 맞춘다
+   (원칙 6). 설문 편집기(poll-editor.js)·대표 이미지 드롭존(post-form.js)의 id/class도 그대로.
+   school/comment-form.html(오늘의 한마디 작성)도 같은 폼 구조라 Phase 3에서 body.community를 붙여
+   이 스타일을 그대로 쓴다. */
+.community .post-form-card { padding: 36px 40px 32px; }
+.community .post-form-card h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 26px;
+}
+.community .post-field { margin-bottom: 24px; }
+.community .post-field > label { font-size: 0.9rem; margin-bottom: 8px; }
+
+.community .post-field input:not([type="checkbox"]):not([type="radio"]),
+.community .post-field select { border-radius: 12px; padding: 12px 16px; }
+.community #postTitleInput { font-size: 1.05rem; font-weight: 600; }
+
+.community .post-category-radio { border-radius: 999px; padding: 8px 18px; }
+.community .post-visibility-radio { border-radius: 14px; padding: 12px 16px; }
+
+.community .ql-toolbar:has(+ .rich-editor-container) { border-radius: 14px 14px 0 0; }
+.community .rich-editor-container.ql-container { border-radius: 0 0 14px 14px; }
+
+.community .post-image-dropzone { border-radius: 16px; padding: 32px 16px; }
+.community .post-image-existing-item { border-radius: 12px; }
+.community .post-poll-fields { border-radius: 16px; }
+.community .post-poll-add-btn { border-radius: 999px; }
+
+.community .post-form-actions {
+    margin-top: 30px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+}
+.community .post-form-actions .btn { border-radius: 999px; padding: 11px 24px; }
+
+/* ── 2-D: 추천 게시글 랭킹(post/contest-list.html) / 일별 1위 이력(post/contest-history.html) ──
+   추천 버튼의 data-post-uuid(인라인 스크립트가 읽음)는 그대로. */
+.community .post-list-header > .btn,
+.community .post-list-header-actions .btn { border-radius: 999px; padding: 9px 18px; font-weight: 700; }
+
+.community .contest-period-tabs { gap: 8px; margin-bottom: 20px; }
+.community .contest-period-tab { padding: 8px 18px; font-size: 0.88rem; }
+
+.community .contest-entry-list { gap: 12px; }
+.community .contest-entry {
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    border-width: 1px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.community .contest-entry:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-lg);
+    border-color: var(--brand-1);
+}
+
+/* 순위 - 4위부터는 옅은 브랜드 톤, 2·3위는 진한 브랜드, 1위만 금색으로 강조한다. 금색은 새로 만든
+   색이 아니라 위쪽 .post-contest-btn(추천 게시글 진입 버튼)의 "성취" 금색을 그대로 가져온 것 -
+   그 버튼처럼 다크모드에서도 같은 톤을 유지한다(성취 색은 테마와 무관하다는 기존 규칙). */
+.community .contest-entry-rank {
+    width: 38px;
+    height: 38px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    background: var(--brand-gradient-tint-2);
+    color: var(--brand-1);
+}
+.community .contest-entry:nth-child(-n+3) .contest-entry-rank { background: var(--brand-fixed); color: #fff; }
+.community .contest-entry:first-child .contest-entry-rank {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1.5px solid #f2c94c;
+    color: #92400e;
+}
+
+.community .contest-entry-title { font-size: 1rem; }
+
+/* 득표 수·포인트를 작은 칩으로 */
+.community .contest-entry-votes,
+.community .contest-entry-prize {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    background: var(--brand-gradient-tint-2);
+    color: var(--brand-1);
+}
+.community .contest-entry-prize { background: var(--success-soft); color: var(--success); }
+.community .contest-vote-btn { border-radius: 999px; font-weight: 700; }
+
+/* 이력의 날짜 - 도장처럼 */
+.community .contest-history-date {
+    width: auto;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1.5px dashed var(--border);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+    .community .post-page-heading h1 { font-size: 1.5rem; }
+    .community .post-list-item { padding: 14px 16px; }
+    .community .post-list-thumbnail { width: 44px; height: 44px; }
+    .community .post-detail-card { padding: 26px 20px 22px; }
+    .community .post-detail-title { font-size: 1.4rem; }
+    .community .post-comment-section { padding: 22px 18px; }
+    .community .post-form-card { padding: 26px 20px 22px; }
+    .community .post-form-card h2 { font-size: 1.35rem; }
+    .community .contest-entry { flex-wrap: wrap; padding: 14px 16px; gap: 10px 12px; }
+    .community .contest-entry-body { flex-basis: calc(100% - 60px); }
+}

@@ -7,7 +7,7 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${profile.nickname + ' 님의 프로필 - WebSchool'}">프로필 - WebSchool</title>
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
-    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <th:block th:replace="~{fragments/head :: postStyles}"></th:block>
     <link rel="stylesheet" th:href="@{/css/profile-card.css}">
 </head>
 <body class="community">
