@@ -521,8 +521,16 @@ cp src/main/resources/application.yml.example src/main/resources/application.yml
 
 **방법 A — 로컬 MySQL**
 
+MySQL에 `webschool` 데이터베이스와, 그 DB에만 권한이 있는 앱 전용 계정을 먼저 만듭니다
+(앱이 `root`로 접속하지 않게 하기 위함 — 비밀번호는 `application.yml`에 적은 값과 같게).
+
+```sql
+CREATE DATABASE IF NOT EXISTS webschool CHARACTER SET utf8mb4;
+CREATE USER IF NOT EXISTS 'webschool'@'localhost' IDENTIFIED BY '여기에-비밀번호';
+GRANT ALL PRIVILEGES ON webschool.* TO 'webschool'@'localhost';
+```
+
 ```bash
-# MySQL에 webschool 데이터베이스를 미리 만들어둔 뒤
 ./gradlew bootRun   # http://localhost:8888
 ```
 
@@ -530,14 +538,24 @@ cp src/main/resources/application.yml.example src/main/resources/application.yml
 
 ```bash
 cp .env.example .env
-# MYSQL_ROOT_PASSWORD / NEIS_API_KEY 입력
+# MYSQL_ROOT_PASSWORD / MYSQL_APP_PASSWORD / NEIS_API_KEY 입력
 docker compose up --build   # http://localhost:8888
+```
+
+앱은 `root`가 아니라 전용 계정 `webschool`(비밀번호 `MYSQL_APP_PASSWORD`)로 DB에 접속합니다.
+이 계정은 DB 볼륨이 **처음 만들어질 때** 자동 생성되므로, 예전에 만든 `mysql-data` 볼륨을
+그대로 쓰고 있다면 한 번만 직접 만들어 주세요.
+
+```bash
+docker compose up -d db
+docker compose exec db mysql -uroot -p -e "CREATE USER IF NOT EXISTS 'webschool'@'%' IDENTIFIED BY '.env의-MYSQL_APP_PASSWORD-값'; GRANT ALL PRIVILEGES ON webschool.* TO 'webschool'@'%';"
 ```
 
 같은 `docker compose up`으로 애플리케이션 지표(요청 처리량/응답시간/JVM 등) 모니터링용
 Prometheus([http://localhost:9090](http://localhost:9090))와
-Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin`/`admin`, Prometheus
-데이터소스와 `webschool 개요` 대시보드 자동 등록)도 함께 뜹니다.
+Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin` / 비밀번호는 `.env`의
+`GRAFANA_ADMIN_PASSWORD`(비워두면 `admin`), Prometheus 데이터소스와 `webschool 개요` 대시보드
+자동 등록)도 함께 뜹니다. 세 포트(8888·9090·3000)는 모두 이 PC(`127.0.0.1`)에서만 열립니다.
 
 **띄운 뒤 참고**
 - API 문서: 총관리자로 로그인한 상태에서 [http://localhost:8888/swagger-ui.html](http://localhost:8888/swagger-ui.html)

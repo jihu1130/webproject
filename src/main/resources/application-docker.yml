@@ -1,6 +1,6 @@
 # docker-compose 전용 프로파일(SPRING_PROFILES_ACTIVE=docker) - 시크릿 없음(git 추적 대상).
 # DB 비밀번호/NEIS 키는 여기 넣지 않고 docker-compose.yml이 .env에서 읽어
-# SPRING_DATASOURCE_USERNAME/SPRING_DATASOURCE_PASSWORD/NEIS_API_KEY 환경변수로 주입한다
+# SPRING_DATASOURCE_USERNAME(앱 전용 계정 webschool)/SPRING_DATASOURCE_PASSWORD/NEIS_API_KEY 환경변수로 주입한다
 # (application.yml.example이 실제 값을 로컬 파일에만 두는 것과 동일한 원칙).
 spring:
   datasource:

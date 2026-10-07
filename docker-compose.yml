@@ -5,6 +5,11 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: webschool
+      # 앱 전용 DB 계정(보안 점검 L6) - 앱이 root로 접속하면 앱이 뚫렸을 때 DB 서버 전체 권한이 넘어간다.
+      # MySQL 이미지가 이 계정을 만들고 MYSQL_DATABASE(webschool)에만 권한을 준다. 단, **볼륨이 처음
+      # 만들어질 때만** 적용된다 - 이미 mysql-data 볼륨이 있으면 README "방법 B"의 SQL로 직접 만들 것.
+      MYSQL_USER: webschool
+      MYSQL_PASSWORD: "${MYSQL_APP_PASSWORD:?add MYSQL_APP_PASSWORD to .env - see .env.example}"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -21,12 +26,15 @@ services:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SPRING_DATASOURCE_USERNAME: webschool
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_APP_PASSWORD}
       NEIS_API_KEY: ${NEIS_API_KEY}
       JWT_SECRET: ${JWT_SECRET}
+    # 포트는 전부 이 PC(127.0.0.1)에서만 열린다(보안 점검 L7) - "8888:8888"처럼 쓰면 0.0.0.0에 열려서
+    # 같은 와이파이(학원 등 공용 네트워크)의 다른 사람이 접속할 수 있다. 다른 기기에서 접속해 봐야 하면
+    # 그때만 잠깐 "8888:8888"로 바꿀 것.
     ports:
-      - "8888:8888"
+      - "127.0.0.1:8888:8888"
     volumes:
       - ../uploads:/data/uploads
 
@@ -40,7 +48,7 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
 
   grafana:
     image: grafana/grafana:11.3.1
@@ -48,16 +56,17 @@ services:
     depends_on:
       - prometheus
     environment:
-      # 로컬 전용 기본 계정 - 운영에 그대로 쓰지 말 것(2단계에서 실제로 쓰게 되면
-      # 반드시 별도 비밀번호로 교체).
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      # 관리자(admin) 비밀번호는 .env의 GRAFANA_ADMIN_PASSWORD - 비워두면 로컬 전용 기본값 admin
+      # (포트가 127.0.0.1에만 열려 있어 이 PC 밖에서는 접속할 수 없다). 최초 기동 때만 적용되고
+      # 이후엔 grafana-data 볼륨의 값이 우선한다(운영 docker-compose.prod.yml과 같은 변수명).
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
     volumes:
       - ./monitoring/grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
       - ./monitoring/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
       - ./monitoring/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
 volumes:
   mysql-data:
