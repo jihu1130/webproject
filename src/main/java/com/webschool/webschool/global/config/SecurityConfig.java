@@ -24,6 +24,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.header.HeaderWriterFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -166,7 +168,9 @@ public class SecurityConfig {
                                 .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                         .addHeaderWriter(new CspHeaderWriter(cspReportOnly)))
                 .addFilterBefore(new CspNonceFilter(), HeaderWriterFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // LogoutFilter보다 앞이어야 한다 - 로그인 상태를 세션에 두지 않으므로, 이 필터가 먼저 돌지 않으면
+                // 로그아웃 처리 시점에 "누가 로그아웃하는지"를 몰라 토큰 무효화(아래 addLogoutHandler)가 건너뛰어진다.
+                .addFilterBefore(jwtAuthenticationFilter, LogoutFilter.class)
                 // IP당 로그인 실패 제한(보안 점검 M4) - 폼 로그인 처리(BCrypt 검증) 전에 걸러야 의미가 있다.
                 .addFilterBefore(loginThrottleFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(login -> login
@@ -193,6 +197,15 @@ public class SecurityConfig {
                 // 시점에만 생성해서 재사용하는 용도로만 쓰인다.
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                // 로그인 상태(SecurityContext)는 세션에 저장하지도, 세션에서 읽지도 않는다(2026-10-07) - 요청 하나
+                // 안에서만 유지하고, 매 요청 JwtAuthenticationFilter가 JWT 쿠키로 다시 만든다.
+                // 기본값(세션 저장)으로 두면 폼 로그인/구글 로그인 성공 시 로그인 상태가 세션에도 들어가서,
+                // **JWT가 무효여도 세션 쿠키(JSESSIONID)만으로 로그인이 유지됐다**: 다른 기기에서 로그아웃하거나
+                // 비밀번호를 바꿔도(User.tokensInvalidBefore), 관리자가 계정을 정지해도, JWT가 만료돼도 그 브라우저는
+                // 세션이 살아 있는 동안 계속 로그인 상태였다(curl로 확인 - 무효화된 뒤에도 세션 쿠키만으로 /mypage 200).
+                // 세션은 CSRF 토큰과 구글 로그인 왕복 데이터를 담는 용도로만 남는다.
+                .securityContext(context -> context
+                        .securityContextRepository(new RequestAttributeSecurityContextRepository()))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         // 쿠키만 지우면 이미 복사된 토큰은 만료까지 살아 있다 - 서버에서도 이 계정의 토큰을

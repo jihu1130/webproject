@@ -11,7 +11,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -34,6 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
+    // SecurityConfig.securityContext()에 지정한 것과 같은 종류 - 요청 속성에만 저장하므로 인스턴스가 달라도 같은 곳을 본다.
+    private final SecurityContextRepository securityContextRepository = new RequestAttributeSecurityContextRepository();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -41,12 +46,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         readTokenCookie(request)
                 .flatMap(jwtService::parse)
-                .ifPresent(claims -> authenticate(claims, request));
+                .ifPresent(claims -> authenticate(claims, request, response));
 
         filterChain.doFilter(request, response);
     }
 
-    private void authenticate(JwtService.TokenClaims claims, HttpServletRequest request) {
+    private void authenticate(JwtService.TokenClaims claims, HttpServletRequest request, HttpServletResponse response) {
         String username = claims.username();
         try {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -60,7 +65,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // SecurityContextHolder만 채우지 않고 저장소(요청 속성)에도 저장한다. 안 하면 SessionManagementFilter가
+            // "이 요청에서 방금 로그인했다"고 오인해 세션 고정 보호를 매 요청 다시 실행하고, 그때마다 세션과
+            // CSRF 토큰이 새로 발급돼 화면에 그려진 토큰이 제출 시점엔 이미 무효가 된다(2026-09-16에 겪은 버그와
+            // 같은 원리 - 로그인 상태를 세션에 두지 않게 바꾸면서 다시 나타나 2026-10-07에 이 방식으로 해결).
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            securityContextRepository.saveContext(context, request, response);
             // 요청 로그(RequestLoggingFilter)가 요청이 끝난 뒤 "누가" 보낸 요청인지 찍을 수 있게 남기고,
             // 이 요청 안에서 나오는 다른 로그 줄에도 사용자가 찍히도록 MDC에 넣는다(MDC는
             // RequestLoggingFilter가 요청 끝에 비운다).
