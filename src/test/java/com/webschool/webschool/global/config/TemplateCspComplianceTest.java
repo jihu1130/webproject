@@ -60,6 +60,28 @@ class TemplateCspComplianceTest {
                         + String.join("\n", violations));
     }
 
+    // CDN에서 불러오는 스크립트/스타일에는 integrity(SRI 해시)가 있어야 한다 - CSP는 출처만 제한하므로, 허용된
+    // CDN의 파일 내용이 바뀌는 것은 이 해시로만 막을 수 있다. crossorigin이 없으면 브라우저가 해시를 검사하지
+    // 못하고 파일을 아예 막는다.
+    @Test
+    void everyCdnResourceHasIntegrity() throws IOException {
+        Pattern external = Pattern.compile("<(script|link)\\b[^>]*\\b(src|href)=\"https?://[^>]*>", Pattern.DOTALL);
+        List<String> violations = new ArrayList<>();
+        forEachTemplate((file, html) -> {
+            Matcher matcher = external.matcher(html);
+            while (matcher.find()) {
+                String tag = matcher.group();
+                if (!tag.contains("integrity=\"sha") || !tag.contains("crossorigin=\"anonymous\"")) {
+                    violations.add(file + ": " + tag.replaceAll("\\s+", " "));
+                }
+            }
+        });
+
+        assertTrue(violations.isEmpty(),
+                "CDN 자원에 integrity/crossorigin이 없습니다(fragments/head.html 주석 참고):\n"
+                        + String.join("\n", violations));
+    }
+
     private interface TemplateVisitor {
         void visit(Path file, String html);
     }

@@ -8,7 +8,7 @@
     <title th:text="${mode == 'edit'} ? '게시물 수정 - WebSchool' : '게시물 작성 - WebSchool'">게시물 작성 - WebSchool</title>
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/post.css}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" integrity="sha256-YAWsUh9IimrexPGsNujui9SYWqnr0UrXCEJw8bZCgtc=" crossorigin="anonymous">
 </head>
 <body class="community">
 
@@ -182,7 +182,7 @@
 </script>
 <script th:src="@{/js/csrf.js}"></script>
 <script th:src="@{/js/modal.js}"></script>
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js" integrity="sha256-5q7uUOOlr88Io5YhQk3lgYcoB/P3+5Awq1lf0rRa7+Y=" crossorigin="anonymous"></script>
 <script th:src="@{/js/rich-editor.js}"></script>
 <script th:src="@{/js/post-form.js}"></script>
 <script th:src="@{/js/poll-editor.js}"></script>

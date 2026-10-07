@@ -127,7 +127,7 @@
      대체). Chart.js는 색을 캔버스에 직접 굳혀 그리므로 var(--brand-1) 같은 CSS 변수와 달리
      다크모드 토글에 저절로 안 따라간다 - dark-mode.js가 쏘는 "themechange" 이벤트를 듣고
      테마 토큰을 다시 읽어 각 차트에 재적용한다. -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js" integrity="sha256-/tanOfjQ8GhxdN5s0UdF/A/HgJFEqxE9IpCKJr8Nf+o=" crossorigin="anonymous"></script>
 <script th:inline="javascript" th:attr="nonce=${cspNonce}">
 (function () {
     var trendLabels = /*[[${postTrendLabels}]]*/ [];
