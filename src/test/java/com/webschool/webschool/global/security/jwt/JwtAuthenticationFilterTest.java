@@ -1,5 +1,6 @@
 package com.webschool.webschool.global.security.jwt;
 
+import com.webschool.webschool.user.account.service.AccountUserDetails;
 import com.webschool.webschool.user.account.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.Cookie;
@@ -14,6 +15,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -96,6 +99,40 @@ class JwtAuthenticationFilterTest {
         new JwtAuthenticationFilter(jwtService, userDetailsService).doFilterInternal(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    // 보안 점검 L2(2026-10-07) - 로그아웃/비밀번호 변경으로 계정의 무효화 기준 시각(User.tokensInvalidBefore)이
+    // 토큰 발급 시각보다 뒤로 가면, 서명·만료가 멀쩡한 토큰도 익명 처리돼야 한다.
+    @Test
+    void tokenIssuedBeforeRevocation_isTreatedAsAnonymous() throws Exception {
+        JwtService jwtService = new JwtService(SECRET);
+        Instant issuedAt = Instant.now().minusSeconds(600);
+        String token = jwtService.generateToken("test1", issuedAt);
+        when(request.getCookies()).thenReturn(new Cookie[]{new Cookie(JwtService.COOKIE_NAME, token)});
+        long revokedAt = issuedAt.plusSeconds(60).toEpochMilli();
+        when(userDetailsService.loadUserByUsername("test1"))
+                .thenReturn(new AccountUserDetails(activeUser("test1"), revokedAt));
+
+        new JwtAuthenticationFilter(jwtService, userDetailsService).doFilterInternal(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    // 비밀번호 변경 직후 같은 요청에서 다시 내준 토큰(발급 시각 = 무효화 기준 시각)과 그 뒤에 로그인해서
+    // 받은 토큰은 통과해야 한다 - 안 그러면 비밀번호를 바꾼 본인까지 로그아웃된다.
+    @Test
+    void tokenIssuedAtOrAfterRevocation_isAccepted() throws Exception {
+        JwtService jwtService = new JwtService(SECRET);
+        Instant cutoff = Instant.ofEpochMilli(System.currentTimeMillis());
+        String token = jwtService.generateToken("test1", cutoff);
+        when(request.getCookies()).thenReturn(new Cookie[]{new Cookie(JwtService.COOKIE_NAME, token)});
+        when(userDetailsService.loadUserByUsername("test1"))
+                .thenReturn(new AccountUserDetails(activeUser("test1"), cutoff.toEpochMilli()));
+
+        new JwtAuthenticationFilter(jwtService, userDetailsService).doFilterInternal(request, response, filterChain);
+
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test

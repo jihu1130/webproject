@@ -1,5 +1,6 @@
 package com.webschool.webschool.global.config;
 
+import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.security.jwt.JwtAuthenticationFilter;
 import com.webschool.webschool.global.security.jwt.JwtService;
 import com.webschool.webschool.global.security.login.LoginFailureHandler;
@@ -7,6 +8,7 @@ import com.webschool.webschool.global.security.login.LoginSuccessHandler;
 import com.webschool.webschool.global.security.login.LoginThrottleFilter;
 import com.webschool.webschool.global.security.login.OAuth2LoginSuccessHandler;
 import com.webschool.webschool.user.account.service.CustomOAuth2UserService;
+import com.webschool.webschool.user.account.service.TokenRevocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +42,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final LoginThrottleFilter loginThrottleFilter;
     private final JwtService jwtService;
+    private final TokenRevocationService tokenRevocationService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -173,6 +176,13 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
+                        // 쿠키만 지우면 이미 복사된 토큰은 만료까지 살아 있다 - 서버에서도 이 계정의 토큰을
+                        // 전부 무효화한다(보안 점검 L2, TokenRevocationService). 다른 기기 로그인도 같이 풀린다.
+                        .addLogoutHandler((request, response, authentication) -> {
+                            if (AuthenticationUtils.isLoggedIn(authentication)) {
+                                tokenRevocationService.revokeAll(authentication.getName());
+                            }
+                        })
                         .logoutSuccessHandler((request, response, authentication) -> {
                             response.addHeader(HttpHeaders.SET_COOKIE,
                                     jwtService.buildExpiredCookie(request.isSecure()).toString());

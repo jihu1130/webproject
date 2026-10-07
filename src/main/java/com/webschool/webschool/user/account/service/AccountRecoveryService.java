@@ -62,6 +62,9 @@ public class AccountRecoveryService {
                 emailTokenService.peek(token, EmailToken.Purpose.RESET_PASSWORD).getUsername(), newPassword);
         User user = emailTokenService.consume(token, EmailToken.Purpose.RESET_PASSWORD);
         user.setPassword(passwordEncoder.encode(newPassword));
+        // 비밀번호를 잊어서가 아니라 계정이 털려서 재설정하는 경우도 있으므로, 이미 발급된 로그인 토큰을
+        // 전부 끊는다(보안 점검 L2) - 재설정 후엔 어차피 새 비밀번호로 다시 로그인한다.
+        user.revokeIssuedTokens();
         // 비로그인 상태에서 일어나는 조치라 actorUsername을 직접 넘긴다(UserService.register()와 동일한 이유).
         adminActionLogService.log("USER", user.getId(), "PASSWORD_RESET", null, user.getUsername());
     }

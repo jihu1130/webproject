@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -198,6 +199,36 @@ public class User {
         return lockedUntil != null && lockedUntil.isAfter(LocalDateTime.now());
     }
 
+    // 이 시각(epoch 밀리초)보다 먼저 발급된 JWT는 서명·만료가 멀쩡해도 무효(보안 점검 L2, 2026-10-07).
+    // 예전엔 로그아웃이 브라우저 쿠키만 지워서, 이미 새어 나간 토큰은 로그아웃하거나 비밀번호를 바꿔도
+    // 만료(60분)까지 계속 쓸 수 있었다. JwtAuthenticationFilter가 매 요청 사용자를 다시 읽을 때 토큰의
+    // 발급 시각과 비교한다. LocalDateTime 대신 epoch 값으로 둬서 시간대 해석 차이가 없다.
+    // **초가 아니라 밀리초**인 이유: 초 단위로 하면 로그아웃하고 같은 초 안에 다시 로그인한 새 토큰까지
+    // 무효가 된다(실제로 겪음) - JWT 표준 iat는 초 단위라 JwtService가 밀리초 클레임을 따로 넣는다.
+    // nullable - 이 컬럼이 생기기 전 계정은 null이고 "무효화한 적 없음"으로 본다.
+    private Long tokensInvalidBefore;
+
+    // 지금까지 발급된 토큰을 전부 무효화한다(로그아웃, 비밀번호 변경/재설정). 지금 이 순간 발급된 토큰까지
+    // 끊으려고 기준을 "현재 + 1ms"로 잡는다 - 그래서 같은 요청에서 토큰을 다시 내줘야 하면(비밀번호
+    // 변경 후 로그인 유지) 반환값을 발급 시각으로 써야 한다(JwtService.generateToken(username, issuedAt)).
+    public Instant revokeIssuedTokens() {
+        Instant cutoff = Instant.ofEpochMilli(System.currentTimeMillis() + 1);
+        this.tokensInvalidBefore = cutoff.toEpochMilli();
+        return cutoff;
+    }
+
+    public boolean isTokenRevoked(Instant issuedAt) {
+        return isTokenRevoked(tokensInvalidBefore, issuedAt);
+    }
+
+    // AccountUserDetails도 같은 판단을 쓴다(User 엔티티를 SecurityContext에 들고 다니지 않기 위해 값만 복사).
+    public static boolean isTokenRevoked(Long tokensInvalidBefore, Instant issuedAt) {
+        if (tokensInvalidBefore == null) {
+            return false;
+        }
+        return issuedAt == null || issuedAt.toEpochMilli() < tokensInvalidBefore;
+    }
+
     // 포인트/티어 시스템(todo.md 요구사항) - 게시글/댓글 작성, 좋아요 받음, QnA 답변 채택 등
     // 활동에 따라 UserPointService가 적립한다(일일 획득 한도 있음, 어뷰징 방지). 소비형(화폐)
     // 개념으로 설계했지만 소비 기능은 아직 미구현(사용자 확정) - 지금은 오르기만 한다. 신규
@@ -232,6 +263,11 @@ public class User {
     @PrePersist
     public void prePersist() {
         this.uuid = UUID.randomUUID().toString();
+        // 계정이 생기기 전에 발급된 토큰은 이 계정 것이 아니다 - 아이디를 바꾸거나 탈퇴해서 비워진 아이디로
+        // 다른 사람이 가입했을 때, 옛 주인의 아직 만료 안 된 토큰이 새 계정으로 통하는 것을 막는다.
+        if (this.tokensInvalidBefore == null) {
+            this.tokensInvalidBefore = System.currentTimeMillis();
+        }
     }
 
     public PointTier getTier() {

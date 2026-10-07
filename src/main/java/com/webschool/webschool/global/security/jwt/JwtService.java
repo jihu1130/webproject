@@ -1,5 +1,6 @@
 package com.webschool.webschool.global.security.jwt;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -25,6 +26,7 @@ public class JwtService {
 
     public static final String COOKIE_NAME = "jwt";
     private static final Duration EXPIRATION = Duration.ofMinutes(60);
+    private static final String ISSUED_AT_MILLIS_CLAIM = "iat_ms";
 
     // "알려진 함정" 패턴 준수 - jwt.secret이 아직 application.yml에 없는 환경(로컬/운영
     // 최초 배포 등)에서도 앱이 기동은 되게 기본값(빈 문자열)을 준다. 빈 값이면 매 기동마다
@@ -57,11 +59,20 @@ public class JwtService {
     }
 
     public String generateToken(String username) {
-        Instant now = Instant.now();
+        return generateToken(username, Instant.now());
+    }
+
+    // 발급 시각을 직접 정하는 버전 - 비밀번호 변경처럼 "기존 토큰은 전부 무효화하되 지금 이 브라우저는
+    // 로그인 유지"가 필요할 때, User.revokeIssuedTokens()가 돌려준 기준 시각으로 새 토큰을 발급한다
+    // (그 시각보다 앞선 iat는 JwtAuthenticationFilter가 거부하므로 Instant.now()로 만들면 바로 무효가 된다).
+    public String generateToken(String username, Instant issuedAt) {
         return Jwts.builder()
                 .subject(username)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(EXPIRATION)))
+                .issuedAt(Date.from(issuedAt))
+                // 표준 iat는 초 단위로 잘려서, 무효화 기준 시각과 밀리초로 비교할 값을 따로 싣는다
+                // (User.tokensInvalidBefore 주석 참고).
+                .claim(ISSUED_AT_MILLIS_CLAIM, issuedAt.toEpochMilli())
+                .expiration(Date.from(issuedAt.plus(EXPIRATION)))
                 .signWith(key)
                 .compact();
     }
@@ -97,16 +108,37 @@ public class JwtService {
     // 서명/만료 검증 실패 시 예외를 던지지 않고 empty를 반환한다 - 호출부(JwtAuthenticationFilter)가
     // 조용히 익명 처리로 넘어가게 하기 위함(만료/변조된 쿠키 하나 때문에 500이 나면 안 됨).
     public Optional<String> validateAndGetUsername(String token) {
+        return parse(token).map(TokenClaims::username);
+    }
+
+    // 발급 시각(iat)까지 같이 돌려준다 - 로그아웃/비밀번호 변경 이전에 발급된 토큰인지는 사용자별 기준
+    // 시각(User.tokensInvalidBefore)과 비교해야 해서 JwtAuthenticationFilter가 판단한다.
+    public Optional<TokenClaims> parse(String token) {
         try {
-            String username = Jwts.parser()
+            Claims claims = Jwts.parser()
                     .verifyWith(key)
                     .build()
                     .parseSignedClaims(token)
-                    .getPayload()
-                    .getSubject();
-            return Optional.ofNullable(username);
+                    .getPayload();
+            if (claims.getSubject() == null) {
+                return Optional.empty();
+            }
+            return Optional.of(new TokenClaims(claims.getSubject(), issuedAtOf(claims)));
         } catch (JwtException | IllegalArgumentException e) {
             return Optional.empty();
         }
+    }
+
+    // 밀리초 클레임이 없는 토큰(이 클레임이 생기기 전에 발급돼 아직 만료 안 된 것)은 초 단위 iat로 대신한다.
+    private Instant issuedAtOf(Claims claims) {
+        Object millis = claims.get(ISSUED_AT_MILLIS_CLAIM);
+        if (millis instanceof Number number) {
+            return Instant.ofEpochMilli(number.longValue());
+        }
+        Date issuedAt = claims.getIssuedAt();
+        return issuedAt == null ? null : issuedAt.toInstant();
+    }
+
+    public record TokenClaims(String username, Instant issuedAt) {
     }
 }

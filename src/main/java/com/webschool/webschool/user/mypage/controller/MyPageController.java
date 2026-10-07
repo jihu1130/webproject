@@ -1,10 +1,12 @@
 package com.webschool.webschool.user.mypage.controller;
 
+import com.webschool.webschool.global.security.jwt.JwtService;
 import com.webschool.webschool.global.util.PageUtils;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.point.dto.AttendanceCalendarDto;
 import com.webschool.webschool.user.point.dto.AttendanceCheckInResult;
 import com.webschool.webschool.user.mypage.dto.MyPageUpdateDto;
+import com.webschool.webschool.user.mypage.dto.ProfileUpdateResult;
 import com.webschool.webschool.user.point.service.AttendanceService;
 import com.webschool.webschool.user.mypage.service.MyActivityService;
 import com.webschool.webschool.user.mypage.service.MyPageService;
@@ -14,6 +16,7 @@ import com.webschool.webschool.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
@@ -40,6 +43,7 @@ public class MyPageController {
     private final AttendanceService attendanceService;
     private final UserPointService userPointService;
     private final ShopService shopService;
+    private final JwtService jwtService;
 
     @GetMapping("/mypage")
     public String myPage(Authentication authentication, Model model) {
@@ -130,10 +134,16 @@ public class MyPageController {
                                     HttpServletRequest request, HttpServletResponse response,
                                     Model model) {
         try {
-            boolean usernameChanged = myPageService.updateProfile(authentication.getName(), dto);
-            if (usernameChanged) {
+            ProfileUpdateResult result = myPageService.updateProfile(authentication.getName(), dto);
+            if (result.usernameChanged()) {
                 new SecurityContextLogoutHandler().logout(request, response, authentication);
                 return "redirect:/login?updated=true";
+            }
+            // 비밀번호가 바뀌면 기존 토큰이 전부 무효화된다(다른 기기 로그아웃) - 지금 브라우저까지 풀리지
+            // 않게 무효화 기준 시각으로 새 토큰을 내준다.
+            if (result.tokensRevokedAt() != null) {
+                String token = jwtService.generateToken(authentication.getName(), result.tokensRevokedAt());
+                response.addHeader(HttpHeaders.SET_COOKIE, jwtService.buildCookie(token, request.isSecure()).toString());
             }
             return "redirect:/mypage?updated=true";
         } catch (IllegalArgumentException e) {

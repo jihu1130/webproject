@@ -10,6 +10,7 @@ import com.webschool.webschool.global.upload.FileUploadService;
 import com.webschool.webschool.post.util.BannedWordFilter;
 import com.webschool.webschool.user.domain.User;
 import com.webschool.webschool.user.mypage.dto.MyPageUpdateDto;
+import com.webschool.webschool.user.mypage.dto.ProfileUpdateResult;
 import com.webschool.webschool.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 // 로그인 후 마이페이지의 계정 설정 - 내 정보 수정, 남이 보는 프로필(소개글/사진), 알림 설정,
@@ -32,10 +34,11 @@ public class MyPageService {
     private final FileUploadService fileUploadService;
 
     /**
-     * 마이페이지 정보 수정. 아이디가 변경되면 true를 반환 (세션 재로그인 필요).
+     * 마이페이지 정보 수정. 아이디가 변경됐는지(재로그인 필요)와 비밀번호 변경으로 기존 토큰을
+     * 무효화한 시각을 돌려준다.
      */
     @Transactional
-    public boolean updateProfile(String currentUsername, MyPageUpdateDto dto) {
+    public ProfileUpdateResult updateProfile(String currentUsername, MyPageUpdateDto dto) {
         User user = userService.getByUsername(currentUsername);
 
         // 소셜 로그인(GOOGLE) 계정은 본인도 모르는 임의 비밀번호가 들어있어(User.password 필드 주석
@@ -51,6 +54,7 @@ public class MyPageService {
                 dto.getGrade(), dto.getClassNum());
 
         boolean usernameChanged = false;
+        Instant tokensRevokedAt = null;
         String newUsername = dto.getUsername() == null ? "" : dto.getUsername().trim();
 
         if (!newUsername.isBlank() && !newUsername.equals(user.getUsername())) {
@@ -74,6 +78,9 @@ public class MyPageService {
             // 아이디를 같은 요청에서 바꿨다면 위에서 이미 새 아이디로 바뀐 상태라 새 아이디 기준으로 검사된다.
             UserInputValidator.requireValidPassword(user.getUsername(), dto.getNewPassword());
             user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+            // 비밀번호를 바꾸는 이유가 "누가 내 계정을 쓰는 것 같아서"일 수 있으므로 이미 발급된 토큰(다른
+            // 기기 포함)을 전부 끊는다(보안 점검 L2) - 지금 브라우저는 컨트롤러가 새 토큰을 내줘서 유지된다.
+            tokensRevokedAt = user.revokeIssuedTokens();
             // 값 자체(원문/해시 불문)는 절대 detail에 남기지 않는다 - 변경이 일어났다는 사실만 기록.
             adminActionLogService.log("USER", user.getId(), "PASSWORD_CHANGE", null);
         }
@@ -101,7 +108,7 @@ public class MyPageService {
         user.setGrade(dto.getGrade());
         user.setClassNum(dto.getClassNum());
 
-        return usernameChanged;
+        return new ProfileUpdateResult(usernameChanged, tokensRevokedAt);
     }
 
     // "내 프로필 설정" - 남이 보는 프로필(/users/{id})에 노출되는 소개글만 다루는 가벼운 수정.

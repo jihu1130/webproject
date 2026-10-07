@@ -2,6 +2,8 @@ package com.webschool.webschool.global.security.jwt;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -17,6 +19,19 @@ class JwtServiceTest {
         String token = jwtService.generateToken("test1");
 
         assertEquals("test1", jwtService.validateAndGetUsername(token).orElseThrow());
+    }
+
+    // 보안 점검 L2 - 로그아웃/비밀번호 변경 이전 토큰을 가려내려면 발급 시각이 밀리초까지 그대로 읽혀야 한다
+    // (초 단위로 잘리면 로그아웃 직후 같은 초에 다시 로그인한 토큰이 무효가 된다).
+    @Test
+    void parse_returnsIssuedAtWithMillis() {
+        JwtService jwtService = new JwtService(SECRET);
+        Instant issuedAt = Instant.ofEpochMilli(System.currentTimeMillis() - 120_123);
+        String token = jwtService.generateToken("test1", issuedAt);
+
+        JwtService.TokenClaims claims = jwtService.parse(token).orElseThrow();
+        assertEquals("test1", claims.username());
+        assertEquals(issuedAt, claims.issuedAt());
     }
 
     @Test

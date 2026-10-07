@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
 
-        return org.springframework.security.core.userdetails.User
+        UserDetails details = org.springframework.security.core.userdetails.User
                 .builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
@@ -33,5 +33,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 // "비밀번호 오류"와 구분되는 잠금 안내 메시지로 리다이렉트할 수 있게 한다.
                 .accountLocked(user.isLocked())
                 .build();
+        // 로그아웃/비밀번호 변경 이전에 발급된 JWT를 JwtAuthenticationFilter가 걸러낼 수 있게 기준 시각을 같이 넘긴다.
+        return new AccountUserDetails(details, user.getTokensInvalidBefore());
     }
 }
