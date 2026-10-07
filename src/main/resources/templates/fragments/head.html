@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
 <!--/* 모든 페이지가 동일하게 불러오던 CDN/공용 CSS 블록을 여기 하나로 모았다.
      페이지별 <head>는 charset/viewport/title/CSRF meta(필요한 페이지만)를 직접 쓰고,
@@ -9,6 +9,18 @@
      가장 먼저 불러온 뒤 각자의 css를 불러와야 한다"는 페이지별 css 기준이며,
      Bootstrap 리셋/브릿지보다 뒤에 와도 무방하다). */-->
 <th:block th:fragment="commonHead">
+    <!--/* 검색 결과·메신저 링크 미리보기용 메타 태그. 페이지가 따로 정하지 않으면 사이트 공통 문구가 나가고,
+         제목을 바꾸고 싶은 페이지는 이 프래그먼트를 th:with="metaTitle=..."(필요하면 metaDescription도)를 건
+         th:block으로 감싸면 된다(post/detail.html 참고 - th:replace와 같은 태그에 th:with를 쓰면 적용되지 않는다).
+         og:image는 일부러 넣지 않았다: 미리보기 서비스는 SVG를 못 읽는데 로고가 SVG뿐이다 - PNG(권장 1200x630)를
+         static/images에 추가하면 그때 넣을 것. og:url도 생략(절대 주소가 필요한데 미리보기는 공유된 주소를 그대로 쓴다). */-->
+    <meta name="description" th:content="${metaDescription} ?: '우리 학교 시간표·급식·학사일정을 확인하고 같은 학교 친구들과 이야기하는 커뮤니티'">
+    <meta property="og:site_name" content="WebSchool">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:title" th:content="${metaTitle} ?: 'WebSchool - 우리 학교 일정과 커뮤니티'">
+    <meta property="og:description" th:content="${metaDescription} ?: '우리 학교 시간표·급식·학사일정을 확인하고 같은 학교 친구들과 이야기하는 커뮤니티'">
+    <meta name="twitter:card" content="summary">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/logo.svg}">
     <!--/* CDN 파일에는 integrity(SRI 해시)를 붙인다 - CDN 쪽 파일이 바뀌거나 변조되면 브라우저가 실행하지 않는다
          (CSP는 "어디서 불러오는가"만 제한하고 내용은 확인하지 못한다). **라이브러리 버전을 올리면 해시도 같이

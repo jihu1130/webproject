@@ -1,12 +1,16 @@
 ﻿<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${post.title + ' - WebSchool'}">게시물 - WebSchool</title>
+    <!--/* 링크 공개·비공개 글은 목록/검색에 안 나오게 한 글이라 검색엔진에도 수집되지 않게 한다. */-->
+    <meta name="robots" content="noindex" th:if="${post.visibility != 'PUBLIC'}">
+    <th:block th:with="metaTitle=${post.title}">
         <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
+    </th:block>
     <link rel="stylesheet" th:href="@{/css/post.css}">
 </head>
 <body class="community">
