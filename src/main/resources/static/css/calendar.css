@@ -811,7 +811,8 @@ a.comment-nickname:hover { text-decoration: underline; }
 .comment-delete-btn,
 .comment-report-btn,
 .comment-like-btn,
-.comment-bookmark-btn {
+.comment-bookmark-btn,
+.comment-share-btn {
     margin-left: 4px;
     background: none;
     border: none;
@@ -844,6 +845,7 @@ a.comment-nickname:hover { text-decoration: underline; }
 .comment-delete-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
 .comment-report-btn:hover { color: var(--danger-dark); background: var(--danger-soft); transform: translateY(-1px); }
 .comment-report-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.comment-share-btn:hover { color: var(--brand-1); background: color-mix(in srgb, var(--brand-1) 8%, transparent); transform: translateY(-1px); }
 .comment-like-btn.active, .comment-like-btn.active:hover { color: var(--danger); background: var(--danger-soft); }
 .comment-bookmark-btn.active, .comment-bookmark-btn.active:hover { color: var(--brand-1); background: color-mix(in srgb, var(--brand-1) 10%, transparent); }
 .comment-like-count { font-size: 11px; margin-left: 2px; }
@@ -1134,3 +1136,37 @@ html[data-theme="dark"] .day-detail-date.day-detail-date-sun { color: #ff6b64; }
 html[data-theme="dark"] .cal-dow-header .dow-sat,
 html[data-theme="dark"] .cal-day-num-sat,
 html[data-theme="dark"] .day-detail-date.day-detail-date-sat { color: #5b9dec; }
+/* 모바일 사용성 개선(2026-10-07).
+   880px 이하에서는 상세 패널이 달력 옆이 아니라 아래로 내려간다. 그 상태에서 패널·급식·한마디 목록이
+   각자 높이 제한 + 내부 스크롤을 가지면 페이지 스크롤 안에 스크롤이 세 겹으로 겹쳐, 손가락으로 밀 때
+   어느 쪽이 움직일지 알 수 없었다. 폰에서는 전부 펼쳐서 페이지 스크롤 하나만 남긴다. */
+@media (max-width: 880px) {
+    .day-detail-panel { max-height: none; }
+    .day-detail-body { overflow-y: visible; }
+    .meal-box,
+    .comment-list { max-height: none; overflow-y: visible; }
+}
+
+/* 손가락으로 누르기엔 작던 버튼(30~34px)을 44px 안팎으로 키우고, 9~11px이던 글자를 읽을 수 있는
+   크기로 올린다. 달력 칸 안의 일정 띠는 칸 폭이 48px 정도라 더 키우면 글자가 거의 안 들어간다. */
+@media (max-width: 640px) {
+    .cal-nav-btn { width: 44px; height: 44px; font-size: 14px; }
+    .cal-nav-select-group select { min-height: 44px; }
+    .cal-nav-today-btn { height: 44px; font-size: 0.95rem; }
+    .day-detail-close,
+    .day-detail-day-nav-btn { width: 40px; height: 40px; }
+
+    .cal-day-num { font-size: 0.8125rem; }
+    .cal-day-event-bar { font-size: 0.625rem; letter-spacing: -0.02em; }
+
+    .comment-nickname { font-size: 14px; position: relative; }
+    a.comment-nickname::after { content: ""; position: absolute; inset: -12px -10px; }
+    .comment-time { font-size: 12px; }
+    .comment-edit-btn,
+    .comment-delete-btn,
+    .comment-report-btn,
+    .comment-like-btn,
+    .comment-bookmark-btn,
+    .comment-share-btn { font-size: 15px; padding: 10px; }
+    .comment-like-count { font-size: 13px; }
+}

@@ -148,3 +148,16 @@
     padding: 9px 20px;
     font-weight: 700;
 }
+
+/* 모바일 사용성 개선(2026-10-07) - 전 화면 공통.
+   iOS Safari는 글자 크기가 16px 미만인 입력창에 포커스하면 화면을 자동으로 확대하고, 입력이 끝나도
+   되돌리지 않아 매번 손으로 다시 줄여야 한다. 화면별 CSS가 입력창 글자를 13~15px로 제각각 잡고 있어서
+   (검색창, 학년/반 선택, 문의 폼 등) 폰 폭에서는 한 곳에서 16px로 고정한다 - 화면별 규칙이 클래스로
+   지정돼 있어 !important 없이는 못 이긴다. */
+@media (max-width: 767.98px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}

@@ -572,9 +572,9 @@ Grafana([http://localhost:3000](http://localhost:3000), 계정 `admin` / 비밀�
 ./gradlew test --tests "com.webschool.webschool.devseed.SuperAdminSeeder"
 ```
 
-`test1`~`test5` 일반 계정과 예시 게시글/한마디, `admin` 총관리자 계정이 생성됩니다
-(비밀번호는 `TestDataSeeder` 상단의 `USER_PASSWORD`/`ADMIN_PASSWORD` 상수 참고 — 가입 시 비밀번호
-규칙이 적용되므로 아이디와 같은 비밀번호는 쓸 수 없습니다). 이미 존재하는 데이터는 건너뛰므로 여러 번 실행해도
+`test1`~`test5` 일반 계정과 예시 게시글/한마디, `admin`(비밀번호 `admin!`) 총관리자 계정,
+`subadmin`(비밀번호 `subadmin!`) 부관리자 계정이 생성됩니다(`test1`~`test5` 비밀번호는 `TestDataSeeder`
+상단의 `USER_PASSWORD` 상수 참고 — 가입 시 비밀번호 규칙이 적용되므로 아이디와 같은 비밀번호는 쓸 수 없습니다). 이미 존재하는 데이터는 건너뛰므로 여러 번 실행해도
 안전합니다. **배포 전에는 반드시 비밀번호를 바꾸세요.**
 
 ## 🌐 배포

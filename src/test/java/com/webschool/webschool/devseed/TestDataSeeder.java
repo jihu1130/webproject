@@ -37,6 +37,7 @@ import com.webschool.webschool.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -83,9 +84,12 @@ class TestDataSeeder {
     private static final int USER_COUNT = 5;
     private static final String USERNAME_PREFIX = "test";
     private static final String ADMIN_USERNAME = "admin";
-    private static final String ADMIN_PASSWORD = "Seed-BxKduYIo7!";
+    // admin/admin!, subadmin/subadmin!은 사용자가 정한 고정 값이라 바꾸지 말 것. 2026-09-30 비밀번호 규칙(8자 이상,
+    // 아이디 포함 금지)에 걸려 가입 경로로는 못 만드므로, 규칙을 통과하는 USER_PASSWORD로 먼저 가입시킨 뒤
+    // 리포지토리로 직접 덮어쓴다(역할 승격과 같은 우회). 이미 있는 계정의 비밀번호는 건드리지 않는다.
+    private static final String ADMIN_PASSWORD = "admin!";
     private static final String SUBADMIN_USERNAME = "subadmin";
-    private static final String SUBADMIN_PASSWORD = "Seed-IUMlvNW67!";
+    private static final String SUBADMIN_PASSWORD = "subadmin!";
     // test1~test5 공용 비밀번호 - 2026-09-30 비밀번호 규칙(8자 이상, 2종류 이상, 아이디 포함 금지, 보안 점검 M3)이
     // 생기면서 예전 "아이디+!" 방식은 가입 자체가 거부돼 고정 값으로 바꿨다. 이미 있는 계정엔 반영 안 됨.
     private static final String USER_PASSWORD = "Seed-jwvyLP1G7!";
@@ -318,6 +322,9 @@ class TestDataSeeder {
     @Autowired
     private BugReportRepository bugReportRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Test
     void seedTestData() {
         createSchoolIfAbsent();
@@ -407,11 +414,12 @@ class TestDataSeeder {
     // 승격 상태를 보장해야 한다(이미 있는 admin 행이 과거에 ROLE_USER로만 만들어졌을 수 있음).
     // 총관리자(ROLE_SUPER_ADMIN) 승격은 기존 설계대로 SuperAdminSeeder의 책임으로 남겨둔다.
     private void createAdminIfAbsent() {
-        if (!userRepository.existsByUsername(ADMIN_USERNAME)) {
+        boolean created = !userRepository.existsByUsername(ADMIN_USERNAME);
+        if (created) {
             RegisterDto dto = new RegisterDto();
             dto.setUsername(ADMIN_USERNAME);
-            dto.setPassword(ADMIN_PASSWORD);
-            dto.setConfirmPassword(ADMIN_PASSWORD);
+            dto.setPassword(USER_PASSWORD);
+            dto.setConfirmPassword(USER_PASSWORD);
             dto.setNickname(ADMIN_USERNAME);
             dto.setEmail(ADMIN_USERNAME + "@test.local");
             dto.setSchoolName(SCHOOL_NAME);
@@ -426,6 +434,9 @@ class TestDataSeeder {
 
         User admin = userRepository.findByUsername(ADMIN_USERNAME)
                 .orElseThrow(() -> new IllegalStateException("admin 계정 생성에 실패했습니다."));
+        if (created) {
+            admin.setPassword(passwordEncoder.encode(ADMIN_PASSWORD));
+        }
         if (admin.getRole() != User.Role.ROLE_ADMIN && admin.getRole() != User.Role.ROLE_SUPER_ADMIN) {
             admin.setRole(User.Role.ROLE_ADMIN);
         }
@@ -438,11 +449,12 @@ class TestDataSeeder {
     // 전부 허용된 상태를 보여주기 위함). admin과 동일하게 계정 존재 여부와 무관하게 매번
     // 권한 상태를 보장한다.
     private void createSubAdminIfAbsent() {
-        if (!userRepository.existsByUsername(SUBADMIN_USERNAME)) {
+        boolean created = !userRepository.existsByUsername(SUBADMIN_USERNAME);
+        if (created) {
             RegisterDto dto = new RegisterDto();
             dto.setUsername(SUBADMIN_USERNAME);
-            dto.setPassword(SUBADMIN_PASSWORD);
-            dto.setConfirmPassword(SUBADMIN_PASSWORD);
+            dto.setPassword(USER_PASSWORD);
+            dto.setConfirmPassword(USER_PASSWORD);
             dto.setNickname(SUBADMIN_USERNAME);
             dto.setEmail(SUBADMIN_USERNAME + "@test.local");
             dto.setSchoolName(SCHOOL_NAME);
@@ -457,6 +469,9 @@ class TestDataSeeder {
 
         User subAdmin = userRepository.findByUsername(SUBADMIN_USERNAME)
                 .orElseThrow(() -> new IllegalStateException("subadmin 계정 생성에 실패했습니다."));
+        if (created) {
+            subAdmin.setPassword(passwordEncoder.encode(SUBADMIN_PASSWORD));
+        }
         if (subAdmin.getRole() != User.Role.ROLE_ADMIN && subAdmin.getRole() != User.Role.ROLE_SUPER_ADMIN) {
             subAdmin.setRole(User.Role.ROLE_ADMIN);
         }

@@ -298,3 +298,15 @@
     .community .contest-entry { flex-wrap: wrap; padding: 14px 16px; gap: 10px 12px; }
     .community .contest-entry-body { flex-basis: calc(100% - 60px); }
 }
+
+/* 모바일 사용성 개선(2026-10-07) - 목록의 제목 링크는 글자 높이(24px)만큼만 눌렸고 작성자 이름은
+   22x19px이라 옆을 누르기 일쑤였다. 보이는 모양은 그대로 두고 눌리는 영역만 넓힌다
+   (제목은 위아래 여백을 링크 안으로, 작성자 이름은 보이지 않는 ::after로). */
+@media (max-width: 560px) {
+    .post-list-link { padding: 10px 0; margin: -10px 0; }
+    .post-list-nickname { position: relative; }
+    a.post-list-nickname::after { content: ""; position: absolute; inset: -12px -10px; }
+    .post-list-back { display: inline-flex; align-items: center; min-height: 44px; }
+    .post-search-sort { min-height: 44px; padding: 6px 12px; }
+    .post-category-badge { font-size: 12px; }
+}

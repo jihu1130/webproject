@@ -379,4 +379,7 @@ body.auth-body.auth-flow.auth-flow-inapp { background-image: none; }
     .auth-flow .auth-shell { padding-top: 2.25rem; padding-bottom: 2rem; }
     .auth-flow .auth-card { padding: 2.25rem 1.25rem 1.75rem; }
     .auth-flow .auth-title { font-size: 1.4rem; }
+    /* 모바일 사용성 개선(2026-10-07) - 아이디 찾기/비밀번호 찾기/회원가입 링크가 글자 높이(16px)만큼만
+       눌려서 바로 옆 링크를 잘못 누르기 쉬웠다. */
+    .auth-footer a { display: inline-block; padding: 12px 6px; margin: -6px 0; }
 }

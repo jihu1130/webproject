@@ -349,3 +349,13 @@ html { scroll-behavior: smooth; }
 }
 .back-to-top.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .back-to-top:hover { filter: brightness(1.08); }
+
+/* 모바일 사용성 개선(2026-10-07) - 글자 높이만큼만 눌리던 텍스트 링크의 터치 영역을 넓히고,
+   10~11.5px이던 라벨을 12px 이상으로 올린다. */
+@media (max-width: 700px) {
+    .footer2-links { gap: 0 24px; }
+    .footer2-links a { padding: 11px 0; }
+    .statement-link { display: inline-block; padding: 10px 4px; }
+    .period-tag { font-size: 0.78rem; }
+    .op-stamp-label { font-size: 0.7rem; letter-spacing: 0.06em; }
+}

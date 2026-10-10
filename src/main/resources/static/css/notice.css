@@ -48,4 +48,5 @@
 @media (max-width: 560px) {
     .notice-banner { padding: 10px 16px; gap: 8px; }
     .notice-banner-title { font-size: 0.85rem; }
+    .notice-badge { font-size: 12px; }
 }
