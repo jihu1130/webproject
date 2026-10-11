@@ -47,6 +47,10 @@ public class BugReportService {
     private static final int MAX_TITLE_LENGTH = 100;
     private static final int MAX_CONTENT_LENGTH = 2000;
     private static final int MAX_ATTACHMENTS = 5;
+    // 아래 3개는 DB 컬럼 길이와 같다 - 넘는 값을 그대로 저장하면 DB 오류(500)가 나므로 미리 걸러 안내한다.
+    private static final int MAX_NICKNAME_LENGTH = 30;
+    private static final int MAX_EMAIL_LENGTH = 100;
+    private static final int MAX_REPLY_LENGTH = 2000;
 
     private final BugReportRepository bugReportRepository;
     private final BugReportAttachmentRepository bugReportAttachmentRepository;
@@ -83,11 +87,17 @@ public class BugReportService {
                 throw new IllegalArgumentException("비로그인 상태에서는 연락 가능한 이메일을 입력해주세요.");
             }
             String trimmedNickname = reporterNickname == null ? "" : reporterNickname.trim();
+            if (trimmedNickname.length() > MAX_NICKNAME_LENGTH) {
+                throw new IllegalArgumentException("닉네임은 " + MAX_NICKNAME_LENGTH + "자 이내로 입력해주세요.");
+            }
             report.setReporterNickname(trimmedNickname.isBlank() ? null : trimmedNickname);
         }
 
         if (contactEmail != null && !contactEmail.isBlank()) {
             String trimmedEmail = contactEmail.trim();
+            if (trimmedEmail.length() > MAX_EMAIL_LENGTH) {
+                throw new IllegalArgumentException("이메일은 " + MAX_EMAIL_LENGTH + "자 이내로 입력해주세요.");
+            }
             if (!EMAIL_PATTERN.matcher(trimmedEmail).matches()) {
                 throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
             }
@@ -209,6 +219,9 @@ public class BugReportService {
         if (trimmed.isBlank()) {
             throw new IllegalArgumentException("답변 내용을 입력해주세요.");
         }
+        if (trimmed.length() > MAX_REPLY_LENGTH) {
+            throw new IllegalArgumentException("답변은 " + MAX_REPLY_LENGTH + "자 이내로 입력해주세요.");
+        }
         BannedWordFilter.validate(trimmed);
 
         InquiryReply reply = new InquiryReply();
@@ -246,6 +259,9 @@ public class BugReportService {
         String trimmed = content == null ? "" : content.trim();
         if (trimmed.isBlank()) {
             throw new IllegalArgumentException("답장 내용을 입력해주세요.");
+        }
+        if (trimmed.length() > MAX_REPLY_LENGTH) {
+            throw new IllegalArgumentException("답장은 " + MAX_REPLY_LENGTH + "자 이내로 입력해주세요.");
         }
         BannedWordFilter.validate(trimmed);
 
