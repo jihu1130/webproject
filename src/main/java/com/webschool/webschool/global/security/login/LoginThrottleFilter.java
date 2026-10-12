@@ -1,6 +1,7 @@
 package com.webschool.webschool.global.security.login;
 
 import com.webschool.webschool.global.security.RateLimiter;
+import com.webschool.webschool.global.security.captcha.CaptchaService;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.user.account.service.LoginAttemptService;
 import jakarta.servlet.FilterChain;
@@ -29,6 +30,7 @@ public class LoginThrottleFilter extends OncePerRequestFilter {
     private final RateLimiter rateLimiter;
     private final LoginAttemptService loginAttemptService;
     private final KnownDeviceCookie knownDeviceCookie;
+    private final CaptchaService captchaService;
 
     public void recordFailure(HttpServletRequest request) {
         rateLimiter.tryAcquireForIp(KEY_PREFIX, ClientIpUtils.getClientIp(request), Integer.MAX_VALUE, WINDOW);
@@ -53,7 +55,10 @@ public class LoginThrottleFilter extends OncePerRequestFilter {
             username = username.trim();
             long wait = loginAttemptService.waitSecondsBeforeNextAttempt(username,
                     ClientIpUtils.getClientIp(request), knownDeviceCookie.isPresentFor(request, username));
-            if (wait > 0) {
+            // 캡차를 통과한 시도는 기다리지 않고 비밀번호 확인으로 넘긴다(2026-10-12) - 남이 내 아이디로 틀려서
+            // 걸린 대기를 본인이 풀 수 있게. 틀리면 실패 횟수는 그대로 늘고, 다음 시도에도 캡차가 다시 필요하다.
+            // 위의 IP당 한도(15분 30회)는 캡차로도 못 넘는다 - 캡차를 사람이 계속 풀어 주는 대입의 상한.
+            if (wait > 0 && !captchaService.verify(request, ClientIpUtils.getClientIp(request))) {
                 response.sendRedirect(request.getContextPath() + "/login?locked=true&wait=" + wait);
                 return;
             }

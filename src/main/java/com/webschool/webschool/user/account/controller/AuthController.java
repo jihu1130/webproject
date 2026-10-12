@@ -4,6 +4,7 @@ import com.webschool.webschool.global.error.BusinessException;
 import com.webschool.webschool.global.error.ErrorCode;
 import com.webschool.webschool.global.security.AuthenticationUtils;
 import com.webschool.webschool.global.security.RateLimiter;
+import com.webschool.webschool.global.security.captcha.CaptchaService;
 import com.webschool.webschool.global.util.ClientIpUtils;
 import com.webschool.webschool.global.security.jwt.JwtService;
 import com.webschool.webschool.user.account.dto.RegisterDto;
@@ -45,6 +46,14 @@ public class AuthController {
     // 구글 OAuth 클라이언트 등록(client-id/secret)이 안 돼 있으면 이 빈 자체가 없다(SecurityConfig
     // 참고) - 로그인/회원가입 화면에 "구글로 로그인" 버튼을 보여줄지 여기서 같은 방식으로 판단한다.
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
+    private final CaptchaService captchaService;
+
+    // 로그인/회원가입 화면의 캡차 위젯용 사이트 키 - 캡차가 꺼져 있으면 null이라 위젯이 안 나온다.
+    // 가입 실패로 화면을 다시 그릴 때도 필요해서 메서드마다 넣지 않고 여기서 한 번에 넣는다.
+    @ModelAttribute("captchaSiteKey")
+    public String captchaSiteKey() {
+        return captchaService.siteKeyOrNull();
+    }
 
     // 수정사항.md 지적 - 이미 로그인된 상태에서 /login·/register에 직접 들어가면(주소창 입력,
     // 즐겨찾기, 뒤로가기) 네비바는 로그인 상태를 보여주면서 그 아래에 로그인/회원가입 폼이
@@ -117,6 +126,11 @@ public class AuthController {
             if (rateLimiter.isExhaustedForIp(REGISTER_LIMIT_KEY, clientIp, REGISTER_LIMIT, REGISTER_WINDOW)) {
                 throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS,
                         "이 네트워크에서 가입이 너무 많이 이루어졌습니다. 잠시 후 다시 시도해주세요.");
+            }
+            // 캡차(2026-10-12) - 위 횟수 제한은 대량 생성을 늦출 뿐이라, 자동으로 계정을 찍어내는 것 자체를 막는다.
+            if (captchaService.isEnabled() && !captchaService.verify(request, clientIp)) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT,
+                        "로봇이 아닌지 확인하지 못했어요. 아래 확인을 마친 뒤 다시 시도해주세요.");
             }
             userService.register(registerDto);
             rateLimiter.tryAcquireForIp(REGISTER_LIMIT_KEY, clientIp, REGISTER_LIMIT, REGISTER_WINDOW);

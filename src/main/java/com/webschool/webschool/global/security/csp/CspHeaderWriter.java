@@ -15,11 +15,14 @@ import org.springframework.security.web.header.HeaderWriter;
 // - style: 인라인 허용('unsafe-inline') - Quill/템플릿이 style 속성을 많이 써서 막을 수 없고, 스타일만으로는
 //   스크립트 실행이 안 돼 위험이 낮다.
 // - img/media: https 전체 - 운영 업로드 파일이 S3(다른 도메인, 버킷 주소는 설정값)에 있어서.
+// - frame: 우리 서버 + 캡차 위젯(Cloudflare Turnstile) - 로그인 대기 화면과 회원가입 화면에서만 쓴다.
 // - connect: 우리 서버만 - JS가 외부로 직접 요청하는 곳이 없다(NEIS/날씨는 서버가 호출).
 public class CspHeaderWriter implements HeaderWriter {
 
     private static final String HEADER = "Content-Security-Policy";
     private static final String REPORT_ONLY_HEADER = "Content-Security-Policy-Report-Only";
+    // 캡차(Cloudflare Turnstile, CaptchaService) - 스크립트와 그 스크립트가 띄우는 iframe 둘 다 이 출처다.
+    private static final String TURNSTILE = "https://challenges.cloudflare.com";
 
     private final boolean reportOnly;
 
@@ -43,12 +46,13 @@ public class CspHeaderWriter implements HeaderWriter {
         String scriptNonce = nonce == null ? "" : " 'nonce-" + nonce + "'";
         return String.join("; ",
                 "default-src 'self'",
-                "script-src 'self'" + scriptNonce + " https://cdn.jsdelivr.net",
+                "script-src 'self'" + scriptNonce + " https://cdn.jsdelivr.net " + TURNSTILE,
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
                 "font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
                 "img-src 'self' data: blob: https:",
                 "media-src 'self' blob: https:",
                 "connect-src 'self'",
+                "frame-src 'self' " + TURNSTILE,
                 "object-src 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",

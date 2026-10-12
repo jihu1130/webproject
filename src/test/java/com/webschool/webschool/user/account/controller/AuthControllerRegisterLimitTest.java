@@ -1,6 +1,7 @@
 package com.webschool.webschool.user.account.controller;
 
 import com.webschool.webschool.global.security.RateLimiter;
+import com.webschool.webschool.global.security.captcha.CaptchaService;
 import com.webschool.webschool.global.security.jwt.JwtService;
 import com.webschool.webschool.user.account.dto.RegisterDto;
 import com.webschool.webschool.user.service.UserService;
@@ -43,7 +44,8 @@ class AuthControllerRegisterLimitTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AuthController(userService, jwtService, new RateLimiter(), clientRegistrationRepositoryProvider);
+        controller = new AuthController(userService, jwtService, new RateLimiter(), clientRegistrationRepositoryProvider,
+                new CaptchaService("", ""));
         lenient().when(jwtService.generateToken(anyString())).thenReturn("token");
         lenient().when(jwtService.buildCookie(anyString(), anyBoolean()))
                 .thenReturn(ResponseCookie.from(JwtService.COOKIE_NAME, "token").build());

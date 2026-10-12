@@ -71,6 +71,10 @@ class TemplateCspComplianceTest {
             Matcher matcher = external.matcher(html);
             while (matcher.find()) {
                 String tag = matcher.group();
+                // 캡차 스크립트는 Cloudflare가 내용을 수시로 바꿔서 해시를 걸 수 없다(Turnstile 공식 제약).
+                if (tag.contains("src=\"https://challenges.cloudflare.com/turnstile/")) {
+                    continue;
+                }
                 if (!tag.contains("integrity=\"sha") || !tag.contains("crossorigin=\"anonymous\"")) {
                     violations.add(file + ": " + tag.replaceAll("\\s+", " "));
                 }

@@ -30,6 +30,7 @@
             <div th:if="${param.locked}" class="alert alert-danger">
                 비밀번호를 여러 번 잘못 입력해서 잠시 로그인할 수 없어요.
                 <span th:text="${loginWaitText}">잠시</span> 후 다시 시도해주세요. 비밀번호가 기억나지 않으면 아래 <a th:href="@{/forgot-password}">비밀번호 찾기</a>를 이용하세요.
+                <span th:if="${captchaSiteKey != null}">기다리기 어렵다면 아래 "사람인지 확인"을 마치고 바로 다시 로그인할 수 있어요.</span>
             </div>
             <div th:if="${param.throttled}" class="alert alert-danger">
                 로그인 실패가 너무 많습니다. 잠시 후 다시 시도해주세요.
@@ -67,6 +68,11 @@
                     <label class="form-label">비밀번호</label>
                     <input type="password" name="password" class="form-control" placeholder="비밀번호 입력" required>
                 </div>
+                <!--/* 캡차는 대기가 걸렸을 때만 보인다 - 통과하면 LoginThrottleFilter가 기다림 없이 넘겨준다.
+                     위젯이 이 폼 안에 cf-turnstile-response hidden input을 넣는다. */-->
+                <div class="auth-field" th:if="${captchaSiteKey != null and param.locked != null}">
+                    <div class="cf-turnstile" th:attr="data-sitekey=${captchaSiteKey}" data-language="ko"></div>
+                </div>
                 <button type="submit" class="btn btn-primary w-100">로그인</button>
             </form>
 
@@ -76,6 +82,9 @@
     </div>
 </div>
 
+<!--/* Cloudflare가 내용을 수시로 바꾸는 파일이라 integrity 해시를 걸 수 없다(TemplateCspComplianceTest의 예외). */-->
+<script th:if="${captchaSiteKey != null and param.locked != null}"
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <th:block th:replace="~{fragments/head :: commonScripts}"></th:block>
 </body>
 </html>

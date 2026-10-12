@@ -80,6 +80,15 @@ neis:
 jwt:
   secret: YOUR_JWT_SECRET_MIN_32_BYTES
 
+# 캡차(Cloudflare Turnstile, 2026-10-12) - 회원가입 화면과 로그인 대기 화면에 쓴다(CaptchaService).
+# 둘 다 비워두면 캡차 전체가 꺼진다(로컬 개발 기본값). 키는 Cloudflare 대시보드 > Turnstile에서
+# 위젯을 만들면 나온다 - 도메인에 실제 서비스 주소를 등록할 것. site-key는 화면에 그대로 나가는 공개 값,
+# secret-key는 서버만 아는 값이다.
+captcha:
+  turnstile:
+    site-key: ''
+    secret-key: ''
+
 app:
   upload:
     dir: ../uploads # 프로젝트 폴더(webproject-main/webproject-main) 밖, 게시글 이미지 저장 위치
