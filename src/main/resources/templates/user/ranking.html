@@ -63,7 +63,7 @@
                 <div class="profile-card-avatar profile-card-avatar-user ranking-avatar"
                      th:classappend="${item.equippedEffect == 'SPARKLE'} ? ' avatar-effect-sparkle' : (${item.equippedEffect == 'RAINBOW'} ? ' avatar-effect-rainbow' : '')"
                      th:style="${item.equippedAvatarColor != null} ? 'border-color:' + ${item.equippedAvatarColor}">
-                    <img th:src="@{${item.profileImageUrl != null} ? ${item.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진">
+                    <img th:src="@{${item.profileImageUrl != null} ? ${item.profileImageUrl} : '/images/default-avatar.svg'}" alt="프로필 사진" loading="lazy">
                 </div>
 
                 <div class="ranking-identity">

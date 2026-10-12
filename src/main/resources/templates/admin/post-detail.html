@@ -51,7 +51,7 @@
 
             <div class="post-image-gallery" th:if="${!post.images.empty}">
                 <a class="post-image-gallery-item" th:each="image : ${post.images}" th:href="${image.url}" target="_blank">
-                    <img th:src="${image.url}" th:alt="${image.originalFilename}">
+                    <img th:src="${image.url}" th:alt="${image.originalFilename}" loading="lazy">
                 </a>
             </div>
 

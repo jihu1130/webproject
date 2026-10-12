@@ -54,7 +54,7 @@
                     <label>기존 이미지 (체크하면 저장 시 삭제됩니다)</label>
                     <div class="post-image-existing-grid">
                         <label class="post-image-existing-item" th:each="image : ${existingImages}">
-                            <img th:src="${image.url}" alt="첨부 이미지">
+                            <img th:src="${image.url}" alt="첨부 이미지" loading="lazy">
                             <span class="post-image-existing-remove">
                                 <input type="checkbox" name="removeImageIds" th:value="${image.id}"> 삭제
                             </span>

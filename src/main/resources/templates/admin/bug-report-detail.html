@@ -42,7 +42,7 @@
             <div class="admin-bug-report-detail-attachments" th:unless="${#lists.isEmpty(report.attachments)}">
                 <a th:each="file : ${report.attachments}" th:href="${file.url}" target="_blank" rel="noopener"
                    class="admin-bug-report-detail-attachment">
-                    <img th:if="${file.kind == 'image'}" th:src="${file.url}" th:alt="${file.originalFilename}">
+                    <img th:if="${file.kind == 'image'}" th:src="${file.url}" th:alt="${file.originalFilename}" loading="lazy">
                     <video th:if="${file.kind != 'image'}" th:src="${file.url}" controls></video>
                     <span class="admin-bug-report-detail-filename" th:text="${file.originalFilename}">파일명</span>
                 </a>

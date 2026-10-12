@@ -86,7 +86,7 @@
         <ul class="post-list" th:unless="${posts.empty}">
             <li class="post-list-item reveal-on-scroll" th:each="post : ${posts}">
                 <a th:href="@{'/posts/' + ${post.uuid}}" class="post-list-link">
-                    <img th:if="${post.thumbnailUrl != null}" th:src="${post.thumbnailUrl}" class="post-list-thumbnail" alt="">
+                    <img th:if="${post.thumbnailUrl != null}" th:src="${post.thumbnailUrl}" class="post-list-thumbnail" alt="" loading="lazy">
                     <span class="post-category-badge" th:classappend="'post-category-badge-' + ${post.category}" th:text="${post.categoryLabel}">자유</span>
                     <span class="post-list-title" th:text="${post.title}">제목</span>
                 </a>

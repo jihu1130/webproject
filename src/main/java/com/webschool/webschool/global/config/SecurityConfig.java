@@ -100,7 +100,7 @@ public class SecurityConfig {
                         // 같이 permitAll이어야 함(오류 페이지 자체는 누구나 볼 수 있어야 하는 게 맞기도
                         // 하다 - BasicErrorController가 렌더링하는 templates/error.html 참고).
                         .requestMatchers("/", "/register", "/login", "/oauth2/**", "/login/oauth2/**",
-                                "/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico", "/error",
+                                "/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico", "/robots.txt", "/error",
                                 "/api/users/check-username", "/school/api/search", "/school/api/classes",
                                 // /actuator/prometheus - 로컬 Prometheus 컨테이너가 인증 없이 스크레이프하므로
                                 // health와 동일하게 permitAll(todo.md #24, 로컬 모니터링 범위). 나중에 이
